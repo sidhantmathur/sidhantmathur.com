@@ -26,7 +26,7 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col pb-11">
         <Header />
-        {children}
+        <main>{children}</main>
         <Footer />
         <StickyChatBar />
         <CommandPalette />

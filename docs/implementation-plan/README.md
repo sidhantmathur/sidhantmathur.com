@@ -91,6 +91,33 @@ Deployment and account tasks deliberately left out of the overnight build:
    (rate-limit script, OG image paste test in LinkedIn/Slack, Lighthouse ≥95,
    replace old Google Drive resume links everywhere with /resume).
 
+### Surfaced by the overnight build (2026-07-03, added during Phase 4)
+
+10. **Run the evals** (needs `AI_GATEWAY_API_KEY`, ~10 min): the 20 recruiter
+    questions and 11 adversarial prompts in
+    `04-generative-ui-and-verification.md` §3 could not run overnight — no
+    key exists yet. Run them against `/chat` locally after step 4.
+11. **`--faint` contrast decision**: Lighthouse flags `color-contrast` on
+    every page — `--faint` (#9B968C) on paper is ~2.6:1, below WCAG AA
+    (4.5:1). Accessibility still scores 95–96 everywhere, but the audit
+    fails. Darkening `--faint` toward ~#767167 would pass; that changes a
+    pinned design token (00-decisions §2 says do not re-derive), so it needs
+    your sign-off, not an agent's.
+12. **`/chat` mobile performance**: 91–93 under Lighthouse's simulated
+    mobile throttling (100 on desktop; real LCP ~140 ms after the static
+    empty-state shell landed). The remaining gap is AI SDK hydration cost.
+    Accept, or budget a follow-up (e.g. lazy-loading the chat bundle on
+    interaction).
+13. **Browser visual QA**: overnight verification was build/HTML/curl-based
+    plus Lighthouse. Load the site in a real browser once — check the
+    console for errors, the ⌘K palette, the sticky-bar → /chat handoff, and
+    the stat band. Note: the stat band shows the giant "4–6" with the copy's
+    caption; the phrase "hours per day" does not appear next to the number
+    (per 02 §4.3's pinned reading of 00-decisions §5) — confirm that's what
+    you intended.
+14. **Local dev note**: if port 3000 is busy (the adarle20 dev server), run
+    `PORT=3100 npm run dev`.
+
 ## Out of scope for v1 (tracked, not built)
 
 - `/now` page (optional in spec; no copy exists).
