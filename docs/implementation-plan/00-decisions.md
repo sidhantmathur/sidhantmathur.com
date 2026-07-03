@@ -99,7 +99,7 @@ Fonts via `next/font/google`: **Geist** (400/500/600/700) and **Geist Mono**
 | Card 01 role | "CTO / cofounder" | "Founder and developer" |
 | Card 02 | Nokia, "SFDC, Python, SQL" | Copy's Nokia card (role, stack, status, description) |
 | Card 03 | absent | Dell card exists in copy — same card pattern, no image |
-| Email | hello@sidhantkmathur.com | Footer link text per copy ("GitHub · LinkedIn · Email"); hrefs resolved from the resume source: `https://github.com/sidhantmathur`, `https://www.linkedin.com/in/sidhantmathur`, `mailto:sidhant185@gmail.com` |
+| Email | hello@sidhantkmathur.com | Footer link text per copy ("GitHub · LinkedIn · Email"); hrefs resolved from the resume source: `https://github.com/sidhantmathur`, `https://www.linkedin.com/in/sidhantmathur`, `mailto:hello@sidhantmathur.com` — **superseded 2026-07-03**: canonical domain is now sidhantmathur.com (bought at Cloudflare; old domain will 301 here once recovered), contact email is hello@sidhantmathur.com (requires Cloudflare Email Routing to be enabled before deploy) |
 | Footer | "set in Geist — built by hand" | "© 2026 Sidhant Mathur · Toronto, ON · GitHub · LinkedIn · Email" |
 | Experience table | 2024/2023 dates, invented rows | **Build it** — row facts now come from `docs/resume/resume-source.md` (see §11). Rows: 2025 — A Darle 20 — Founder and developer → details → `/projects/adarle20`; 2022 — Nokia — Sales operations → details → `/projects/nokia`; 2019 — Freelance web development — Self-employed (no link); 2018 — Dell — Marketing intern → details → `/projects/dell-ml`; final row "full history" → `/resume`. Role phrasing follows site-copy card wording where an equivalent exists |
 

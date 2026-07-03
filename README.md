@@ -1,4 +1,4 @@
-# sidhantkmathur.com
+# sidhantmathur.com
 
 Personal portfolio. Static Next.js site (App Router) with one AI chat endpoint
 (`/api/chat`) backed by Claude via the Vercel AI Gateway.

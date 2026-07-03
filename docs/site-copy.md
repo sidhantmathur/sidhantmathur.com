@@ -1,4 +1,4 @@
-# Site copy — sidhantkmathur.com
+# Site copy — sidhantmathur.com
 
 Single source of truth for all site text. Sentence case everywhere. No all-caps.
 No taglines beyond what's written here. [TODO] items are placeholders for Sidhant.

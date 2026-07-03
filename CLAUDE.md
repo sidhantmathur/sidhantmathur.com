@@ -1,4 +1,4 @@
-# CLAUDE.md — sidhantkmathur.com
+# CLAUDE.md — sidhantmathur.com
 
 Personal portfolio. Static Next.js site with one AI chat endpoint.
 

@@ -8,7 +8,7 @@ import { CommandPalette } from "@/components/command-palette";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://sidhantkmathur.com"),
+  metadataBase: new URL("https://sidhantmathur.com"),
   title: "Sidhant Mathur",
   description:
     "Sales operations specialist and builder. I make internal tools and revenue systems at Nokia, and I run A Darle 20, a marketplace for tabletop game sessions in Latin America.",

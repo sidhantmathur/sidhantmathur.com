@@ -38,8 +38,8 @@ export default function ResumePage() {
         <div className="mt-16 border-t border-ink pt-10">
           <h2 className="font-mono text-xs text-faint">Toronto, ON</h2>
           <p className="mt-1 font-mono text-xs text-faint">
-            sidhant185@gmail.com · linkedin.com/in/sidhantmathur ·
-            github.com/sidhantmathur · sidhantkmathur.com
+            hello@sidhantmathur.com · linkedin.com/in/sidhantmathur ·
+            github.com/sidhantmathur · sidhantmathur.com
           </p>
 
           <div className="mt-10">

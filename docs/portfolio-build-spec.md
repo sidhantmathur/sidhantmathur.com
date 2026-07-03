@@ -1,6 +1,6 @@
 # Portfolio v2 — Build Spec
 
-Owner: Sidhant Mathur · Target: sidhantkmathur.com · Host: Vercel (existing plan)
+Owner: Sidhant Mathur · Target: sidhantmathur.com (2026-07-03: replaces sidhantkmathur.com, which redirects here once recovered from Squarespace) · Host: Vercel (existing plan)
 Positioning: AI-native technical operator — GTM engineering / revenue systems / solutions engineering.
 
 ## 0. Pre-flight (manual, before any code)

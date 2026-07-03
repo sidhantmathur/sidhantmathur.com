@@ -214,7 +214,7 @@ const chatTools = {
     description: "Show a card with ways to contact Sidhant.",
     inputSchema: z.object({}),
     execute: async () => ({
-      email: "mailto:sidhant185@gmail.com",
+      email: "mailto:hello@sidhantmathur.com",
       github: "https://github.com/sidhantmathur",
       linkedin: "https://www.linkedin.com/in/sidhantmathur",
     }),

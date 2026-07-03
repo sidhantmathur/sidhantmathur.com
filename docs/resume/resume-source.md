@@ -12,8 +12,8 @@ base) — email, LinkedIn, GitHub, and site URL are fine to publish.
 
 ## Sidhant Mathur
 
-Toronto, ON · sidhant185@gmail.com
-linkedin.com/in/sidhantmathur · github.com/sidhantmathur · sidhantkmathur.com
+Toronto, ON · hello@sidhantmathur.com
+linkedin.com/in/sidhantmathur · github.com/sidhantmathur · sidhantmathur.com
 
 ### Summary
 

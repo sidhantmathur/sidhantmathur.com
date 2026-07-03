@@ -25,6 +25,6 @@ companies.
 
 Email, LinkedIn, or GitHub:
 
-- Email: sidhant185@gmail.com
+- Email: hello@sidhantmathur.com
 - LinkedIn: linkedin.com/in/sidhantmathur
 - GitHub: github.com/sidhantmathur
