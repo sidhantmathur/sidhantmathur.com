@@ -7,6 +7,22 @@ import { DefaultChatTransport, type UIMessage } from "ai";
 import { Container } from "@/components/layout/container";
 import { Section } from "@/components/layout/section";
 import { track } from "@/lib/analytics";
+import {
+  ProjectCard,
+  type ProjectCardData,
+} from "@/components/chat/tools/project-card";
+import {
+  ResumeCard,
+  type ResumeCardData,
+} from "@/components/chat/tools/resume-card";
+import {
+  RoleFitCard,
+  type RoleFitCardData,
+} from "@/components/chat/tools/role-fit-card";
+import {
+  ContactCard,
+  type ContactCardData,
+} from "@/components/chat/tools/contact-card";
 
 // Copy strings — verbatim from docs/site-copy.md (lines 84–90, 229–234).
 const EMPTY_STATE =
@@ -49,6 +65,39 @@ function textOf(message: UIMessage): string {
     .filter((p): p is { type: "text"; text: string } => p.type === "text")
     .map((p) => p.text)
     .join("");
+}
+
+// Tool invocations arrive as typed message parts: `part.type` is
+// `tool-<name>` and the part carries a `state` plus `input`/`output` fields
+// (ai@7, v5-era wire format). We render a card only once the tool has
+// executed (`state === 'output-available'`); while the state is
+// 'input-streaming' / 'input-available' we render nothing (the model is still
+// deciding / the args are still arriving). 'output-error' is left silent — the
+// model's own text answer still renders, so the turn degrades gracefully.
+function ToolPart({ part }: { part: UIMessage["parts"][number] }) {
+  const type = part.type;
+  if (typeof type !== "string" || !type.startsWith("tool-")) return null;
+
+  // Narrow to the executed-output shape. Non-output states render nothing.
+  const p = part as {
+    type: string;
+    state?: string;
+    output?: unknown;
+  };
+  if (p.state !== "output-available" || p.output == null) return null;
+
+  switch (type) {
+    case "tool-showProject":
+      return <ProjectCard data={p.output as ProjectCardData} />;
+    case "tool-showResume":
+      return <ResumeCard data={p.output as ResumeCardData} />;
+    case "tool-roleFit":
+      return <RoleFitCard data={p.output as RoleFitCardData} />;
+    case "tool-contactCard":
+      return <ContactCard data={p.output as ContactCardData} />;
+    default:
+      return null;
+  }
 }
 
 function ChatConversation() {
@@ -120,24 +169,34 @@ function ChatConversation() {
 
           {messages.map((message) => {
             const text = textOf(message);
-            if (!text) return null;
+            // Tool cards (assistant only) render at full width, outside the
+            // 58ch prose column, in message-part order.
+            const toolParts = message.parts.filter(
+              (p) =>
+                typeof p.type === "string" && p.type.startsWith("tool-"),
+            );
+            if (!text && toolParts.length === 0) return null;
             return (
-              <div
-                key={message.id}
-                className="max-w-[58ch] whitespace-pre-wrap font-mono text-[13px] leading-relaxed"
-              >
-                <span className="text-faint">
-                  {message.role === "user" ? "you" : "assistant"}
-                </span>
-                <p
-                  className={
-                    message.role === "user"
-                      ? "mt-1 text-ink"
-                      : "mt-1 text-ink-soft"
-                  }
-                >
-                  {text}
-                </p>
+              <div key={message.id} className="space-y-4">
+                {text && (
+                  <div className="max-w-[58ch] whitespace-pre-wrap font-mono text-[13px] leading-relaxed">
+                    <span className="text-faint">
+                      {message.role === "user" ? "you" : "assistant"}
+                    </span>
+                    <p
+                      className={
+                        message.role === "user"
+                          ? "mt-1 text-ink"
+                          : "mt-1 text-ink-soft"
+                      }
+                    >
+                      {text}
+                    </p>
+                  </div>
+                )}
+                {toolParts.map((part, i) => (
+                  <ToolPart key={`${message.id}-tool-${i}`} part={part} />
+                ))}
               </div>
             );
           })}

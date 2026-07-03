@@ -4,6 +4,7 @@ import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { StickyChatBar } from "@/components/chat/sticky-bar";
 import { AnalyticsProvider } from "@/components/analytics-provider";
+import { CommandPalette } from "@/components/command-palette";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -28,6 +29,7 @@ export default function RootLayout({
         {children}
         <Footer />
         <StickyChatBar />
+        <CommandPalette />
         <AnalyticsProvider />
       </body>
     </html>

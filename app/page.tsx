@@ -6,6 +6,7 @@ import { MonoLabel } from "@/components/mono-label";
 import { MonoLink } from "@/components/mono-link";
 import { ProjectCard } from "@/components/project-card";
 import { AskAnythingButton } from "@/components/ask-anything-button";
+import { PROJECTS } from "@/content/projects";
 
 const EXPERIENCE_ROWS = [
   {
@@ -96,21 +97,20 @@ export default function Home() {
           <MonoLabel>Selected work</MonoLabel>
 
           <div className="mt-6 flex flex-col gap-8">
-            <ProjectCard index="01">
+            {/* A Darle 20 — the only card with an image column. */}
+            <ProjectCard index={PROJECTS.adarle20.index}>
               <div className="grid grid-cols-1 md:grid-cols-[1fr_minmax(280px,420px)]">
                 <div className="p-6">
                   <h2 className="font-sans text-[30px] font-semibold tracking-[-0.025em] text-ink">
-                    A Darle 20
+                    {PROJECTS.adarle20.title}
                   </h2>
                   <p className="mt-4 max-w-[52ch] text-[15px] leading-relaxed text-ink-soft">
-                    A marketplace connecting tabletop game hosts with paying players across Latin
-                    America. I designed and shipped the whole product — bookings, payments, chat,
-                    refunds, notifications — by directing AI coding agents through the full build.
+                    {PROJECTS.adarle20.description}
                   </p>
                 </div>
                 <div className="relative min-h-[220px] border-t border-ink md:border-l md:border-t-0">
                   <Image
-                    src="/images/adarle20-listings.png"
+                    src={PROJECTS.adarle20.image!}
                     alt="A Darle 20 listings screenshot"
                     fill
                     className="object-cover"
@@ -119,51 +119,32 @@ export default function Home() {
                 </div>
               </div>
               <CardMetaStrip
-                role="Founder and developer"
-                stack="TypeScript, Next.js, Supabase, Stripe Connect"
-                status="Live at adarle20.com"
-                href="/projects/adarle20"
+                role={PROJECTS.adarle20.role}
+                stack={PROJECTS.adarle20.stack.join(", ")}
+                status={PROJECTS.adarle20.status}
+                href={PROJECTS.adarle20.caseStudyHref}
               />
             </ProjectCard>
 
-            <ProjectCard index="02">
-              <div className="p-6">
-                <h2 className="font-sans text-[30px] font-semibold tracking-[-0.025em] text-ink">
-                  Reporting tools at Nokia
-                </h2>
-                <p className="mt-4 max-w-[52ch] text-[15px] leading-relaxed text-ink-soft">
-                  Self-serve reporting tools for a global sales organization. A Power App used by
-                  80+ stakeholders across seven regions replaced a manual quarterly process, and a
-                  migration from Salesforce Analytics to Power BI moved 150+ users onto reporting
-                  I model and maintain.
-                </p>
-              </div>
-              <CardMetaStrip
-                role="Sales operations specialist"
-                stack="Power Apps, Power BI, SQL, DAX, Salesforce"
-                status="In production since 2024"
-                href="/projects/nokia"
-              />
-            </ProjectCard>
-
-            <ProjectCard index="03">
-              <div className="p-6">
-                <h2 className="font-sans text-[30px] font-semibold tracking-[-0.025em] text-ink">
-                  Sales prediction model at Dell
-                </h2>
-                <p className="mt-4 max-w-[52ch] text-[15px] leading-relaxed text-ink-soft">
-                  As an intern, I built a machine learning model that predicted sale outcomes at
-                  91% accuracy and surfaced 20,000 leads worth $129M in pipeline for the sales
-                  team.
-                </p>
-              </div>
-              <CardMetaStrip
-                role="Marketing intern"
-                stack="Python, Azure"
-                status="2018"
-                href="/projects/dell-ml"
-              />
-            </ProjectCard>
+            {/* Nokia and Dell — text-only cards (no image exists for either). */}
+            {[PROJECTS.nokia, PROJECTS["dell-ml"]].map((project) => (
+              <ProjectCard key={project.slug} index={project.index}>
+                <div className="p-6">
+                  <h2 className="font-sans text-[30px] font-semibold tracking-[-0.025em] text-ink">
+                    {project.title}
+                  </h2>
+                  <p className="mt-4 max-w-[52ch] text-[15px] leading-relaxed text-ink-soft">
+                    {project.description}
+                  </p>
+                </div>
+                <CardMetaStrip
+                  role={project.role}
+                  stack={project.stack.join(", ")}
+                  status={project.status}
+                  href={project.caseStudyHref}
+                />
+              </ProjectCard>
+            ))}
           </div>
         </Container>
       </Section>

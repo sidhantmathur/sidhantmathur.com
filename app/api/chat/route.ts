@@ -1,8 +1,15 @@
-import { streamText, convertToModelMessages, type UIMessage } from "ai";
+import {
+  streamText,
+  convertToModelMessages,
+  tool,
+  stepCountIs,
+  type UIMessage,
+} from "ai";
 import { z } from "zod";
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 import { buildSystemPrompt } from "@/lib/system-prompt";
+import { PROJECTS } from "@/content/projects";
 
 // Node runtime: both @upstash/ratelimit and the in-memory fallback work fine on
 // Node, and there's no edge-specific requirement here.
@@ -104,6 +111,116 @@ function jsonError(error: string, status: number): Response {
   });
 }
 
+// --- Chat tools ----------------------------------------------------------
+//
+// Four tools the model can call to render visual UI in the chat (Phase 4,
+// 04 §2). NOTE: `ai@7` uses the v5-era `tool()` API — schemas go under
+// `inputSchema` (NOT `parameters`). Each `execute` does no I/O beyond reading
+// static, build-time-bundled copy — no new fetches, no new dependencies.
+//
+// Client renders these as typed `tool-<name>` message parts (see
+// app/chat/page.tsx), switching on `part.state === 'output-available'`.
+
+const chatTools = {
+  // 2.1 — visual card for one of the three projects. The model only picks the
+  // slug; all card content comes from the shared content/projects.ts module
+  // (no model generation of card copy).
+  showProject: tool({
+    description: "Show a visual card for one of Sidhant's three projects.",
+    inputSchema: z.object({
+      slug: z.enum(["adarle20", "nokia", "dell-ml"]),
+    }),
+    execute: async ({ slug }) => {
+      const p = PROJECTS[slug];
+      return {
+        slug: p.slug,
+        index: p.index,
+        title: p.title,
+        description: p.description,
+        role: p.role,
+        stack: p.stack,
+        status: p.status,
+        caseStudyHref: p.caseStudyHref,
+        image: p.image ?? null,
+      };
+    },
+  }),
+
+  // 2.2 — resume card. Zero-arg tool; returns a fixed object. pdfAvailable is
+  // hardcoded false for the overnight build (resume.pdf is a morning task).
+  showResume: tool({
+    description: "Show a card to download or view the resume.",
+    inputSchema: z.object({}),
+    execute: async () => ({
+      htmlHref: "/resume",
+      pdfHref: "/resume.pdf",
+      pdfAvailable: false,
+    }),
+  }),
+
+  // 2.3 — structured skills-match breakdown. The CONTENT (areas, evidence) is
+  // model-generated and grounded via the system prompt (§2.5); execute only
+  // does light validation: trims strings, caps matches at 5, and passes the
+  // shape through to the client.
+  roleFit: tool({
+    description:
+      "Show a structured skills-match breakdown mapping Sidhant's experience to a named role the user is asking about (e.g. GTM engineer, solutions engineer, RevOps, sales ops). Only call this after you've formed a grounded answer — every 'evidence' string must restate a fact that exists in the knowledge base, not a generalization.",
+    inputSchema: z.object({
+      role: z
+        .string()
+        .describe(
+          "The role name as the user phrased it or a close normalization, e.g. 'GTM engineer', 'solutions engineer', 'RevOps', 'sales ops'.",
+        ),
+      matches: z
+        .array(
+          z.object({
+            area: z
+              .string()
+              .describe(
+                "A short skill/competency label relevant to the role, e.g. 'Cross-functional ownership', 'SQL and data modeling'.",
+              ),
+            evidence: z
+              .string()
+              .describe(
+                "One sentence of grounded evidence from the knowledge base — a specific project, number, or outcome. No invented specifics.",
+              ),
+          }),
+        )
+        .min(2)
+        .max(5),
+      caveats: z
+        .string()
+        .optional()
+        .describe(
+          "Optional one-sentence honest gap or stretch for this role, if one exists. Omit if there is nothing honest to say.",
+        ),
+    }),
+    execute: async ({ role, matches, caveats }) => ({
+      role: role.trim(),
+      matches: matches.slice(0, 5).map((m) => ({
+        area: m.area.trim(),
+        evidence: m.evidence.trim(),
+      })),
+      ...(caveats && caveats.trim()
+        ? { caveats: caveats.trim() }
+        : {}),
+    }),
+  }),
+
+  // 2.4 — contact card. Zero-arg tool; returns the fixed footer links. Never
+  // exposes salary/address/phone (the phone number is deliberately excluded
+  // from every published surface — 00-decisions.md §11).
+  contactCard: tool({
+    description: "Show a card with ways to contact Sidhant.",
+    inputSchema: z.object({}),
+    execute: async () => ({
+      email: "mailto:sidhant185@gmail.com",
+      github: "https://github.com/sidhantmathur",
+      linkedin: "https://www.linkedin.com/in/sidhantmathur",
+    }),
+  }),
+};
+
 export async function POST(req: Request): Promise<Response> {
   // (a) Parse and validate the body.
   let parsed: z.infer<typeof bodySchema>;
@@ -148,6 +265,12 @@ export async function POST(req: Request): Promise<Response> {
     const result = streamText({
       model: "anthropic/claude-haiku-4.5", // Vercel AI Gateway — no provider SDK, no API key in code.
       maxOutputTokens: 600,
+      tools: chatTools,
+      // The SDK's default stop condition is stepCountIs(1), which ends the
+      // stream at the tool call before the model can answer. Allow a second
+      // step so the model always follows a tool call with a short text answer
+      // (the tool is a visual aid, not a replacement for the answer — §2.5).
+      stopWhen: stepCountIs(3),
       // System prompt supplied as a message so we can attach cache_control.
       // The prompt is byte-identical across requests, so ephemeral caching hits
       // on every request after the first.
