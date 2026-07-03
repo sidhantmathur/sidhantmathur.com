@@ -1,0 +1,90 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+:root {
+  color-scheme: light;
+
+  /* Design tokens — 00-decisions.md §2. Do not rename or re-derive. */
+  --paper: #FAF7F1;
+  --ink: #1B1916;
+  --ink-soft: #4A463F;
+  --muted: #6E6A62;
+  --faint: #9B968C;
+  --hairline: #E0DBD1;
+  --surface: #F2EEE5;
+  --surface-raised: #FFFEFB;
+  --band: #131110;
+  --band-muted: #97928A;
+
+  --radius: 0rem;
+
+  /* shadcn mapping — 00-decisions.md §2 */
+  --background: var(--paper);
+  --foreground: var(--ink);
+  --muted-foreground: var(--faint);
+  --border: var(--hairline);
+  --primary: var(--ink);
+  --primary-foreground: var(--paper);
+
+  /* shadcn mapping — additional vars referenced by generated components
+     (button.tsx and future shadcn components), mapped sensibly onto our
+     palette rather than the generated nova/oklch theme. */
+  --secondary: var(--surface);
+  --secondary-foreground: var(--ink);
+  --accent: var(--surface);
+  --accent-foreground: var(--ink);
+  --destructive: #B3261E;
+  --ring: var(--ink);
+  --input: var(--hairline);
+  --card: var(--surface-raised);
+  --card-foreground: var(--ink);
+  --popover: var(--surface-raised);
+  --popover-foreground: var(--ink);
+}
+
+@theme inline {
+  --color-paper: var(--paper);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-muted: var(--muted);
+  --color-faint: var(--faint);
+  --color-hairline: var(--hairline);
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
+  --color-band: var(--band);
+  --color-band-muted: var(--band-muted);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+
+  --radius: var(--radius);
+
+  /* next/font variables (set on <html> by app/fonts.ts) → Tailwind fonts */
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  /* reference the next/font var directly — @theme inline does not emit
+     --font-sans as a runtime custom property */
+  font-family: var(--font-geist-sans);
+}
