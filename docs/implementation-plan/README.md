@@ -61,6 +61,11 @@ version traps but the installed versions win.
 
 ## Morning checklist (human work, in order)
 
+> **Superseded 2026-07-03** by `docs/launch-checklist.md` — the domain plan
+> changed (sidhantmathur.com bought at Cloudflare and made canonical;
+> sidhantkmathur.com pending Squarespace rescue). Kept for the historical
+> record.
+
 Deployment and account tasks deliberately left out of the overnight build:
 
 1. **Sign-offs** (most decided by Sidhant 2026-07-03 — dark mode skipped,
