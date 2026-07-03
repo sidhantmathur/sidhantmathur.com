@@ -1,36 +1,40 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# sidhantkmathur.com
 
-## Getting Started
+Personal portfolio. Static Next.js site (App Router) with one AI chat endpoint
+(`/api/chat`) backed by Claude via the Vercel AI Gateway.
 
-First, run the development server:
+## Local viewing
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+```
+npm install
+cp .env.example .env.local   # can stay empty — the site runs without keys
+npm run dev                  # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+With an empty `.env.local`: every page renders, and the chat UI renders and
+shows the copy's error state when a message is sent. With `AI_GATEWAY_API_KEY`
+set: chat streams answers (rate limiting uses an in-memory fallback until the
+Upstash keys exist).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+This working copy lives in WSL. Run `npm install` / `npm run dev` **inside WSL**
+(`wsl -e bash -lc "cd ~/sidhantmathur && npm run dev"`) — npm and file-watching
+over the Windows UNC bridge are slow and flaky.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Commands
 
-## Learn More
+- `npm run dev` — dev server (runs `build-knowledge` first via `predev`)
+- `npm run build` — production build (runs `build-knowledge` first via `prebuild`)
+- `npm run start` — serve the production build
+- `npm run lint` — ESLint
 
-To learn more about Next.js, take a look at the following resources:
+The chat knowledge base is generated at build time from
+`content/knowledge/*.md` into `lib/knowledge.generated.ts` (git-ignored) by
+`scripts/build-knowledge.mjs`.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Deployment
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Deployment, keys, and account setup are deferred to the morning checklist in
+[`docs/implementation-plan/README.md`](docs/implementation-plan/README.md)
+(Vercel + AI Gateway, Upstash, PostHog, GitHub, domain, prod verification).
+`docs/implementation-plan/00-decisions.md` is the authoritative architecture
+and design reference.

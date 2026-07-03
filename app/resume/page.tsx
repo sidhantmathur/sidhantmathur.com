@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Container } from "@/components/layout/container";
 import { Section } from "@/components/layout/section";
 import { MonoLabel } from "@/components/mono-label";
+import { ResumeDownloadButton } from "@/components/resume-download-button";
 
 export const metadata: Metadata = {
   title: "Resume",
@@ -30,13 +31,7 @@ export default function ResumePage() {
           if you&apos;d rather feed it to an AI — I won&apos;t take it personally.
         </p>
 
-        <a
-          href="/resume.pdf"
-          download
-          className="mt-6 inline-block bg-ink px-5 py-3 font-sans text-sm font-medium text-paper transition-opacity hover:opacity-90"
-        >
-          Download PDF
-        </a>
+        <ResumeDownloadButton />
 
         {/* Resume body — built from docs/resume/resume-source.md verbatim.
             No phone number ships on any web surface. */}
