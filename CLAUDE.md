@@ -22,4 +22,10 @@ Chat: Vercel AI SDK via Vercel AI Gateway · Rate limiting: Upstash · Analytics
 Feature branches for multi-step work; atomic commits with clear messages.
 
 ## Commands
-(fill in after scaffold: dev / build / lint)
+Run inside WSL (`wsl -e bash -lc "cd ~/sidhantmathur && <cmd>"`) — never npm from Windows.
+- `npm run dev` — dev server at http://localhost:3000 (`predev` regenerates the knowledge base)
+- `npm run build` — production build (`prebuild` regenerates the knowledge base); must pass with zero errors
+- `npm run start` — serve the production build
+- `npm run lint` — ESLint
+
+The chat knowledge base is built from `content/knowledge/*.md` into `lib/knowledge.generated.ts` (git-ignored) by `scripts/build-knowledge.mjs`, wired as `predev`/`prebuild`.

@@ -40,3 +40,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# generated knowledge base (built by scripts/build-knowledge.mjs)
+/lib/knowledge.generated.ts
