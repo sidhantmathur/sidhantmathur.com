@@ -16,6 +16,10 @@ type NavEntry = {
   href: string;
 };
 
+// Fired by CommandPaletteTrigger (header "Menu" button) to open the palette
+// without prop-drilling through the layout.
+export const OPEN_COMMAND_PALETTE_EVENT = "open-command-palette";
+
 const NAV_ENTRIES: NavEntry[] = [
   { label: "Home", href: "/" },
   { label: "A Darle 20", href: "/projects/adarle20" },
@@ -37,8 +41,15 @@ export function CommandPalette() {
         setOpen((prev) => !prev);
       }
     }
+    function handleOpenEvent() {
+      setOpen(true);
+    }
     document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
+    window.addEventListener(OPEN_COMMAND_PALETTE_EVENT, handleOpenEvent);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener(OPEN_COMMAND_PALETTE_EVENT, handleOpenEvent);
+    };
   }, []);
 
   const runNavigate = useCallback(
@@ -51,10 +62,11 @@ export function CommandPalette() {
 
   const runAskQuestion = useCallback(() => {
     setOpen(false);
-    // Same focus mechanism as the hero "Ask me anything" button
-    // (components/ask-anything-button.tsx) — focus the sticky chat bar input.
-    document.getElementById("sticky-chat-input")?.focus();
-  }, []);
+    // Navigate to the chat page rather than focusing the sticky bar — the
+    // dialog restores focus to its trigger on close, which silently undid the
+    // focus, and navigation is the obvious behavior anyway.
+    router.push("/chat");
+  }, [router]);
 
   return (
     <CommandDialog

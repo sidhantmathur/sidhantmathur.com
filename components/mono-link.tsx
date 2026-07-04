@@ -19,7 +19,7 @@ type MonoLinkProps = {
 const SUFFIX: Record<MonoLinkVariant, string> = {
   internal: " →",
   external: " ↗",
-  mailto: "",
+  mailto: " ↗",
 };
 
 export function MonoLink({
@@ -62,10 +62,12 @@ export function MonoLink({
     );
   }
 
-  // mailto — plain anchor, no suffix (00-decisions §8, flagged convention).
+  // mailto — plain anchor; ↗ suffix to match sibling contact links
+  // (owner override of the 00-decisions §8 no-suffix default, 2026-07-03).
   return (
     <a href={href} className={classes} onClick={onClick}>
       {children}
+      {SUFFIX.mailto}
     </a>
   );
 }

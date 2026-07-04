@@ -1,13 +1,13 @@
-import { MonoLink } from "@/components/mono-link";
+import Link from "next/link";
+import { CommandPaletteTrigger } from "@/components/command-palette-trigger";
 
 export function Header() {
   return (
-    <header className="flex items-center justify-between border-b border-ink px-10 py-3.5 font-mono text-xs">
-      <span>Sidhant Mathur</span>
-      <span className="text-ink-soft">Toronto, ON · Open to new roles</span>
-      <MonoLink href="mailto:sidhant185@gmail.com" variant="mailto" contact="email">
-        Email
-      </MonoLink>
+    <header className="sticky top-0 z-40 flex items-center justify-between border-b border-ink bg-paper px-10 py-3.5 font-mono text-xs">
+      <Link href="/" className="no-underline hover:underline">
+        Sidhant Mathur
+      </Link>
+      <CommandPaletteTrigger />
     </header>
   );
 }

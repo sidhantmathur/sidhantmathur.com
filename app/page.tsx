@@ -6,6 +6,7 @@ import { MonoLabel } from "@/components/mono-label";
 import { MonoLink } from "@/components/mono-link";
 import { ProjectCard } from "@/components/project-card";
 import { AskAnythingButton } from "@/components/ask-anything-button";
+import { ChatLauncherInput } from "@/components/chat/chat-launcher-input";
 import { PROJECTS } from "@/content/projects";
 
 const EXPERIENCE_ROWS = [
@@ -162,20 +163,22 @@ export default function Home() {
           </p>
 
           <div className="mt-6 flex flex-wrap gap-3">
-            <span className="border border-hairline px-3 py-1.5 font-mono text-xs text-ink-soft">
-              What did Sidhant build at Nokia?
-            </span>
-            <span className="border border-hairline px-3 py-1.5 font-mono text-xs text-ink-soft">
-              How does A Darle 20 work?
-            </span>
-            <span className="border border-hairline px-3 py-1.5 font-mono text-xs text-ink-soft">
-              Is he a fit for a solutions engineering role?
-            </span>
+            {[
+              "What did Sidhant build at Nokia?",
+              "How does A Darle 20 work?",
+              "Is he a fit for a solutions engineering role?",
+            ].map((q) => (
+              <Link
+                key={q}
+                href={`/chat?q=${encodeURIComponent(q)}`}
+                className="border border-hairline px-3 py-1.5 font-mono text-xs text-ink-soft transition-colors hover:border-ink"
+              >
+                {q}
+              </Link>
+            ))}
           </div>
 
-          <div className="mt-6 flex h-11 max-w-xl items-center border border-hairline bg-surface-raised px-4 font-mono text-[13px] text-faint">
-            Ask a question about my work
-          </div>
+          <ChatLauncherInput className="mt-6 h-11 max-w-xl border border-ink bg-surface-raised px-4" />
 
           <p className="mt-4 font-mono text-xs text-faint">
             AI-generated answers about my professional background.
