@@ -305,7 +305,7 @@ Route: `/`. Section order top to bottom:
    - Footer renders Phase 1's component with copy line 228 verbatim: "©
      2026 Sidhant Mathur · Toronto, ON · GitHub · LinkedIn · Email" — hrefs
      resolved per `00-decisions.md` §5 (github.com/sidhantmathur,
-     linkedin.com/in/sidhantmathur, `mailto:sidhant185@gmail.com`).
+     linkedin.com/in/sidhantmathur, `mailto:hello@sidhantmathur.com`).
 
 ---
 

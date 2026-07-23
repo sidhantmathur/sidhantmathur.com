@@ -19,7 +19,7 @@ The site, chatbot, and resume all show hello@sidhantmathur.com. Until
 forwarding exists, mail to it bounces.
 
 - [ ] Cloudflare dashboard → sidhantmathur.com → Email → Email Routing →
-      create custom address `hello@` → destination sidhant185@gmail.com →
+      create custom address `hello@` → destination: personal Gmail inbox →
       click the verification link that lands in Gmail. Cloudflare adds the
       MX/SPF records itself. (~5 min, free)
 - [ ] Send a test email to hello@sidhantmathur.com and confirm it arrives.

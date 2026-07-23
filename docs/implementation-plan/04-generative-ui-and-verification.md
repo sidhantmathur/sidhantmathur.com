@@ -173,7 +173,7 @@ contactCard: tool({
 ```
 
 **Server returns**: a fixed object with copy-safe labels and the same hrefs
-used in the footer — `{ email: 'mailto:sidhant185@gmail.com', github:
+used in the footer — `{ email: 'mailto:hello@sidhantmathur.com', github:
 'https://github.com/sidhantmathur', linkedin:
 'https://www.linkedin.com/in/sidhantmathur' }`, matching `00-decisions.md`
 §5's resolved footer links. Zero-arg tool — no model input.

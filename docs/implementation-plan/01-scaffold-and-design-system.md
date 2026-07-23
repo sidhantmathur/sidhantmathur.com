@@ -368,8 +368,8 @@ as:
 - Center/status slot: "Toronto, ON · Open to new roles" (remainder of the
   same metadata string).
 - Right slot: email link — per 00-decisions §5, no email address exists in
-  copy; use `mailto:sidhant185@gmail.com` per the decisions doc's explicit
-  resolution ("point `href` at `mailto:sidhant185@gmail.com` for Email"),
+  copy; use `mailto:hello@sidhantmathur.com` per the decisions doc's explicit
+  resolution ("point `href` at `mailto:hello@sidhantmathur.com` for Email"),
   with link text "Email" (mono link style, `mono-link.tsx`, external-style
   since it's a `mailto:` — use the `↗`-suffix variant or a no-suffix mailto
   special case; pick one and stay consistent — recommend no suffix for
@@ -393,7 +393,7 @@ Render as mono 11px text with "GitHub", "LinkedIn", "Email" as individual
 00-decisions §5/§11 (resolved from the resume source):
 - GitHub → `https://github.com/sidhantmathur`
 - LinkedIn → `https://www.linkedin.com/in/sidhantmathur`
-- Email → `mailto:sidhant185@gmail.com`
+- Email → `mailto:hello@sidhantmathur.com`
 
 (The *colophon's* link to this portfolio's own repo is separate and still
 gated on the `[TODO: confirm repo is public before linking]` marker — that
@@ -477,7 +477,7 @@ phase; no Phase 1 code reads these vars yet (chat route is Phase 2/3).
 - [ ] Footer renders: exact text "© 2026 Sidhant Mathur · Toronto, ON ·
       GitHub · LinkedIn · Email" (site-copy.md → Small pieces), mono 11px,
       `--faint`, hairline top border. Hrefs: github.com/sidhantmathur,
-      linkedin.com/in/sidhantmathur, `mailto:sidhant185@gmail.com`.
+      linkedin.com/in/sidhantmathur, `mailto:hello@sidhantmathur.com`.
 - [ ] `public/images/adarle20-listings.png` extracted and committed.
 - [ ] `.env.example` created at repo root with the five vars from
       00-decisions §9; `.env.local` confirmed git-ignored (not created).
