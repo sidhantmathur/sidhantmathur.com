@@ -6,7 +6,6 @@ import { MonoLabel } from "@/components/mono-label";
 import { MonoLink } from "@/components/mono-link";
 import { ProjectCard } from "@/components/project-card";
 import { AskAnythingButton } from "@/components/ask-anything-button";
-import { ChatLauncherInput } from "@/components/chat/chat-launcher-input";
 import { PROJECTS } from "@/content/projects";
 
 const EXPERIENCE_ROWS = [
@@ -48,17 +47,19 @@ export default function Home() {
       {/* Hero */}
       <Section divider="none">
         <Container className="py-16 md:py-24">
-          <h1 className="max-w-[22ch] font-mono text-[clamp(32px,5vw,58px)] font-medium leading-[1.12] tracking-[-0.04em] text-ink">
-            I build internal tools,{" "}
-            <span className="bg-ink px-[0.14em] text-paper">revenue</span>{" "}
-            systems, and the occasional whole product.
+          <h1 className="max-w-[22ch] font-mono text-[clamp(32px,5vw,58px)] font-medium leading-[1.12] tracking-[-0.015em] text-ink">
+            I build internal tools, revenue systems, and the occasional{" "}
+            <span className="bg-rubric px-[0.14em] text-paper [box-decoration-break:clone]">
+              whole product
+            </span>
+            .
           </h1>
           <p className="mt-6 max-w-[52ch] text-[15px] leading-relaxed text-ink-soft md:text-base">
             I work in sales operations at Nokia, where tools I&apos;ve built are used by 150+
             people across seven regions. On the side I founded A Darle 20, a live marketplace
             processing real payments in Latin America.
           </p>
-          <p className="mt-6 font-mono text-xs text-faint">
+          <p className="mt-6 font-mono text-xs text-muted">
             Sidhant Mathur · Toronto, ON · Open to new roles
           </p>
           <div className="mt-8 flex items-center gap-6">
@@ -67,28 +68,6 @@ export default function Home() {
               View resume
             </MonoLink>
           </div>
-        </Container>
-      </Section>
-
-      {/* Stat band */}
-      <Section divider="none" className="bg-band">
-        <Container className="flex flex-col gap-6 py-16 md:flex-row md:items-end md:justify-between">
-          <span
-            className="text-[clamp(96px,16vw,210px)] font-bold leading-[0.78] tracking-[-0.05em]"
-            style={{
-              backgroundImage:
-                "repeating-linear-gradient(0deg, #F2EEE5 0px, #F2EEE5 5px, rgba(242,238,229,0) 5px, rgba(242,238,229,0) 8px)",
-              backgroundClip: "text",
-              WebkitBackgroundClip: "text",
-              color: "transparent",
-            }}
-          >
-            1
-          </span>
-          <p className="max-w-[30ch] font-mono text-[13px] text-band-muted md:text-right">
-            Analyst-day of manual collection eliminated, every day of quarter-end close,
-            by a reporting tool I built and rolled out at Nokia.
-          </p>
         </Container>
       </Section>
 
@@ -114,8 +93,7 @@ export default function Home() {
                     src={PROJECTS.adarle20.image!}
                     alt="A Darle 20 listings screenshot"
                     fill
-                    className="object-cover"
-                    style={{ filter: "grayscale(0.15)" }}
+                    className="object-cover grayscale-[0.15] transition-[filter] duration-300 group-hover:grayscale-0"
                   />
                 </div>
               </div>
@@ -127,16 +105,36 @@ export default function Home() {
               />
             </ProjectCard>
 
-            {/* Nokia and Dell — text-only cards (no image exists for either). */}
-            {[PROJECTS.nokia, PROJECTS["dell-ml"]].map((project) => (
+            {/* Nokia and Dell — no image exists for either, so the visual
+                column renders the project's headline stat as display type. */}
+            {[
+              {
+                project: PROJECTS.nokia,
+                stat: { value: "150+", label: "users across seven regions" },
+              },
+              {
+                project: PROJECTS["dell-ml"],
+                stat: { value: "$129M", label: "estimated pipeline" },
+              },
+            ].map(({ project, stat }) => (
               <ProjectCard key={project.slug} index={project.index}>
-                <div className="p-6">
-                  <h2 className="font-sans text-[30px] font-semibold tracking-[-0.025em] text-ink">
-                    {project.title}
-                  </h2>
-                  <p className="mt-4 max-w-[52ch] text-[15px] leading-relaxed text-ink-soft">
-                    {project.description}
-                  </p>
+                <div className="grid grid-cols-1 md:grid-cols-[1fr_minmax(280px,420px)]">
+                  <div className="p-6">
+                    <h2 className="font-sans text-[30px] font-semibold tracking-[-0.025em] text-ink">
+                      {project.title}
+                    </h2>
+                    <p className="mt-4 max-w-[52ch] text-[15px] leading-relaxed text-ink-soft">
+                      {project.description}
+                    </p>
+                  </div>
+                  <div className="flex flex-col justify-center gap-1.5 border-t border-ink p-6 md:border-l md:border-t-0">
+                    <span className="font-mono text-[clamp(44px,5vw,68px)] font-medium leading-none tracking-[-0.02em] text-ink">
+                      {stat.value}
+                    </span>
+                    <span className="font-mono text-xs text-muted">
+                      {stat.label}
+                    </span>
+                  </div>
                 </div>
                 <CardMetaStrip
                   role={project.role}
@@ -171,16 +169,14 @@ export default function Home() {
               <Link
                 key={q}
                 href={`/chat?q=${encodeURIComponent(q)}`}
-                className="border border-hairline px-3 py-1.5 font-mono text-xs text-ink-soft transition-colors hover:border-ink"
+                className="border border-hairline px-3 py-1.5 font-mono text-xs text-ink-soft transition-colors duration-150 hover:border-rubric hover:text-ink"
               >
                 {q}
               </Link>
             ))}
           </div>
 
-          <ChatLauncherInput className="mt-6 h-11 max-w-xl border border-ink bg-surface-raised px-4" />
-
-          <p className="mt-4 font-mono text-xs text-faint">
+          <p className="mt-4 font-mono text-xs text-muted">
             AI-generated answers about my professional background.
             It can make mistakes — the resume is the authoritative version.
           </p>
@@ -220,7 +216,7 @@ export default function Home() {
                   i < EXPERIENCE_ROWS.length - 1 ? "border-b border-hairline" : ""
                 }`}
               >
-                <span className="font-mono text-xs text-faint">{row.date}</span>
+                <span className="font-mono text-xs text-muted">{row.date}</span>
                 <span className="text-[15px] text-ink">{row.name}</span>
                 <span className="hidden text-[15px] text-ink-soft md:block">{row.role}</span>
                 <span className="text-right">
@@ -256,10 +252,19 @@ function CardMetaStrip({
       <MetaCell label="Stack" value={stack} />
       <MetaCell label="Status" value={status} />
       <div className="border-l border-hairline px-3 py-2 font-mono text-xs">
-        <span className="text-faint">Link</span>
+        <span className="text-muted">Link</span>
         <div className="mt-0.5">
-          <Link href={href} className="no-underline hover:underline">
-            Read the case study →
+          <Link
+            href={href}
+            className="group/link no-underline transition-colors duration-150 hover:text-rubric hover:underline"
+          >
+            Read the case study{" "}
+            <span
+              aria-hidden
+              className="inline-block transition-transform duration-150 group-hover/link:translate-x-0.5"
+            >
+              →
+            </span>
           </Link>
         </div>
       </div>
@@ -270,7 +275,7 @@ function CardMetaStrip({
 function MetaCell({ label, value }: { label: string; value: string }) {
   return (
     <div className="border-l border-hairline px-3 py-2 font-mono text-xs first:border-l-0">
-      <span className="text-faint">{label}</span>
+      <span className="text-muted">{label}</span>
       <div className="mt-0.5 text-ink-soft">{value}</div>
     </div>
   );

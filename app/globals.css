@@ -16,6 +16,9 @@
   --surface-raised: #FFFEFB;
   --band: #131110;
   --band-muted: #97928A;
+  /* Single warm accent ("rubrication") — hero highlight, card index badges,
+     link hovers, chat caret. Nowhere else. 4.9:1 on paper (AA). */
+  --rubric: #C7391B;
 
   --radius: 0rem;
 
@@ -54,6 +57,7 @@
   --color-surface-raised: var(--surface-raised);
   --color-band: var(--band);
   --color-band-muted: var(--band-muted);
+  --color-rubric: var(--rubric);
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);

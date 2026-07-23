@@ -62,7 +62,7 @@ export function ProjectCard({ data }: { data: ProjectCardData }) {
         <MetaCell label="Stack" value={data.stack.join(", ")} />
         <MetaCell label="Status" value={data.status} />
         <div className="border-l border-hairline px-3 py-2 font-mono text-xs">
-          <span className="text-faint">Link</span>
+          <span className="text-muted">Link</span>
           <div className="mt-0.5">
             <Link
               href={data.caseStudyHref}
@@ -80,7 +80,7 @@ export function ProjectCard({ data }: { data: ProjectCardData }) {
 function MetaCell({ label, value }: { label: string; value: string }) {
   return (
     <div className="border-l border-hairline px-3 py-2 font-mono text-xs first:border-l-0">
-      <span className="text-faint">{label}</span>
+      <span className="text-muted">{label}</span>
       <div className="mt-0.5 text-ink-soft">{value}</div>
     </div>
   );

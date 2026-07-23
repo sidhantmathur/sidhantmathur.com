@@ -26,7 +26,7 @@ export default function ColophonPage() {
           Most of the code was written by AI agents working from a build
           spec; the decisions, copy, and mistakes are mine. The spec, design
           brief, and source are on GitHub.{" "}
-          <span className="font-mono text-faint">
+          <span className="font-mono text-muted">
             [TODO: confirm repo is public before linking]
           </span>
         </p>

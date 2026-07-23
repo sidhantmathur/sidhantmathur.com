@@ -19,12 +19,15 @@ export const runtime = "nodejs";
 //
 // useChat (@ai-sdk/react v4 / ai v7, v5-era wire format) POSTs UIMessages:
 // each has an `id`, a `role`, and a `parts` array. We accept only user/assistant
-// roles from the client (no `system`), cap history at 12 messages, and cap each
-// message's total text at 500 chars. `parts` may contain non-text entries in
+// roles from the client (no `system`). The 500-char text cap applies to USER
+// messages only — assistant turns are the model's own prior output (up to 600
+// tokens, routinely past 500 chars) echoed back as history; capping them made
+// every follow-up after one long answer fail with a 400. Assistant text gets a
+// generous abuse ceiling instead. `parts` may contain non-text entries in
 // principle; we validate the text ones and sum their length.
 
 // Non-text parts are passed through untouched (schema-permissive) but only text
-// parts count toward the 500-char limit.
+// parts count toward the per-role limit.
 const messageSchema = z
   .object({
     id: z.string().optional(),
@@ -39,13 +42,17 @@ const messageSchema = z
             p.type === "text" && typeof p.text === "string",
         )
         .reduce((sum, p) => sum + p.text.length, 0);
-      return textLength <= 500;
+      return textLength <= (msg.role === "user" ? 500 : 8000);
     },
-    { message: "Message text must be 500 characters or fewer." },
+    { message: "Message text exceeds the allowed length." },
   );
 
+// History cap: must fit the full intended conversation — up to 10 user turns
+// (enforced below with the graceful 429) plus their assistant replies — with
+// headroom, so the >10-user-messages case reaches the rate-limit copy instead
+// of dying on a schema 400.
 const bodySchema = z.object({
-  messages: z.array(messageSchema).min(1).max(12),
+  messages: z.array(messageSchema).min(1).max(30),
 });
 
 // --- Rate limiting -------------------------------------------------------

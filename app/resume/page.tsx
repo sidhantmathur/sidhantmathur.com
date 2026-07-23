@@ -33,8 +33,8 @@ export default function ResumePage() {
 
         {/* Resume body matches docs/Sidhant_Mathur_Resume.pdf (July 2026). */}
         <div className="mt-16 border-t border-ink pt-10">
-          <h2 className="font-mono text-xs text-faint">Toronto, ON</h2>
-          <p className="mt-1 font-mono text-xs text-faint">
+          <h2 className="font-mono text-xs text-muted">Toronto, ON</h2>
+          <p className="mt-1 font-mono text-xs text-muted">
             613-795-9684 · hello@sidhantmathur.com · linkedin.com/in/sidhantmathur ·
             github.com/sidhantmathur · sidhantmathur.com
           </p>
@@ -59,7 +59,7 @@ export default function ResumePage() {
               <h3 className="font-sans text-lg font-semibold text-ink">
                 Nokia — Toronto, ON
               </h3>
-              <p className="mt-3 font-mono text-xs text-faint">
+              <p className="mt-3 font-mono text-xs text-muted">
                 Sales operations specialist (internal tools &amp; automation) · Jun 2024 – Present
               </p>
               <ul className="mt-2 max-w-[58ch] list-disc space-y-2 pl-5 text-[15px] leading-relaxed text-ink-soft">
@@ -82,7 +82,7 @@ export default function ResumePage() {
                 </li>
               </ul>
 
-              <p className="mt-6 font-mono text-xs text-faint">
+              <p className="mt-6 font-mono text-xs text-muted">
                 Workforce management specialist · Oct 2022 – Jun 2024
               </p>
               <ul className="mt-2 max-w-[58ch] list-disc space-y-2 pl-5 text-[15px] leading-relaxed text-ink-soft">
@@ -101,7 +101,7 @@ export default function ResumePage() {
               <h3 className="font-sans text-lg font-semibold text-ink">
                 A Darle 20 (&quot;Let&apos;s Go 20&quot;) — adarle20.com — Toronto, ON
               </h3>
-              <p className="mt-3 font-mono text-xs text-faint">
+              <p className="mt-3 font-mono text-xs text-muted">
                 Co-Founder &amp; CTO (solo developer) · Aug 2025 – Present · launched Mar
                 2026
               </p>
@@ -141,7 +141,7 @@ export default function ResumePage() {
               <h3 className="font-sans text-lg font-semibold text-ink">
                 Freelance web development &amp; consulting — remote
               </h3>
-              <p className="mt-3 font-mono text-xs text-faint">
+              <p className="mt-3 font-mono text-xs text-muted">
                 Self-employed · May 2019 – Oct 2022
               </p>
               <ul className="mt-2 max-w-[58ch] list-disc space-y-2 pl-5 text-[15px] leading-relaxed text-ink-soft">
@@ -164,7 +164,7 @@ export default function ResumePage() {
               <h3 className="font-sans text-lg font-semibold text-ink">
                 Dell Technologies — Austin, TX
               </h3>
-              <p className="mt-3 font-mono text-xs text-faint">
+              <p className="mt-3 font-mono text-xs text-muted">
                 Marketing intern · May 2018 – Aug 2018
               </p>
               <ul className="mt-2 max-w-[58ch] list-disc space-y-2 pl-5 text-[15px] leading-relaxed text-ink-soft">

@@ -35,7 +35,7 @@ export function ResumeCard({ data }: { data: ResumeCardData }) {
           Download PDF ↗
         </a>
         {!data.pdfAvailable && (
-          <span className="text-faint">
+          <span className="text-muted">
             (PDF pending — HTML version above is current)
           </span>
         )}

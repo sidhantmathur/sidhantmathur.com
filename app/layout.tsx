@@ -3,6 +3,7 @@ import { geistSans, geistMono } from "./fonts";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { StickyChatBar } from "@/components/chat/sticky-bar";
+import { HideOnChat } from "@/components/layout/hide-on-chat";
 import { AnalyticsProvider } from "@/components/analytics-provider";
 import { CommandPalette } from "@/components/command-palette";
 import "./globals.css";
@@ -27,8 +28,10 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col pb-11">
         <Header />
         <main>{children}</main>
-        <Footer />
-        <StickyChatBar />
+        <HideOnChat>
+          <Footer />
+          <StickyChatBar />
+        </HideOnChat>
         <CommandPalette />
         <AnalyticsProvider />
       </body>

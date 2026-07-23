@@ -78,12 +78,12 @@ export function CommandPalette() {
     >
       <Command className="rounded-none! bg-popover text-popover-foreground">
         <CommandList className="rounded-none">
-          <CommandEmpty className="font-mono text-[13px] text-faint">
+          <CommandEmpty className="font-mono text-[13px] text-muted">
             No results found.
           </CommandEmpty>
           <CommandGroup
             heading="Go to"
-            className="text-muted [&_[cmdk-group-heading]]:normal-case [&_[cmdk-group-heading]]:font-mono [&_[cmdk-group-heading]]:text-[12px] [&_[cmdk-group-heading]]:text-faint"
+            className="text-muted [&_[cmdk-group-heading]]:normal-case [&_[cmdk-group-heading]]:font-mono [&_[cmdk-group-heading]]:text-[12px] [&_[cmdk-group-heading]]:text-muted"
           >
             {NAV_ENTRIES.map((entry) => (
               <CommandItem
@@ -98,7 +98,7 @@ export function CommandPalette() {
           </CommandGroup>
           <CommandGroup
             heading="Chat"
-            className="text-muted [&_[cmdk-group-heading]]:normal-case [&_[cmdk-group-heading]]:font-mono [&_[cmdk-group-heading]]:text-[12px] [&_[cmdk-group-heading]]:text-faint"
+            className="text-muted [&_[cmdk-group-heading]]:normal-case [&_[cmdk-group-heading]]:font-mono [&_[cmdk-group-heading]]:text-[12px] [&_[cmdk-group-heading]]:text-muted"
           >
             <CommandItem
               value="Ask a question"

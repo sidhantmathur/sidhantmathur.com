@@ -33,12 +33,6 @@ Sidhant Mathur · Toronto, ON · Open to new roles
 Primary button: Ask me anything
 (opens the chat — secondary link next to it: View resume)
 
-### Stat block
-
-1
-Analyst-day of manual collection eliminated, every day of quarter-end close, by
-a reporting tool I built and rolled out at Nokia.
-
 ### Projects section
 
 Section heading: Selected work
@@ -65,6 +59,7 @@ Role: Sales operations specialist
 Stack: Power Apps, Power BI, SQL, DAX, Salesforce
 Status: In production since 2024
 Link: Read the case study
+Stat column (display numeral): 150+ / users across seven regions
 
 **Card 3 — Sales prediction model at Dell**
 As an intern, I built a propensity model on Dell's historical customer
@@ -76,6 +71,7 @@ Role: Marketing intern
 Stack: Python, Azure ML
 Status: 2018
 Link: Read the case study
+Stat column (display numeral): $129M / estimated pipeline
 
 ### Chat panel (homepage teaser)
 

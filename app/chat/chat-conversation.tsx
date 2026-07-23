@@ -22,7 +22,7 @@ import {
   type ContactCardData,
 } from "@/components/chat/tools/contact-card";
 
-// Copy strings — verbatim from docs/site-copy.md (lines 84–90, 229–234).
+// Copy strings — verbatim from docs/site-copy.md.
 const EMPTY_STATE =
   "Ask me about my work at Nokia, A Darle 20, or anything on my resume.";
 const ERROR_STATE =
@@ -117,10 +117,37 @@ export function ChatConversation() {
 
   const sentMessageCount = useRef(0);
 
+  // Stick-to-bottom auto-scroll (window scroll — the conversation lives in
+  // normal page flow with the input fixed at the viewport bottom). While the
+  // reader is at (or near) the bottom, each new streamed chunk keeps the page
+  // pinned to the bottom; once they scroll up to reread something, streaming
+  // no longer yanks them back down. Sending a message always re-pins.
+  const stickToBottom = useRef(true);
+
+  useEffect(() => {
+    function onScroll() {
+      const el = document.documentElement;
+      stickToBottom.current =
+        el.scrollHeight - window.innerHeight - window.scrollY < 120;
+    }
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  useEffect(() => {
+    if (stickToBottom.current) {
+      window.scrollTo({ top: document.documentElement.scrollHeight });
+    }
+  }, [messages]);
+
+  const [input, setInput] = useState("");
+  const isBusy = status === "submitted" || status === "streaming";
+
   function submit(text: string) {
     const q = text.trim();
-    if (!q) return;
+    if (!q || isBusy) return;
     setErrorKind("none");
+    stickToBottom.current = true;
     track("chat_message_sent", {
       message_index: sentMessageCount.current,
       message: q,
@@ -129,7 +156,7 @@ export function ChatConversation() {
     void sendMessage({ text: q });
   }
 
-  // On mount, read ?q= from the sticky-bar redirect and send it as the first
+  // On mount, read ?q= from the launcher-bar redirect and send it as the first
   // message. The ref guard prevents a double-send under React strict mode.
   // The send is deferred to a microtask so the effect body doesn't call setState
   // synchronously (avoids a cascading render on mount).
@@ -144,16 +171,27 @@ export function ChatConversation() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
-  const [input, setInput] = useState("");
-  const isBusy = status === "submitted" || status === "streaming";
+  // Send from the input box: clear it only when the message actually goes out
+  // (submit() no-ops while a reply is streaming — don't eat the typed text).
+  function trySend() {
+    const q = input.trim();
+    if (!q || isBusy) return;
+    submit(q);
+    setInput("");
+  }
   const hasMessages = messages.length > 0;
+  // Show a pending indicator between send and the first streamed token.
+  const awaitingReply =
+    status === "submitted" ||
+    (status === "streaming" &&
+      messages[messages.length - 1]?.role !== "assistant");
 
   return (
     <>
       {/* Conversation */}
       <div className="mt-8 space-y-6">
         {!hasMessages && (
-          <p className="max-w-[58ch] font-mono text-[13px] leading-relaxed text-faint">
+          <p className="max-w-[58ch] font-mono text-[13px] leading-relaxed text-muted">
             {EMPTY_STATE}
           </p>
         )}
@@ -168,22 +206,20 @@ export function ChatConversation() {
           if (!text && toolParts.length === 0) return null;
           return (
             <div key={message.id} className="space-y-4">
-              {text && (
-                <div className="max-w-[58ch] whitespace-pre-wrap font-mono text-[13px] leading-relaxed">
-                  <span className="text-faint">
-                    {message.role === "user" ? "you" : "assistant"}
-                  </span>
-                  <p
-                    className={
-                      message.role === "user"
-                        ? "mt-1 text-ink"
-                        : "mt-1 text-ink-soft"
-                    }
-                  >
+              {text &&
+                (message.role === "user" ? (
+                  // User turns: right-aligned surface block, chat-app style.
+                  <div className="flex justify-end">
+                    <p className="max-w-[48ch] whitespace-pre-wrap border border-hairline bg-surface px-3 py-2 font-mono text-[13px] leading-relaxed text-ink">
+                      {text}
+                    </p>
+                  </div>
+                ) : (
+                  // Assistant turns: plain left-aligned prose column.
+                  <p className="max-w-[58ch] whitespace-pre-wrap font-mono text-[13px] leading-relaxed text-ink-soft">
                     {text}
                   </p>
-                </div>
-              )}
+                ))}
               {toolParts.map((part, i) => (
                 <ToolPart key={`${message.id}-tool-${i}`} part={part} />
               ))}
@@ -191,15 +227,21 @@ export function ChatConversation() {
           );
         })}
 
+        {awaitingReply && (
+          <p aria-hidden className="font-mono text-[13px] text-faint">
+            &hellip;
+          </p>
+        )}
+
         {/* Inline error / rate-limit states (styled distinctly, no ink
             border) so the user can retry without losing prior messages. */}
         {errorKind === "error" && (
-          <p className="max-w-[58ch] font-mono text-[13px] leading-relaxed text-faint">
+          <p className="max-w-[58ch] font-mono text-[13px] leading-relaxed text-muted">
             {ERROR_STATE}
           </p>
         )}
         {errorKind === "rate_limited" && (
-          <p className="max-w-[58ch] font-mono text-[13px] leading-relaxed text-faint">
+          <p className="max-w-[58ch] font-mono text-[13px] leading-relaxed text-muted">
             {RATE_LIMIT_STATE}
           </p>
         )}
@@ -222,25 +264,40 @@ export function ChatConversation() {
         </div>
       )}
 
-      {/* Input row — strong ink border for emphasis, radius 0. */}
+      {/* Input — fixed dark bar at the viewport bottom, in the exact position
+          (and style) of the site-wide sticky launcher bar, which is hidden on
+          this route. The bar visually carries over from every other page; here
+          it is the live chat input. Typing stays enabled while a reply streams
+          (submit is guarded), matching standard chat-app behavior. */}
       <form
-        className="mt-8 flex h-11 max-w-xl items-center border border-ink bg-surface-raised px-4 font-mono text-[13px]"
+        className="fixed inset-x-0 bottom-0 z-50 border-t border-ink bg-ink px-6 md:px-12"
         onSubmit={(e) => {
           e.preventDefault();
-          submit(input);
-          setInput("");
+          trySend();
         }}
       >
-        <span className="text-ink-soft">&gt;</span>
-        <input
-          type="text"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          disabled={isBusy}
-          placeholder="Ask a question about my work"
-          className="ml-2 w-full flex-1 border-none bg-transparent text-ink outline-none placeholder:text-faint disabled:opacity-50"
-        />
-        <span className="text-faint">enter ↵</span>
+        <div className="flex h-11 items-center font-mono text-[13px]">
+          <span className="text-band-muted">&gt;</span>
+          <input
+            type="text"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            // Explicit Enter handling — implicit form submission is skipped
+            // by some input methods (IMEs, automation, some mobile keyboards).
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.nativeEvent.isComposing) {
+                e.preventDefault();
+                trySend();
+              }
+            }}
+            placeholder="Ask a question about my work"
+            autoFocus
+            className="ml-2 w-full flex-1 border-none bg-transparent text-paper outline-none placeholder:text-band-muted"
+          />
+          <span className="text-band-muted">enter ↵</span>
+          {/* Guarantees implicit Enter-to-submit across browsers/input methods. */}
+          <button type="submit" hidden aria-hidden tabIndex={-1} />
+        </div>
       </form>
     </>
   );

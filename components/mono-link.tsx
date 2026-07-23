@@ -17,10 +17,25 @@ type MonoLinkProps = {
 };
 
 const SUFFIX: Record<MonoLinkVariant, string> = {
-  internal: " →",
-  external: " ↗",
-  mailto: " ↗",
+  internal: "→",
+  external: "↗",
+  mailto: "↗",
 };
+
+/** Arrow suffix nudges right on hover (group set on the anchor). */
+function Suffix({ variant }: { variant: MonoLinkVariant }) {
+  return (
+    <>
+      {" "}
+      <span
+        aria-hidden
+        className="inline-block transition-transform duration-150 group-hover:translate-x-0.5"
+      >
+        {SUFFIX[variant]}
+      </span>
+    </>
+  );
+}
 
 export function MonoLink({
   href,
@@ -30,7 +45,7 @@ export function MonoLink({
   contact,
 }: MonoLinkProps) {
   const classes = cn(
-    "font-mono text-xs no-underline hover:underline",
+    "group font-mono text-xs no-underline transition-colors duration-150 hover:text-rubric hover:underline",
     className
   );
 
@@ -42,7 +57,7 @@ export function MonoLink({
     return (
       <Link href={href} className={classes} onClick={onClick}>
         {children}
-        {SUFFIX.internal}
+        <Suffix variant="internal" />
       </Link>
     );
   }
@@ -57,7 +72,7 @@ export function MonoLink({
         onClick={onClick}
       >
         {children}
-        {SUFFIX.external}
+        <Suffix variant="external" />
       </a>
     );
   }
@@ -67,7 +82,7 @@ export function MonoLink({
   return (
     <a href={href} className={classes} onClick={onClick}>
       {children}
-      {SUFFIX.mailto}
+      <Suffix variant="mailto" />
     </a>
   );
 }

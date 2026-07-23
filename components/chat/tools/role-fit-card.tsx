@@ -35,7 +35,7 @@ export function RoleFitCard({ data }: { data: RoleFitCardData }) {
 
       {data.caveats && (
         <div className="mt-4 border-t border-hairline pt-3">
-          <span className="font-mono text-xs text-faint">Worth noting</span>
+          <span className="font-mono text-xs text-muted">Worth noting</span>
           <p className="mt-1 max-w-[58ch] text-[15px] leading-relaxed text-ink-soft">
             {data.caveats}
           </p>
