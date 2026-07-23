@@ -147,14 +147,14 @@ const chatTools = {
   }),
 
   // 2.2 — resume card. Zero-arg tool; returns a fixed object. pdfAvailable is
-  // hardcoded false for the overnight build (resume.pdf is a morning task).
+  // true — resume.pdf ships in public/.
   showResume: tool({
     description: "Show a card to download or view the resume.",
     inputSchema: z.object({}),
     execute: async () => ({
       htmlHref: "/resume",
       pdfHref: "/resume.pdf",
-      pdfAvailable: false,
+      pdfAvailable: true,
     }),
   }),
 
@@ -207,9 +207,9 @@ const chatTools = {
     }),
   }),
 
-  // 2.4 — contact card. Zero-arg tool; returns the fixed footer links. Never
-  // exposes salary/address/phone (the phone number is deliberately excluded
-  // from every published surface — 00-decisions.md §11).
+  // 2.4 — contact card. Zero-arg tool; returns the fixed footer links. Salary
+  // and address stay private; the phone number now appears on /resume, but
+  // this card keeps contact routed through email and social.
   contactCard: tool({
     description: "Show a card with ways to contact Sidhant.",
     inputSchema: z.object({}),
