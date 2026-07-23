@@ -4,7 +4,8 @@ import CaseStudy from "@/content/adarle20.mdx";
 
 export const metadata: Metadata = {
   title: "A Darle 20",
-  description: "A marketplace for tabletop game sessions in Latin America.",
+  description:
+    "A marketplace for tabletop game sessions in Latin America — 2,100+ bookings in its first four months.",
 };
 
 export default function AdarleTwentyPage() {

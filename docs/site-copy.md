@@ -9,8 +9,9 @@ No taglines beyond what's written here. [TODO] items are placeholders for Sidhan
 
 Site title: Sidhant Mathur
 Meta description: Sales operations specialist and builder. I make internal tools
-and revenue systems at Nokia, and I run A Darle 20, a marketplace for tabletop
-game sessions in Latin America.
+and revenue systems at Nokia, and I'm co-founder and CTO of A Darle 20, a
+marketplace for tabletop game sessions in Latin America — 2,100+ bookings in
+its first four months.
 
 ---
 
@@ -34,9 +35,9 @@ Primary button: Ask me anything
 
 ### Stat block
 
-4–6 hours per day
-Time saved for finance staff at quarter-end close by a reporting tool I built
-and rolled out at Nokia.
+1
+Analyst-day of manual collection eliminated, every day of quarter-end close, by
+a reporting tool I built and rolled out at Nokia.
 
 ### Projects section
 
@@ -44,10 +45,12 @@ Section heading: Selected work
 
 **Card 1 — A Darle 20**
 A marketplace connecting tabletop game hosts with paying players across Latin
-America. I designed and shipped the whole product — bookings, payments, chat,
-refunds, notifications — by directing AI coding agents through the full build.
+America. I designed and shipped the whole product solo — bookings, payments,
+chat, refunds, notifications — running an AI-agent-heavy development
+workflow. Four months after launch: 1,400+ registered users, 127 hosts, and
+2,100+ bookings.
 
-Role: Founder and developer
+Role: Co-Founder & CTO
 Stack: TypeScript, Next.js, Supabase, Stripe Connect
 Status: Live at adarle20.com
 Link: Read the case study
@@ -64,12 +67,13 @@ Status: In production since 2024
 Link: Read the case study
 
 **Card 3 — Sales prediction model at Dell**
-As an intern, I built a machine learning model that predicted sale outcomes at
-91% accuracy and surfaced 20,000 leads worth $129M in pipeline for the sales
-team.
+As an intern, I built a propensity model on Dell's historical customer
+database to find cross-sell targets for a high-margin software product — it
+surfaced about 20,000 qualified accounts representing an estimated $129M in
+pipeline.
 
 Role: Marketing intern
-Stack: Python, Azure
+Stack: Python, Azure ML
 Status: 2018
 Link: Read the case study
 
@@ -108,24 +112,29 @@ listings, bookings and reservations, real-time chat, email notifications,
 refunds, and authentication. Payments run on Stripe Connect, handling host
 payouts and platform fees — including OXXO integration so players in Mexico
 can pay in cash at a convenience store, which matters in a market where card
-penetration is low.
+penetration is low. The funnel is instrumented end to end — bookings,
+conversion, cancellations, refunds, host activation — and that data steers
+product and monetization decisions.
 
-The build itself is part of the story. I wrote very little of the code by hand.
-I directed AI coding agents through the full build, and later set up a
-multi-agent workflow in Claude Code that reviews, refactors, and regression-tests
-the codebase on its own. My job was architecture, product decisions, and quality
-control — the agents did the typing.
+The build itself is part of the story. I run an AI-agent-heavy development
+workflow in Claude Code — agents write most of the code, while I keep
+hands-on ownership of architecture, product decisions, code review, and
+release. Later I set up a multi-agent workflow that reviews, refactors, and
+regression-tests the codebase on its own.
 
 ### What it runs on
 TypeScript, React and Next.js, Supabase (PostgreSQL) with Prisma, Stripe Connect,
 Resend for transactional email, deployed on Vercel.
 
 ### Where it stands
-The platform is live and processing real payments. [TODO: one or two concrete
-numbers — bookings, hosts, or revenue range — pending what we're comfortable
-sharing.] Running it has taught me as much about unit economics as about code:
-we've tested a commission model against direct event ticket sales, run a large
-community event, and made real decisions about where the margin actually is.
+Development started in August 2025; the platform launched in March 2026. Four
+months in, it has 1,400+ registered users, 127 hosts, and 2,100+ bookings, with
+200–400 unique visitors a day. The biggest single test so far was a flagship
+251-player event at a 19,000-attendee convention — I built the technology
+behind it; my co-founder ran the event on the ground — rated 4.96/5 by
+attendees. Running it has taught me as much about unit economics as about code:
+we've tested a commission model against direct event ticket sales and made real
+decisions about where the margin actually is.
 
 ### What I'd tell a hiring manager
 This is the project that proves I can take an ambiguous idea to a revenue-
@@ -140,10 +149,10 @@ Title: Reporting tools at Nokia
 Subtitle: Internal tools for a global sales organization.
 
 ### The problem
-Quarterly executive reporting ran on manual data collection. Finance staff spent
-4–6 hours a day at quarter-end chasing inputs across regions and formats. At the
-same time, sales reporting lived in Salesforce Analytics, which the organization
-was moving away from.
+Quarterly executive reporting ran on manual data collection — a process that
+consumed one finance analyst's entire workday, every day of quarter-end close,
+chasing inputs across regions and formats. At the same time, sales reporting
+lived in Salesforce Analytics, which the organization was moving away from.
 
 ### What I built
 Two main things. First, a self-serve Power App for quarterly executive reporting,
@@ -168,13 +177,14 @@ and I close that gap myself rather than filing a ticket.
 ## Case study — Sales prediction at Dell
 
 Title: Sales prediction at Dell
-Subtitle: A machine learning model for lead targeting, built as an intern.
+Subtitle: A propensity model for cross-sell targeting, built as an intern.
 
-During a summer internship in 2018, I built a model in Python that predicted
-sale outcomes at 91% accuracy. Applied to the customer base, it surfaced about
-20,000 leads representing $129M in potential pipeline. The model was hosted on
-Azure so sales and marketing teams could get predictions and feed back new
-training data.
+During a summer internship in 2018, I built a propensity model (Azure ML) on
+Dell's historical customer database to identify cross-sell targets for a
+high-margin software product. It surfaced about 20,000 qualified accounts
+representing an estimated $129M in pipeline, based on segment-level average
+deal sizes. The model was hosted on Azure so sales and marketing teams could
+get predictions and feed back new training data.
 
 It was an internship project, so I'll keep the claims modest — but it's where
 I first saw that the interesting work is usually where data, revenue, and
@@ -184,8 +194,8 @@ tooling meet, and I've been working in that intersection since.
 
 ## About (short section or page)
 
-I'm a sales operations specialist at Nokia in Toronto and the founder of
-A Darle 20. I don't have a computer science degree — I have a business degree,
+I'm a sales operations specialist at Nokia in Toronto and the co-founder and
+CTO of A Darle 20. I don't have a computer science degree — I have a business degree,
 a bootcamp, and eight years of teaching myself whatever the next problem
 required: React, SQL, the Power Platform, Stripe, and lately, building with
 LLMs and coding agents.
@@ -200,7 +210,7 @@ Outside work: basketball, chess, cooking, and slowly learning three languages.
 ## Resume page
 
 Heading: Resume
-Body: The current version, last updated [TODO: month year]. A plain-text
+Body: The current version, last updated July 2026. A plain-text
 version lives at /resume.md if you'd rather feed it to an AI — I won't take
 it personally.
 Button: Download PDF

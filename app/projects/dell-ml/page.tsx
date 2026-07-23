@@ -5,14 +5,14 @@ import CaseStudy from "@/content/dell-ml.mdx";
 export const metadata: Metadata = {
   title: "Sales prediction at Dell",
   description:
-    "A machine learning model for lead targeting, built as an intern.",
+    "A propensity model for cross-sell targeting, built as an intern.",
 };
 
 export default function DellMlPage() {
   return (
     <CaseStudyLayout
       title="Sales prediction at Dell"
-      subtitle="A machine learning model for lead targeting, built as an intern."
+      subtitle="A propensity model for cross-sell targeting, built as an intern."
     >
       <CaseStudy />
     </CaseStudyLayout>

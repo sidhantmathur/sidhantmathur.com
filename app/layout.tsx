@@ -11,7 +11,7 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://sidhantmathur.com"),
   title: "Sidhant Mathur",
   description:
-    "Sales operations specialist and builder. I make internal tools and revenue systems at Nokia, and I run A Darle 20, a marketplace for tabletop game sessions in Latin America.",
+    "Sales operations specialist and builder. I make internal tools and revenue systems at Nokia, and I'm co-founder and CTO of A Darle 20, a marketplace for tabletop game sessions in Latin America — 2,100+ bookings in its first four months.",
 };
 
 export default function RootLayout({

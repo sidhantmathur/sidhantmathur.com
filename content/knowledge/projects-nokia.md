@@ -5,10 +5,10 @@ specialist. In production since 2024.
 
 ## The problem
 
-Quarterly executive reporting ran on manual data collection. Finance staff spent
-4–6 hours a day at quarter-end chasing inputs across regions and formats. At the
-same time, sales reporting lived in Salesforce Analytics, which the organization
-was moving away from.
+Quarterly executive reporting ran on manual data collection — a process that
+consumed one finance analyst's entire workday, every day of quarter-end close,
+chasing inputs across regions and formats. At the same time, sales reporting
+lived in Salesforce Analytics, which the organization was moving away from.
 
 ## What he built
 

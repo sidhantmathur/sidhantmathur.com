@@ -14,8 +14,7 @@ Yes — open to new roles.
 
 ## What roles is he targeting?
 
-GTM engineering, revenue systems, and solutions engineering roles at AI-native
-companies.
+RevOps / GTM systems roles at AI-forward companies.
 
 ## What is he not looking for?
 

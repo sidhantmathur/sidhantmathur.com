@@ -13,7 +13,7 @@ const EXPERIENCE_ROWS = [
   {
     date: "2025 —",
     name: "A Darle 20",
-    role: "Founder and developer",
+    role: "Co-Founder & CTO",
     link: { label: "details", href: "/projects/adarle20" },
   },
   {
@@ -23,7 +23,7 @@ const EXPERIENCE_ROWS = [
     link: { label: "details", href: "/projects/nokia" },
   },
   {
-    date: "2019 —",
+    date: "2019–2022",
     name: "Freelance web development",
     role: "Self-employed",
     link: null,
@@ -83,11 +83,11 @@ export default function Home() {
               color: "transparent",
             }}
           >
-            4–6
+            1
           </span>
           <p className="max-w-[30ch] font-mono text-[13px] text-band-muted md:text-right">
-            Time saved for finance staff at quarter-end close by a reporting tool I built
-            and rolled out at Nokia.
+            Analyst-day of manual collection eliminated, every day of quarter-end close,
+            by a reporting tool I built and rolled out at Nokia.
           </p>
         </Container>
       </Section>
@@ -192,11 +192,11 @@ export default function Home() {
         <Container className="py-16">
           <MonoLabel>About</MonoLabel>
           <p className="mt-4 max-w-[58ch] text-[15px] leading-relaxed text-ink-soft">
-            I&apos;m a sales operations specialist at Nokia in Toronto and the founder of
-            A Darle 20. I don&apos;t have a computer science degree — I have a business degree,
-            a bootcamp, and eight years of teaching myself whatever the next problem
-            required: React, SQL, the Power Platform, Stripe, and lately, building with
-            LLMs and coding agents.
+            I&apos;m a sales operations specialist at Nokia in Toronto and the co-founder
+            and CTO of A Darle 20. I don&apos;t have a computer science degree — I have a
+            business degree, a bootcamp, and eight years of teaching myself whatever the
+            next problem required: React, SQL, the Power Platform, Stripe, and lately,
+            building with LLMs and coding agents.
           </p>
           <p className="mt-4 max-w-[58ch] text-[15px] leading-relaxed text-ink-soft">
             The through line is that I like turning vague business problems into working
