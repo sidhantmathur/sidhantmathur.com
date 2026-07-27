@@ -9,9 +9,9 @@ Two things were added that aren't in either doc, because sequencing surfaced the
 **F1–F3**, foundations that several accepted items silently depend on. They are not
 new features. They are the parts of accepted features that have to exist first.
 
-Status: **approved 2026-07-27.** Sprint 1 is built and green — see the results
-note under it. Sprints 2–7 and Track B are unspecced and unbuilt. The open
-question at the bottom (#4) is still Sidhant's call; Sprint 1 didn't depend on it.
+Status: **approved 2026-07-27.** Sprints 1 and 2 are built and green — see the
+results notes under them. Sprints 3–7 and Track B are unspecced and unbuilt. The
+open question at the bottom (#4) was resolved on 2026-07-27 and lands in Sprint 3.
 
 ---
 
@@ -149,6 +149,69 @@ Sprint 2's job — the sprint is called invisible on purpose.
 **#1** cost meter (the single home for turns, dollars, cached input, session cumulative, privacy framing) · **#5** tokens-per-second seismograph · **#3** glass-box trace inspector · **#6** failure theatre (F1's error classes, forced) · **#16** teletype audio, off by default · **#14** idle mode
 
 **Done means:** a visitor who ignores every readout still has a working chatbot (§4 instrumentation policy); no instrument adds a step, mode, or decision to the main path; #14 and any #1 copy logged in `docs/copy-ledger.md`.
+
+#### Sprint 2 results — 2026-07-27
+
+**Done.** All six items shipped and all three acceptance criteria met. `npm run
+build`, `npm run lint` and `npm run eval` (62/62) clean.
+
+The shape it took: **the always-visible half is four numbers in the status strip
+that already existed** — turns, latency, a seismograph, session dollars — and
+**the dense half opens in the context panel that already existed**, on a click.
+Nothing new appears in the message column and nothing was added to the page to
+advertise the instruments; the readouts are their own affordance. That is the §4
+policy taken literally, and it also meant the sprint added one panel view rather
+than a surface.
+
+What shipped: `lib/pricing.ts` (the list-price table and the turn arithmetic),
+`components/shell/instruments.tsx` (the deck — cost meter, seismograph, trace
+inspector, failure theatre, teletype toggle), three hooks
+(`use-token-rate.ts`, `use-teletype.ts`, `use-idle.ts`), a `?simulate=` branch in
+the chat route, and `evals/instruments.test.mjs`.
+
+Five things worth carrying forward:
+
+1. **Two numbers for one measurement, kept apart on purpose.** The seismograph
+   needs a rate *while* the answer streams; the server's exact figure only
+   arrives when the turn ends. So the live needle is sampled client-side from
+   the growth of the text and rendered with a `≈`, and the settled number —
+   F1's, from the provider's own usage — renders without one. Same for TTFT,
+   where the trace shows the server's and the browser's side by side rather than
+   reconciling them. On a site whose argument is that its instruments are
+   honest, collapsing an estimate and a measurement into one figure would have
+   been the cheapest possible way to lose that argument.
+2. **The failure theatre is a real exit, not a mock.** `?simulate=<class>` takes
+   the same route out as the real thing — `jsonError` for the three early
+   classes, an actual throw inside `createUIMessageStream` for the five
+   mid-stream ones — so a simulated timeout really does arrive as an HTTP 200
+   whose stream ends in an error chunk. It calls no model and consumes no
+   budget, which is what makes it safe to leave on in production, and it is
+   failure-only: it cannot produce an answer, and an unrecognised value falls
+   through to a normal turn. Three static tests keep the class list, the route's
+   cases, and the panel's buttons in step.
+3. **The price table is the soft spot, and it's marked as one.** Input and output
+   prices come from the ones already recorded against each model in `route.ts`.
+   The cache-read and cache-write prices are *derived* — each provider's
+   published discount applied to that model's input price, not separately
+   checked figures. Everything says "est. at list price", `lib/pricing.ts` says
+   which numbers are which, and an unpriced model renders "—" and is excluded
+   from the session total rather than being counted as free. **Worth a check
+   before #23 or #2 publish any of it.**
+4. **A tool call no longer steals the panel — but only from the deck.** Every
+   other view still gets replaced by tool output as before. Having the
+   instruments yanked away mid-reading made them feel like they belonged to the
+   model rather than the reader.
+5. **#15 was not pulled forward.** The roadmap flags it as a candidate if
+   rate-limiting shows up in real traffic. Failure theatre now makes the
+   rate-limited state reproducible on demand, so the question of whether it's
+   worth building is answerable from the PostHog `chat_rate_limited` counts
+   rather than from a guess. Left in Sprint 7.
+
+**Not done, and out of scope by design:** the seismograph estimates tokens at
+four characters each, which is wrong in both directions on code and on names —
+that's why it's an `≈` and not a fix. Idle mode fires at 90 seconds with no
+research behind the number. The rate-limit copy under #6 is the existing string,
+not new copy for a visitor who deliberately pressed a failure button.
 
 ---
 
