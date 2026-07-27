@@ -11,7 +11,9 @@ import { z } from "zod";
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 import { buildSystemPrompt } from "@/lib/system-prompt";
-import { looksLikeJobPosting } from "@/lib/job-posting";
+import { looksLikeJobPosting, wrapPosting } from "@/lib/job-posting";
+import { reconcileRoleFit } from "@/lib/role-fit";
+import { CHUNK_BY_ID } from "@/lib/chunks.generated";
 import {
   TURN_PART_ID,
   classifyTurnError,
@@ -205,6 +207,35 @@ function jsonError(error: TurnErrorClass, status: number): Response {
 const MAX_OUTPUT_TOKENS = 600;
 const MAX_OUTPUT_TOKENS_JD = 2500;
 
+/**
+ * Rewrites the last user message so the posting arrives fenced and re-asserted.
+ *
+ * Only that message, and only its text: the earlier turns are history the model
+ * has already answered, and re-fencing them every turn would change the prefix
+ * of the conversation on each request for no benefit.
+ */
+function hardenPosting(messages: z.infer<typeof bodySchema>["messages"]) {
+  let lastUserIndex = -1;
+  for (let i = messages.length - 1; i >= 0; i -= 1) {
+    if (messages[i]!.role === "user") {
+      lastUserIndex = i;
+      break;
+    }
+  }
+  return (msg: (typeof messages)[number], index: number) => {
+    if (index !== lastUserIndex) return msg;
+    const nonText = msg.parts.filter((p) => p.type !== "text");
+    const text = msg.parts
+      .filter(
+        (p): p is { type: "text"; text: string } =>
+          p.type === "text" && typeof p.text === "string",
+      )
+      .map((p) => p.text)
+      .join("\n");
+    return { ...msg, parts: [...nonText, { type: "text", text: wrapPosting(text) }] };
+  };
+}
+
 /** The last user turn's text, which is what the JD detector reads. */
 function lastUserText(messages: z.infer<typeof bodySchema>["messages"]): string {
   for (let i = messages.length - 1; i >= 0; i -= 1) {
@@ -223,113 +254,232 @@ function lastUserText(messages: z.infer<typeof bodySchema>["messages"]): string 
 
 // --- Chat tools ----------------------------------------------------------
 //
-// Four tools the model can call to render visual UI in the chat (Phase 4,
-// 04 §2). NOTE: `ai@7` uses the v5-era `tool()` API — schemas go under
-// `inputSchema` (NOT `parameters`). Each `execute` does no I/O beyond reading
-// static, build-time-bundled copy — no new fetches, no new dependencies.
+// Tools the model can call to render visual UI in the chat (Phase 4, 04 §2).
+// NOTE: `ai@7` uses the v5-era `tool()` API — schemas go under `inputSchema`
+// (NOT `parameters`). Each `execute` does no I/O beyond reading static,
+// build-time-bundled copy — no new fetches, no new dependencies.
 //
-// Client renders these as typed `tool-<name>` message parts (see
-// app/chat/page.tsx), switching on `part.state === 'output-available'`.
+// Client renders these as typed `tool-<name>` message parts, switching on
+// `part.state === 'output-available'`.
+//
+// SPRINT 4 — the job-description flow is now TWO calls, not one:
+//
+//   extractRequirements  the posting's requirements, verbatim, before anything
+//                        has an opinion about them
+//   roleFit              a verdict per requirement, each positive one citing a
+//                        chunk id, plus the gaps
+//
+// Splitting them is bank §6 Stage 1's fourth change and the only place on this
+// site where a multi-step loop earns its keep: asked to extract and judge at
+// once, a model compresses toward a flattering summary and quietly drops the
+// requirements it would have to say no to. Extracting first fixes the list
+// before the judging starts, and `lib/role-fit.ts` then holds the judgment to
+// it — every extracted requirement gets a row, whether the model wrote one or
+// not.
 
-const chatTools = {
-  // 2.1 — visual card for one of the three projects. The model only picks the
-  // slug; all card content comes from the shared content/projects.ts module
-  // (no model generation of card copy).
-  showProject: tool({
-    description: "Show a visual card for one of Sidhant's three projects.",
-    inputSchema: z.object({
-      slug: z.enum(["adarle20", "nokia", "dell-ml"]),
-    }),
-    execute: async ({ slug }) => {
-      const p = PROJECTS[slug];
-      return {
-        slug: p.slug,
-        index: p.index,
-        title: p.title,
-        description: p.description,
-        role: p.role,
-        stack: p.stack,
-        status: p.status,
-        caseStudyHref: p.caseStudyHref,
-        image: p.image ?? null,
-      };
-    },
-  }),
-
-  // 2.2 — resume card. Zero-arg tool; returns a fixed object. pdfAvailable is
-  // true — resume.pdf ships in public/.
-  showResume: tool({
-    description: "Show a card to download or view the resume.",
-    inputSchema: z.object({}),
-    execute: async () => ({
-      htmlHref: "/resume",
-      pdfHref: "/resume.pdf",
-      pdfAvailable: true,
-    }),
-  }),
-
-  // 2.3 — structured skills-match breakdown. The CONTENT (areas, evidence) is
-  // model-generated and grounded via the system prompt (§2.5); execute only
-  // does light validation: trims strings, caps matches at 5, and passes the
-  // shape through to the client.
-  roleFit: tool({
-    description:
-      "Show a structured skills-match breakdown mapping Sidhant's experience to a named role the user is asking about (e.g. GTM engineer, solutions engineer, RevOps, sales ops). Only call this after you've formed a grounded answer — every 'evidence' string must restate a fact that exists in the knowledge base, not a generalization.",
-    inputSchema: z.object({
-      role: z
+/**
+ * One assessed requirement, as loosely as it can be stated and still be useful.
+ *
+ * A bare string is accepted because that is the shape a model falls into when
+ * it echoes the extraction step instead of judging it, and a rejected tool call
+ * costs the whole assessment (Sprint 1's lesson, met again on this sprint's
+ * first live run). `lib/role-fit.ts` normalizes whatever arrives and marks what
+ * doesn't hold up.
+ */
+const rowSchema = z.array(
+  z.union([
+    z.object({
+      requirement: z
         .string()
         .describe(
-          "The role name as the user phrased it or a close normalization, e.g. 'GTM engineer', 'solutions engineer', 'RevOps', 'sales ops'.",
+          "The requirement in the POSTING's words, copied from the extraction step. When no posting was pasted, a requirement the named role genuinely implies.",
         ),
-      matches: z
-        .array(
-          z.object({
-            area: z
-              .string()
-              .describe(
-                "A short skill/competency label relevant to the role, e.g. 'Cross-functional ownership', 'SQL and data modeling'.",
-              ),
-            evidence: z
-              .string()
-              .describe(
-                "One sentence of grounded evidence from the knowledge base — a specific project, number, or outcome. No invented specifics.",
-              ),
-          }),
-        )
-        .min(2)
-        .max(5),
-      caveats: z
+      verdict: z
         .string()
-        .optional()
         .describe(
-          "Optional one-sentence honest gap or stretch for this role, if one exists. Omit if there is nothing honest to say.",
+          "Exactly one of: met, partial, unmet, unclear. met — the record shows this. partial — some of it, honestly short of the ask. unmet — the record does not show it. unclear — the knowledge base doesn't cover it either way, which is NOT a gentler word for unmet.",
+        ),
+      evidence: z
+        .string()
+        .describe(
+          "One sentence. For met/partial, the specific fact from the knowledge base that supports it — a project, a number, a named tool. For unmet/unclear, what is missing, in a sentence that does not dissolve it.",
+        ),
+      sources: z
+        .array(z.string())
+        .describe(
+          "Chunk ids backing this row, e.g. ['resume:nokia']. Required for met and partial — a row that claims a fit and cites nothing is downgraded to unclear by the site, not by you. Leave empty for unmet and unclear: an absence has nothing to cite.",
         ),
     }),
-    execute: async ({ role, matches, caveats }) => ({
-      role: role.trim(),
-      matches: matches.slice(0, 5).map((m) => ({
-        area: m.area.trim(),
-        evidence: m.evidence.trim(),
-      })),
-      ...(caveats && caveats.trim()
-        ? { caveats: caveats.trim() }
-        : {}),
-    }),
-  }),
+    z.string(),
+  ]),
+);
 
-  // 2.4 — contact card. Zero-arg tool; returns the fixed footer links. Salary
-  // and address stay private; the phone number now appears on /resume, but
-  // this card keeps contact routed through email and social.
-  contactCard: tool({
-    description: "Show a card with ways to contact Sidhant.",
-    inputSchema: z.object({}),
-    execute: async () => ({
-      email: "mailto:hello@sidhantmathur.com",
-      github: "https://github.com/sidhantmathur",
-      linkedin: "https://www.linkedin.com/in/sidhantmathur",
+// Built per request rather than at module scope (Sprint 4): the two halves of a
+// job-description turn are separate tool calls, and the judging half has to see
+// what the extracting half produced. `extraction` is that hand-off — one
+// request's requirement list, closed over by both tools, never shared between
+// requests.
+function buildChatTools(extraction: { requirements: string[] }) {
+  return {
+    // 2.1 — visual card for one of the three projects. The model only picks the
+    // slug; all card content comes from the shared content/projects.ts module
+    // (no model generation of card copy).
+    showProject: tool({
+      description: "Show a visual card for one of Sidhant's three projects.",
+      inputSchema: z.object({
+        slug: z.enum(["adarle20", "nokia", "dell-ml"]),
+      }),
+      execute: async ({ slug }) => {
+        const p = PROJECTS[slug];
+        return {
+          slug: p.slug,
+          index: p.index,
+          title: p.title,
+          description: p.description,
+          role: p.role,
+          stack: p.stack,
+          status: p.status,
+          caseStudyHref: p.caseStudyHref,
+          image: p.image ?? null,
+        };
+      },
     }),
-  }),
-};
+
+    // 2.2 — resume card. Zero-arg tool; returns a fixed object. pdfAvailable is
+    // true — resume.pdf ships in public/.
+    showResume: tool({
+      description: "Show a card to download or view the resume.",
+      inputSchema: z.object({}),
+      execute: async () => ({
+        htmlHref: "/resume",
+        pdfHref: "/resume.pdf",
+        pdfAvailable: true,
+      }),
+    }),
+
+    // 2.3a — extraction. No judgment, no evidence, no verdicts: this call only
+    // copies out what the posting asks for. Its output is not rendered; it is
+    // the input to the next call and to the coverage check after it.
+    extractRequirements: tool({
+      description:
+        "Read a pasted job posting and list the requirements it states, verbatim. Extraction only — do not assess anything here, do not skip a requirement because Sidhant does not meet it, and do not merge two requirements into one line.",
+      inputSchema: z.object({
+        role: z
+          .string()
+          .describe("The role title as the posting states it."),
+        requirements: z
+          .array(
+            z
+              .string()
+              .describe(
+                "One requirement, in the posting's own words. Trim the bullet, keep the wording.",
+              ),
+          )
+          .describe(
+            "Every requirement, qualification, or responsibility the posting states — including the ones Sidhant clearly does not meet. This list is what the assessment is scored against, so an omission here is an omission there.",
+          ),
+      }),
+      execute: async ({ role, requirements }) => {
+        // Deduplicated and capped, because the next call has to answer every
+        // line of this list and the table has to stay readable.
+        const seen = new Set<string>();
+        const cleaned: string[] = [];
+        for (const raw of requirements) {
+          const text = raw.trim().replace(/^[-•*]\s*/, "").slice(0, 240);
+          const key = text.toLowerCase();
+          if (!text || seen.has(key)) continue;
+          seen.add(key);
+          cleaned.push(text);
+          if (cleaned.length >= 14) break;
+        }
+        extraction.requirements = cleaned;
+        return { role: role.trim(), requirements: cleaned };
+      },
+    }),
+
+    // 2.3b — the assessment. The CONTENT is model-generated; what happens to it
+    // afterwards is not. `reconcileRoleFit` adds a row for any requirement this
+    // call skipped, downgrades any positive verdict that cites nothing valid,
+    // runs Sprint 3's checker over each row's evidence, and refuses to return an
+    // assessment that has unmet rows and no gaps. See lib/role-fit.ts.
+    roleFit: tool({
+      description:
+        "Show a structured, per-requirement assessment of Sidhant against a role — a pasted job posting, or a role the user names (e.g. GTM engineer, solutions engineer, RevOps). One row per requirement, each with a verdict and, where it claims a fit, the chunk ids it stands on.",
+      inputSchema: z.object({
+        role: z
+          .string()
+          .describe(
+            "The role as the posting titles it, or as the user phrased it — e.g. 'GTM engineer', 'RevOps analyst'.",
+          ),
+        // NAMED `rows`, NOT `requirements`, AND TYPED LOOSELY ON PURPOSE.
+        //
+        // Both halves of a job-description turn are in the same context, and
+        // the first one filled a field called `requirements` with strings. Ask
+        // the second for a field of the same name and a real model will hand
+        // back the same array — measured, not guessed: the first live run of
+        // this sprint failed four of six postings with an input-validation
+        // error, which arrives as a turn that answers in prose with no
+        // assessment behind it. That is the Stage 0 bug, rebuilt by hand.
+        //
+        // So the field has a different name, `verdict` is a plain string rather
+        // than an enum, and a row may arrive as a bare string. Nothing here can
+        // reject a generation. lib/role-fit.ts normalizes what comes back and
+        // downgrades whatever doesn't hold up — enforcement lives there, where
+        // failing means a marked row instead of a lost answer.
+        // Optional, like everything else here: a missing key must not cost the
+        // turn. When the assessment arrives empty, coverage still fills the
+        // table from the extraction — every requirement as an unanswered row,
+        // which is a visible degradation rather than a silent one.
+        rows: rowSchema
+          .optional()
+          .describe(
+            "One object per requirement, in the posting's order — NOT a list of strings, and not a copy of the extraction. Answer every requirement that was extracted, including the ones he does not meet.",
+          ),
+        // The same list under the name the model reaches for when it slips back
+        // into the extraction's vocabulary. Measured, again: a run after the
+        // rename still lost one posting to a missing `rows` key, because the
+        // object arrived under `requirements`. Accepting both costs a line;
+        // rejecting one costs the assessment.
+        requirements: rowSchema
+          .optional()
+          .describe("Alias for `rows`. Prefer `rows`."),
+        verdict: z
+          .string()
+          .describe(
+            "One line a recruiter could read on its own: where he fits, and what the real question is.",
+          ),
+        gaps: z
+          .array(z.string())
+          .describe(
+            "Every requirement he does not meet, stated plainly, one per entry. This is the part of the assessment a recruiter is reading for — do not soften, merge, or dissolve them.",
+          ),
+        noGapsRationale: z
+          .string()
+          .optional()
+          .describe(
+            "Only when `gaps` is genuinely empty: why a posting with no unmet requirement is a real outcome and not an oversight.",
+          ),
+      }),
+      // The model's object goes in; what the site is prepared to render comes
+      // out. `extraction.requirements` is empty on a turn that was a question
+      // rather than a posting, which is exactly when coverage does not apply.
+      execute: async (raw) => reconcileRoleFit(raw, extraction.requirements, CHUNK_BY_ID),
+    }),
+
+    // 2.4 — contact card. Zero-arg tool; returns the fixed footer links. Salary
+    // and address stay private; the phone number now appears on /resume, but
+    // this card keeps contact routed through email and social.
+    contactCard: tool({
+      description: "Show a card with ways to contact Sidhant.",
+      inputSchema: z.object({}),
+      execute: async () => ({
+        email: "mailto:hello@sidhantmathur.com",
+        github: "https://github.com/sidhantmathur",
+        linkedin: "https://www.linkedin.com/in/sidhantmathur",
+      }),
+    }),
+  };
+}
 
 // --- Failure theatre (roadmap Sprint 2, #6) ------------------------------
 //
@@ -480,6 +630,17 @@ export async function POST(req: Request): Promise<Response> {
   // changes both the output ceiling and whether `roleFit` is optional.
   const jobPosting = looksLikeJobPosting(lastUserText(messages));
 
+  // (e2) A posting goes to the model fenced, labeled as data, and with the
+  // untrusted-input rules restated underneath it (Sprint 4, bank §6 Stage 2).
+  // It happens HERE, on the user message, and never in the system prompt: that
+  // string has to stay byte-identical across requests or the cache that makes
+  // every turn cheap stops hitting.
+  const outgoing = jobPosting ? messages.map(hardenPosting(messages)) : messages;
+
+  // This request's extraction, closed over by both job-description tools.
+  const extraction = { requirements: [] as string[] };
+  const chatTools = buildChatTools(extraction);
+
   const startedAt = Date.now();
 
   // The record the client reads. Written twice under one part id: everything
@@ -522,20 +683,29 @@ export async function POST(req: Request): Promise<Response> {
         // stream at the tool call before the model can answer. Allow a second
         // step so the model always follows a tool call with a short text answer
         // (the tool is a visual aid, not a replacement for the answer — §2.5).
-        stopWhen: stepCountIs(3),
-        // THE JD FIX. On a job-posting turn the structured assessment is the
-        // feature, so it is not left to the model's discretion: step 0 must
-        // call `roleFit`. Steps after it get `toolChoice: "none"` — without
-        // that, a forced choice applies to every step and the model calls the
-        // tool again instead of writing the sentence that follows it.
+        // Four, because a job-posting turn now spends three of them: extract,
+        // judge, then the sentence that follows.
+        stopWhen: stepCountIs(4),
+        // THE JD FIX (Sprint 1), now in two stages (Sprint 4). On a
+        // job-posting turn the structured assessment is the feature, so it is
+        // not left to the model's discretion: step 0 extracts the posting's
+        // requirements, step 1 judges them, and every step after that gets
+        // `toolChoice: "none"` — without that, a forced choice applies to every
+        // step and the model calls the tool again instead of writing the
+        // sentence that follows it.
         //
         // Non-JD turns are untouched: `undefined` means "use the outer
         // setting", which is the default `auto`.
         prepareStep: jobPosting
-          ? ({ stepNumber }) =>
-              stepNumber === 0
-                ? { toolChoice: { type: "tool", toolName: "roleFit" } }
-                : { toolChoice: "none" }
+          ? ({ stepNumber }) => {
+              if (stepNumber === 0) {
+                return { toolChoice: { type: "tool", toolName: "extractRequirements" } };
+              }
+              if (stepNumber === 1) {
+                return { toolChoice: { type: "tool", toolName: "roleFit" } };
+              }
+              return { toolChoice: "none" };
+            }
           : undefined,
         // System prompt supplied as a message so we can attach cache_control.
         // The prompt is byte-identical across requests, so ephemeral caching
@@ -549,7 +719,7 @@ export async function POST(req: Request): Promise<Response> {
               anthropic: { cacheControl: { type: "ephemeral" } },
             },
           },
-          ...(await convertToModelMessages(messages as Omit<UIMessage, "id">[])),
+          ...(await convertToModelMessages(outgoing as Omit<UIMessage, "id">[])),
         ],
       });
 
