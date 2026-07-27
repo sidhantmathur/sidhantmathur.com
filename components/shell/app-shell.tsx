@@ -426,7 +426,7 @@ export function AppShell() {
           <Sheet open={railOpen} onOpenChange={setRailOpen}>
             <SheetContent
               side="left"
-              className="w-72 border-line bg-panel p-4 text-[11px] text-text"
+              className="w-72 border-line bg-panel p-4 text-[11px] text-text [font-family:var(--font-geist-mono)]"
             >
               <SheetHeader className="p-0">
                 <SheetTitle className="text-[11px] font-normal text-text-faint">
@@ -446,7 +446,7 @@ export function AppShell() {
             <SheetContent
               side="bottom"
               style={{ height: sheetFull ? "88dvh" : "52dvh" }}
-              className="border-line bg-panel p-0 text-text transition-[height] duration-200"
+              className="border-line bg-panel p-0 text-text transition-[height] duration-200 [font-family:var(--font-geist-mono)]"
             >
               <SheetHeader className="flex-row items-center justify-between space-y-0 border-b border-line px-4 py-2">
                 <SheetTitle className="truncate text-[11px] font-normal text-text-faint">

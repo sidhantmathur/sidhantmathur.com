@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 export default function ResumePage() {
   return (
     <DocPage>
-        <h1 className="font-sans text-[30px] font-semibold tracking-[-0.025em] text-text">
+        <h1 className="text-[24px] font-medium tracking-[-0.02em] text-text">
           Resume
         </h1>
         <p className="mt-4 max-w-[58ch] text-[15px] leading-relaxed text-text-soft md:text-base">
@@ -54,7 +54,7 @@ export default function ResumePage() {
             <MonoLabel>Experience</MonoLabel>
 
             <div className="mt-4">
-              <h3 className="font-sans text-lg font-semibold text-text">
+              <h3 className="text-[15px] font-medium text-text">
                 Nokia — Toronto, ON
               </h3>
               <p className="mt-3 font-mono text-xs text-text-faint">
@@ -96,7 +96,7 @@ export default function ResumePage() {
             </div>
 
             <div className="mt-10">
-              <h3 className="font-sans text-lg font-semibold text-text">
+              <h3 className="text-[15px] font-medium text-text">
                 A Darle 20 (&quot;Let&apos;s Go 20&quot;) — adarle20.com — Toronto, ON
               </h3>
               <p className="mt-3 font-mono text-xs text-text-faint">
@@ -136,7 +136,7 @@ export default function ResumePage() {
             </div>
 
             <div className="mt-10">
-              <h3 className="font-sans text-lg font-semibold text-text">
+              <h3 className="text-[15px] font-medium text-text">
                 Freelance web development &amp; consulting — remote
               </h3>
               <p className="mt-3 font-mono text-xs text-text-faint">
@@ -159,7 +159,7 @@ export default function ResumePage() {
             </div>
 
             <div className="mt-10">
-              <h3 className="font-sans text-lg font-semibold text-text">
+              <h3 className="text-[15px] font-medium text-text">
                 Dell Technologies — Austin, TX
               </h3>
               <p className="mt-3 font-mono text-xs text-text-faint">

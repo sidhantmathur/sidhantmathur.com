@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 export default function ColophonPage() {
   return (
     <DocPage>
-        <h1 className="font-sans text-[30px] font-semibold tracking-[-0.025em] text-text">
+        <h1 className="text-[24px] font-medium tracking-[-0.02em] text-text">
           How this site was built
         </h1>
         <p className="mt-6 max-w-[58ch] text-[15px] leading-relaxed text-text-soft md:text-base">
