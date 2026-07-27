@@ -102,11 +102,13 @@ screen mid-answer is hostile. On mobile the reader taps a citation chip to open
 it. Don't "fix" this into symmetry.
 
 **Build new UI against the dark tokens only.** Nothing new should reference
-`--paper`, `--ink`, `--hairline`, `--band`, or their Tailwind equivalents.
+`--paper`, `--ink`, `--hairline`, `--band`, or their Tailwind equivalents —
+they no longer exist.
 
-shadcn mapping (legacy, still pointing at the light palette until phase 4):
-`background=paper`, `foreground=ink`, `muted-foreground=faint`,
-`border=hairline`, `primary=ink`, `primary-foreground=paper`, `radius=0`.
+shadcn mapping (see the `--accent` warning in §2.1): `background=bg`,
+`foreground=text`, `muted=raised`, `muted-foreground=text-faint`,
+`border=line`, `input=line-strong`, `ring=accent`, `primary=text`,
+`primary-foreground=bg`, `card`/`popover=panel`, `radius=0`.
 
 ## 3. Typography
 
