@@ -39,6 +39,9 @@ export type PanelView =
   | { kind: "why" }
   | { kind: "jd" }
   | { kind: "instruments" }
+  // One chunk of the corpus, opened from a citation (Sprint 3, F2/#4). The
+  // whole file renders; `id` is what gets highlighted and scrolled to.
+  | { kind: "source"; id: string }
   | { kind: "roleFit"; data: RoleFit };
 
 export type ToolOut = { type: string; state?: string; output?: unknown };

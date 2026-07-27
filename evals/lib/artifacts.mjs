@@ -31,13 +31,13 @@ export function readKnowledgeBase() {
   return JSON.parse(match[1]);
 }
 
-/** The structured citation index built from resume.md. */
-export function readCitations() {
-  const src = read("lib/citations.generated.ts");
-  const match = src.match(/export const CITATIONS: Citation\[\] = (\[[\s\S]*?\n\]);/);
+/** The addressable corpus — every chunk of content/knowledge, with its id. */
+export function readChunks() {
+  const src = read("lib/chunks.generated.ts");
+  const match = src.match(/export const CHUNKS: Chunk\[\] = (\[[\s\S]*?\n\]);/);
   if (!match) {
     throw new Error(
-      "Could not parse CITATIONS from lib/citations.generated.ts — run `node scripts/build-knowledge.mjs` first.",
+      "Could not parse CHUNKS from lib/chunks.generated.ts — run `node scripts/build-knowledge.mjs` first.",
     );
   }
   return JSON.parse(match[1]);

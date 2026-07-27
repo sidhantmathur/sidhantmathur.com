@@ -43,7 +43,7 @@ next-env.d.ts
 
 # generated knowledge base (built by scripts/build-knowledge.mjs)
 /lib/knowledge.generated.ts
-/lib/citations.generated.ts
+/lib/chunks.generated.ts
 
 # claude code local tooling
 /.claude/

@@ -20,7 +20,6 @@ import {
   buildPromptApproximation,
   estimateTokens,
   read,
-  readCitations,
   readClientModels,
   readDefaultModel,
   readKnowledgeBase,
@@ -64,39 +63,8 @@ describe("knowledge base", () => {
   });
 });
 
-describe("citation index", () => {
-  test("is non-empty and every id is unique", () => {
-    const citations = readCitations();
-    assert.ok(citations.length >= 4, `only ${citations.length} citable sections`);
-    const ids = citations.map((c) => c.id);
-    assert.equal(new Set(ids).size, ids.length, `duplicate citation ids: ${ids.join(", ")}`);
-  });
-
-  test("every id is a usable slug", () => {
-    for (const c of readCitations()) {
-      assert.match(c.id, /^[a-z0-9]+(-[a-z0-9]+)*$/, `citation id "${c.id}" is not slug-shaped`);
-    }
-  });
-
-  test("every citation carries content", () => {
-    for (const c of readCitations()) {
-      assert.ok(c.heading, `citation "${c.id}" has no heading`);
-      assert.ok(
-        Array.isArray(c.bullets) && c.bullets.length > 0,
-        `citation "${c.id}" has no bullets — the panel would render an empty section`,
-      );
-    }
-  });
-
-  test("the ids the shell maps to still exist", () => {
-    // SLUG_TO_RESUME in shell-data.ts hardcodes these. If resume.md's headings
-    // change, the citation chip silently opens nothing.
-    const ids = new Set(readCitations().map((c) => c.id));
-    for (const id of ["a-darle-20", "nokia"]) {
-      assert.ok(ids.has(id), `SLUG_TO_RESUME points at "${id}", which is no longer a citation id`);
-    }
-  });
-});
+// The chunk index and the citation machinery it feeds are tested in
+// evals/citations.test.mjs.
 
 describe("system prompt", () => {
   test("keeps every guard section", () => {
@@ -106,6 +74,7 @@ describe("system prompt", () => {
       "## Untrusted input",
       "## Formatting",
       "## Knowledge base",
+      "## Citing",
       "## Tools",
     ]) {
       assert.ok(src.includes(section), `system prompt lost its "${section}" section`);

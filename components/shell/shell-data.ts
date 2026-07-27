@@ -2,19 +2,23 @@ import { JD_PREFIX } from "@/lib/job-posting";
 
 // Navigation and copy for the app shell.
 //
-// Resume content is NOT here — it comes from lib/citations.generated.ts, built
-// from content/knowledge/resume.md by scripts/build-knowledge.mjs. That's the
-// same file the model reads, so the evidence a visitor sees beside an answer
-// can't drift from the evidence the answer was built from. Edit the markdown,
-// not a copy of it.
+// Resume content is NOT here — it comes from lib/chunks.generated.ts, built
+// from content/knowledge/*.md by scripts/build-knowledge.mjs. Those are the
+// same chunks the model reads, under the same ids it cites, so the evidence a
+// visitor sees beside an answer can't drift from the evidence the answer was
+// built from. Edit the markdown, not a copy of it.
 
-// Maps a project slug from the showProject tool onto the citation id (from
-// lib/citations.generated.ts) that evidences it. Dell has a resume entry but the
+// Maps a project slug from the showProject tool onto the chunk id (from
+// lib/chunks.generated.ts) that evidences it. Dell has a resume entry but the
 // case study carries more than the one line there, so it routes to the project
 // view instead.
+//
+// Ids are `<source>:<slug>` since Sprint 3 — the corpus is one id space now,
+// not just the resume's sections, so a bare `nokia` would be ambiguous between
+// the resume block and the case-study file.
 export const SLUG_TO_RESUME: Record<string, string> = {
-  adarle20: "a-darle-20",
-  nokia: "nokia",
+  adarle20: "resume:a-darle-20",
+  nokia: "resume:nokia",
 };
 
 // docs/site-copy.md → "Why this site is a chatbot". Marked DRAFT there pending

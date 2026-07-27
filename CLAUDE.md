@@ -58,4 +58,4 @@ Run inside WSL (`wsl -e bash -lc "cd ~/sidhantmathur && <cmd>"`) — never npm f
 - `npm run start` — serve the production build
 - `npm run lint` — ESLint
 
-The chat knowledge base is built from `content/knowledge/*.md` into `lib/knowledge.generated.ts` (git-ignored) by `scripts/build-knowledge.mjs`, wired as `predev`/`prebuild`.
+The chat knowledge base is built from `content/knowledge/*.md` by `scripts/build-knowledge.mjs`, wired as `predev`/`prebuild`. It writes two git-ignored files: `lib/knowledge.generated.ts` (the prompt text) and `lib/chunks.generated.ts` (the same content as addressable chunks — the ids the model cites and `lib/verify.ts` checks against).

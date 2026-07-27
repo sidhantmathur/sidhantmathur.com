@@ -6,7 +6,7 @@ import Adarle20 from "@/content/adarle20.mdx";
 import DellMl from "@/content/dell-ml.mdx";
 import Nokia from "@/content/nokia.mdx";
 import { PROJECTS } from "@/content/projects";
-import { CITATIONS, type Citation } from "@/lib/citations.generated";
+import { CHUNKS, CHUNK_BY_ID, type Chunk } from "@/lib/chunks.generated";
 import { JD_COPY, PROJECT_LINKS, SOCIAL_LINKS, WHY_CHATBOT } from "./shell-data";
 import type { PanelView } from "./use-conversation";
 
@@ -36,6 +36,10 @@ export function panelTitle(panel: PanelView): string {
       return "Instruments";
     case "project":
       return PROJECTS[panel.slug].title;
+    case "source": {
+      const chunk = CHUNK_BY_ID[panel.id];
+      return chunk ? `${chunk.sourceLabel} — ${chunk.heading}` : panel.id;
+    }
     case "roleFit":
       return `Role fit — ${panel.data.role}`;
     default:
@@ -57,8 +61,8 @@ export function PanelBody({
   if (panel.kind === "resume") {
     return (
       <div className="space-y-6">
-        {CITATIONS.map((c) => (
-          <ResumeBlock key={c.id} citation={c} focused={panel.focus === c.id} />
+        {CHUNKS.filter((c) => c.source === "resume").map((c) => (
+          <ChunkBlock key={c.id} chunk={c} focused={panel.focus === c.id} />
         ))}
         <div className="flex flex-wrap gap-2">
           <PanelLink href="/resume">Full resume</PanelLink>
@@ -66,6 +70,21 @@ export function PanelBody({
             PDF
           </PanelLink>
         </div>
+      </div>
+    );
+  }
+
+  // A cited chunk. The whole file renders rather than the one chunk, because a
+  // citation is an invitation to check the answer and checking means reading
+  // what sits around the sentence — the id is what gets highlighted.
+  if (panel.kind === "source") {
+    const chunk = CHUNK_BY_ID[panel.id];
+    if (!chunk) return null;
+    return (
+      <div className="space-y-6">
+        {CHUNKS.filter((c) => c.source === chunk.source).map((c) => (
+          <ChunkBlock key={c.id} chunk={c} focused={c.id === chunk.id} showId />
+        ))}
       </div>
     );
   }
@@ -243,7 +262,16 @@ function PanelLink({
   );
 }
 
-function ResumeBlock({ citation, focused }: { citation: Citation; focused: boolean }) {
+function ChunkBlock({
+  chunk,
+  focused,
+  showId,
+}: {
+  chunk: Chunk;
+  focused: boolean;
+  /** Print the citation id, so a reader can see what the answer named. */
+  showId?: boolean;
+}) {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (focused) ref.current?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -255,13 +283,12 @@ function ResumeBlock({ citation, focused }: { citation: Citation; focused: boole
       className={`border-l-2 pl-3 transition-colors ${focused ? "border-accent" : "border-line"}`}
     >
       <div className={`text-[12px] ${focused ? "text-accent" : "text-text"}`}>
-        {citation.heading}
+        {chunk.heading}
       </div>
-      {citation.meta && (
-        <div className="mt-0.5 text-[11px] text-text-faint">{citation.meta}</div>
-      )}
+      {showId && <div className="mt-0.5 text-[10px] text-text-faint">{chunk.id}</div>}
+      {chunk.meta && <div className="mt-0.5 text-[11px] text-text-faint">{chunk.meta}</div>}
       <ul className="mt-2 space-y-2">
-        {citation.bullets.map((b, i) => (
+        {chunk.lines.map((b, i) => (
           <li key={i} className="text-[12px] leading-relaxed text-text-soft">
             {b}
           </li>
