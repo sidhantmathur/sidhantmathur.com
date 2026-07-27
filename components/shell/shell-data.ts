@@ -96,6 +96,69 @@ export const IDLE_LINES = [
   "Ask the question you'd actually ask on a call.",
 ];
 
+// Recruiter TL;DR (#25, Track B). docs/site-copy.md → "Homepage → Recruiter
+// TL;DR". Marked DRAFT there pending Sidhant's review, and logged in
+// docs/copy-ledger.md.
+//
+// This is the one block on the site that makes claims about Sidhant rather than
+// about the site, so the rule it lives under is stricter than the rest of this
+// file: EVERY value below is lifted from content/knowledge/ or the resume, and
+// the `source` field names the file it came from. It is not decoration — it is
+// what evals/track-b.test.mjs checks the corpus still contains. A row whose
+// fact the corpus stops carrying should fail the suite, not quietly become
+// untrue on the homepage.
+//
+// Scan-shaped rather than prose on purpose: the reader this exists for has not
+// started reading yet. Six seconds, per decisions #25.
+export type TldrRow = {
+  /** Short mono label, lowercase, like the status strip's readouts. */
+  label: string;
+  value: string;
+  /** The corpus file this row's facts come from. */
+  source: string;
+};
+
+export const TLDR_LABEL = "tl;dr";
+
+export const RECRUITER_TLDR: TldrRow[] = [
+  {
+    label: "now",
+    value:
+      "Sales operations specialist at Nokia, in Toronto. Co-founder and CTO of A Darle 20.",
+    source: "content/knowledge/bio.md",
+  },
+  {
+    label: "shipped",
+    value:
+      "A Darle 20 — a two-sided marketplace, architected and shipped solo. 1,400+ registered users, 127 hosts and 2,100+ bookings in its first four months.",
+    source: "content/knowledge/resume.md",
+  },
+  {
+    label: "before that",
+    value:
+      "At Nokia: a self-serve Power App used by 80+ stakeholders across seven regions, and a Salesforce Analytics to Power BI migration for 150+ users.",
+    source: "content/knowledge/projects-nokia.md",
+  },
+  {
+    label: "how he builds",
+    value:
+      "An AI-agent-heavy workflow in Claude Code — agents write most of the code, he keeps architecture, code review and release.",
+    source: "content/knowledge/projects-adarle20.md",
+  },
+  {
+    label: "looking for",
+    value: "A RevOps / GTM systems role at an AI-forward company.",
+    source: "content/knowledge/faq.md",
+  },
+  {
+    label: "where",
+    value: "Toronto, ON. Canadian citizen, no visa sponsorship needed.",
+    source: "content/knowledge/faq.md",
+  },
+];
+
+export const TLDR_FOOTER = "The resume has the rest, and so does the box below.";
+
 // docs/site-copy.md → "Job-description fit". Marked DRAFT there.
 export const JD_COPY = {
   heading: "Paste a job description",
@@ -196,6 +259,8 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     name: "/fit",
     hint: "Ask about role fit",
     kind: "send",
-    message: "Is he a fit for a solutions engineering role?",
+    // Kept verbatim-identical to one of the suggested chips (#26 swapped both
+    // together) so the command and the chip can't become two questions.
+    message: "Is he a fit for a RevOps role at an AI-forward company?",
   },
 ];

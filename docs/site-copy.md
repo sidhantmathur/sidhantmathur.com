@@ -39,6 +39,29 @@ the "Ask me anything" / "View resume" buttons are retired. The status strip
 carries the name and location; the rail carries the resume link; the input is
 the only call to action.
 
+### Recruiter TL;DR (#25)
+
+[DRAFT 2026-07-27 — assembled by Claude for Track B. Every value is lifted from
+`content/knowledge/` or the resume; nothing here is drafted prose about
+Sidhant. Rewrite the wording freely, but a fact that leaves this block has to
+leave the corpus too.]
+
+Shown in the homepage's empty state only, between the hero subline and the
+suggested questions. Gone as soon as a conversation starts.
+
+Label: tl;dr
+
+| Row label | Value | From |
+| --- | --- | --- |
+| now | Sales operations specialist at Nokia, in Toronto. Co-founder and CTO of A Darle 20. | `bio.md` |
+| shipped | A Darle 20 — a two-sided marketplace, architected and shipped solo. 1,400+ registered users, 127 hosts and 2,100+ bookings in its first four months. | `resume.md` |
+| before that | At Nokia: a self-serve Power App used by 80+ stakeholders across seven regions, and a Salesforce Analytics to Power BI migration for 150+ users. | `projects-nokia.md` |
+| how he builds | An AI-agent-heavy workflow in Claude Code — agents write most of the code, he keeps architecture, code review and release. | `projects-adarle20.md` |
+| looking for | A RevOps / GTM systems role at an AI-forward company. | `faq.md`, `resume.md` |
+| where | Toronto, ON. Canadian citizen, no visa sponsorship needed. | `faq.md` |
+
+Footer link (to /resume): The resume has the rest, and so does the box below.
+
 ### Projects section
 
 Section heading: Selected work
@@ -87,9 +110,20 @@ projects, and it can answer the questions a resume can't — or just show you
 around. It's also a working demo of how I build with LLMs.
 
 Suggested questions (chips):
-- What did Sidhant build at Nokia?
-- How does A Darle 20 work?
-- Is he a fit for a solutions engineering role?
+
+[DRAFT 2026-07-27 — swapped for Track B (#26). The previous three were "What
+did Sidhant build at Nokia?", "How does A Darle 20 work?" and "Is he a fit for
+a solutions engineering role?" — a demo of the site's range rather than the
+questions the reader arrived with. These replace them; there is no
+recruiter/engineer toggle, per decisions #26.]
+
+- Give me the 30-second version
+- What has he shipped end to end?
+- Is he a fit for a RevOps role at an AI-forward company?
+- Does he need visa sponsorship?
+
+The `/fit` slash command sends the third one verbatim, so the two can't drift
+into different questions.
 
 Input placeholder: Ask a question about my work
 Disclaimer (small, mono): AI-generated answers about my professional background.
