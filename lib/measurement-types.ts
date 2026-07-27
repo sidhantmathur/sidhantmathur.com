@@ -22,6 +22,65 @@ export type PublishedFile = {
   suites: PublishedSuite[];
 };
 
+/**
+ * A measured quantity's shape. `n` travels with it because what the page is
+ * willing to print is a function of the sample size — a median without its
+ * count cannot be held to that policy. Null throughout means NOT MEASURED, and
+ * never zero: a turn whose telemetry never arrived must not be able to make a
+ * model look like the fastest one on the page.
+ */
+export type PublishedSample = {
+  n: number;
+  p50: number;
+  min: number;
+  max: number;
+} | null;
+
+/** Per-turn performance, published for every graded case (Sprint 8). */
+export type PublishedTurnPerformance = {
+  ttftMs: number | null;
+  durationMs: number | null;
+  tokensPerSecond: number | null;
+  inputTokens: number | null;
+  cachedInputTokens: number | null;
+  outputTokens: number | null;
+  steps: number | null;
+  finishReason: string | null;
+  /** List-price estimate from lib/pricing.ts. Null for an unpriced model. */
+  costUsd: number | null;
+};
+
+/** A whole run's performance, aggregated over the turns that carried telemetry. */
+export type PublishedPerformance = {
+  turns: { measured: number; missing: number };
+  ttftMs: PublishedSample;
+  durationMs: PublishedSample;
+  tokensPerSecond: PublishedSample;
+  inputTokens: PublishedSample;
+  cachedInputTokens: PublishedSample;
+  outputTokens: PublishedSample;
+  steps: PublishedSample;
+  /** Share of INPUT TOKENS served from the prompt cache — not share of turns. */
+  cacheHitRate: number | null;
+  finishReasons: Record<string, number>;
+  cost: {
+    pricedTurns: number;
+    totalUsd: number;
+    perTurnP50Usd: number | null;
+    savedUsd: number;
+  } | null;
+};
+
+export type PublishedCase = {
+  group: string;
+  id: string;
+  label: string | null;
+  pass: boolean;
+  broke: boolean;
+  /** Optional: runs published before Sprint 8 carry no performance record. */
+  performance?: PublishedTurnPerformance;
+};
+
 export type PublishedRun = {
   model: string;
   ranAt: string | null;
@@ -31,7 +90,9 @@ export type PublishedRun = {
   /** Turns that failed in transport rather than in judgment (Sprint 1's lesson). */
   broke: number;
   citations: { answers: number; claims: number; verified: number; inventedIds: number };
-  cases: { group: string; id: string; label: string | null; pass: boolean; broke: boolean }[];
+  /** Optional for the same reason: the archive predates it. */
+  performance?: PublishedPerformance;
+  cases: PublishedCase[];
 };
 
 export type PublishedEvals = {

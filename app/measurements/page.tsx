@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { DocPage } from "@/components/layout/doc-page";
+import { latestRunPerModel } from "@/lib/model-comparison";
 import { ANALYTICS, BUILT_AT, PUBLISHED_EVALS } from "@/lib/measurements.generated";
 import {
   MIN_CLAIMS_FOR_RATE,
@@ -54,7 +56,9 @@ const COPY = {
   liveEmpty:
     "No live run has been published yet.",
   liveNote:
-    "A run is recorded per model, on the day it was run. A turn that failed in transport is counted separately from one the model answered badly — they are different problems and collapsing them hides both.",
+    "A run is recorded per model, on the day it was run, and every run is kept. A turn that failed in transport is counted separately from one the model answered badly — they are different problems and collapsing them hides both.",
+  liveCompare:
+    "What each of these models cost and how fast it answered, plotted side by side:",
 
   latencyHeading: "Latency and reliability",
   latencyIntro:
@@ -98,7 +102,11 @@ const UNAVAILABLE: Record<Exclude<typeof ANALYTICS, { available: true }>["reason
 
 export default function MeasurementsPage() {
   const evals = PUBLISHED_EVALS;
-  const runs = evals?.live.runs ?? [];
+  // The snapshot archives EVERY run (Sprint 8), so a model measured twice
+  // appears twice. Every aggregate here has to pick one run per model or it
+  // double-counts that model — which would have silently inflated the
+  // groundedness claim count the moment the archive shipped.
+  const runs = latestRunPerModel(evals?.live.runs ?? []);
   const ground = groundedness(runs);
 
   return (
@@ -199,7 +207,13 @@ export default function MeasurementsPage() {
                 </div>
               ))}
             </div>
-            <Note>{COPY.liveNote}</Note>
+            <Note>
+              {COPY.liveNote} {COPY.liveCompare}{" "}
+              <Link href="/measurements/models" className="text-accent">
+                Five models, one corpus
+              </Link>
+              .
+            </Note>
           </>
         )}
       </Section>

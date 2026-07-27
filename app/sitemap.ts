@@ -17,6 +17,7 @@ const ROUTES = [
   { path: "/projects/dell-ml", priority: 0.7 },
   { path: "/colophon", priority: 0.5 },
   { path: "/measurements", priority: 0.5 },
+  { path: "/measurements/models", priority: 0.4 },
   { path: "/prompt", priority: 0.4 },
   { path: "/refusals", priority: 0.4 },
 ];

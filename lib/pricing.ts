@@ -75,6 +75,30 @@ export const MODEL_PRICES: Record<string, ModelPrice> = {
   "deepseek/deepseek-v4-flash": { input: 0.14, output: 0.28, cacheRead: 0.0028, cacheWrite: 0 },
 };
 
+/**
+ * How much to trust each row above, as data rather than as a comment.
+ *
+ * The comments already say this, and a comment cannot be rendered. Sprint 8
+ * publishes cost-per-task on `/measurements/models`, and a page that prints a
+ * dollar figure without saying which of its prices could not be confirmed is
+ * doing the thing this whole site argues against. So the caveat travels with
+ * the number.
+ *
+ *   confirmed — input and output checked against a published rate on PRICES_CHECKED
+ *   derived   — input/output confirmed; the cache rate is a published multiplier
+ *               applied to input rather than a separately published figure
+ *   unconfirmed — neither could be checked. Least trustworthy row here.
+ */
+export type PriceConfidence = "confirmed" | "derived" | "unconfirmed";
+
+export const PRICE_CONFIDENCE: Record<string, PriceConfidence> = {
+  "anthropic/claude-haiku-4.5": "confirmed",
+  "openai/gpt-5-mini": "derived",
+  "openai/gpt-5.6-luna": "unconfirmed",
+  "google/gemini-3.5-flash-lite": "derived",
+  "deepseek/deepseek-v4-flash": "confirmed",
+};
+
 export type TurnCost = {
   /** Input tokens that were neither read from nor written to the cache. */
   freshInput: number;

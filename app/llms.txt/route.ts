@@ -22,6 +22,7 @@ lead targeting, built as an intern.
 /refusals — What the assistant will not do, and which of those rules are
 enforced by code rather than asked of the model.
 /measurements — What the assistant scores against a fixed eval corpus.
+/measurements/models — Every model this site can run, compared on one corpus: pass rate, latency, tokens and cost per task.
 /chat — Ask a question about my work directly.
 `;
 
