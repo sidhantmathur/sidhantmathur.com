@@ -88,8 +88,15 @@ type ByteStream = {
 
 async function pipe(bytes: Uint8Array, stream: ByteStream) {
   const writer = stream.writable.getWriter();
-  void writer.write(bytes);
-  void writer.close();
+  // The write and close promises are deliberately not awaited — the reader
+  // below is what drains the stream — but they MUST be caught. On a corrupt
+  // payload the inflater errors both ends, and an uncaught rejection on the
+  // writable side surfaces as an unhandledRejection long after decodeSnapshot
+  // has already returned its honest `null`. (Found by the truncated-link test,
+  // which is exactly the case a mail client produces.)
+  const ignore = () => {};
+  writer.write(bytes).catch(ignore);
+  writer.close().catch(ignore);
   const chunks: Uint8Array[] = [];
   let total = 0;
   const reader = stream.readable.getReader();
