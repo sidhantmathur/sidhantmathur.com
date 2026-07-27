@@ -329,14 +329,37 @@ const VERDICT_STYLE: Record<RequirementVerdict, string> = {
 /** Counts, in a fixed order so the row doesn't reshuffle between answers. */
 const COUNT_ORDER: RequirementVerdict[] = ["met", "partial", "unmet", "unclear"];
 
+const ROLE_FIT_UNREADABLE =
+  "This assessment was saved by an older version of the site and can't be shown. Paste the posting again to rebuild it.";
+
 function RequirementTable({
   fit,
   onOpenSource,
 }: {
-  fit: RoleFit;
+  fit: RoleFit | undefined;
   onOpenSource?: (view: PanelView) => void;
 }) {
-  const { rows, counts, gaps, noGapsRationale, verdict } = fit;
+  const partial = (fit ?? {}) as Partial<RoleFit>;
+
+  // A tool result that doesn't have the shape this renders is not a crash.
+  //
+  // It used to be. An assessment stored before Sprint 4 renamed these fields
+  // came back with no `counts`, and reading one off it threw during render —
+  // which in React takes down the whole shell, not the panel. The reader saw a
+  // blank page for a conversation they'd had a week earlier.
+  //
+  // This is Sprint 4's own rule arriving in the client: nothing may reject a
+  // payload by failing. The version bump in use-conversation.ts retires the
+  // stored conversations that land here, but a permalink carries the same
+  // object in a URL and never touches storage, so the shape still has to be
+  // checked at the point of use. Saying the assessment can't be shown is worth
+  // more than an empty panel — a reader who knows something was lost can go
+  // back and paste the posting again.
+  if (!Array.isArray(partial.rows) || !partial.counts || !Array.isArray(partial.gaps)) {
+    return <p className="text-[12px] leading-relaxed text-text-faint">{ROLE_FIT_UNREADABLE}</p>;
+  }
+
+  const { rows, counts, gaps, noGapsRationale, verdict } = partial as RoleFit;
 
   return (
     <div className="space-y-4">

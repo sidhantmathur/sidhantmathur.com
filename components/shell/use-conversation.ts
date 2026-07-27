@@ -22,7 +22,25 @@ type UIMessage = ChatUIMessage;
 export type ChatMessage = ChatUIMessage;
 
 
-const STORAGE_KEY = "conversation.v1";
+// Bumped when a persisted message can no longer be rendered by the code that
+// reads it back. Sprint 4 changed the shape of a roleFit tool result, and a
+// conversation stored before that arrived here with no `rows` and no `counts` —
+// which threw inside the requirement table and took the whole shell down with
+// it. A returning visitor got a blank page and no way to recover but to clear
+// their own storage.
+//
+// The key is the version. Retiring the old one drops exactly the conversations
+// that can't be rendered, and it does so without sniffing message shapes: a
+// heuristic that guesses which stored parts are still readable is a second
+// implementation of every renderer, kept in step by hope. `removeItem` on the
+// retired keys keeps this from growing into an attic.
+//
+// The other half of the fix is that the requirement table no longer throws on a
+// payload it doesn't recognise (see panel-body.tsx) — a permalink carries the
+// same tool result and never touches storage at all, so the version bump alone
+// would have left that door open.
+const STORAGE_KEY = "conversation.v2";
+const RETIRED_STORAGE_KEYS = ["conversation.v1"];
 
 // Reading the clock is impure, and calling it inside a component body trips
 // react-hooks/purity even from an event handler.
@@ -288,6 +306,7 @@ export function useConversation(model: string) {
     function restoreLocal() {
       let saved: UIMessage[] = [];
       try {
+        for (const key of RETIRED_STORAGE_KEYS) window.localStorage.removeItem(key);
         const raw = window.localStorage.getItem(STORAGE_KEY);
         const parsed = raw ? JSON.parse(raw) : null;
         if (Array.isArray(parsed)) saved = parsed as UIMessage[];

@@ -136,6 +136,19 @@ either arithmetic from `lib/pricing.ts` or a description of an exit in
 `app/api/chat/route.ts`. If one of those behaviours changes, the string is wrong
 and should move, which is why they're logged rather than treated as chrome.
 
+**A note on the unreadable-assessment row.** One string, added with the fix for
+the returning-visitor crash:
+
+| File | String | Claims |
+| --- | --- | --- |
+| `components/shell/panel-body.tsx` | "This assessment was saved by an older version of the site and can't be shown. Paste the posting again to rebuild it." | none |
+
+It is only reachable by a reader whose stored conversation or permalink predates
+a change to the assessment's shape. Two things about the wording are deliberate:
+it blames the site rather than the reader, and it names the way out. An empty
+panel would have been the cheaper option and would have left someone staring at
+a blank space wondering what they'd broken.
+
 ## Pending `[VERIFY]` markers
 
 Sentences drafted with a fact-shaped hole in them, waiting on Sidhant. Listing them
