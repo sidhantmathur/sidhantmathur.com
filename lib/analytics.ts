@@ -47,7 +47,11 @@ export type AnalyticsEvent =
   | "chat_error"
   | "chat_rate_limited"
   | "resume_download"
-  | "contact_click";
+  | "contact_click"
+  // Copy-to-clipboard. Worth measuring: the site stores nothing, so a copy is
+  // the clearest signal that an answer was considered worth keeping.
+  | "chat_copy_message"
+  | "chat_copy_conversation";
 
 // Safe no-op when PostHog isn't configured, or when the SDK hasn't finished
 // loading yet — events fired in that window are dropped (see note above).

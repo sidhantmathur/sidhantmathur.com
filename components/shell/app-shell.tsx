@@ -14,6 +14,8 @@ import {
 import { Markdown } from "./markdown";
 import { usePanelUrl } from "./use-panel-url";
 import { PanelBody, panelTitle } from "./panel-body";
+import { CopyButton } from "./copy-button";
+import { conversationToMarkdown, messageToMarkdown } from "@/lib/transcript";
 import {
   textOf,
   toolOutputs,
@@ -34,6 +36,10 @@ const ERROR_STATE =
   "Something went wrong on my end. Give it another try in a moment.";
 const RATE_LIMIT_STATE =
   "You've hit the message limit for now — the resume has everything in the meantime.";
+// Identity strings, hoisted so the status strip and the copied transcript's
+// header can't drift apart. Not prose — a name and a URL.
+const SITE_NAME = "Sidhant Mathur";
+const SITE_URL = "https://sidhantmathur.com";
 const SUGGESTED = [
   "What did Sidhant build at Nokia?",
   "How does A Darle 20 work?",
@@ -237,7 +243,7 @@ export function AppShell() {
           ☰
         </button>
         <Link href="/" className="text-text no-underline hover:text-accent">
-          Sidhant Mathur
+          {SITE_NAME}
         </Link>
         <span className="hidden text-text-faint sm:inline">Toronto, ON</span>
 
@@ -331,18 +337,28 @@ export function AppShell() {
                       ) : (
                         <>
                           <Markdown text={text} />
-                          {outs.length > 0 && (
-                            <div className="flex flex-wrap gap-2 pt-1">
-                              {outs.map((o, i) => (
-                                <CitationChip
-                                  key={i}
-                                  out={o}
-                                  latest={m.id === lastId}
-                                  onOpen={openPanel}
-                                />
-                              ))}
-                            </div>
-                          )}
+                          {/* Citations and the copy affordance share one row.
+                              The copy button stays visible rather than
+                              hover-revealed — hover doesn't exist on touch,
+                              and this is the only way an answer leaves the
+                              page. */}
+                          <div className="flex flex-wrap items-center gap-2 pt-1">
+                            {outs.map((o, i) => (
+                              <CitationChip
+                                key={i}
+                                out={o}
+                                latest={m.id === lastId}
+                                onOpen={openPanel}
+                              />
+                            ))}
+                            {!isBusy && (
+                              <CopyButton
+                                getText={() => messageToMarkdown(m)}
+                                label="copy"
+                                event="chat_copy_message"
+                              />
+                            )}
+                          </div>
                         </>
                       )}
                     </div>
@@ -406,13 +422,28 @@ export function AppShell() {
                 className="ml-2 min-w-0 flex-1 bg-transparent text-text outline-none placeholder:text-text-faint"
               />
               {hasMessages && (
-                <button
-                  type="button"
-                  onClick={reset}
-                  className="mr-3 text-[11px] text-text-faint hover:text-accent"
-                >
-                  reset
-                </button>
+                <>
+                  <CopyButton
+                    getText={() =>
+                      conversationToMarkdown(messages, {
+                        title: SITE_NAME,
+                        sourceUrl: SITE_URL,
+                        footer: DISCLAIMER,
+                      })
+                    }
+                    label="copy all"
+                    copiedLabel="copied all"
+                    event="chat_copy_conversation"
+                    className="mr-3"
+                  />
+                  <button
+                    type="button"
+                    onClick={reset}
+                    className="mr-3 text-[11px] text-text-faint hover:text-accent"
+                  >
+                    reset
+                  </button>
+                </>
               )}
               <span className="hidden text-[11px] text-text-faint sm:inline">enter ↵</span>
             </form>
