@@ -100,6 +100,24 @@ export const JD_COPY = {
   prefix: JD_PREFIX,
 };
 
+// Labels over the role-fit assessment, shared by the context panel, the print
+// document and the scorecard export (Sprint 5) so the same field can't be
+// called three things in three artifacts. Logged in docs/copy-ledger.md.
+//
+// `notAScore` is load-bearing rather than decorative: decisions §3 attaches a
+// rendering constraint to this component — four crisp tags look more precise
+// than the assessment under them — and this sentence is how that constraint is
+// met. It travels with the table into print and into the scorecard for the same
+// reason the gaps do.
+export const FIT_LABELS = {
+  gaps: "What he doesn't have",
+  noGaps: "No unmet requirements — why",
+  counts: "Coverage",
+  evidence: "Strongest evidence",
+  notAScore:
+    "Each row is a judgment against the record, not a score, and the four tags don't add up to one. A row claiming a fit has to name the part of the record it stands on; where it didn't, the site downgraded it rather than the model.",
+};
+
 export const PROJECT_LINKS = [
   { label: "A Darle 20", href: "/projects/adarle20" },
   { label: "Nokia", href: "/projects/nokia" },
@@ -117,18 +135,32 @@ export type SlashCommand = {
   hint: string;
   /** 'panel' opens the context panel locally; 'send' dispatches a chat message. */
   kind: "panel" | "send";
-  /** For kind==='panel': which panel view to open. */
-  panel?: "resume" | "projects" | "contact";
+  /**
+   * For kind==='panel': which panel view to open. Every name here has to be a
+   * `PanelView` kind in use-conversation.ts — a typo would open nothing, and
+   * silently. evals/export.test.mjs asserts the two lists agree.
+   */
+  panel?: "resume" | "projects" | "contact" | "jd" | "instruments" | "export" | "corpus";
   /** For kind==='send': the message text (verbatim from docs/site-copy.md). */
   message?: string;
 };
 
 // Slash-command labels are UI affordances, not site copy. The one command that
 // sends a message reuses a suggested question verbatim from site-copy.md.
+//
+// Extended in Sprint 5 (#13). The decisions doc lists `/jd`, `/model`,
+// `/budget`, `/sources` and `/pdf`; four of the five are here, because four of
+// the five now have somewhere to point. `/model` is not: it needs an argument
+// ("/model gpt-5-mini") and this registry has no parser, so it would either be
+// a fifth panel or a lie. The header select still does that job.
 export const SLASH_COMMANDS: SlashCommand[] = [
   { name: "/resume", hint: "Open the resume in the panel", kind: "panel", panel: "resume" },
   { name: "/projects", hint: "List the three projects", kind: "panel", panel: "projects" },
   { name: "/contact", hint: "Show contact links", kind: "panel", panel: "contact" },
+  { name: "/jd", hint: "Paste a job description", kind: "panel", panel: "jd" },
+  { name: "/budget", hint: "Turns, tokens and what they cost", kind: "panel", panel: "instruments" },
+  { name: "/sources", hint: "Every source the answers are built from", kind: "panel", panel: "corpus" },
+  { name: "/pdf", hint: "Export — markdown, print, link", kind: "panel", panel: "export" },
   {
     name: "/fit",
     hint: "Ask about role fit",

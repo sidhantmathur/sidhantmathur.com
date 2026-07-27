@@ -19,9 +19,22 @@ type Props = {
   /** PostHog event name. */
   event?: AnalyticsEvent;
   className?: string;
+  /**
+   * Fires only on a copy that actually reached the clipboard — the actions
+   * strip's post-action emphasis (#27) hangs off this, and emphasising a copy
+   * that silently failed would be the site lying about its own state.
+   */
+  onCopied?: () => void;
 };
 
-export function CopyButton({ getText, label, copiedLabel = "copied", event, className = "" }: Props) {
+export function CopyButton({
+  getText,
+  label,
+  copiedLabel = "copied",
+  event,
+  className = "",
+  onCopied,
+}: Props) {
   const [copied, setCopied] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -43,6 +56,7 @@ export function CopyButton({ getText, label, copiedLabel = "copied", event, clas
       return;
     }
     if (event) track(event, { chars: text.length });
+    onCopied?.();
     setCopied(true);
     if (timer.current) clearTimeout(timer.current);
     timer.current = setTimeout(() => setCopied(false), 1600);

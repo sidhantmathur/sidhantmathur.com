@@ -95,6 +95,72 @@ body {
   font-family: var(--font-geist-sans);
 }
 
+/* ---------------------------------------------------------------------------
+   Print (roadmap Sprint 5, #17 — the typeset document)
+   ---------------------------------------------------------------------------
+   NO DEPENDENCY WAS ADDED FOR PDF. The browser's own print pipeline produces a
+   real PDF at the reader's paper size, with selectable text, working links and
+   the system's hyphenation — everything a canvas-to-PDF library re-implements
+   badly and ships ~200 kB to do. So the "PDF" export is a print stylesheet and
+   a document that is laid out for paper rather than for the app.
+
+   The mechanism is two containers: the shell carries `screen-only` and the
+   document carries `print-only`, and print swaps which one exists. The shell
+   is DISPLAY:NONE rather than hidden, so none of its fixed-height, overflow-
+   hidden application layout reaches the page box.
+
+   Colours are forced rather than themed. The site is dark by design; a dark
+   theme sent to a printer is either an empty page or a cartridge. */
+
+.print-only {
+  display: none;
+}
+
+@media print {
+  html,
+  body {
+    height: auto;
+    overflow: visible;
+    background: #fff;
+    color: #14110f;
+  }
+
+  .screen-only {
+    display: none !important;
+  }
+
+  .print-only {
+    display: block !important;
+  }
+
+  @page {
+    margin: 18mm 16mm;
+  }
+
+  .doc,
+  .doc * {
+    color: #14110f !important;
+    background: transparent !important;
+    border-color: #c9c3bb !important;
+    /* Tailwind's text-[13px] etc. survive; only colour and box treatment are
+       overridden, so the document keeps the site's proportions on paper. */
+  }
+
+  .doc a {
+    text-decoration: underline;
+  }
+
+  /* A question and the answer under it should not be split across a page
+     break, and neither should a requirement row. */
+  .doc-block {
+    break-inside: avoid;
+  }
+
+  .doc-rule {
+    border-top: 1px solid #c9c3bb;
+  }
+}
+
 /* Honour the OS "reduce motion" setting. Reduced, not removed: transitions
    collapse to ~1ms so state changes still land in a single frame rather than
    snapping mid-interaction, which is the behaviour the spec asks for.

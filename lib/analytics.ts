@@ -59,6 +59,21 @@ export type AnalyticsEvent =
   // the clearest signal that an answer was considered worth keeping.
   | "chat_copy_message"
   | "chat_copy_conversation"
+  // The export surface (Sprint 5, #17). `kind` says which handle was pulled —
+  // file, print, mailto, or a copied link. Same reasoning as the copy events:
+  // the site stores nothing, so an export is the clearest signal that the
+  // conversation was worth keeping.
+  //   kind, chars
+  | "chat_export"
+  // A permalink was built. The character count travels with it, because
+  // whether real conversations produce links that survive an email client is a
+  // measurement, not the estimate in docs/idea-decisions.md.
+  //   chars
+  | "chat_permalink_created"
+  // Someone opened one. The counterpart to the event above: links built vs
+  // links followed is the only way to find out whether this feature is used.
+  //   messages
+  | "chat_permalink_opened"
   // One event per completed turn, carrying the F1 telemetry record. This is
   // what #23's latency and reliability panel is built from.
   //   model, tier, jd, ttft_ms, duration_ms, tokens_per_second,

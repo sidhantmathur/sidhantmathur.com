@@ -39,11 +39,23 @@ function pathForPanel(panel: PanelView): string | null {
   return PANEL_PATHS[panel.kind] ?? null;
 }
 
+/**
+ * The address a panel state should show, keeping any fragment.
+ *
+ * THE FRAGMENT IS THE CONVERSATION (Sprint 5, #18). `pushState(null, "", "/")`
+ * drops the hash, so opening a panel while reading a permalink used to erase
+ * the very thing being read — invisibly, and only discoverable by reloading.
+ * The panel owns the path; it has no opinion about the fragment.
+ */
+export function panelHref(panel: PanelView, hash: string): string {
+  return (pathForPanel(panel) ?? "/") + hash;
+}
+
 export function usePanelUrl(panel: PanelView, setPanel: (v: PanelView) => void) {
   // Panel → URL.
   useEffect(() => {
-    const target = pathForPanel(panel) ?? "/";
-    if (window.location.pathname === target) return;
+    const target = panelHref(panel, window.location.hash);
+    if (window.location.pathname + window.location.hash === target) return;
     window.history.pushState(null, "", target);
   }, [panel]);
 

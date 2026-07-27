@@ -21,6 +21,10 @@ import { useTokenRate } from "./use-token-rate";
 import { useTeletype } from "./use-teletype";
 import { useIdle, useTypedText } from "./use-idle";
 import { conversationToMarkdown, messageToMarkdown } from "@/lib/transcript";
+import { permalinkFor } from "@/lib/permalink";
+import { track } from "@/lib/analytics";
+import { ExportDeck } from "./export-deck";
+import { PrintSheet } from "./print-sheet";
 import { costOfTurn, formatUsd, sumCosts } from "@/lib/pricing";
 import {
   textOf,
@@ -42,6 +46,12 @@ const ERROR_STATE =
   "Something went wrong on my end. Give it another try in a moment.";
 const RATE_LIMIT_STATE =
   "You've hit the message limit for now — the resume has everything in the meantime.";
+// Drafted for Sprint 5 (#18) and logged in docs/copy-ledger.md. Says three
+// things, all of them checkable in this repo: this is a replay, it came out of
+// the link rather than off a server, and it stopped being live when it was
+// made.
+const REPLAY_BANNER =
+  "Replayed conversation. It was rebuilt from the link you opened — the site stored nothing, and this is a snapshot of what the model said then, not a live session.";
 // Identity strings, hoisted so the status strip and the copied transcript's
 // header can't drift apart. Not prose — a name and a URL.
 const SITE_NAME = "Sidhant Mathur";
@@ -88,6 +98,7 @@ export function AppShell() {
     turns,
     budget,
     turnLog,
+    replayed,
   } = useConversation(model);
 
   usePanelUrl(panel, setPanel);
@@ -128,6 +139,41 @@ export function AppShell() {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [sheetFull, setSheetFull] = useState(false);
   const [panelWidth, setPanelWidth] = useState(PANEL_DEFAULT);
+  const [linkCopied, setLinkCopied] = useState(false);
+
+  // ---- Export and the actions strip (Sprint 5) -----------------------------
+  //
+  // The link is held here rather than inside the export panel because the print
+  // document carries it too, and because it has to be dropped the moment the
+  // conversation moves on: a permalink describes the turns it was built from,
+  // and one left on screen after another answer would be quietly wrong.
+  // Derived rather than invalidated in an effect: the link is remembered with
+  // the turn count it was built at, and stops being the current link the moment
+  // another turn lands. No cascading render, and no window where the panel
+  // shows a link that describes a shorter conversation.
+  const [builtLink, setBuiltLink] = useState<{ link: string; at: number } | null>(null);
+  const permalink = builtLink && builtLink.at === messages.length ? builtLink.link : null;
+  const setPermalink = useCallback(
+    (link: string | null) => setBuiltLink(link ? { link, at: messages.length } : null),
+    [messages.length],
+  );
+
+  // #27's answer to the trigger problem: nothing appears, the strip that was
+  // always there just gains a little weight — right after an action, which is
+  // the highest-intent moment available and needs no guess at an ending.
+  const [emphasis, setEmphasis] = useState(false);
+  const emphasisTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const bumpStrip = useCallback(() => {
+    setEmphasis(true);
+    if (emphasisTimer.current) clearTimeout(emphasisTimer.current);
+    emphasisTimer.current = setTimeout(() => setEmphasis(false), 6000);
+  }, []);
+  useEffect(
+    () => () => {
+      if (emphasisTimer.current) clearTimeout(emphasisTimer.current);
+    },
+    [],
+  );
 
   // Below lg the rail and panel become sheets. Rendering them only on mobile
   // keeps Radix from mounting a portal + overlay over the desktop layout.
@@ -157,6 +203,9 @@ export function AppShell() {
   // use-conversation.ts about why they must not open the sheet.
   const openPanel = useCallback(
     (view: PanelView) => {
+      // Opening a citation is the other post-action moment the decisions doc
+      // names — someone checking a source is someone taking this seriously.
+      if (view.kind === "source") bumpStrip();
       setPanel(view);
       setRailOpen(false);
       if (isMobile) {
@@ -164,7 +213,7 @@ export function AppShell() {
         setSheetOpen(true);
       }
     },
-    [isMobile, setPanel],
+    [isMobile, setPanel, bumpStrip],
   );
 
   const closePanel = useCallback(() => {
@@ -211,6 +260,36 @@ export function AppShell() {
       submit(cmd.message);
     }
   }
+
+  // One place that says what a copied conversation looks like, so the strip,
+  // the export panel and the rail can't drift into three different documents.
+  const conversationMarkdown = useCallback(
+    () =>
+      conversationToMarkdown(messages, {
+        title: SITE_NAME,
+        sourceUrl: SITE_URL,
+        footer: DISCLAIMER,
+        permalink: permalink ?? undefined,
+      }),
+    [messages, permalink],
+  );
+
+  // The strip's one-tap version of the export panel's Link section. On a
+  // clipboard failure it opens the panel instead, where the link is visible and
+  // selectable — silently doing nothing is the one outcome worth avoiding.
+  const copyLink = useCallback(async () => {
+    try {
+      const link = await permalinkFor(`${window.location.origin}/`, messages);
+      setPermalink(link);
+      track("chat_permalink_created", { chars: link.length });
+      await navigator.clipboard.writeText(link);
+      bumpStrip();
+      return true;
+    } catch {
+      openPanel({ kind: "export" });
+      return false;
+    }
+  }, [messages, openPanel, bumpStrip, setPermalink]);
 
   function trySend() {
     const q = input.trim();
@@ -262,7 +341,18 @@ export function AppShell() {
   // rendered here rather than inside PanelBody — which would otherwise need
   // every instrument's state threaded through it.
   const panelContent =
-    panel.kind === "instruments" ? (
+    panel.kind === "export" ? (
+      <ExportDeck
+        messages={messages}
+        title={SITE_NAME}
+        sourceUrl={SITE_URL}
+        footer={DISCLAIMER}
+        permalink={permalink}
+        onPermalink={setPermalink}
+        onPrint={() => window.print()}
+        onAction={bumpStrip}
+      />
+    ) : panel.kind === "instruments" ? (
       <InstrumentDeck
         turnLog={turnLog}
         budget={budget}
@@ -277,7 +367,7 @@ export function AppShell() {
     );
 
   return (
-    <div className="flex h-dvh flex-col bg-bg text-text [font-family:var(--font-geist-mono)]">
+    <div className="screen-only flex h-dvh flex-col bg-bg text-text [font-family:var(--font-geist-mono)]">
       {/* Skip link. The rail is ~10 links deep and sits before the input in
           tab order, so a keyboard user otherwise tabs through the entire nav
           to reach the only call to action. Visually hidden until focused. */}
@@ -390,6 +480,23 @@ export function AppShell() {
                 idle ? "opacity-70" : "opacity-100"
               }`}
             >
+              {/* A replayed conversation says so, once, at the top of the
+                  thing it is describing (#18). It must never be mistaken for
+                  a live session, and the honest version of that is a line the
+                  reader passes on the way in — not a badge in the chrome. */}
+              {replayed && (
+                <div className="mb-6 border-l-2 border-accent bg-raised px-3 py-2">
+                  <p className="text-[12px] leading-relaxed text-text-soft">{REPLAY_BANNER}</p>
+                  <button
+                    type="button"
+                    onClick={reset}
+                    className="mt-1 text-[11px] text-text-faint hover:text-accent"
+                  >
+                    start a fresh one
+                  </button>
+                </div>
+              )}
+
               {!hasMessages && (
                 <div className="space-y-5">
                   <h1 className="max-w-[24ch] text-[clamp(21px,3.2vw,34px)] font-medium leading-[1.2] tracking-[-0.02em] text-text">
@@ -559,34 +666,6 @@ export function AppShell() {
                 // everyone; that is not a trade worth making.
                 className="ml-2 min-w-0 flex-1 bg-transparent text-[16px] text-text outline-none placeholder:text-text-faint md:text-[13px]"
               />
-              {/* Below sm these two lose to the input for horizontal room —
-                  five controls in one non-wrapping row leaves the field a
-                  sliver. They move to the rail sheet, which already carries
-                  the readouts the header drops at this width. */}
-              {hasMessages && (
-                <div className="hidden items-center sm:flex">
-                  <CopyButton
-                    getText={() =>
-                      conversationToMarkdown(messages, {
-                        title: SITE_NAME,
-                        sourceUrl: SITE_URL,
-                        footer: DISCLAIMER,
-                      })
-                    }
-                    label="copy all"
-                    copiedLabel="copied all"
-                    event="chat_copy_conversation"
-                    className="mr-3"
-                  />
-                  <button
-                    type="button"
-                    onClick={reset}
-                    className="mr-3 text-[11px] text-text-faint hover:text-accent"
-                  >
-                    reset
-                  </button>
-                </div>
-              )}
               <span className="hidden text-[11px] text-text-faint sm:inline">enter ↵</span>
               {/* Touch has no visible affordance for "press enter" and no
                   hardware key to press. The hint above is the desktop half of
@@ -600,6 +679,57 @@ export function AppShell() {
                 ↵
               </button>
             </form>
+
+            {/* ---- Actions strip (#27) ---------------------------------
+                Was a nudge fired at "session end", an event that doesn't
+                exist on this site — visitors close tabs, they don't finish.
+                So: a persistent one-line strip, quiet, present from the
+                first turn, that gains a little weight after an action
+                instead of interrupting. Nothing appears and nothing has to
+                detect an ending. Scrolls horizontally rather than wrapping
+                on a narrow phone, so the input row above it never moves. */}
+            <div
+              className={`flex h-8 items-center gap-4 overflow-x-auto whitespace-nowrap border-t px-4 text-[11px] transition-colors md:px-10 ${
+                emphasis ? "border-accent/60" : "border-line"
+              }`}
+            >
+              {hasMessages && (
+                <>
+                  <CopyButton
+                    getText={conversationMarkdown}
+                    label="copy"
+                    copiedLabel="copied"
+                    event="chat_copy_conversation"
+                    className={emphasis ? "text-text-soft" : ""}
+                    onCopied={bumpStrip}
+                  />
+                  <StripButton
+                    label="export"
+                    emphasis={emphasis}
+                    onClick={() => openPanel({ kind: "export" })}
+                  />
+                  <StripButton
+                    label={linkCopied ? "link copied" : "link"}
+                    emphasis={emphasis}
+                    onClick={() => {
+                      void copyLink().then((ok) => {
+                        if (!ok) return;
+                        setLinkCopied(true);
+                        window.setTimeout(() => setLinkCopied(false), 1600);
+                      });
+                    }}
+                  />
+                </>
+              )}
+              <StripButton
+                label="paste a job description"
+                emphasis={emphasis}
+                onClick={() => openPanel({ kind: "jd" })}
+              />
+              {hasMessages && (
+                <StripButton label="reset" emphasis={emphasis} onClick={reset} />
+              )}
+            </div>
           </div>
         </div>
 
@@ -639,6 +769,19 @@ export function AppShell() {
         )}
       </div>
 
+      {/* ---- Print document ----------------------------------------------
+          Lives in the DOM and is display:none until print (see the print block
+          in app/globals.css), so Cmd-P prints the document rather than the
+          app — and so the print dialog never opens over a layout that hasn't
+          happened yet. */}
+      <PrintSheet
+        messages={messages}
+        title={SITE_NAME}
+        sourceUrl={SITE_URL}
+        permalink={permalink}
+        footer={DISCLAIMER}
+      />
+
       {/* ---- Mobile sheets ------------------------------------------------ */}
       {isMobile && (
         <>
@@ -667,37 +810,10 @@ export function AppShell() {
                 <div className="truncate">model {model}</div>
               </div>
 
-              {/* The transcript controls the input row drops below sm. Copy
-                  leaves the sheet open — its label is the confirmation, and
-                  closing would hide it. Reset closes, since the sheet is
-                  sitting on top of the conversation it just cleared. */}
-              {hasMessages && (
-                <div className="mt-3 flex flex-col items-start gap-1 border-t border-line pt-3">
-                  <CopyButton
-                    getText={() =>
-                      conversationToMarkdown(messages, {
-                        title: SITE_NAME,
-                        sourceUrl: SITE_URL,
-                        footer: DISCLAIMER,
-                      })
-                    }
-                    label="copy all"
-                    copiedLabel="copied all"
-                    event="chat_copy_conversation"
-                    className="py-1"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      reset();
-                      setRailOpen(false);
-                    }}
-                    className="py-1 text-[11px] text-text-faint hover:text-accent"
-                  >
-                    reset
-                  </button>
-                </div>
-              )}
+              {/* The transcript controls used to be duplicated here, because
+                  the input row dropped them below sm. The actions strip is
+                  present at every width now, so this is one place fewer for
+                  the same two buttons to drift apart. */}
             </SheetContent>
           </Sheet>
 
@@ -812,6 +928,31 @@ function RailLink({
     <Link href={item.href ?? "/"} className={cls}>
       {item.label} →
     </Link>
+  );
+}
+
+// One action in the strip. Emphasis is a colour step, not a new element —
+// the strip is the same shape before and after, which is the difference
+// between weight and a notification.
+function StripButton({
+  label,
+  emphasis,
+  onClick,
+}: {
+  label: string;
+  emphasis: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`shrink-0 transition-colors hover:text-accent ${
+        emphasis ? "text-text-soft" : "text-text-faint"
+      }`}
+    >
+      {label}
+    </button>
   );
 }
 

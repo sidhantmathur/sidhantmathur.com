@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { track } from "@/lib/analytics";
+import { decodeSnapshot, payloadFromHash } from "@/lib/permalink";
 import type { RoleFitResult } from "@/lib/role-fit";
 import {
   isRateLimitClass,
@@ -16,6 +17,9 @@ import {
 // Alias so the rest of this file (and its callers) read as before while every
 // message is the app's typed variant, carrying the F1 telemetry data part.
 type UIMessage = ChatUIMessage;
+
+/** The same type, exported for the components that render a message. */
+export type ChatMessage = ChatUIMessage;
 
 
 const STORAGE_KEY = "conversation.v1";
@@ -39,6 +43,10 @@ export type PanelView =
   | { kind: "why" }
   | { kind: "jd" }
   | { kind: "instruments" }
+  // The export surface and the corpus index (Sprint 5, #17 and #13's
+  // `/sources`). Both are opened deliberately and never by a tool call.
+  | { kind: "export" }
+  | { kind: "corpus" }
   // One chunk of the corpus, opened from a citation (Sprint 3, F2/#4). The
   // whole file renders; `id` is what gets highlighted and scrolled to.
   | { kind: "source"; id: string }
@@ -172,6 +180,10 @@ export function useConversation(model: string) {
   // the server exactly, so: start empty, restore after mount.
   const [hydrated, setHydrated] = useState(false);
 
+  // True when this conversation came out of a URL fragment rather than out of
+  // this browser. Drives the banner, and switches persistence off — see below.
+  const [replayed, setReplayed] = useState(false);
+
   // The client's own stopwatch, kept so the record can carry both latencies.
   const clientTtft = useRef<number | null>(null);
 
@@ -251,25 +263,73 @@ export function useConversation(model: string) {
   const sentCount = useRef(0);
 
   // Restore once, after mount. One conversation, not a history sidebar.
+  //
+  // A permalink wins over local storage (Sprint 5, #18). Someone who opened a
+  // link came to read THAT conversation, and the fragment is decoded before
+  // anything is read back from the browser.
   useEffect(() => {
-    let saved: UIMessage[] = [];
-    try {
-      const raw = window.localStorage.getItem(STORAGE_KEY);
-      const parsed = raw ? JSON.parse(raw) : null;
-      if (Array.isArray(parsed)) saved = parsed as UIMessage[];
-    } catch {
-      /* unreadable / private mode — start fresh */
+    let cancelled = false;
+
+    function restoreLocal() {
+      let saved: UIMessage[] = [];
+      try {
+        const raw = window.localStorage.getItem(STORAGE_KEY);
+        const parsed = raw ? JSON.parse(raw) : null;
+        if (Array.isArray(parsed)) saved = parsed as UIMessage[];
+      } catch {
+        /* unreadable / private mode — start fresh */
+      }
+      queueMicrotask(() => {
+        if (cancelled) return;
+        if (saved.length) setMessages(saved);
+        setHydrated(true);
+      });
     }
-    queueMicrotask(() => {
-      if (saved.length) setMessages(saved);
+
+    const payload = payloadFromHash(window.location.hash);
+    if (!payload) {
+      restoreLocal();
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    void decodeSnapshot(payload).then((restored) => {
+      if (cancelled) return;
+      // A fragment that doesn't decode is a link an email client cut in half.
+      // Falling through to the reader's own conversation is the quiet answer;
+      // an error screen for a bad link would be the loud wrong one.
+      if (!restored?.length) {
+        restoreLocal();
+        return;
+      }
+      setReplayed(true);
+      setMessages(
+        restored.map((m, i) => ({
+          id: `replay-${i}`,
+          role: m.role as "user" | "assistant",
+          parts: m.parts,
+        })) as unknown as UIMessage[],
+      );
       setHydrated(true);
+      track("chat_permalink_opened", { messages: restored.length });
     });
+
+    return () => {
+      cancelled = true;
+    };
   }, [setMessages]);
 
   // Persist only once restore has run, so the empty first render can't wipe
   // the stored conversation before it's read back.
+  //
+  // A REPLAYED CONVERSATION IS NEVER PERSISTED. Someone reading a link they
+  // were sent has their own conversation sitting in this browser, and
+  // overwriting it with a stranger's would be the rudest possible reading of
+  // "no storage". The replay lives in memory until the tab closes or the
+  // reader starts a fresh one.
   useEffect(() => {
-    if (!hydrated) return;
+    if (!hydrated || replayed) return;
     try {
       if (messages.length) {
         window.localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
@@ -279,7 +339,7 @@ export function useConversation(model: string) {
     } catch {
       /* private mode / quota — persistence is a nicety, never a hard dependency */
     }
-  }, [messages, hydrated]);
+  }, [messages, hydrated, replayed]);
 
   // Time to first token: the gap between send and the first streamed character.
   useEffect(() => {
@@ -340,6 +400,12 @@ export function useConversation(model: string) {
   function reset() {
     setMessages([]);
     setPanel({ kind: "none" });
+    // Drops the fragment as well, so a reload after "start a fresh one" opens
+    // the site rather than replaying the link again.
+    if (replayed) {
+      setReplayed(false);
+      window.history.replaceState(null, "", window.location.pathname);
+    }
     setErrorKind("none");
     setErrorClass(null);
     setTtft(null);
@@ -359,6 +425,8 @@ export function useConversation(model: string) {
     isBusy,
     awaitingReply,
     errorKind,
+    // True while the conversation on screen was rebuilt from a link (#18).
+    replayed,
     // The class behind `errorKind`. Nothing renders it yet — #6 (Sprint 2) is
     // what it's here for; F1's job is that the number exists to be read.
     errorClass,

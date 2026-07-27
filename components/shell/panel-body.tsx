@@ -9,7 +9,7 @@ import { PROJECTS } from "@/content/projects";
 import { CHUNKS, CHUNK_BY_ID, type Chunk } from "@/lib/chunks.generated";
 import { stripCitations } from "@/lib/verify";
 import type { RequirementVerdict } from "@/lib/role-fit";
-import { JD_COPY, PROJECT_LINKS, SOCIAL_LINKS, WHY_CHATBOT } from "./shell-data";
+import { FIT_LABELS, JD_COPY, PROJECT_LINKS, SOCIAL_LINKS, WHY_CHATBOT } from "./shell-data";
 import type { PanelView, RoleFit } from "./use-conversation";
 
 const CASE_STUDIES = {
@@ -36,6 +36,12 @@ export function panelTitle(panel: PanelView): string {
     // content. The title still belongs here so both panel chromes agree.
     case "instruments":
       return "Instruments";
+    // Rendered by app-shell for the same reason as the deck: the export
+    // surface is conversation state, not content.
+    case "export":
+      return "Export";
+    case "corpus":
+      return "Sources";
     case "project":
       return PROJECTS[panel.slug].title;
     case "source": {
@@ -89,6 +95,42 @@ export function PanelBody({
       <div className="space-y-6">
         {CHUNKS.filter((c) => c.source === chunk.source).map((c) => (
           <ChunkBlock key={c.id} chunk={c} focused={c.id === chunk.id} showId />
+        ))}
+      </div>
+    );
+  }
+
+  // The whole corpus, by file, with the id each chunk answers to (Sprint 5,
+  // #13's `/sources`). The citation margin shows the ids an ANSWER used; this
+  // is the other direction — everything the site could ever cite, listed once,
+  // so "what is this built from" is a question with a visible answer rather
+  // than one you have to ask the model.
+  if (panel.kind === "corpus") {
+    const bySource = new Map<string, Chunk[]>();
+    for (const chunk of CHUNKS) {
+      const list = bySource.get(chunk.sourceLabel) ?? [];
+      list.push(chunk);
+      bySource.set(chunk.sourceLabel, list);
+    }
+    return (
+      <div className="space-y-5">
+        {[...bySource.entries()].map(([label, chunks]) => (
+          <div key={label}>
+            <div className="text-[11px] text-text-faint">{label}</div>
+            <div className="mt-1 flex flex-col">
+              {chunks.map((chunk) => (
+                <button
+                  key={chunk.id}
+                  type="button"
+                  onClick={() => onOpenSource?.({ kind: "source", id: chunk.id })}
+                  className="border-b border-line py-1.5 text-left text-[12px] text-text-soft transition-colors last:border-b-0 hover:text-accent"
+                >
+                  {chunk.heading}
+                  <span className="ml-2 text-[10px] text-text-faint">{chunk.id}</span>
+                </button>
+              ))}
+            </div>
+          </div>
         ))}
       </div>
     );
@@ -286,7 +328,7 @@ function RequirementTable({
 
       {gaps.length > 0 && (
         <div className="border-t border-line pt-3">
-          <div className="text-[11px] text-text-faint">What he doesn&apos;t have</div>
+          <div className="text-[11px] text-text-faint">{FIT_LABELS.gaps}</div>
           <ul className="mt-1 space-y-1">
             {gaps.map((gap, i) => (
               <li key={i} className="text-[12px] leading-relaxed text-text-soft">
@@ -299,7 +341,7 @@ function RequirementTable({
 
       {!gaps.length && noGapsRationale && (
         <div className="border-t border-line pt-3">
-          <div className="text-[11px] text-text-faint">No unmet requirements — why</div>
+          <div className="text-[11px] text-text-faint">{FIT_LABELS.noGaps}</div>
           <p className="mt-1 text-[12px] leading-relaxed text-text-soft">
             {stripCitations(noGapsRationale)}
           </p>
@@ -312,11 +354,7 @@ function RequirementTable({
         </p>
       )}
 
-      <p className="text-[11px] leading-relaxed text-text-faint">
-        Each row is a judgment against the record, not a score, and the four tags don&apos;t add
-        up to one. A row claiming a fit has to name the part of the record it stands on; where
-        it didn&apos;t, the site downgraded it rather than the model.
-      </p>
+      <p className="text-[11px] leading-relaxed text-text-faint">{FIT_LABELS.notAScore}</p>
     </div>
   );
 }
