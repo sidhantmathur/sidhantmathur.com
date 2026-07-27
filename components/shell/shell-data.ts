@@ -1,3 +1,5 @@
+import { JD_PREFIX } from "@/lib/job-posting";
+
 // Navigation and copy for the app shell.
 //
 // Resume content is NOT here — it comes from lib/citations.generated.ts, built
@@ -67,8 +69,10 @@ export const JD_COPY = {
   body: "Paste the posting and I'll map my experience onto it — including the parts I don't match.",
   placeholder: "Paste the job description here",
   submit: "Check the fit",
-  prefix:
-    "Here's a job description. Map my experience onto it, and be straight about where I don't match.",
+  // Lives in lib/job-posting.ts because the server reads it too — it's the
+  // strongest signal that a turn is a posting, and the route forces the
+  // roleFit tool call on those turns.
+  prefix: JD_PREFIX,
 };
 
 export const PROJECT_LINKS = [
