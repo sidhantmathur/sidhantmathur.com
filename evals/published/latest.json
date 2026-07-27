@@ -1,10 +1,10 @@
 {
-  "publishedAt": "2026-07-27T20:00:28.235Z",
+  "publishedAt": "2026-07-27T20:08:30.428Z",
   "static": {
-    "ranAt": "2026-07-27T20:00:28.124Z",
+    "ranAt": "2026-07-27T20:08:30.304Z",
     "totals": {
-      "tests": 157,
-      "passed": 157,
+      "tests": 180,
+      "passed": 180,
       "failed": 0
     },
     "files": [
@@ -220,6 +220,78 @@
               "every error class can be simulated by the route",
               "every error class has a button in the panel",
               "the panel offers nothing the route won't produce"
+            ]
+          }
+        ]
+      },
+      {
+        "file": "evals/measurements.test.mjs",
+        "total": 23,
+        "passed": 23,
+        "suites": [
+          {
+            "name": "withholding a statistic the sample can't carry",
+            "total": 4,
+            "passed": 4,
+            "tests": [
+              "a median is withheld below the floor and reported above it",
+              "a 95th percentile has a stricter floor than a median",
+              "a figure that was never measured is distinguished from one that's too thin",
+              "a success rate needs turns before it means anything"
+            ]
+          },
+          {
+            "name": "groundedness (#22), which is gated on #2 in code",
+            "total": 5,
+            "passed": 5,
+            "tests": [
+              "no published run means no number at all",
+              "a rate is withheld under the claim floor and the counts still show",
+              "above the floor it reports the rate",
+              "a published number drawn only from job-posting runs is caveated",
+              "the groups behind the number travel with it"
+            ]
+          },
+          {
+            "name": "formatting",
+            "total": 3,
+            "passed": 3,
+            "tests": [
+              "milliseconds stay milliseconds until they're seconds",
+              "a percentage keeps a decimal unless it would read as false precision",
+              "an undated thing says so rather than showing an epoch"
+            ]
+          },
+          {
+            "name": "the build with nothing to show",
+            "total": 4,
+            "passed": 4,
+            "tests": [
+              "a build with no analytics credentials succeeds and says so",
+              "the empty state carries no numbers for the panel to render",
+              "the script never invents a fallback number",
+              "every reason the aggregate can be unavailable has a sentence on the page"
+            ]
+          },
+          {
+            "name": "the published eval snapshot",
+            "total": 4,
+            "passed": 4,
+            "tests": [
+              "is committed and parses",
+              "carries no model prose",
+              "the static half matches the suite that is actually here",
+              "every published live run names its model and its groups"
+            ]
+          },
+          {
+            "name": "the machine-readable eval output",
+            "total": 3,
+            "passed": 3,
+            "tests": [
+              "npm run eval still prints TAP as well as writing JSON",
+              "the measurements build runs before every build and every dev server",
+              "the published snapshot is committed, not ignored"
             ]
           }
         ]

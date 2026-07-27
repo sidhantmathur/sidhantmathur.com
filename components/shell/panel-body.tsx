@@ -201,7 +201,10 @@ export function PanelBody({
           with the knowledge base injected directly into the prompt — at this scale, a
           vector database would be complexity for its own sake, so there isn&apos;t one.
         </p>
-        <PanelLink href="/colophon">Open as a page</PanelLink>
+        <div className="flex flex-wrap gap-2">
+          <PanelLink href="/colophon">Open as a page</PanelLink>
+          <PanelLink href="/measurements">What it scores</PanelLink>
+        </div>
       </div>
     );
   }

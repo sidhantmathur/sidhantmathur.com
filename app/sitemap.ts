@@ -15,6 +15,7 @@ const ROUTES = [
   { path: "/projects/nokia", priority: 0.8 },
   { path: "/projects/dell-ml", priority: 0.7 },
   { path: "/colophon", priority: 0.5 },
+  { path: "/measurements", priority: 0.5 },
 ];
 
 export default function sitemap(): MetadataRoute.Sitemap {

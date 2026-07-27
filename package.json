@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "predev": "node scripts/build-knowledge.mjs",
+    "predev": "node scripts/build-knowledge.mjs && node scripts/build-measurements.mjs",
     "dev": "next dev",
-    "prebuild": "node scripts/build-knowledge.mjs",
+    "prebuild": "node scripts/build-knowledge.mjs && node scripts/build-measurements.mjs",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",

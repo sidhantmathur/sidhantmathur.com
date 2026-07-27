@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { DocPage } from "@/components/layout/doc-page";
 
 export const metadata: Metadata = {
@@ -28,6 +29,14 @@ export default function ColophonPage() {
           <span className="font-mono text-text-faint">
             [TODO: confirm repo is public before linking]
           </span>
+        </p>
+        <p className="mt-4 max-w-[58ch] text-[15px] leading-relaxed text-text-soft md:text-base">
+          The assistant is tested against a fixed corpus, and what it scores is
+          published rather than described.{" "}
+          <Link href="/measurements" className="text-accent">
+            See the measurements
+          </Link>
+          .
         </p>
       </DocPage>
   );
