@@ -80,6 +80,19 @@ What exists: `JobDescriptionForm` in `components/shell/panel-body.tsx`,
 `app/api/chat/route.ts`, and the roleFit guidance in `lib/system-prompt.ts`.
 The user-turn cap was raised 500 → 4000 chars for this flow.
 
+A four-model brainstorm (Haiku, Sonnet, Opus, Fable) has since run; the full
+output is in `docs/idea-bank.md`. §6 is a staged roadmap for this feature.
+
+**Stage 0 is done — the feature has now been tested against real postings**
+(`npm run eval:live -- --group roleFit`, harness in `evals/`). The result was
+not what was predicted. Gap-naming is *good*: on a posting he's unqualified for
+the model volunteers "no management experience, no track record hiring … falling
+short of the 8+ year requirement." The actual bug is structural — **on the
+postings he's least qualified for, the model stops calling the `roleFit` tool
+and answers in prose**, so there is no structured assessment and `caveats` is
+empty because the whole object is missing. Every downstream idea in §6 reads
+from that object. Full write-up in `docs/idea-bank.md` §6.
+
 Directions worth exploring — **brainstorm with Sidhant before building**:
 
 - Structured output rather than prose: requirement-by-requirement match, with
