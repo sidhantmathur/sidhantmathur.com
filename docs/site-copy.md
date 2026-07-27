@@ -136,6 +136,24 @@ It can make mistakes — the resume is the authoritative version.
 Title: A Darle 20
 Subtitle: A marketplace for tabletop game sessions in Latin America.
 
+### In plain terms
+
+[DRAFT 2026-07-27 — written by Claude for Track B (#20). Explanation only: it
+restates facts already in the sections below in plain language and introduces
+none of its own. Rewrite in your own voice.]
+
+Tabletop roleplaying games are played in groups, and somebody has to run the
+game for everyone else. Finding a good one — and paying them — was word of
+mouth and a private arrangement. A Darle 20 is where that arrangement happens
+instead: a host lists a session, a player books a seat, the payment goes
+through the site, and both sides get an email about it.
+
+The booking form is the easy part. The hard part is money. It has to reach the
+host rather than sit with the company, some players have no card at all and pay
+cash at a convenience store instead, and any of it can be cancelled or refunded
+by someone who isn't you. Most of what's described below is the machinery for
+handling that without a person in the middle.
+
 ### The problem
 Tabletop roleplaying games are big in Latin America, but finding a good game
 master — and paying one — was informal and unreliable. Hosts had no clean way to
@@ -184,6 +202,23 @@ edge cases, and infrastructure costs.
 Title: Reporting tools at Nokia
 Subtitle: Internal tools for a global sales organization.
 
+### In plain terms
+
+[DRAFT 2026-07-27 — written by Claude for Track B (#20). Explanation only.
+Rewrite in your own voice.]
+
+A large company sells in a lot of places, and every quarter its executives need
+one picture of how that went. Getting to that picture meant asking people across
+the regions to send their numbers in, in whatever shape they kept them, and
+somebody assembling it by hand. Here that somebody was a finance analyst, and it
+took their entire workday, every day of the quarter-end close.
+
+The fix isn't clever, it's just the whole job: build something the regions can
+fill in themselves, get it in front of the people who have to use it, and keep
+it working when they run into trouble. The second half of this page is the same
+job wearing different clothes — the company was moving off one reporting system,
+and every report and every user had to come out the other side.
+
 ### The problem
 Quarterly executive reporting ran on manual data collection — a process that
 consumed one finance analyst's entire workday, every day of quarter-end close,
@@ -214,6 +249,25 @@ and I close that gap myself rather than filing a ticket.
 
 Title: Sales prediction at Dell
 Subtitle: A propensity model for cross-sell targeting, built as an intern.
+
+### In plain terms
+
+[DRAFT 2026-07-27 — written by Claude for Track B (#20). Explanation only; the
+caveats it names are the ones already in the paragraph below it. Rewrite in
+your own voice.]
+
+A big company already sells to a lot of customers. Some of them would buy a
+second product as well, and nobody knows which — so the sales team calls
+everyone, or it guesses. A propensity model is a way of ranking that list:
+you show it who bought what in the past, and it scores the customers who most
+resemble the ones who already said yes.
+
+That's what this was, and it's worth reading with the caveats attached. It was
+an internship, the model was one piece of a much larger sales machine, and the
+pipeline figure below is an estimate built from average deal sizes rather than
+money anybody collected.
+
+### The project
 
 During a summer internship in 2018, I built a propensity model (Azure ML) on
 Dell's historical customer database to identify cross-sell targets for a
