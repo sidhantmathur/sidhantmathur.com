@@ -12,7 +12,7 @@ import {
   SOCIAL_LINKS,
   type RailItem,
 } from "./shell-data";
-import { Markdown } from "./markdown";
+import { Answer } from "./answer";
 import { usePanelUrl } from "./use-panel-url";
 import { PanelBody, panelTitle } from "./panel-body";
 import { CopyButton } from "./copy-button";
@@ -415,8 +415,15 @@ export function AppShell() {
                         </div>
                       ) : (
                         <>
-                          <Markdown text={text} />
-                          {/* Citations and the copy affordance share one row.
+                          {/* The answer owns its own sources: markers out of
+                              the prose, into the margin, and a source row
+                              under it once the turn settles (Sprint 3). */}
+                          <Answer
+                            text={text}
+                            settled={!isBusy || m.id !== lastId}
+                            onOpenSource={openPanel}
+                          />
+                          {/* Tool citations and the copy affordance share one row.
                               The copy button stays visible rather than
                               hover-revealed — hover doesn't exist on touch,
                               and this is the only way an answer leaves the

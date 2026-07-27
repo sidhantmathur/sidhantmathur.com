@@ -7,6 +7,7 @@ import DellMl from "@/content/dell-ml.mdx";
 import Nokia from "@/content/nokia.mdx";
 import { PROJECTS } from "@/content/projects";
 import { CHUNKS, CHUNK_BY_ID, type Chunk } from "@/lib/chunks.generated";
+import { stripCitations } from "@/lib/verify";
 import { JD_COPY, PROJECT_LINKS, SOCIAL_LINKS, WHY_CHATBOT } from "./shell-data";
 import type { PanelView } from "./use-conversation";
 
@@ -179,13 +180,21 @@ export function PanelBody({
         {matches.map((m, i) => (
           <div key={i} className="border-l-2 border-accent pl-3">
             <div className="text-[12px] text-text">{m.area}</div>
-            <p className="mt-1 text-[12px] leading-relaxed text-text-soft">{m.evidence}</p>
+            {/* Markers are stripped rather than rendered: the roleFit schema
+                has no citation field yet (that's Sprint 4's work with bank §6
+                Stage 1), so an id the model volunteers here has nothing to
+                open and would render as literal brackets. */}
+            <p className="mt-1 text-[12px] leading-relaxed text-text-soft">
+              {stripCitations(m.evidence)}
+            </p>
           </div>
         ))}
         {caveats && (
           <div className="border-t border-line pt-3">
             <div className="text-[11px] text-text-faint">Worth knowing</div>
-            <p className="mt-1 text-[12px] leading-relaxed text-text-soft">{caveats}</p>
+            <p className="mt-1 text-[12px] leading-relaxed text-text-soft">
+              {stripCitations(caveats)}
+            </p>
           </div>
         )}
       </div>

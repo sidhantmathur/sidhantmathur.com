@@ -80,10 +80,34 @@ function inline(text: string, keyPrefix: string): ReactNode[] {
 const BULLET = /^\s*[-*]\s+/;
 const ORDERED = /^\s*\d+[.)]\s+/;
 
-export function Markdown({ text }: { text: string }) {
+export function Markdown({
+  text,
+  gutter,
+}: {
+  text: string;
+  /**
+   * Optional marginalia (#12): whatever this returns is rendered beside the
+   * block, in a column that only exists at lg. Blocks are indexed by their
+   * position in the same split the citation checker uses, so the two agree on
+   * what "block 2" means.
+   */
+  gutter?: (blockIndex: number) => ReactNode;
+}) {
   // Blank lines separate blocks. Streaming means this runs on partial text, so
   // every branch has to tolerate an unterminated block.
   const blocks = text.split(/\n{2,}/);
+
+  // The margin is a grid column rather than an absolutely-positioned overlay so
+  // a long note pushes its own row taller instead of colliding with the next.
+  const wrap = (bi: number, node: ReactNode) =>
+    gutter ? (
+      <div key={bi} className="lg:grid lg:grid-cols-[1fr_6.5rem] lg:gap-4">
+        <div className="min-w-0">{node}</div>
+        <div className="hidden lg:block">{gutter(bi)}</div>
+      </div>
+    ) : (
+      <Fragment key={bi}>{node}</Fragment>
+    );
 
   return (
     <div className="space-y-3 text-[13px] leading-[1.7] text-text-soft">
@@ -96,9 +120,9 @@ export function Markdown({ text }: { text: string }) {
 
         if (bulleted || numbered) {
           const Tag = numbered ? "ol" : "ul";
-          return (
+          return wrap(
+            bi,
             <Tag
-              key={bi}
               className={`space-y-1.5 pl-4 ${numbered ? "list-decimal" : "list-disc"} marker:text-text-faint`}
             >
               {lines.map((l, li) => (
@@ -106,24 +130,24 @@ export function Markdown({ text }: { text: string }) {
                   {inline(l.replace(numbered ? ORDERED : BULLET, ""), `${bi}-${li}`)}
                 </li>
               ))}
-            </Tag>
+            </Tag>,
           );
         }
 
         // Headings would be too loud in a chat turn; render them as emphasis.
         const isHeading = /^#{1,6}\s+/.test(lines[0]) && lines.length === 1;
         if (isHeading) {
-          return (
-            <p key={bi} className="font-medium text-text">
+          return wrap(
+            bi,
+            <p className="font-medium text-text">
               {inline(lines[0].replace(/^#{1,6}\s+/, ""), `${bi}-h`)}
-            </p>
+            </p>,
           );
         }
 
-        return (
-          <p key={bi} className="whitespace-pre-wrap">
-            {inline(lines.join("\n"), String(bi))}
-          </p>
+        return wrap(
+          bi,
+          <p className="whitespace-pre-wrap">{inline(lines.join("\n"), String(bi))}</p>,
         );
       })}
     </div>
