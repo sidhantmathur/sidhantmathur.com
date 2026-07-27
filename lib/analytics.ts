@@ -42,6 +42,13 @@ export function initAnalytics(): void {
   ensureInit();
 }
 
+// The event vocabulary.
+//
+// Widened in roadmap Sprint 1 (F3) ahead of the panel that consumes it (#23,
+// Sprint 6). That panel aggregates PostHog history at BUILD time, so the
+// emitters have to have been running for weeks before it has anything to show
+// — shipping the events early and the panel late is the whole point of putting
+// F3 in this sprint rather than that one.
 export type AnalyticsEvent =
   | "chat_message_sent"
   | "chat_error"
@@ -51,7 +58,17 @@ export type AnalyticsEvent =
   // Copy-to-clipboard. Worth measuring: the site stores nothing, so a copy is
   // the clearest signal that an answer was considered worth keeping.
   | "chat_copy_message"
-  | "chat_copy_conversation";
+  | "chat_copy_conversation"
+  // One event per completed turn, carrying the F1 telemetry record. This is
+  // what #23's latency and reliability panel is built from.
+  //   model, tier, jd, ttft_ms, duration_ms, tokens_per_second,
+  //   input_tokens, cached_input_tokens, output_tokens, cache_hit,
+  //   cache_hit_ratio, steps, tools_called, finish_reason
+  | "chat_turn_complete"
+  // A turn that failed with a class attached — the reliability half of #23,
+  // and the difference between "the site is down" and "the model timed out".
+  //   error_class, model, tier, jd
+  | "chat_turn_failed";
 
 // Safe no-op when PostHog isn't configured, or when the SDK hasn't finished
 // loading yet — events fired in that window are dropped (see note above).
