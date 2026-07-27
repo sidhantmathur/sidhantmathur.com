@@ -9,8 +9,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "eval": "node scripts/build-knowledge.mjs && node --test --experimental-strip-types \"evals/*.test.mjs\"",
-    "eval:live": "node --experimental-strip-types evals/run-live.mjs"
+    "eval": "node scripts/build-knowledge.mjs && node --test --experimental-strip-types --test-reporter=tap --test-reporter-destination=stdout --test-reporter=./evals/reporters/json.mjs --test-reporter-destination=evals/static-results.json \"evals/*.test.mjs\"",
+    "eval:live": "node --experimental-strip-types evals/run-live.mjs",
+    "eval:publish": "node scripts/publish-evals.mjs"
   },
   "dependencies": {
     "@ai-sdk/react": "^4.0.15",
