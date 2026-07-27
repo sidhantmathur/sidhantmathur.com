@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Claude Code's local tooling. Git-ignored, not ours, and it drowns the
+    // site's own output: 302 errors and 7,491 warnings, none of them shippable.
+    ".claude/**",
   ]),
 ]);
 
