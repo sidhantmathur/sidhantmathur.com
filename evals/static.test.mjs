@@ -209,6 +209,29 @@ describe("live-eval assertions are still grounded", () => {
     }
   });
 
+  test("a job-posting turn is forced through extraction and then assessment", () => {
+    // Sprint 4. The coverage guarantee — every extracted requirement gets a row
+    // — is only worth anything if the extraction actually ran. A prepareStep
+    // that lost its first stage would leave the reconciler with an empty list
+    // to compare against, and it would report perfect coverage of nothing.
+    const route = read("app/api/chat/route.ts");
+    const forced = route.slice(route.indexOf("prepareStep: jobPosting"));
+    const extractAt = forced.indexOf('toolName: "extractRequirements"');
+    const assessAt = forced.indexOf('toolName: "roleFit"');
+    assert.ok(extractAt !== -1, "job-posting turns no longer force the extraction step");
+    assert.ok(assessAt !== -1, "job-posting turns no longer force the assessment step");
+    assert.ok(extractAt < assessAt, "the assessment is forced before the extraction it reads");
+  });
+
+  test("the posting reaches the model fenced and re-asserted", () => {
+    const route = read("app/api/chat/route.ts");
+    assert.match(
+      route,
+      /wrapPosting/,
+      "the posting is no longer wrapped — bank §6 Stage 2's delimiting and re-assertion are gone",
+    );
+  });
+
   test("ordinary questions are not detected as job postings", () => {
     // The cost of a false positive is a forced tool call on a turn that didn't
     // want one — a visibly wrong answer shape. These are the shapes closest to

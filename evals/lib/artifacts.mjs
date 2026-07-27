@@ -109,12 +109,18 @@ export function readTierLimits() {
   return limits;
 }
 
-/** Tool names defined on the chat route. */
+/**
+ * Tool names defined on the chat route.
+ *
+ * The tools are built per request (Sprint 4 — the job-description flow's two
+ * calls hand a requirement list between them), so this reads the factory rather
+ * than a module-scope object.
+ */
 export function readToolNames() {
   const src = read("app/api/chat/route.ts");
-  const block = src.match(/const chatTools = \{([\s\S]*?)\n\};/);
-  if (!block) throw new Error("Could not locate chatTools in app/api/chat/route.ts");
-  return [...block[1].matchAll(/^ {2}(\w+):\s*tool\(/gm)].map((m) => m[1]);
+  const block = src.match(/function buildChatTools\([\s\S]*?\n\}\n/);
+  if (!block) throw new Error("Could not locate buildChatTools in app/api/chat/route.ts");
+  return [...block[0].matchAll(/^ {4}(\w+):\s*tool\(/gm)].map((m) => m[1]);
 }
 
 /**

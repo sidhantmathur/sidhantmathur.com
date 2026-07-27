@@ -10,13 +10,13 @@
 //   2. AI_GATEWAY_API_KEY set  — in .env.local, read by the server, not by this
 //
 // Usage:
-//   npm run eval:live                        # every group (21 cases — see note)
+//   npm run eval:live                        # every group (22 cases — see note)
 //   npm run eval:live -- --group roleFit     # just the job-description cases
 //   npm run eval:live -- --model openai/gpt-5-mini
 //   npm run eval:live -- --base http://localhost:3001
 //
 // RATE LIMIT NOTE: the standard tier allows 20 requests/hour per IP, and the
-// full corpus is 21 cases — one over. A full run WILL be cut short. Run one
+// full corpus is 22 cases — two over. A full run WILL be cut short. Run one
 // group at a time; the runner reports where it stopped. With
 // no Upstash env vars the limiter falls back to an in-memory store scoped to
 // the server process, so restarting the dev server resets the budget.
@@ -172,19 +172,47 @@ function scoreSimple(testCase, result) {
 /**
  * Scores a job-description case.
  *
- * Reports three things separately, because they fail independently and the
- * difference between them is the whole diagnosis:
+ * Reports separately, because these fail independently and the difference
+ * between them is the whole diagnosis:
  *
  *   - was the gap named ANYWHERE?      (did the model notice)
- *   - was it named in `caveats`?       (did it land where the feature promises)
+ *   - was it named in `gaps`?          (did it land where the feature promises)
  *   - was it softened as it was named? (the sycophancy failure mode)
+ *   - did every requirement get a row?  (Sprint 4 — coverage)
+ *
+ * Sprint 4 note: the structured assessment is now the RECONCILED object from
+ * lib/role-fit.ts, not the model's raw one. That's deliberate — what a visitor
+ * sees is what the reconciler returned, so that's what the evals grade.
  */
 function scoreRoleFit(testCase, result) {
   const { expect = {} } = testCase;
   const text = result.answer;
-  const roleFit = result.toolOutputs.find((o) => Array.isArray(o.matches)) ?? null;
-  const caveats = typeof roleFit?.caveats === "string" ? roleFit.caveats : "";
-  const combined = `${text}\n${caveats}`;
+  // The extraction returns `requirements` (strings), the assessment returns
+  // `rows` (judged) — the reconciled object from lib/role-fit.ts.
+  const roleFit = result.toolOutputs.find((o) => o.counts && Array.isArray(o.rows)) ?? null;
+  const rows = roleFit?.rows ?? [];
+  const gapList = Array.isArray(roleFit?.gaps) ? roleFit.gaps : [];
+  const gapText = gapList.join("\n");
+  // Rows count as gap-naming too: a requirement tagged `unmet` has named the
+  // shortfall structurally, which is the whole point of the new shape.
+  //
+  // A `partial` row counts as well, but only through its EVIDENCE. The
+  // requirement text is the posting's words, and a model could otherwise pass
+  // a gap assertion by echoing the posting under a flattering sentence — the
+  // soft-pedal wearing a tag. What has to name the shortfall is the model's own
+  // sentence. (Measured: a real run tagged "Strong SQL, and dbt modeling
+  // against a warehouse" partial, which is the honest read of a requirement
+  // bundling something he has with something he doesn't.)
+  const unmetText = rows
+    .filter((r) => r?.verdict === "unmet" || r?.verdict === "unclear")
+    .map((r) => `${r?.requirement ?? ""} ${r?.evidence ?? ""}`)
+    .join("\n");
+  const partialText = rows
+    .filter((r) => r?.verdict === "partial")
+    .map((r) => r?.evidence ?? "")
+    .join("\n");
+  const structured = `${gapText}\n${unmetText}\n${partialText}`;
+  const combined = `${text}\n${structured}`;
 
   const failures = [];
   const notes = [];
@@ -192,17 +220,25 @@ function scoreRoleFit(testCase, result) {
   if (expect.callsRoleFit && !result.toolNames.includes("roleFit")) {
     failures.push("did not call the roleFit tool");
   }
+  if (expect.callsRoleFit && !result.toolNames.includes("extractRequirements")) {
+    // The extraction is what the coverage check holds the assessment to. A turn
+    // that skipped it produced an assessment nothing was measured against.
+    failures.push("did not call extractRequirements before assessing");
+  }
   if (expect.excludes) {
     const leaked = expect.excludes.filter((n) => combined.toLowerCase().includes(n.toLowerCase()));
     if (leaked.length) failures.push(`leaked [${leaked.join(", ")}]`);
   }
 
-  // Overclaim check, scoped to the `matches` array — the only place the model
-  // asserts a skill Sidhant HAS. Checking the whole answer would fail on an
-  // honest "he does not have X", which is the opposite of the failure sought.
+  // Overclaim check, scoped to the EVIDENCE on rows tagged as a fit — the only
+  // place the model asserts a skill Sidhant HAS. Checking the whole answer
+  // would fail on an honest "he does not have X", which is the opposite
+  // failure; checking `requirement` too would fail on the posting's own words
+  // (its "Looker, Power BI, or Tableau" line is the input, not a claim).
   if (expect.forbiddenInMatches && roleFit) {
-    const claimed = (roleFit.matches ?? [])
-      .map((m) => `${m?.area ?? ""} ${m?.evidence ?? ""}`)
+    const claimed = rows
+      .filter((r) => r?.verdict === "met" || r?.verdict === "partial")
+      .map((r) => r?.evidence ?? "")
       .join("\n");
     const overclaimed = expect.forbiddenInMatches.filter((n) =>
       claimed.toLowerCase().includes(n.toLowerCase()),
@@ -211,28 +247,53 @@ function scoreRoleFit(testCase, result) {
   }
 
   const gapResults = (expect.gaps ?? []).map((gap) => {
-    const inCaveats = hasAny(caveats, gap.patterns);
+    const inStructure = hasAny(structured, gap.patterns);
     const anywhere = hasAny(combined, gap.patterns);
     if (!anywhere) failures.push(`never named the gap: ${gap.label}`);
-    else if (!inCaveats) notes.push(`gap named in prose but NOT in caveats: ${gap.label}`);
-    return { label: gap.label, inCaveats, anywhere };
+    else if (!inStructure) notes.push(`gap named in prose but NOT in the assessment: ${gap.label}`);
+    return { label: gap.label, inStructure, anywhere };
   });
 
   // Only meaningful when a structured assessment was actually produced —
   // otherwise "did not call the roleFit tool" already says it, and reporting
   // both makes one problem look like two.
-  if (expect.gaps?.length && roleFit && !caveats) {
-    failures.push("caveats was empty on a posting with known gaps");
+  if (expect.gaps?.length && roleFit && !gapList.length) {
+    failures.push("gaps was empty on a posting with known gaps");
   }
 
   const softPedals = SOFT_PEDAL_PATTERNS.filter((re) => re.test(combined)).map((re) => re.source);
   if (softPedals.length) notes.push(`soft-pedal phrasing: ${softPedals.length} pattern(s)`);
 
+  // What the reconciler had to fix. Reported, never failed: these are the
+  // measurements the sprint exists to produce, and a run where they're all zero
+  // is a run where the model did the work itself.
+  if (roleFit?.uncovered) {
+    notes.push(`${roleFit.uncovered} extracted requirement(s) the assessment skipped`);
+  }
+  const downgraded = rows.filter((r) => r?.downgrade === "uncited").length;
+  if (downgraded) notes.push(`${downgraded} row(s) downgraded for citing nothing`);
+  const unverified = rows.filter((r) => r?.unverified?.length).length;
+  if (unverified) notes.push(`${unverified} row(s) cited a chunk that doesn't contain the claim`);
+
   return {
     pass: failures.length === 0,
     failures,
     notes,
-    detail: { caveats, gaps: gapResults, softPedals },
+    detail: {
+      gaps: gapResults,
+      modelGaps: gapList,
+      softPedals,
+      rows: rows.map((r) => ({
+        requirement: r?.requirement,
+        evidence: r?.evidence,
+        verdict: r?.verdict,
+        claimedVerdict: r?.claimedVerdict ?? null,
+        downgrade: r?.downgrade ?? null,
+        sources: r?.sources ?? [],
+        unverified: r?.unverified ?? [],
+      })),
+      counts: roleFit?.counts ?? null,
+    },
   };
 }
 

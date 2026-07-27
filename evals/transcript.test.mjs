@@ -54,40 +54,82 @@ describe("toolPartsOf", () => {
 });
 
 describe("roleFit serialization", () => {
+  // The reconciled shape lib/role-fit.ts produces (Sprint 4), not the model's
+  // raw object — the transcript renders what the panel rendered.
   const data = {
     role: "GTM engineer",
-    matches: [
-      { area: "Cross-functional ownership", evidence: "Owned the Power BI migration for 150+ users." },
-      { area: "SQL and data modeling", evidence: "Built the transformation logic in SQL/DAX." },
+    rows: [
+      {
+        requirement: "3+ years in revenue operations",
+        verdict: "met",
+        evidence: "Owned the Power BI migration for 150+ users.",
+      },
+      {
+        requirement: "dbt modeling against a warehouse",
+        verdict: "unmet",
+        evidence: "No warehouse tooling appears in the record.",
+      },
+      {
+        requirement: "Manage a team of two analysts",
+        verdict: "unclear",
+        evidence: "",
+        downgrade: "uncovered",
+      },
     ],
-    caveats: "He has not carried a quota or worked directly with external customers.",
+    gaps: ["No dbt or cloud warehouse experience."],
+    verdict: "Strong on the reporting half, short on the data-stack half.",
   };
 
-  test("renders role, matches, and caveats", () => {
+  test("renders the role, a tagged row per requirement, and the verdict", () => {
     const md = toolPartToMarkdown(toolPart("tool-roleFit", data));
     assert.match(md, /\*\*Role fit — GTM engineer\*\*/);
-    assert.match(md, /- \*\*Cross-functional ownership\*\* — Owned the Power BI migration/);
-    assert.match(md, /Worth knowing: He has not carried a quota/);
+    assert.match(md, /- \*\*met\*\* — 3\+ years in revenue operations — Owned the Power BI/);
+    assert.match(md, /- \*\*unmet\*\* — dbt modeling against a warehouse/);
+    assert.match(md, /Strong on the reporting half/);
   });
 
-  test("caveats survive the trip to the clipboard", () => {
-    // The regression this suite exists to prevent.
+  test("gaps survive the trip to the clipboard", () => {
+    // The regression this suite exists to prevent. A forwarded assessment that
+    // lost its gaps is the flattering half of what was on screen.
     const md = conversationToMarkdown([
       userMsg("Is he a fit for a GTM engineering role?"),
       assistantMsg("Here's how it maps.", toolPart("tool-roleFit", data)),
     ]);
     assert.ok(
-      md.includes("has not carried a quota"),
-      "roleFit caveats were dropped from the copied transcript",
+      md.includes("What he doesn't have:"),
+      "the gaps heading was dropped from the copied transcript",
+    );
+    assert.ok(
+      md.includes("No dbt or cloud warehouse experience."),
+      "roleFit gaps were dropped from the copied transcript",
     );
   });
 
-  test("omits the caveats line when the model didn't provide one", () => {
-    const md = toolPartToMarkdown(toolPart("tool-roleFit", { ...data, caveats: undefined }));
-    assert.ok(!md.includes("Worth knowing:"));
+  test("an unmet verdict survives even when the row has no evidence sentence", () => {
+    const md = toolPartToMarkdown(
+      toolPart("tool-roleFit", {
+        role: "RevOps",
+        rows: [{ requirement: "Tableau", verdict: "unmet", evidence: "" }],
+        gaps: [],
+      }),
+    );
+    assert.match(md, /- \*\*unmet\*\* — Tableau$/m);
   });
 
-  test("survives a role with no matches", () => {
+  test("falls back to the no-gaps rationale when there are none", () => {
+    const md = toolPartToMarkdown(
+      toolPart("tool-roleFit", {
+        role: "RevOps",
+        rows: [{ requirement: "SQL", verdict: "met", evidence: "SQL and DAX at Nokia." }],
+        gaps: [],
+        noGapsRationale: "Every requirement in this posting is covered by the record.",
+      }),
+    );
+    assert.ok(!md.includes("What he doesn't have:"));
+    assert.match(md, /Every requirement in this posting is covered/);
+  });
+
+  test("survives a role with no rows", () => {
     const md = toolPartToMarkdown(toolPart("tool-roleFit", { role: "RevOps" }));
     assert.equal(md, "**Role fit — RevOps**");
   });
