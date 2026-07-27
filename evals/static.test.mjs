@@ -19,6 +19,7 @@ import assert from "node:assert/strict";
 import {
   buildPromptApproximation,
   estimateTokens,
+  read,
   readCitations,
   readClientModels,
   readDefaultModel,
@@ -29,6 +30,7 @@ import {
   readToolNames,
 } from "./lib/artifacts.mjs";
 import { GROUNDED, ROLE_FIT } from "./cases.mjs";
+import { JD_PREFIX, looksLikeJobPosting } from "../lib/job-posting.ts";
 
 describe("knowledge base", () => {
   test("builds and is non-empty", () => {
@@ -219,10 +221,74 @@ describe("live-eval assertions are still grounded", () => {
     }
   });
 
+  test("every posting in the corpus is detected as one", () => {
+    // The route forces the roleFit tool call on turns the detector recognises.
+    // A posting it does NOT recognise silently reverts to the old behaviour —
+    // the model choosing, and dropping the tool on the cases that matter most.
+    // The live `callsRoleFit` assertion would then be measuring a code path
+    // production doesn't take, which is worse than failing.
+    for (const c of ROLE_FIT) {
+      assert.ok(
+        looksLikeJobPosting(c.posting),
+        `posting "${c.id}" is not recognised as a job description — the forced roleFit call won't fire for it`,
+      );
+      // And again through the UI's paste panel, which prefixes it.
+      assert.ok(
+        looksLikeJobPosting(`${JD_PREFIX}\n\n${c.posting}`),
+        `posting "${c.id}" is not recognised when sent through the paste-a-JD panel`,
+      );
+    }
+  });
+
+  test("ordinary questions are not detected as job postings", () => {
+    // The cost of a false positive is a forced tool call on a turn that didn't
+    // want one — a visibly wrong answer shape. These are the shapes closest to
+    // the boundary: role questions, and a long answer-length question.
+    const notPostings = [
+      "Is he a fit for a solutions engineering role?",
+      "How does his experience translate to RevOps?",
+      "What did Sidhant build at Nokia?",
+      "Tell me about A Darle 20 — how it works, what it runs on, how big it got, " +
+        "and what he'd change about the architecture if he were starting it again today. " +
+        "I'm curious about the payments side in particular, and about how much of it he wrote himself.",
+    ];
+    for (const text of notPostings) {
+      assert.ok(
+        !looksLikeJobPosting(text),
+        `"${text.slice(0, 50)}…" was misread as a job description`,
+      );
+    }
+  });
+
+  test("the JD panel prefix is the one the server matches on", () => {
+    // shell-data.ts re-exports JD_PREFIX rather than holding its own copy; this
+    // catches a re-divergence.
+    const shellData = read("components/shell/shell-data.ts");
+    assert.ok(
+      shellData.includes("prefix: JD_PREFIX"),
+      "the JD panel no longer uses the shared JD_PREFIX — the server's strongest detection signal is broken",
+    );
+  });
+
   test("the unqualified postings really are unqualified", () => {
     // If the corpus ever gains this experience, these cases stop measuring what
     // they claim to and must be rewritten.
-    for (const term of ["kubernetes", "distributed training", "pytorch", "direct report"]) {
+    for (const term of [
+      "kubernetes",
+      "distributed training",
+      "pytorch",
+      "direct report",
+      // gtm-engineer-partial's two labeled gaps. Both are ABSENCES in the
+      // corpus, which is the only kind of gap a fixture is allowed to assert —
+      // if any of these ever appear, the case is claiming something false about
+      // him and has to be rewritten, not re-scored.
+      "dbt",
+      "snowflake",
+      "bigquery",
+      "outreach",
+      "hubspot",
+      "marketo",
+    ]) {
       assert.ok(
         !kb.includes(term),
         `the knowledge base now mentions "${term}" — the "not qualified" job-description fixtures need rewriting`,

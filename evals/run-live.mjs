@@ -10,14 +10,14 @@
 //   2. AI_GATEWAY_API_KEY set  — in .env.local, read by the server, not by this
 //
 // Usage:
-//   npm run eval:live                        # every group (20 cases — see note)
+//   npm run eval:live                        # every group (21 cases — see note)
 //   npm run eval:live -- --group roleFit     # just the job-description cases
 //   npm run eval:live -- --model openai/gpt-5-mini
 //   npm run eval:live -- --base http://localhost:3001
 //
 // RATE LIMIT NOTE: the standard tier allows 20 requests/hour per IP, and the
-// full corpus is exactly 20 cases. A full run will sit right at the ceiling and
-// a second run within the hour will be refused. Run one group at a time. With
+// full corpus is 21 cases — one over. A full run WILL be cut short. Run one
+// group at a time; the runner reports where it stopped. With
 // no Upstash env vars the limiter falls back to an in-memory store scoped to
 // the server process, so restarting the dev server resets the budget.
 
@@ -80,6 +80,8 @@ async function ask(text) {
 
   const raw = await res.text();
   let answer = "";
+  let streamError = null;
+  let telemetry = null;
   const toolNames = [];
   const toolOutputs = [];
 
@@ -97,6 +99,18 @@ async function ask(text) {
     }
 
     const type = typeof event.type === "string" ? event.type : "";
+    // A turn that fails mid-stream returns HTTP 200 with an error chunk in the
+    // body. Before this was read, such a turn arrived here as an empty answer
+    // with no tool calls — indistinguishable from a model that chose to say
+    // nothing, and scored as a model failure. It is not one.
+    if (type === "error" && typeof event.errorText === "string") {
+      streamError = event.errorText;
+    }
+    // The Sprint 1 telemetry part (lib/chat-telemetry.ts). Written twice under
+    // one id; the last write is the complete one.
+    if (type === "data-turn" && event.data) {
+      telemetry = event.data;
+    }
     if (type.includes("text")) {
       if (typeof event.delta === "string") answer += event.delta;
       else if (typeof event.textDelta === "string") answer += event.textDelta;
@@ -112,6 +126,8 @@ async function ask(text) {
 
   return {
     answer,
+    streamError,
+    telemetry,
     toolNames,
     toolOutputs,
     model: res.headers.get("x-model"),
@@ -246,23 +262,41 @@ async function main() {
         continue;
       }
 
-      const scored =
-        groupName === "roleFit" ? scoreRoleFit(testCase, result) : scoreSimple(testCase, result);
+      // A turn that broke is not a turn that answered badly. Scoring a
+      // transport failure against the model's judgment is how a working
+      // feature gets "fixed" for a problem it never had — so these are marked
+      // BROKE, reported separately, and never scored.
+      const broke = result.streamError ?? null;
+      const scored = broke
+        ? { pass: false, failures: [`stream error: ${broke}`], notes: [], detail: null }
+        : groupName === "roleFit"
+          ? scoreRoleFit(testCase, result)
+          : scoreSimple(testCase, result);
 
-      const mark = scored.pass ? "pass" : "FAIL";
+      const mark = broke ? "BROKE" : scored.pass ? "pass" : "FAIL";
       console.log(`  ${mark}  ${testCase.id}${testCase.label ? ` — ${testCase.label}` : ""}`);
       for (const f of scored.failures) console.log(`        ✗ ${f}`);
       for (const n of scored.notes ?? []) console.log(`        ! ${n}`);
+      // Cheap, and it catches the truncation case: a turn that stops on
+      // `length` with nothing to show spent its whole output budget on
+      // reasoning tokens, which reads as a silent refusal without this line.
+      if (result.telemetry?.finishReason && result.telemetry.finishReason !== "stop") {
+        console.log(`        ! finish reason: ${result.telemetry.finishReason}`);
+      }
 
       results.push({
         group: groupName,
         id: testCase.id,
         label: testCase.label ?? null,
         pass: scored.pass,
+        broke,
         failures: scored.failures,
         notes: scored.notes ?? [],
         detail: scored.detail ?? null,
         model: result.model,
+        // The full Sprint 1 telemetry record for this turn: tokens, cache hit,
+        // TTFT, tokens/sec, steps, tools, finish reason, error class.
+        telemetry: result.telemetry,
         answer: result.answer,
         toolNames: result.toolNames,
       });
@@ -281,6 +315,13 @@ async function main() {
     const inGroup = results.filter((r) => r.group === groupName);
     if (!inGroup.length) continue;
     console.log(`  ${groupName}: ${inGroup.filter((r) => r.pass).length}/${inGroup.length}`);
+  }
+
+  const brokeCount = results.filter((r) => r.broke).length;
+  if (brokeCount) {
+    console.log(
+      `\n  ${brokeCount} turn(s) failed in transport, not in judgment — these say nothing about the model.`,
+    );
   }
 
   const softPedalCount = results.filter((r) => r.detail?.softPedals?.length).length;

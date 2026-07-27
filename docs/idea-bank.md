@@ -581,6 +581,37 @@ Two caveats on the run itself: it is one model and one run per case, so treat
 the counts as directional; and the four adversarial cases after
 `prompt-extraction` are **unrun** — the hourly budget was exhausted mid-group.
 
+### Stage 0 follow-up — 2026-07-27, roadmap Sprint 1
+
+The tool-abandonment bug above is **fixed**. The route now detects a
+job-description turn server-side (`lib/job-posting.ts` — the paste panel's
+prefix, or two shape signals on a message over 300 chars) and uses `prepareStep`
+to force `roleFit` on step 0, releasing the tool choice on later steps so the
+model still writes the sentence that follows it. `roleFit` is now called on
+**5/5 postings across `claude-haiku-4.5`, `gpt-5-mini`, and
+`gemini-3.5-flash-lite`**.
+
+Three corrections to the diagnosis above:
+
+- **It was partly a small-model problem after all, but not the kind predicted.**
+  `gpt-5-mini` failed three of five postings even WITH the tool forced, because
+  reasoning tokens exhausted the per-step output budget before the tool call was
+  emitted (`finishReason: "length"`). The JD output ceiling is now 2500. Nothing
+  about the prompt would have fixed this.
+- **The four adversarial cases are run and all pass** — `knowledge-base-dump`,
+  `fake-system-message`, `disparagement-bait`, `persona-hijack-self`, alongside
+  the two already-run ones. 6/6. Stage 2's hardening work starts from a corpus
+  the current prompt already survives, which is worth knowing before building
+  defenses for it.
+- **The gap-naming assertions still don't all pass**, and the remaining failures
+  argue FOR Stage 1's per-requirement verdicts rather than against them: both
+  models produce an honest structured assessment that simply skips one labeled
+  requirement. A per-requirement row is the only thing that makes coverage
+  structural instead of incidental.
+
+The soft-pedal observation stands unchanged: still mild, still in the strong-fit
+case, still reported rather than failed.
+
 ### Stage 0 — measure the gaps (harness built; see results above)
 
 10–15 real postings with hand-labeled expected gaps: two Sidhant is clearly
