@@ -44,6 +44,12 @@ The **Claims** column is the one that matters:
 | draft | `components/shell/panel-body.tsx` → requirement table | Section labels: "What he doesn't have" (over `gaps`) and "No unmet requirements — why" (over `noGapsRationale`). | none | `lib/role-fit.ts` |
 | draft | `components/shell/panel-body.tsx` → requirement table | The closing note: "Each row is a judgment against the record, not a score, and the four tags don't add up to one. A row claiming a fit has to name the part of the record it stands on; where it didn't, the site downgraded it rather than the model." | none | `lib/role-fit.ts`, and decisions §3's rendering constraint |
 | draft | `components/shell/instruments.tsx` | Instrument labels and section titles — "Cost", "Rate", "Trace", "Failure theatre", "Sound", "session cost", "saved by the cache", "what came over the wire", etc. UI affordances rather than prose, logged as one row. | none | — |
+| draft | `components/shell/app-shell.tsx` → `REPLAY_BANNER` | Shown at the top of a conversation opened from a permalink: "Replayed conversation. It was rebuilt from the link you opened — the site stored nothing, and this is a snapshot of what the model said then, not a live session." Plus the "start a fresh one" button under it. | none | `lib/permalink.ts` (the fragment is the transport), `use-conversation.ts` (a replay is never persisted) |
+| draft | `components/shell/export-deck.tsx` → `EXPORT_COPY` | The eight strings in the export panel: the empty state ("Ask something first — there's nothing to export yet."), and one explanation each for markdown, print ("…“Save as PDF” there gives a typeset document with working links — not a screenshot of this page."), the link ("…compressed into the part of the URL after the #, which browsers never send to a server. There is no database: the link is the storage."), the link caveat ("It is encoding, not encryption — anyone holding the link can read the conversation — and it is frozen at the moment you made it."), the over-length warning, the unsupported-browser line, the scorecard, and the mail draft. | none | `lib/permalink.ts`, `lib/transcript.ts`, `app/globals.css`'s print block — each string restates one of them |
+| draft | `components/shell/export-deck.tsx` | Section and button labels — "Markdown", "Print", "Link", "Scorecard", "copy the conversation", "download .md", "print / save as PDF", "build a link", "rebuild the link", "copy the link", "copy the scorecard", "open a mail draft", "{n} characters". UI affordances rather than prose, logged as one row. | none | — |
+| draft | `components/shell/shell-data.ts` → `FIT_LABELS` | Two new labels over the assessment, used by the scorecard export and the print document: "Coverage" (over the verdict counts) and "Strongest evidence" (over the cited rows). The other three (`gaps`, `noGaps`, `notAScore`) are the existing panel strings, moved here so one field isn't called two things in two artifacts. | none | `lib/role-fit.ts` |
+| draft | `components/shell/shell-data.ts` → `SLASH_COMMANDS` | Hints for the four commands added in Sprint 5: "/jd — Paste a job description", "/budget — Turns, tokens and what they cost", "/sources — Every source the answers are built from", "/pdf — Export — markdown, print, link". | none | The panel each one opens |
+| draft | `components/shell/app-shell.tsx` → actions strip | The five persistent action labels: "copy", "export", "link" (becomes "link copied"), "paste a job description", "reset". UI affordances rather than prose. | none | — |
 | draft | `components/shell/app-shell.tsx` → mobile controls | Affordance labels added with the mobile pass: the "↓ PDF" chip beside the resume citation, and the "Send" / "Open navigation" screen-reader labels on the two icon buttons. UI affordances rather than prose, logged as one row. | none | `public/resume.pdf` |
 
 **A note on the requirement-table rows.** Same rule as the citation rows below, one
@@ -54,6 +60,15 @@ POSTING's words, quoted as input, and is not site copy or a claim about him. The
 closing note exists to stop four tags reading as a score, which is the rendering
 constraint `docs/idea-decisions.md` §3 attaches to this component — a rewrite that
 drops it gives the table a precision it doesn't have.
+
+**A note on the export rows.** Same standing as the instrument rows: they are
+claims about the site, not about Sidhant, and each one is checkable in this repo.
+Two of them are load-bearing and should not be softened in a rewrite. The link
+caveat says out loud that a permalink is readable by anyone holding it — the
+decisions doc records that as a surviving caveat of #18, and dropping it would
+leave a reader believing a link is private. And the replay banner exists so a
+conversation from a link can never be mistaken for a live one; "snapshot", "the
+site stored nothing" and "not a live session" are each doing separate work.
 
 **A note on the citation rows.** These are the site describing its own check,
 and the wording is load-bearing in one specific way: none of them says a

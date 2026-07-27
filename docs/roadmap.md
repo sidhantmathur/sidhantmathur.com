@@ -9,9 +9,9 @@ Two things were added that aren't in either doc, because sequencing surfaced the
 **F1–F3**, foundations that several accepted items silently depend on. They are not
 new features. They are the parts of accepted features that have to exist first.
 
-Status: **approved 2026-07-27.** Sprints 1, 2, 3 and 4 are built and green — see
-the results notes under them. Sprints 5–7 and Track B are unspecced and unbuilt. The
-open question at the bottom (#4) was resolved on 2026-07-27 and shipped in
+Status: **approved 2026-07-27.** Sprints 1, 2, 3, 4 and 5 are built and green —
+see the results notes under them. Sprints 6–7 and Track B are unspecced and
+unbuilt. The open question at the bottom (#4) was resolved on 2026-07-27 and shipped in
 Sprint 3 as a post-hoc "sources touched" row.
 
 ---
@@ -390,6 +390,79 @@ soft-pedal detector is still report-only, and reported zero on the final run.
 **#17** one export surface — markdown, typeset print/PDF, permalink · **#18** URL-fragment permalink with the replayed-conversation banner · **#24** scorecard as an option inside #17 · **S3** folds in here rather than duplicating · **#13** extend the slash registry (`/budget`, `/sources`, `/pdf`) now that the targets exist · **#27** re-tenant the existing chrome as the persistent actions strip, with the post-action emphasis
 
 **Done means:** `lib/transcript.ts` extended, not replaced; every export path tested against the 10-turn cap; the dependency added for PDF/docx named and justified per `CLAUDE.md`.
+
+#### Sprint 5 results — 2026-07-27
+
+**Done.** All three acceptance criteria met. `npm run build`, `npm run lint` and
+`npm run eval` (**157/157**, up from 125) clean. No live run: nothing this
+sprint changes what the model does or what the prompt says, so `eval:live`
+would have re-measured Sprint 4.
+
+Spec: `docs/sprint-5-export.md`. The shape it took: **one panel view with four
+handles on the same conversation** — markdown, a file, a printed document, a
+link — plus the scorecard when there is an assessment to make one from, and
+**the controls that were already wedged into the input row became the strip**.
+What shipped: `lib/transcript.ts` extended with the snapshot format, the
+scorecard and the mail body (the existing serializer is untouched);
+`lib/permalink.ts`; `components/shell/export-deck.tsx`;
+`components/shell/print-sheet.tsx`; a print block in `app/globals.css`; the
+replay path in `use-conversation.ts`; a corpus index in `panel-body.tsx`; four
+new slash commands; and `evals/export.test.mjs` (32 cases).
+
+Six things worth carrying forward:
+
+1. **The PDF dependency is none, and that is the decision.** The roadmap asked
+   for whatever got added to be named and justified; nothing did. The browser's
+   own print pipeline produces a real PDF at the reader's paper size with
+   selectable text and working links — everything a canvas-to-PDF library
+   re-implements worse for ~200 kB — and `CompressionStream('deflate-raw')` is
+   native, so lz-string isn't needed either. There is a static test asserting no
+   PDF/compression dependency has appeared since.
+2. **Print is two containers, and the first version was silently broken.** The
+   shell carries `screen-only`, the document carries `print-only`, and print
+   swaps which one exists. The document was originally rendered *inside* the
+   shell — which meant it was inside the element print hides, so every print
+   would have come out blank. Nothing about that is visible on screen, and no
+   static test would have caught it; it took emulating print media in a real
+   browser. **Whoever touches the print path should do the same.**
+3. **`pushState` was eating the conversation.** `usePanelUrl` pushed a bare path
+   on every panel change, and a bare path drops the fragment — so opening a
+   citation while reading a permalink erased the permalink, invisibly, and only
+   discoverably by reloading. The panel owns the path and has no opinion about
+   the fragment now, and `panelHref` is the seam.
+4. **A replayed conversation is never persisted.** Someone opening a link has
+   their own conversation in that browser, and replacing it with a stranger's
+   is the rudest available reading of "no storage". The replay lives in memory
+   until the tab closes or the reader presses "start a fresh one", which also
+   drops the fragment. The cost: continuing a replayed conversation is not saved
+   across a reload either, which is a real if small surprise.
+5. **The length estimate in the decisions doc didn't cover the case that
+   matters.** It measured ordinary transcripts, and it holds: nine
+   question-and-answer pairs encode to well under the 2,000-character mark, and
+   there's a test pinning that. But a turn carrying a 3.5 kB pasted posting and
+   a full requirement table cannot compress into a tweet, and no amount of
+   arguing changes it. So the surface **prints the real character count** and
+   flags it when it passes the length mail clients cut — Fable #14's joke turned
+   out to be the honest instrument. The permalink is still storage-free and
+   still needs no dependency; it just isn't uniformly small.
+6. **The scorecard shows only rows that cite something.** The section is called
+   evidence, and an `unmet` row has nothing to point at by construction (Sprint
+   4's finding 3). Those rows are not lost — every gap travels, uncut, in every
+   transport, and there is a test per transport asserting it. That assertion is
+   the one in this suite that is about honesty rather than about formatting.
+
+**Not done, and out of scope by design:** no `.docx` (markdown pastes into
+every tool a recruiter uses and the print document covers the attachment case);
+no file upload or URL fetch (bank §6 Stage 4); no derived artifacts — questions
+from `unclear` rows, ramp plans, the cover-note draft that needs Sidhant's
+explicit blessing (Stage 5); no comparison mode (Stage 6); no published pass
+rates (#2, Sprint 6). `/model` is still not a slash command: it needs an
+argument and the registry has no parser, so it would be a fifth panel or a lie.
+The strip's touch targets are 32 px tall — under the 44 px iOS asks for, and the
+same trade the header made in Sprint 4's mobile pass, so it wants a human's eye
+rather than another agent's opinion. And the print document has had exactly one
+pair of human eyes on it, in a headless browser: **paper is the one output here
+that nothing in CI can check.**
 
 ---
 
