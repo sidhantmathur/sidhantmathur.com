@@ -25,7 +25,11 @@ import { writeFileSync } from "node:fs";
 import { join } from "node:path";
 
 import { ALL_GROUPS, REFUSAL_MARKERS, SOFT_PEDAL_PATTERNS } from "./cases.mjs";
-import { ROOT } from "./lib/artifacts.mjs";
+import { ROOT, readChunks } from "./lib/artifacts.mjs";
+import { verifyAnswer } from "../lib/verify.ts";
+
+// The corpus, for the Sprint 3 citation pass below.
+const CHUNK_BY_ID = Object.fromEntries(readChunks().map((c) => [c.id, c]));
 
 // --- args -----------------------------------------------------------------
 
@@ -232,6 +236,26 @@ function scoreRoleFit(testCase, result) {
   };
 }
 
+/**
+ * What the site's own checker (lib/verify.ts) makes of a real answer: which
+ * chunks it cited, how many of its claims stood up, and — the interesting
+ * number — which ones the site will render as unverified to a visitor.
+ */
+function summarizeCitations(answer) {
+  const check = verifyAnswer(answer, CHUNK_BY_ID);
+  return {
+    citedIds: check.citedIds,
+    unknownIds: check.unknownIds,
+    claims: check.claims.length,
+    verified: check.verified,
+    downgraded: check.downgraded.map((c) =>
+      c.verdict === "uncited"
+        ? `uncited: "${c.text.slice(0, 60)}"`
+        : `unverified: ${c.missing.join(", ") || c.unknownIds.join(", ")} not in ${c.ids.join(", ")}`,
+    ),
+  };
+}
+
 // --- run ------------------------------------------------------------------
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -273,6 +297,13 @@ async function main() {
           ? scoreRoleFit(testCase, result)
           : scoreSimple(testCase, result);
 
+      // Sprint 3's citation pass, run over the real answer with the real
+      // corpus. REPORTED, NOT SCORED — the same call as soft-pedal phrasing.
+      // A model that cites badly is a prompt problem worth seeing, but making
+      // it a failure would turn every model swap into a red suite and tempt
+      // whoever's on the hook into loosening the checker, which is the one
+      // thing that must never happen to it.
+      const citations = broke ? null : summarizeCitations(result.answer);
       const mark = broke ? "BROKE" : scored.pass ? "pass" : "FAIL";
       console.log(`  ${mark}  ${testCase.id}${testCase.label ? ` — ${testCase.label}` : ""}`);
       for (const f of scored.failures) console.log(`        ✗ ${f}`);
@@ -282,6 +313,14 @@ async function main() {
       // reasoning tokens, which reads as a silent refusal without this line.
       if (result.telemetry?.finishReason && result.telemetry.finishReason !== "stop") {
         console.log(`        ! finish reason: ${result.telemetry.finishReason}`);
+      }
+      if (citations?.claims) {
+        console.log(
+          `        · cited ${citations.citedIds.length} chunk(s), ` +
+            `${citations.verified}/${citations.claims} claim(s) verified` +
+            (citations.unknownIds.length ? `, invented ids: ${citations.unknownIds.join(", ")}` : ""),
+        );
+        for (const line of citations.downgraded) console.log(`        · ${line}`);
       }
 
       results.push({
@@ -297,6 +336,7 @@ async function main() {
         // The full Sprint 1 telemetry record for this turn: tokens, cache hit,
         // TTFT, tokens/sec, steps, tools, finish reason, error class.
         telemetry: result.telemetry,
+        citations,
         answer: result.answer,
         toolNames: result.toolNames,
       });
@@ -327,6 +367,17 @@ async function main() {
   const softPedalCount = results.filter((r) => r.detail?.softPedals?.length).length;
   if (softPedalCount) {
     console.log(`\n  ${softPedalCount} assessment(s) contained soft-pedal phrasing — read the JSON.`);
+  }
+
+  const cited = results.filter((r) => r.citations?.claims);
+  if (cited.length) {
+    const claims = cited.reduce((n, r) => n + r.citations.claims, 0);
+    const verified = cited.reduce((n, r) => n + r.citations.verified, 0);
+    console.log(`\n  Citations: ${verified}/${claims} claim(s) verified across ${cited.length} answer(s).`);
+    const invented = cited.flatMap((r) => r.citations.unknownIds);
+    if (invented.length) {
+      console.log(`  ${invented.length} invented id(s): ${[...new Set(invented)].join(", ")}`);
+    }
   }
   if (rateLimitedAt) {
     console.log(`\n  Run was cut short by the rate limit at "${rateLimitedAt}".`);

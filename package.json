@@ -10,7 +10,7 @@
     "start": "next start",
     "lint": "eslint",
     "eval": "node scripts/build-knowledge.mjs && node --test --experimental-strip-types \"evals/*.test.mjs\"",
-    "eval:live": "node evals/run-live.mjs"
+    "eval:live": "node --experimental-strip-types evals/run-live.mjs"
   },
   "dependencies": {
     "@ai-sdk/react": "^4.0.15",

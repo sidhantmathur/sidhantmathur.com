@@ -45,6 +45,12 @@ type ContactOutput = { email?: string; github?: string; linkedin?: string };
 
 const SITE_ORIGIN = "https://sidhantmathur.com";
 
+// Citation markers (Sprint 3). Kept as a local copy rather than an import from
+// lib/verify.ts so this module stays free of the generated corpus — it is unit
+// tested under `node --test` and has no business resolving a build artifact.
+// The two regexes are asserted equivalent by evals/citations.test.mjs.
+const CITATION_MARKER = /\[([a-z0-9]+(?:-[a-z0-9]+)*:[a-z0-9]+(?:-[a-z0-9]+)*)\](?!\()/g;
+
 /** Concatenated text of a message's text parts. */
 export function textOf(message: TranscriptMessage): string {
   return message.parts
@@ -92,7 +98,8 @@ export function toolPartToMarkdown(part: TranscriptPart): string | null {
         lines.push("");
         for (const m of matches) {
           if (!m?.area) continue;
-          lines.push(`- **${m.area}** — ${m.evidence ?? ""}`.trimEnd());
+          const evidence = (m.evidence ?? "").replace(CITATION_MARKER, "").trim();
+          lines.push(`- **${m.area}** — ${evidence}`.trimEnd());
         }
       }
       if (data.caveats) {
@@ -100,7 +107,7 @@ export function toolPartToMarkdown(part: TranscriptPart): string | null {
         // "Worth knowing" is the label the panel already renders over this
         // field (panel-body.tsx) — the copied artifact should say what the
         // reader saw on screen, not expose the schema's field name.
-        lines.push(`Worth knowing: ${data.caveats}`);
+        lines.push(`Worth knowing: ${data.caveats.replace(CITATION_MARKER, "").trim()}`);
       }
       return lines.join("\n");
     }
@@ -150,12 +157,30 @@ export function messageToMarkdown(message: TranscriptMessage): string {
       .join("\n");
   }
 
+  // Inline markers are noise in a pasted email, but dropping the provenance
+  // entirely would make a forwarded answer less checkable than the one on
+  // screen. So they come out of the prose and the ids they named are listed
+  // once at the end. (#17 in Sprint 5 owns what a real exported artifact looks
+  // like; this is the minimum that doesn't lose information.)
+  const cited: string[] = [];
+  for (const [, id] of text.matchAll(CITATION_MARKER)) {
+    if (!cited.includes(id)) cited.push(id);
+  }
+  const prose = text
+    .replace(CITATION_MARKER, "")
+    .replace(/[ \t]{2,}/g, " ")
+    .replace(/[ \t]+$/gm, "")
+    .trim();
+
   const blocks: string[] = [];
-  if (text) blocks.push(text);
+  if (prose) blocks.push(prose);
   for (const part of toolPartsOf(message)) {
     const rendered = toolPartToMarkdown(part);
     if (rendered) blocks.push(rendered);
   }
+  // "Sources" is a label, not site copy — the ids themselves are generated
+  // identifiers from content/knowledge, the same ones shown beside the answer.
+  if (cited.length) blocks.push(`Sources: ${cited.join(", ")}`);
   return blocks.join("\n\n");
 }
 
