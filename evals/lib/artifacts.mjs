@@ -118,6 +118,34 @@ export function readToolNames() {
 }
 
 /**
+ * The closed error vocabulary in lib/chat-telemetry.ts, read from the runtime
+ * narrowing list rather than the type — a TS union has nothing to import at
+ * runtime, and the two are asserted equal by the type checker anyway.
+ */
+export function readErrorClasses() {
+  const src = read("lib/chat-telemetry.ts");
+  const block = src.match(/const known: TurnErrorClass\[\] = \[([\s\S]*?)\];/);
+  if (!block) throw new Error("Could not locate the error-class list in lib/chat-telemetry.ts");
+  return [...block[1].matchAll(/"([^"]+)"/g)].map((m) => m[1]);
+}
+
+/** Classes the route's failure theatre will reproduce on demand. */
+export function readSimulatableClasses() {
+  const src = read("app/api/chat/route.ts");
+  const block = src.match(/const SIMULATABLE: TurnErrorClass\[\] = \[([\s\S]*?)\];/);
+  if (!block) throw new Error("Could not locate SIMULATABLE in app/api/chat/route.ts");
+  return [...block[1].matchAll(/"([^"]+)"/g)].map((m) => m[1]);
+}
+
+/** Classes the failure-theatre UI offers a button for. */
+export function readFailureTheatreClasses() {
+  const src = read("components/shell/instruments.tsx");
+  const block = src.match(/const FAILURES: FailureSpec\[\] = \[([\s\S]*?)\n\];/);
+  if (!block) throw new Error("Could not locate FAILURES in components/shell/instruments.tsx");
+  return [...block[1].matchAll(/cls:\s*"([^"]+)"/g)].map((m) => m[1]);
+}
+
+/**
  * Rough token estimate. Deliberately crude — this backstops the ~8k budget the
  * build script targets, and a 4-chars-per-token approximation is accurate
  * enough to catch a corpus that doubled, which is the only failure worth
