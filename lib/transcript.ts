@@ -381,7 +381,12 @@ export type ScorecardOptions = {
   };
 };
 
-/** The rows worth showing first: a judged, cited, unflagged claim beats one without. */
+/**
+ * The rows worth showing first: a judged, cited, unflagged claim beats one
+ * without. Only cited rows are eligible at all — this section is called
+ * evidence, and a row with nothing to point at is not evidence. The unmet rows
+ * are not lost by that: every one of them is in the gaps section below, uncut.
+ */
 function evidenceRank(row: RoleFitRow): number {
   const verdict = row.verdict ?? "unclear";
   let score = verdict === "met" ? 0 : verdict === "partial" ? 1 : 4;
@@ -432,8 +437,8 @@ export function scorecardMarkdown(
   const strongest = [...rows]
     .map((row, i) => ({ row, i }))
     .sort((a, b) => evidenceRank(a.row) - evidenceRank(b.row) || a.i - b.i)
-    .slice(0, MAX_SCORECARD_EVIDENCE)
-    .filter(({ row }) => row.evidence || row.sources?.length);
+    .filter(({ row }) => row.sources?.length && row.evidence)
+    .slice(0, MAX_SCORECARD_EVIDENCE);
   if (strongest.length) {
     const lines: string[] = [];
     if (labels.evidence) lines.push(`**${labels.evidence}**`, "");

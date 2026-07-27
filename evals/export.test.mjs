@@ -22,6 +22,7 @@ import assert from "node:assert/strict";
 
 import { read } from "./lib/artifacts.mjs";
 import {
+  MAILTO_MAX_BODY,
   SNAPSHOT_VERSION,
   condense,
   conversationToMarkdown,
@@ -31,9 +32,6 @@ import {
   scorecardMarkdown,
   toSnapshot,
   verdictCounts,
-} from "../lib/transcript.ts";
-import {
-  MAILTO_MAX_BODY,
 } from "../lib/transcript.ts";
 import {
   PERMALINK_PREFIX,
@@ -271,9 +269,10 @@ describe("scorecard", () => {
     assert.match(md, /# Sidhant Mathur — GTM engineer/);
     assert.match(md, /Strong on the reporting half/);
     assert.match(md, /Coverage: 1 met · 1 partial · 1 unmet · 2 unclear/);
+    // Two rows cite something; the rest are absences, and an absence is not
+    // evidence. They are all still in the gaps section below.
     const rows = md.match(/^- \*\*/gm) ?? [];
-    // Three evidence rows plus the two gaps.
-    assert.equal(rows.length, 3);
+    assert.equal(rows.length, 2);
   });
 
   test("EVERY gap travels, never truncated", () => {
@@ -295,6 +294,8 @@ describe("scorecard", () => {
     assert.match(md, /- \*\*partial\*\* — SQL against a warehouse/);
     // The uncited downgraded row has nothing to stand on and doesn't lead.
     assert.ok(!md.includes("He has done this."));
+    // Neither does an honest unmet row: it is in the gaps, not the evidence.
+    assert.ok(!md.includes("No dbt anywhere in the record."));
   });
 
   test("no gaps falls through to the model's rationale", () => {

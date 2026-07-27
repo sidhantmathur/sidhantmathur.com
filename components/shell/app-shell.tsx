@@ -367,7 +367,23 @@ export function AppShell() {
     );
 
   return (
-    <div className="screen-only flex h-dvh flex-col bg-bg text-text [font-family:var(--font-geist-mono)]">
+    <>
+      {/* ---- Print document --------------------------------------------
+          A SIBLING of the shell, not a child: print hides the shell subtree
+          entirely, so a document nested inside it would go with its parent
+          and every print would come out blank. It lives in the DOM at all
+          times and is display:none until print (the print block in
+          app/globals.css), so Cmd-P — which nothing can reliably intercept —
+          prints the document rather than the app, and the dialog never opens
+          over a layout that hasn't happened yet. */}
+      <PrintSheet
+        messages={messages}
+        title={SITE_NAME}
+        sourceUrl={SITE_URL}
+        permalink={permalink}
+        footer={DISCLAIMER}
+      />
+      <div className="screen-only flex h-dvh flex-col bg-bg text-text [font-family:var(--font-geist-mono)]">
       {/* Skip link. The rail is ~10 links deep and sits before the input in
           tab order, so a keyboard user otherwise tabs through the entire nav
           to reach the only call to action. Visually hidden until focused. */}
@@ -769,19 +785,6 @@ export function AppShell() {
         )}
       </div>
 
-      {/* ---- Print document ----------------------------------------------
-          Lives in the DOM and is display:none until print (see the print block
-          in app/globals.css), so Cmd-P prints the document rather than the
-          app — and so the print dialog never opens over a layout that hasn't
-          happened yet. */}
-      <PrintSheet
-        messages={messages}
-        title={SITE_NAME}
-        sourceUrl={SITE_URL}
-        permalink={permalink}
-        footer={DISCLAIMER}
-      />
-
       {/* ---- Mobile sheets ------------------------------------------------ */}
       {isMobile && (
         <>
@@ -842,7 +845,8 @@ export function AppShell() {
           </Sheet>
         </>
       )}
-    </div>
+      </div>
+    </>
   );
 }
 
