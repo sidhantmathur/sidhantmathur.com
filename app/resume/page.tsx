@@ -6,6 +6,11 @@ import { MonoLabel } from "@/components/mono-label";
 import { ResumeDownloadButton } from "@/components/resume-download-button";
 
 export const metadata: Metadata = {
+  alternates: {
+    canonical: "/resume",
+    // /resume.md is the same resume as plain markdown; this advertises it.
+    types: { "text/markdown": "/resume.md" },
+  },
   title: "Resume",
   description: "The current version, last updated July 2026.",
 };

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { DocPage } from "@/components/layout/doc-page";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/colophon" },
   title: "How this site was built",
   description:
     "Next.js, TypeScript, and Tailwind, deployed on Vercel. Type is Geist Sans and Geist Mono.",

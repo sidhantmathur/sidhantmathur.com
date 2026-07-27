@@ -3,6 +3,7 @@ import { CaseStudyLayout } from "@/components/case-study-layout";
 import CaseStudy from "@/content/nokia.mdx";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/projects/nokia" },
   title: "Reporting tools at Nokia",
   description: "Internal tools for a global sales organization.",
 };

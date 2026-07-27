@@ -3,6 +3,7 @@ import { CaseStudyLayout } from "@/components/case-study-layout";
 import CaseStudy from "@/content/dell-ml.mdx";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/projects/dell-ml" },
   title: "Sales prediction at Dell",
   description:
     "A propensity model for cross-sell targeting, built as an intern.",

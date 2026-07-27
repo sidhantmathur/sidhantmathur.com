@@ -3,6 +3,7 @@ import { CaseStudyLayout } from "@/components/case-study-layout";
 import CaseStudy from "@/content/adarle20.mdx";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/projects/adarle20" },
   title: "A Darle 20",
   description:
     "A marketplace for tabletop game sessions in Latin America — 2,100+ bookings in its first four months.",
