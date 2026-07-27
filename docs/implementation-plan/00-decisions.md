@@ -73,7 +73,7 @@ Components needing a hover surface use `--muted`, mapped to `--raised`.
 | 2 | App shell at `/`, responsive incl. mobile sheets; 404 dark | done |
 | 3 | Document routes restyled dark; legacy tokens and old chrome deleted | done |
 | 4 | Document content opens in the panel; URL follows the panel | done |
-| 5 | Web resume with depth and images | pending |
+| 5 | Web resume: jump nav, case-study links, screenshot, mono body | done |
 | 6 | Build-time citation index, model routing, JD paste | pending |
 | 7 | Copy: hero, "why a chatbot" (DRAFT in site-copy.md), rail labels | pending |
 
