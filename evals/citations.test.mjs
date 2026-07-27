@@ -312,6 +312,30 @@ describe("false alarms the live corpus produced", () => {
     assert.deepEqual(checkableTokens("Want to hear how the Nokia rollout went?"), []);
   });
 
+  test("a compound the corpus writes as two words is not a fabrication", () => {
+    // Sprint 4's live run: rows citing chunks that say "TypeScript", "Next.js"
+    // and "LLM" separately, flagged for writing "TypeScript/Next.js" and
+    // "LLM-integrated". Both halves are in the chunk; the punctuation between
+    // them is phrasing, and phrasing is not a claim.
+    const result = verifyAnswer(
+      "He shipped it in TypeScript/Next.js with LLM-integrated tooling. [resume:nokia]",
+      {
+        "resume:nokia": {
+          id: "resume:nokia",
+          text: "He shipped it in TypeScript on Next.js, with LLM tooling in the loop.",
+        },
+      },
+    );
+    assert.equal(result.claims[0].verdict, "verified", `flagged: ${result.claims[0].missing}`);
+  });
+
+  test("a compound whose halves are NOT both present is still flagged", () => {
+    const result = verifyAnswer("He shipped it in Rust/Kubernetes. [resume:nokia]", {
+      "resume:nokia": { id: "resume:nokia", text: "He shipped it in TypeScript." },
+    });
+    assert.equal(result.claims[0].verdict, "unverified");
+  });
+
   test("a derived form matches the word the corpus uses", () => {
     // The model wrote "Mexican customer base" against a chunk that says
     // "players in Mexico".

@@ -213,8 +213,16 @@ export function checkableTokens(sentence: string): string[] {
   for (const match of text.matchAll(NAME)) {
     const raw = match[0].replace(/[.,;:!?'’]+$/, "");
     if (raw.length < 2) continue;
-    if (STOPWORDS.has(normalize(raw))) continue;
-    tokens.push(raw);
+    // A compound the answer joins and the corpus writes apart:
+    // "TypeScript/Next.js", "Salesforce-to-Power", "LLM-integrated". Each
+    // CAPITALIZED part is a name to look for; the lowercase parts are ordinary
+    // English holding them together ("to", "integrated") and assert nothing.
+    // Sprint 4's live run flagged two honest rows on this alone.
+    for (const part of raw.split(/[/-]/)) {
+      if (part.length < 2 || !/^[A-Z]/.test(part)) continue;
+      if (STOPWORDS.has(normalize(part))) continue;
+      tokens.push(part);
+    }
   }
 
   // Deduplicated case-insensitively so "Nokia … Nokia" is one thing to find.
