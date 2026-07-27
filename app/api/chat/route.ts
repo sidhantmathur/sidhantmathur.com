@@ -331,7 +331,109 @@ const chatTools = {
   }),
 };
 
+// --- Failure theatre (roadmap Sprint 2, #6) ------------------------------
+//
+// The careful degradation in this route — 400 for a bad body, 429 for the
+// conversation cap and again for the hourly budget, 502 for a missing key, and
+// a mid-stream failure that arrives as an error chunk on an HTTP 200 — is the
+// most reliable signal of production experience on the site and the least
+// visible, because it only shows up when something breaks.
+//
+// `?simulate=<class>` makes each path reproducible on demand. Three rules, and
+// they're the reason this is safe to leave on in production:
+//
+//   1. It NEVER calls the model and never consumes the visitor's budget. A
+//      simulated failure costs zero tokens and zero turns.
+//   2. It is not a bypass. It can only produce failures, never an answer, and
+//      the class is looked up in a closed list — an unrecognised value is
+//      ignored and the request proceeds as a normal turn.
+//   3. It takes the SAME exits as the real thing: `jsonError` for the early
+//      classes, and for the mid-stream ones an actual throw inside
+//      `createUIMessageStream`, so the response is genuinely an HTTP 200 whose
+//      stream carries an error chunk. Faking the shape would defeat the point.
+
+/** The early exits: a status code and a JSON body, before a stream exists. */
+const SIMULATED_STATUS: Partial<Record<TurnErrorClass, number>> = {
+  invalid_request: 400,
+  rate_limited: 429,
+  upstream_unconfigured: 502,
+};
+
+const SIMULATABLE: TurnErrorClass[] = [
+  "invalid_request",
+  "rate_limited",
+  "upstream_unconfigured",
+  "upstream_auth",
+  "upstream_timeout",
+  "upstream_unavailable",
+  "aborted",
+  "unknown",
+];
+
+function simulatedClass(req: Request): TurnErrorClass | null {
+  const value = new URL(req.url).searchParams.get("simulate");
+  const match = SIMULATABLE.find((c) => c === value);
+  return match ?? null;
+}
+
+/**
+ * The mid-stream half: HTTP 200, a real stream, a real throw. `createUIMessageStream`'s
+ * `onError` classifies it exactly as it would a Gateway failure, so the client
+ * receives the same error chunk and the same closing telemetry record.
+ */
+function simulateStreamFailure(cls: TurnErrorClass, model: ModelId): Response {
+  const startedAt = Date.now();
+  const telemetry: TurnTelemetry = {
+    model,
+    tier: MODELS[model].tier,
+    budgetRemaining: TIER_LIMITS[MODELS[model].tier],
+    budgetLimit: TIER_LIMITS[MODELS[model].tier],
+    jobPosting: false,
+    usage: null,
+    timing: null,
+    steps: null,
+    toolsCalled: null,
+    finishReason: null,
+    error: null,
+  };
+
+  const stream = createUIMessageStream<ChatUIMessage>({
+    // Returned verbatim rather than run through `classifyTurnError`. The
+    // classifier's job is to map an unknown upstream error onto the vocabulary;
+    // here the class is the input, and round-tripping it through pattern
+    // matching would only introduce a way for the demo to show the wrong one.
+    // What's being exercised is the TRANSPORT — an HTTP 200 whose stream ends
+    // in an error chunk — and that is real.
+    onError: () => cls,
+    execute: async ({ writer }) => {
+      writer.write({ type: "start" });
+      writer.write({ type: "data-turn", id: TURN_PART_ID, data: telemetry });
+      telemetry.error = { class: cls, detail: "simulated" };
+      telemetry.timing = { ttftMs: null, durationMs: Date.now() - startedAt, tokensPerSecond: null };
+      writer.write({ type: "data-turn", id: TURN_PART_ID, data: telemetry });
+      writer.write({ type: "finish" });
+      // Thrown last so the record above has already reached the client, which
+      // is the ordering a real mid-stream failure produces too.
+      throw new Error(`simulated ${cls}`);
+    },
+  });
+
+  return createUIMessageStreamResponse({
+    stream,
+    headers: { "x-model": model, "x-simulated": cls },
+  });
+}
+
 export async function POST(req: Request): Promise<Response> {
+  // (0) Failure theatre, ahead of everything: no body parsing, no budget, no
+  // model. See the block comment above.
+  const simulate = simulatedClass(req);
+  if (simulate) {
+    const status = SIMULATED_STATUS[simulate];
+    if (status) return jsonError(simulate, status);
+    return simulateStreamFailure(simulate, DEFAULT_MODEL);
+  }
+
   // (a) Parse and validate the body.
   let parsed: z.infer<typeof bodySchema>;
   try {
@@ -473,8 +575,12 @@ export async function POST(req: Request): Promise<Response> {
           outputTokens,
           totalTokens: usage.totalTokens ?? null,
         };
+        // Rounded: the SDK reports fractional milliseconds, and sub-millisecond
+        // precision on a network measurement is noise that reads as false
+        // exactness once it's on screen next to a dollar figure.
+        const ttftMs = steps[0]?.performance?.timeToFirstOutputMs;
         telemetry.timing = {
-          ttftMs: steps[0]?.performance?.timeToFirstOutputMs ?? null,
+          ttftMs: ttftMs != null ? Math.round(ttftMs) : null,
           durationMs: Date.now() - startedAt,
           tokensPerSecond:
             outputTokens && generationMs > 0
