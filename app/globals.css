@@ -3,18 +3,12 @@
 @import "shadcn/tailwind.css";
 
 :root {
-  color-scheme: light;
-
   /* ---------------------------------------------------------------------
-     DARK SYSTEM — the site's design system as of the instrument redesign.
-     Canonical definition: 00-decisions.md §2. Do not rename or re-derive.
-
-     Migration state: these tokens are live on the routes that have been
-     redesigned. The legacy paper/ink tokens below still back the routes that
-     have not (see §2.1 of the decisions doc for the phase order); they are
-     deleted once the last of those is migrated. Build new UI against THIS
-     block — nothing new should reference paper/ink.
+     Design tokens. Canonical definition: 00-decisions.md §2.
+     Do not rename or re-derive.
      --------------------------------------------------------------------- */
+  color-scheme: dark;
+
   --bg: #0B0A09;          /* page */
   --panel: #111010;       /* rail, status strip, input, context panel */
   --raised: #171614;      /* user turns, inputs, inset blocks */
@@ -23,54 +17,38 @@
   --text: #EFEBE4;        /* primary */
   --text-soft: #A9A29A;   /* body */
   --text-faint: #6B655E;  /* metadata, labels */
-  --accent: #E4522B;      /* the rubric red, lifted for dark backgrounds */
+  --accent: #E4522B;      /* sole accent — see §2 */
   --signal: #6FA85C;      /* status dot only — never text, never borders */
-
-  /* Legacy light system — retiring. See the migration note above. */
-
-  /* Design tokens — 00-decisions.md §2. Do not rename or re-derive. */
-  --paper: #FAF7F1;
-  --ink: #1B1916;
-  --ink-soft: #4A463F;
-  --muted: #6E6A62;
-  --faint: #9B968C;
-  --hairline: #E0DBD1;
-  --surface: #F2EEE5;
-  --surface-raised: #FFFEFB;
-  --band: #131110;
-  --band-muted: #97928A;
-  /* Single warm accent ("rubrication") — hero highlight, card index badges,
-     link hovers, chat caret. Nowhere else. 4.9:1 on paper (AA). */
-  --rubric: #C7391B;
 
   --radius: 0rem;
 
-  /* shadcn mapping — 00-decisions.md §2 */
-  --background: var(--paper);
-  --foreground: var(--ink);
-  --muted-foreground: var(--faint);
-  --border: var(--hairline);
-  --primary: var(--ink);
-  --primary-foreground: var(--paper);
-
-  /* shadcn mapping — additional vars referenced by generated components
-     (button.tsx and future shadcn components), mapped sensibly onto our
-     palette rather than the generated nova/oklch theme. */
-  --secondary: var(--surface);
-  --secondary-foreground: var(--ink);
-  --accent: var(--surface);
-  --accent-foreground: var(--ink);
-  --destructive: #B3261E;
-  --ring: var(--ink);
-  --input: var(--hairline);
-  --card: var(--surface-raised);
-  --card-foreground: var(--ink);
-  --popover: var(--surface-raised);
-  --popover-foreground: var(--ink);
+  /* shadcn roles mapped onto the tokens above.
+     NOTE: shadcn's generated theme also wants an `--accent` role (a hover
+     background). That name collides with OUR brand accent, and when both were
+     declared the later one silently won — which is how --accent spent the
+     early redesign resolving to a pale cream instead of the red. The role is
+     deliberately NOT mapped here; components that want a hover surface use
+     --muted. Never reintroduce an `--accent:` declaration below this line. */
+  --background: var(--bg);
+  --foreground: var(--text);
+  --muted: var(--raised);
+  --muted-foreground: var(--text-faint);
+  --border: var(--line);
+  --input: var(--line-strong);
+  --ring: var(--accent);
+  --primary: var(--text);
+  --primary-foreground: var(--bg);
+  --secondary: var(--raised);
+  --secondary-foreground: var(--text);
+  --card: var(--panel);
+  --card-foreground: var(--text);
+  --popover: var(--panel);
+  --popover-foreground: var(--text);
+  --destructive: #E0523F;
 }
 
 @theme inline {
-  /* Dark system → Tailwind utilities: bg-bg, bg-panel, border-line,
+  /* Design system → Tailwind utilities: bg-bg, bg-panel, border-line,
      border-line-strong, text-text-soft, text-accent, bg-signal, … */
   --color-bg: var(--bg);
   --color-panel: var(--panel);
@@ -83,37 +61,24 @@
   --color-accent: var(--accent);
   --color-signal: var(--signal);
 
-  /* Legacy light system — retiring. */
-  --color-paper: var(--paper);
-  --color-ink: var(--ink);
-  --color-ink-soft: var(--ink-soft);
-  --color-muted: var(--muted);
-  --color-faint: var(--faint);
-  --color-hairline: var(--hairline);
-  --color-surface: var(--surface);
-  --color-surface-raised: var(--surface-raised);
-  --color-band: var(--band);
-  --color-band-muted: var(--band-muted);
-  --color-rubric: var(--rubric);
-
+  /* shadcn roles used by the three generated components still in the tree
+     (button, input, sheet). */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
   --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
-
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
-  --color-accent: var(--accent);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-destructive: var(--destructive);
-  --color-ring: var(--ring);
-  --color-input: var(--input);
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
   --color-popover: var(--popover);
   --color-popover-foreground: var(--popover-foreground);
+  --color-destructive: var(--destructive);
 
   --radius: var(--radius);
 
@@ -123,8 +88,8 @@
 }
 
 body {
-  background: var(--paper);
-  color: var(--ink);
+  background: var(--bg);
+  color: var(--text);
   /* reference the next/font var directly — @theme inline does not emit
      --font-sans as a runtime custom property */
   font-family: var(--font-geist-sans);

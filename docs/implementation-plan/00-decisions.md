@@ -57,22 +57,32 @@ Tailwind utilities: `bg-bg`, `bg-panel`, `bg-raised`, `border-line`,
 
 ### 2.1 Migration state
 
-The dark tokens and the legacy paper/ink tokens **coexist in `globals.css`**
-during the redesign. Routes are migrated a phase at a time; the legacy block
-(and the shadcn mapping onto it) is deleted when the last one lands.
+The legacy paper/ink tokens are **gone** as of phase 3. `globals.css` defines
+the dark system and maps shadcn's roles onto it — nothing references `--paper`,
+`--ink`, `--hairline`, `--band`, or `--rubric` any more.
+
+**Never declare an `--accent:` role for shadcn.** Its generated theme wants
+`--accent` for a hover background, which collides with the brand accent above;
+when both were declared the later one silently won, and `--accent` spent the
+early redesign resolving to a pale cream (`#F2EEE5`) instead of the red.
+Components needing a hover surface use `--muted`, mapped to `--raised`.
 
 | Phase | Scope | State |
 |---|---|---|
 | 1 | Dark tokens in `globals.css`; this doc | done |
 | 2 | App shell at `/`, responsive incl. mobile sheets; 404 dark | done |
-| 3 | Intercepting routes: resume / case studies / colophon open in the panel | pending |
-| 4 | `(legacy)` routes restyled dark; delete the group, header, footer | pending |
+| 3 | Document routes restyled dark; legacy tokens and old chrome deleted | done |
+| 4 | Intercepting routes: resume / case studies / colophon open in the panel | pending |
 | 5 | Web resume with depth and images | pending |
 | 6 | Build-time citation index, model routing, JD paste | pending |
 | 7 | Copy: hero, "why a chatbot" (DRAFT in site-copy.md), rail labels | pending |
 
 Phase 3 (mobile) folded into phase 2 — the shell was built responsive rather
-than retrofitted — and the old phase 3 slot is now the intercepting-routes work.
+than retrofitted.
+
+Restyling and intercepting routes were then swapped: intercepting routes render
+the *same* component in the panel and standalone, so the document pages had to
+be dark before they could be rendered inside the panel.
 
 ### 2.2 App shell layout
 

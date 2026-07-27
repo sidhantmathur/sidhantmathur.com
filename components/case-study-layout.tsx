@@ -1,6 +1,4 @@
-import Link from "next/link";
-import { Container } from "@/components/layout/container";
-import { Section } from "@/components/layout/section";
+import { DocPage } from "@/components/layout/doc-page";
 
 type CaseStudyLayoutProps = {
   title: string;
@@ -8,28 +6,14 @@ type CaseStudyLayoutProps = {
   children: React.ReactNode;
 };
 
-export function CaseStudyLayout({
-  title,
-  subtitle,
-  children,
-}: CaseStudyLayoutProps) {
+export function CaseStudyLayout({ title, subtitle, children }: CaseStudyLayoutProps) {
   return (
-    <Section divider="none">
-      <Container className="py-16">
-        <Link
-          href="/"
-          className="inline-block font-mono text-xs text-ink-soft no-underline hover:underline"
-        >
-          ← Selected work
-        </Link>
-        <h1 className="mt-6 font-sans text-[30px] font-semibold tracking-[-0.025em] text-ink">
-          {title}
-        </h1>
-        <p className="mt-3 max-w-[58ch] text-[15px] leading-relaxed text-ink-soft md:text-base">
-          {subtitle}
-        </p>
-        <div className="mt-10">{children}</div>
-      </Container>
-    </Section>
+    <DocPage>
+      <h1 className="text-[24px] font-medium tracking-[-0.02em] text-text">{title}</h1>
+      <p className="mt-3 max-w-[62ch] text-[13px] leading-relaxed text-text-soft">
+        {subtitle}
+      </p>
+      <div className="mt-10">{children}</div>
+    </DocPage>
   );
 }

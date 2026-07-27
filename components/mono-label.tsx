@@ -7,7 +7,7 @@ export function MonoLabel({
 }: React.ComponentProps<"span">) {
   return (
     <span
-      className={cn("font-mono text-xs text-muted", className)}
+      className={cn("font-mono text-xs text-text-faint", className)}
       {...props}
     >
       {children}

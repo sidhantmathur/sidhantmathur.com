@@ -11,7 +11,7 @@ export function ResumeDownloadButton() {
       href="/resume.pdf"
       download
       onClick={() => track("resume_download")}
-      className="mt-6 inline-block bg-ink px-5 py-3 font-sans text-sm font-medium text-paper transition-opacity hover:opacity-90"
+      className="mt-6 inline-block bg-accent px-5 py-3 font-sans text-sm font-medium text-bg transition-opacity hover:opacity-90"
     >
       Download PDF
     </a>
