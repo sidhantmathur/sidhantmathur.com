@@ -9,10 +9,11 @@ Two things were added that aren't in either doc, because sequencing surfaced the
 **F1–F3**, foundations that several accepted items silently depend on. They are not
 new features. They are the parts of accepted features that have to exist first.
 
-Status: **approved 2026-07-27.** Sprints 1, 2, 3, 4, 5 and 6 are built and green —
-see the results notes under them. Sprint 7 and Track B are unspecced and
-unbuilt. The open question at the bottom (#4) was resolved on 2026-07-27 and shipped in
-Sprint 3 as a post-hoc "sources touched" row.
+Status: **approved 2026-07-27. Track A is complete** — all seven sprints are
+built and green; see the results notes under them. **Track B is unspecced and
+unbuilt**, and is now the only thing left on this roadmap. The open question at
+the bottom (#4) was resolved on 2026-07-27 and shipped in Sprint 3 as a post-hoc
+"sources touched" row.
 
 ---
 
@@ -557,6 +558,102 @@ ledger, #15 manual mode) and all of Track B were left where they are.
 **#7** publish the system prompt · **#8** index the repo as a second corpus · **#9** roast this site (needs #8) · **#10** refusal ledger (hand-curated content) · **#15** manual mode — meet the cached me on rate limit
 
 **Pull-forward candidate:** #15 is the only item here that fixes a hole rather than adding a surface — a rate-limited visitor currently gets an error state. If that's happening in real traffic, move it to Sprint 2.
+
+#### Sprint 7 results — 2026-07-27
+
+**Done.** All the acceptance criteria in the spec are met. `npm run build`,
+`npm run lint` and `npm run eval` (**232/232**, up from 180) clean. This sprint
+changes the system prompt, so there **was** a live run: refusal 4/4, injection
+6/6 — including `prompt-extraction`, which is the one that had to keep passing
+now that the prompt is public — and grounded 6/6 with **11 of 12 claims
+verified**, the best citation result any run has recorded.
+
+Spec: `docs/sprint-7-recursion.md`. The shape it took: **two pre-rendered
+documents** (`/prompt`, `/refusals`), **one more corpus** that is loaded per
+turn instead of always, and **one screen that used to be a sentence**. What
+shipped: `scripts/build-repo-corpus.mjs` and the git-ignored
+`lib/repo.generated.ts`; `lib/corpus.ts` (the merged id space);
+`lib/site-question.ts` (the detector and the two slash messages);
+`SITE_APPENDIX` in `lib/system-prompt.ts` plus a `## This site` section in the
+base; `lib/refusals.ts` and `app/refusals/page.tsx`; `app/prompt/page.tsx`;
+`components/shell/manual-mode.tsx`; two panel views, two rail items, four slash
+commands; and `evals/recursion.test.mjs` (52 cases).
+
+Seven things worth carrying forward:
+
+1. **The prompt cache answer, measured rather than assumed.** An ordinary turn
+   is **7,704 input tokens, 7,371 of them cache reads**, in one step — and it
+   measures the same before and after a site turn, which is the claim that
+   mattered. A site turn is **11,779 input tokens**, +4,075 for the appended
+   corpus, and the first one after the appendix text changes reports an
+   **11,445-token cache write and zero reads**: the second corpus is a separate
+   cache entry that costs one write and is then read like anything else. What
+   is **not** free is the scope carve-out in the base prompt — **+1,618
+   characters, ~405 tokens, on every turn forever**, because the model has to
+   know the site is in scope even when the corpus isn't loaded. That is the
+   price of this item and it should be read as such.
+2. **One measurement in that set is unexplained, and it is recorded rather than
+   smoothed.** An earlier probe, before the appendix text was last edited,
+   showed two site turns reporting near-total cache *reads* with zero writes on
+   what should have been a cold prompt. The later cold run behaved as expected.
+   Nobody should lean on site-turn cache figures without re-measuring; the
+   ordinary-turn numbers above were reproduced twice and are the ones to trust.
+3. **The second corpus is extracted, never written — and that is a test.** Every
+   line of every `repo:` chunk is verbatim from a file in the tree: comment
+   blocks, `package.json`, the routes read off `app/`, and the roadmap's own
+   "not done" paragraphs. One test squashes both sides and fails if a line
+   isn't in the file the chunk names, so the corpus can be diffed against the
+   repo rather than believed. It also means the corpus has no copy in it to
+   review, which is why the ledger's Sprint 7 rows are about pages and not
+   about the corpus.
+4. **The roast is only as good as the site's own list of what it hasn't done.**
+   That chunk gets four times every other chunk's character budget, deliberately,
+   and it is where the first live roast got its teeth: it named the
+   instrumentation deck that has never published a number, the job-posting
+   summary sentence that cites almost nothing while its rows do, and the export
+   flow's missing derived artifacts — all true, all sourced, all things the
+   roadmap says about itself. A roast built only from comment headers would have
+   been a tour.
+5. **It made two mistakes on the first run and one of them was fixable in the
+   prompt.** It wrote a repo path as a markdown link (`[the citation
+   checker](/verify.ts)`) — a dead link, caused by the formatting rule that
+   tells it never to write a bare path — so the appendix now says a file path is
+   not a URL, and the second run wrote paths in code style. The other was
+   rounding in prose: "conversations live in the URL fragment" is true of a
+   shared link and not of a conversation, and the checker cannot catch a
+   sentence whose proper nouns are all present. Site answers are subject to
+   exactly the same limit as answers about Sidhant, which is worth remembering
+   before treating this corpus as self-documenting.
+6. **Publishing the prompt did not cost the refusal, and the two are now
+   linked.** The prompt says decline *and point at `/prompt`*, the ledger's
+   first entry explains why that isn't a contradiction, and `prompt-extraction`
+   still passes. The ledger's real content is the `enforcedBy` column: five
+   entries hold because the code holds them, five because the model cooperates,
+   one because it was a decision and nothing was built. Collapsing those into
+   one list would have made the page a promise it can't keep.
+7. **Manual mode is the corpus, not a cached voice.** It renders the FAQ chunks
+   verbatim with the ids the model would have cited, calls nothing, and holds
+   back any chunk still carrying a `[TODO` — a hole is not an answer. It is
+   reachable on demand through `?simulate=rate_limited`, which the shell now
+   forwards to the endpoint, so the whole UI enters the state instead of one
+   fetch reporting on it; that was Sprint 2's failure theatre paying for itself.
+
+**Not done, and out of scope by design:** no retrieval — the repo corpus is
+loaded whole or not at all, and a question about a file that isn't in the 22
+chunks gets told so rather than reasoned about. The corpus is curated: it holds
+one comment block per file, so it describes the site's decisions well and its
+current behaviour only as well as those comments do. The detector is one signal
+and will miss an obliquely phrased site question; the fallback is the base
+prompt's "say you don't have the source on this turn", which is honest but less
+useful than an answer. Nothing publishes the roast — it is generated per turn
+and stored nowhere, so there is no roast on the site for someone who never asks.
+`/measurements` was **not** re-published with this sprint's grounded run (11/12
+verified, which would improve the figure Sprint 6 called the least favourable
+the site could report): `evals/results.json` is a single shared file and another
+run was being written to it at the time, so publishing would have archived
+someone else's numbers. It stays a one-command job for whoever runs the suite
+next. And no live run was done on a second model — the standard tier is 20
+turns an hour and this sprint spent them on the groups that could regress.
 
 ---
 
