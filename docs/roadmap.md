@@ -9,9 +9,10 @@ Two things were added that aren't in either doc, because sequencing surfaced the
 **F1–F3**, foundations that several accepted items silently depend on. They are not
 new features. They are the parts of accepted features that have to exist first.
 
-Status: **approved 2026-07-27.** Sprints 1 and 2 are built and green — see the
-results notes under them. Sprints 3–7 and Track B are unspecced and unbuilt. The
-open question at the bottom (#4) was resolved on 2026-07-27 and lands in Sprint 3.
+Status: **approved 2026-07-27.** Sprints 1, 2 and 3 are built and green — see the
+results notes under them. Sprints 4–7 and Track B are unspecced and unbuilt. The
+open question at the bottom (#4) was resolved on 2026-07-27 and shipped in
+Sprint 3 as a post-hoc "sources touched" row.
 
 ---
 
@@ -68,6 +69,9 @@ below — this one needs Sidhant.
 (citation enforcement), and S1's "a row that cannot cite is downgraded by code"
 all require the model to emit ids against a chunked corpus. That's F2, and it
 gates a whole sprint's worth of accepted items.
+*Closed by Sprint 3 for prose: the whole corpus is chunked as `CHUNKS`, the model
+emits ids, and `lib/verify.ts` checks them. `roleFit.evidence` is still
+unanchored — that half is Sprint 4's.*
 
 **3. The only side-channel to the client is four HTTP headers.** No data parts, no
 `messageMetadata`, no `createUIMessageStream`. #1, #3, #5, #6, #22 and #23 all read
@@ -226,6 +230,66 @@ not new copy for a visitor who deliberately pressed a failure button.
 | #4 | Retrieval flicker — **blocked on the open question below.** |
 
 **Done means:** a claim without a valid chunk id is downgraded by code, not by the model's judgment; the downgrade path has an eval case.
+
+#### Sprint 3 results — 2026-07-27
+
+**Done.** Both acceptance criteria met. `npm run build`, `npm run lint` and
+`npm run eval` (94/94) clean; live corpus green on the default model — grounded
+6/6, refusal 4/4, injection 6/6, roleFit 4/5 (see 4 below).
+
+Spec: `docs/sprint-3-grounding.md`. What shipped: the build script cuts all six
+knowledge files into **29 chunks** with `<source>:<slug>` ids and renders those
+ids into the knowledge base itself; `lib/verify.ts` (the deterministic
+post-pass); `components/shell/answer.tsx` (margin, sources row, downgrade
+marks); a panel view for a cited chunk; `evals/citations.test.mjs`.
+
+Five things worth carrying forward:
+
+1. **The id lives on the line above the text it names.** There is no separate
+   list of ids in the prompt, because a list is a thing that can fall out of
+   sync with the corpus. The same rendering produces both the prompt and the
+   chunk data, so the ids the model is shown, the ids the panel can open, and
+   the text the checker searches are one artifact. Both directions of that are
+   asserted in the static suite.
+2. **The chunk's checkable text has to be exactly what the model read.** The
+   first live run flagged "A Darle 20" as unverified against an A Darle 20
+   chunk: the label line was in the prompt and not in the haystack. Every gap
+   between what the model sees and what the checker searches surfaces as a
+   *false* unverified, which is the most expensive way this feature can be
+   wrong — a mark on a correct sentence teaches the reader to ignore all of
+   them.
+3. **Calibration was most of the work, and it is pinned.** Live runs produced
+   false flags on discourse markers ("First," "Specifically,"), a trailing
+   comma inside a number, derived forms ("Mexican" against "Mexico"), an
+   abbreviated month ("March" against "Mar 2026"), and the closing question
+   every answer ends with. Each fix has a test in "false alarms the live corpus
+   produced", so the next person to touch the tokenizer finds out immediately.
+   Leniency runs one way on purpose: this thing reports absence, and a
+   near-miss must never become an accusation.
+4. **The JD flow doesn't cite, and that's Sprint 4's.** Ordinary answers cite
+   well (9/11 claims verified on the grounded group, and both remaining flags
+   were real miscitations). Job-posting turns cite almost nothing — 1/12 across
+   five postings, unchanged after two prompt nudges. The model writes its
+   closing summary off the `roleFit` object it just produced rather than off
+   the corpus. Rather than special-case it, an answer that cites *nothing* now
+   renders one quiet line instead of a mark per sentence; the real fix is a
+   `sources` field on the schema, which is Sprint 4's `requirementTable` work.
+   The roleFit 4/5 is the known gap-naming assertion from Sprint 1 — it moved
+   from `ml-infra` to `eng-manager` between runs on the same model, which is
+   the flakiness Sprint 1 recorded, not a regression.
+5. **`verified` is a narrow word and the copy keeps it narrow.** It means the
+   numbers and names in this sentence appear in the chunk it cited — not that
+   the sentence is true, and not that unmarked prose was checked. Sentences
+   with nothing checkable in them are not claims and are not counted. Anyone
+   rewriting these strings should read the note in `docs/copy-ledger.md` first:
+   upgrading them to a truth claim would assert more than the code can support.
+
+**Not done, and out of scope by design:** `roleFit` has no citation field (see
+4). Nothing publishes an aggregate groundedness rate — that's #22, gated on #2.
+The checker only reads numbers and proper nouns, so "he likes owning the
+result" is invisible to it, deliberately. Exported transcripts strip markers
+and append a bare `Sources:` line; rendering them properly in an artifact is
+#17.
 
 ---
 

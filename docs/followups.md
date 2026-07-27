@@ -96,8 +96,9 @@ from that object. Full write-up in `docs/idea-bank.md` §6.
 Directions worth exploring — **brainstorm with Sidhant before building**:
 
 - Structured output rather than prose: requirement-by-requirement match, with
-  each row citing the resume section that backs it. The citation index in
-  `lib/citations.generated.ts` already has stable ids for exactly this.
+  each row citing the chunk that backs it. Sprint 3 built the half this needs:
+  `lib/chunks.generated.ts` addresses the whole corpus and `lib/verify.ts`
+  checks a citation deterministically. The schema half is Sprint 4.
 - A shareable result. A recruiter forwarding a fit assessment to a hiring
   manager is the highest-value thing this feature could do, and there is
   currently no way to do it. Note this needs storage, which the architecture

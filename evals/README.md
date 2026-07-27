@@ -22,10 +22,18 @@ invariants the chat silently depends on:
 
 - **Knowledge base** — built, non-empty, all six source files present, within
   the ~8k token target, no `[TODO]` markers.
-- **Citation index** — ids unique and slug-shaped, every citation carries
-  content, and the ids `shell-data.ts` hardcodes still exist.
+- **Chunk index** — every chunk of `content/knowledge` is addressable, ids are
+  unique and shaped `<source>:<slug>`, every chunk carries content, the ids
+  `shell-data.ts` hardcodes still exist, and the ids the panel can open and the
+  ids the prompt shows the model are the same set in both directions.
+- **Citation checking** (`lib/verify.ts`) — the downgrade path, which is the
+  Sprint 3 acceptance criterion: a claim citing a chunk that doesn't contain its
+  number, a claim citing an id that doesn't exist, and a claim citing nothing
+  are each downgraded by code. Plus the calibration cases — every false
+  "unverified" a live run produced is pinned as a test, because a checker that
+  cries wolf stops being read.
 - **System prompt** — every guard section present (`Scope`, `Untrusted input`,
-  `Formatting`, `Knowledge base`, `Tools`), the specific injection defenses
+  `Formatting`, `Knowledge base`, `Citing`, `Tools`), the specific injection defenses
   intact, every tool the route defines is documented in the prompt, and nothing
   dynamic crept in that would break prompt caching.
 - **Model allowlist** — every model the client offers exists on the server
@@ -37,7 +45,7 @@ invariants the chat silently depends on:
   the corpus doesn't cover.
 - **Transcript serializer** — unit tests for `lib/transcript.ts`.
 
-That last-but-one group is what keeps the suite honest. A live case checking for
+The **fixture freshness** group is what keeps the suite honest. A live case checking for
 `1,400` is worthless once someone edits `resume.md` and the number changes — the
 case would fail and look like a model regression. Layer 1 catches it as what it
 is: a stale assertion.
@@ -55,6 +63,14 @@ npm run eval:live -- --group roleFit     # in another
 ```
 
 Options: `--group <name>`, `--model <id>`, `--base <url>`, `--delay <ms>`.
+
+Every answer is also run through `lib/verify.ts` and the result printed under
+the case: how many chunks it cited, how many of its claims verified, and each
+downgrade. **Reported, not scored** — same call as soft-pedal phrasing. A model
+that cites badly is a prompt problem worth seeing, but failing the suite on it
+would tempt whoever is on the hook into loosening the checker, and the checker
+is the one thing here that must not be negotiable.
+
 Results land in `evals/results.json` (git-ignored), and the process exits
 non-zero on failure so it can gate CI later.
 
@@ -73,7 +89,7 @@ reporting the remaining cases as failures.
 - **refusal** (4) — does it decline out-of-scope requests instead of helping?
 - **injection** (6) — role override, prompt extraction, knowledge-base dump, a
   fake system message, disparagement bait, and persona hijack.
-- **roleFit** (4) — the job-description cases. See below.
+- **roleFit** (5) — the job-description cases. See below.
 
 ## The job-description cases
 
@@ -85,7 +101,7 @@ is currently defended by two sentences of prompt and an **optional** schema fiel
 whose description reads "Omit if there is nothing honest to say." Models are
 sycophantic. These cases measure whether it holds.
 
-Two of the four postings are roles Sidhant is genuinely **not** qualified for —
+Two of the five postings are roles Sidhant is genuinely **not** qualified for —
 a senior ML infrastructure role and an engineering manager role. Those are the
 important ones. A run where `revops-strong-fit` passes and `ml-infra-unqualified`
 fails is the feature working exactly as badly as suspected, and that result is
