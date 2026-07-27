@@ -9,8 +9,8 @@ Two things were added that aren't in either doc, because sequencing surfaced the
 **F1–F3**, foundations that several accepted items silently depend on. They are not
 new features. They are the parts of accepted features that have to exist first.
 
-Status: **approved 2026-07-27.** Sprints 1, 2, 3, 4 and 5 are built and green —
-see the results notes under them. Sprints 6–7 and Track B are unspecced and
+Status: **approved 2026-07-27.** Sprints 1, 2, 3, 4, 5 and 6 are built and green —
+see the results notes under them. Sprint 7 and Track B are unspecced and
 unbuilt. The open question at the bottom (#4) was resolved on 2026-07-27 and shipped in
 Sprint 3 as a post-hoc "sources touched" row.
 
@@ -469,6 +469,86 @@ that nothing in CI can check.**
 ### Sprint 6 — Publish the measurements
 
 **#2** published eval suite — needs `npm run eval` to emit machine-readable output first; today the static layer only prints TAP · **#23** latency and reliability panel, aggregated at build time from the F3 events · **#22** groundedness self-report with calibration, **gated on #2** per the decisions doc
+
+#### Sprint 6 results — 2026-07-27
+
+**Done.** All the acceptance criteria in the spec are met. `npm run build`,
+`npm run lint` and `npm run eval` (**180/180**, up from 157) clean. No live run:
+nothing this sprint changes what the model does, so `eval:live` would have
+re-measured Sprint 4 — the run it publishes is Sprint 4's, republished rather
+than repeated.
+
+Spec: `docs/sprint-6-measurements.md`. The shape it took: **one static page at
+`/measurements`** with three sections, fed by **one build-time module** with two
+sources, either of which may be missing. What shipped: a JSON reporter running
+alongside TAP (`evals/reporters/json.mjs`), `scripts/publish-evals.mjs` and the
+committed `evals/published/latest.json`, `scripts/build-measurements.mjs` wired
+into `prebuild`/`predev`, `lib/measurements.ts` (the policy) and
+`lib/measurement-types.ts`, `app/measurements/page.tsx`, and
+`evals/measurements.test.mjs` (23 cases).
+
+Six things worth carrying forward:
+
+1. **The price-table check found the wrong row.** Sprint 2's finding 3 flagged
+   the *derived* cache figures as the soft numbers and called `input`/`output`
+   "the ones to trust". On `deepseek/deepseek-v4-flash` it was the trusted pair
+   that was wrong: published $0.14/$0.28 against a recorded $0.09/$0.18, and a
+   cache-hit rate published directly at $0.0028 rather than the ~10x discount
+   the file assumed — the derived figure was more than three times too high.
+   Corrected, with each row now saying whether it was confirmed, derived, or
+   could not be checked at all (`openai/gpt-5.6-luna` could not). **Nothing this
+   sprint publishes is denominated in money**, deliberately, so no published
+   aggregate ever rested on any of it — but the meter did, and does.
+2. **The empty state is the default path, and it is run for real in the suite.**
+   The build script has no credentials in this repo, so `no-credentials` is what
+   ships today; a test executes the script with the environment stripped, reads
+   what it wrote, and asserts the aggregate carries *no* `models`, `byClass`, or
+   turn counts for a renderer to mistake for a measurement. The three reasons
+   the panel can be empty are keyed through a total record rather than a
+   ternary, so a fourth reason is a type error instead of silently inheriting
+   whichever sentence was last — a blank section reads as "nothing is wrong",
+   which is the confusion these states exist to prevent.
+3. **The honest number was the one it refused to print.** The only published
+   live run has six checkable claims, three verified. Rendering that as "50%"
+   would have been the single most misleading figure on the site, so the policy
+   withholds a rate under twenty claims and shows the pair of counts instead.
+   Same shape for latency: a median needs ten turns and a p95 needs fifty,
+   because the p95 of twenty samples is a maximum wearing a percentile's name.
+4. **Naming the sample wasn't enough.** The published run covers `roleFit`
+   only — the flow Sprint 3's finding 4 recorded as citing almost nothing,
+   because the evidence travels in the requirement rows instead. Printing "over
+   the roleFit group" is true and tells a reader nothing, so the page adds a
+   sentence whenever `grounded` isn't among the published groups. **The most
+   useful thing anyone can do to this page is run `eval:live --group grounded`
+   and publish it** — the figure it shows today is close to the least favourable
+   the site could report.
+5. **Publishing is a decision, not a build step.** The page renders a committed
+   snapshot, never what the build machine measured. That is what lets a
+   credential-free deploy still ship a page that says when its numbers were
+   taken, and it means an unreviewed model answer can't reach the site by
+   riding along in a results file — the snapshot carries verdicts and counts and
+   is asserted to carry no prose.
+6. **The suite's own output is now a published artifact, which changes how it
+   rots.** A test file that gets renamed leaves the page describing assertions
+   nobody runs; there's a check that every file named in the snapshot still
+   exists. The snapshot's static half is only as current as the last
+   `eval:publish`, and nothing forces them into step — re-publish after
+   changing the suite, or the page under-reports it.
+
+**Not done, and out of scope by design:** **#23 has never rendered a number.**
+The F3 events have been in the code since Sprint 1 and the PostHog project holds
+zero `chat_turn_complete` and zero `chat_turn_failed` events, so the panel has
+only ever been seen in its empty state — the query shape, the percentile
+withholding, and the per-class failure list are all untested against real data,
+and the first deploy with credentials and traffic is where they get their first
+real exercise. That build also needs two new server-side env vars
+(`POSTHOG_PROJECT_ID`, `POSTHOG_PERSONAL_API_KEY`); PostHog is not a new service
+but a build-time personal API key is a new credential and wants Sidhant's nod.
+Nothing publishes dollars. Nothing publishes per-model pass rates beyond the one
+model whose run exists. The live suite still isn't in CI — it costs tokens and
+needs a key, and that stays a deliberate local step. And Sprint 7's items (#7
+the system prompt, #8 the repo as a second corpus, #9 roast, #10 the refusal
+ledger, #15 manual mode) and all of Track B were left where they are.
 
 ---
 

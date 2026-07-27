@@ -50,6 +50,35 @@ The **fixture freshness** group is what keeps the suite honest. A live case chec
 case would fail and look like a model regression. Layer 1 catches it as what it
 is: a stale assertion.
 
+`npm run eval` prints TAP **and** writes `evals/static-results.json` — the same
+run, machine-readable, one record per assertion with the suite it sits under.
+That file is git-ignored; it is an input to publishing, not the artifact.
+
+## Publishing a run (`npm run eval:publish`)
+
+The site's `/measurements` page publishes `evals/published/latest.json`, which is
+**committed**. It never publishes whatever happened to run on the build machine:
+a deploy with no API key still builds, and the page can still say when its
+numbers were measured, because measuring and publishing are two events with two
+timestamps.
+
+```bash
+npm run eval && npm run eval:publish          # publish the static suite
+npm run eval:live -- --group grounded
+npm run eval:publish                          # merge that run in as well
+```
+
+Live runs merge **by model**, because a full corpus costs more than one hour of
+rate limit and the models get measured on different days. Publishing a run on one
+model replaces that model's entry and leaves the others alone. The static half is
+replaced wholesale — there is only ever one suite.
+
+What does **not** travel into the snapshot: the assistant's prose. Every answer
+in a live run is unreviewed model output making claims about Sidhant, and the
+copy rule in `CLAUDE.md` has no exception for text that arrived in a JSON file.
+Verdicts, counts and the citation summary are measurements about the run, not
+claims about him, so those do. There is a test.
+
 ## Layer 2 — live (`npm run eval:live`)
 
 Runs the corpus against a **real running server** over HTTP, so it measures the
