@@ -233,7 +233,7 @@ function RequirementTable({
             className="grid grid-cols-[58px_1fr] gap-3 border-b border-line py-3 last:border-b-0"
           >
             <span
-              className={`border px-1 py-0.5 text-center text-[9.5px] uppercase tracking-[0.07em] ${VERDICT_STYLE[row.verdict]}`}
+              className={`mt-0.5 self-start border px-1 py-0.5 text-center text-[9.5px] uppercase tracking-[0.07em] ${VERDICT_STYLE[row.verdict]}`}
             >
               {row.verdict}
             </span>

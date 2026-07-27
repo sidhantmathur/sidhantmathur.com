@@ -9,8 +9,8 @@ Two things were added that aren't in either doc, because sequencing surfaced the
 **F1–F3**, foundations that several accepted items silently depend on. They are not
 new features. They are the parts of accepted features that have to exist first.
 
-Status: **approved 2026-07-27.** Sprints 1, 2 and 3 are built and green — see the
-results notes under them. Sprints 4–7 and Track B are unspecced and unbuilt. The
+Status: **approved 2026-07-27.** Sprints 1, 2, 3 and 4 are built and green — see
+the results notes under them. Sprints 5–7 and Track B are unspecced and unbuilt. The
 open question at the bottom (#4) was resolved on 2026-07-27 and shipped in
 Sprint 3 as a post-hoc "sources touched" row.
 
@@ -70,8 +70,9 @@ below — this one needs Sidhant.
 all require the model to emit ids against a chunked corpus. That's F2, and it
 gates a whole sprint's worth of accepted items.
 *Closed by Sprint 3 for prose: the whole corpus is chunked as `CHUNKS`, the model
-emits ids, and `lib/verify.ts` checks them. `roleFit.evidence` is still
-unanchored — that half is Sprint 4's.*
+emits ids, and `lib/verify.ts` checks them. Closed by Sprint 4 for the job-
+description flow: every assessment row carries `sources`, and a row that claims
+a fit and cites nothing valid is downgraded by `lib/role-fit.ts`.*
 
 **3. The only side-channel to the client is four HTTP headers.** No data parts, no
 `messageMetadata`, no `createUIMessageStream`. #1, #3, #5, #6, #22 and #23 all read
@@ -299,6 +300,87 @@ and append a bare `Sources:` line; rendering them properly in an artifact is
 **S1** `gaps` required with `noGapsRationale`; per-requirement `met`/`partial`/`unmet`/`unclear`; citation-or-downgrade (uses #21); extraction split from judgment · **#11** the generative-UI component vocabulary, `requirementTable` first · **S2** posting-as-hostile-input hardening
 
 **Done means:** S0's soft-pedal and gap-naming assertions pass; the injection cases pass; `requirementTable` renders without implying arithmetic precision it doesn't have (the rendering constraint from decisions §3).
+
+#### Sprint 4 results — 2026-07-27
+
+**Done.** All three acceptance criteria met. `npm run build`, `npm run lint` and
+`npm run eval` (125/125) clean; live corpus green on the default model —
+**roleFit 6/6**, grounded 6/6, refusal 4/4, injection 6/6 — and **roleFit 6/6 on
+`openai/gpt-5-mini` and `google/gemini-3.5-flash-lite` as well**. The gap-naming
+assertion that failed in Sprint 1 and again in Sprint 3 now passes, on every
+posting, on all three models.
+
+Spec: `docs/sprint-4-jd.md`. The shape it took: **a job-posting turn is three
+forced steps** — extract the requirements verbatim, judge them, then write the
+sentence — and **`lib/role-fit.ts` decides what a reader finally sees**. Every
+extracted requirement gets a row whether the model wrote one or not; a row
+claiming a fit and citing nothing valid is downgraded to `unclear` by code; gaps
+cannot come back empty while an `unmet` row exists. What shipped besides that:
+`checkClaim` lifted out of `lib/verify.ts` so a row is checked exactly like a
+sentence of prose, the posting fenced and re-asserted with a deterministic
+injection pre-pass (`lib/job-posting.ts`), the `requirementTable` renderer in
+the context panel, and `evals/role-fit.test.mjs` (31 cases).
+
+Five things worth carrying forward:
+
+1. **The schema was the bug, twice, and both times it cost the whole
+   assessment.** The first live run failed four of six postings with a tool
+   input-validation error: both halves of the turn are in one context, the
+   extraction filled a field called `requirements` with strings, and asked for
+   a field of the same name the model handed back the same array. Renaming it
+   to `rows` fixed most of it; the next run still lost one posting because the
+   object arrived under `requirements` anyway. **The rule this settles: nothing
+   in a tool schema may reject a generation.** The field is optional, its
+   alias is accepted, `verdict` is a plain string, and a bare string is a valid
+   row. Enforcement moved entirely into the reconciler, where failing means a
+   marked row instead of an answer with nothing behind it — which is Sprint 1's
+   lesson arriving by a new road, and it now has a static test.
+2. **Coverage is what fixed gap-naming, not better prompting.** Both models in
+   Sprint 1 wrote honest assessments that skipped exactly one labeled
+   requirement. Nothing about that is fixable by asking harder. Extracting the
+   list first and having code fill in the rows the judgment skipped makes the
+   omission structurally impossible — and when it happens the reader is told
+   *the assessment didn't answer this one* rather than seeing nothing.
+3. **A citation can only be demanded of a positive claim, and the checker can
+   only read presence.** `unmet` rows cite nothing because an absence has no
+   chunk to point at; requiring one would make "claim it instead" the cheapest
+   way to satisfy the checker. And a row whose sentence names what's *missing*
+   has names in it that aren't in the corpus by construction — the first run
+   put unverified marks on seven of the most honest rows in the table. So a
+   `met` row is checked whole, a `partial` row up to its first negation, and an
+   `unmet` row not at all.
+4. **Two real false alarms in the prose checker, found by this flow and fixed
+   there:** `TypeScript/Next.js` and `LLM-integrated` were flagged against
+   chunks that write those words apart. A compound now contributes its
+   capitalized parts as separate tokens; the lowercase halves ("to",
+   "integrated") assert nothing and are dropped. Both directions are tested in
+   Sprint 3's "false alarms the live corpus produced" block.
+5. **The extra step cost tokens where Sprint 1 said it would.** `gpt-5-mini`
+   failed one posting on `finishReason: "length"` with 2,496 output tokens and
+   nothing emitted — the whole ceiling spent on reasoning before the EXTRACTION
+   call, one step earlier than Sprint 1's version of this. The JD ceiling went
+   2500 → 4000 and it went 6/6. Testing across the allowlist is what found it,
+   again; on the default model it is invisible, again.
+6. **The guarantees are visibly load-bearing on other models.** Gemini's run
+   shows them working rather than idle: on one posting it judged one of six
+   extracted requirements and code filled in the other five as unanswered, and
+   on another it produced two rows claiming a fit with nothing cited, which
+   were downgraded. On the default model both counts are usually zero — which
+   is exactly why they're reported per run rather than assumed.
+7. **The posting-borne injection is in the eval corpus now**, not just the
+   defense. `injected-posting` carries a dictated verdict, suppressed gaps, a
+   fake system line and a persona swap, and passes: the Kubernetes requirement
+   still comes back unmet and none of the dictated language appears. Worth
+   knowing before hardening further — the prompt survived it on the first run,
+   as it did the six adversarial cases in Sprint 1.
+
+**Not done, and out of scope by design:** the closing prose after a
+job-posting turn still cites almost nothing (Sprint 3's finding 4, unchanged) —
+the rows carry the provenance now, so the assessment is grounded even when the
+sentence under it isn't, and an answer that cites nothing still renders one
+quiet line rather than a mark per sentence. Export, scorecard and permalink are
+Sprint 5's; nothing publishes per-model pass rates yet (#2, Sprint 6). The
+soft-pedal detector is still report-only, and reported zero on the final run.
 
 ---
 

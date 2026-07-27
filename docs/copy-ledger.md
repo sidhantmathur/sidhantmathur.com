@@ -40,7 +40,19 @@ The **Claims** column is the one that matters:
 | draft | `components/shell/instruments.tsx` → sound | "A tick per chunk of text, pitched to how fast it's arriving. Synthesized in the browser, off until you switch it on, and remembered after that." | none | `use-teletype.ts` |
 | draft | `components/shell/answer.tsx` → downgraded claims | The two verdict labels and their explanations: "unverified · {tokens} — not in {chunk id}" · "uncited · no source cited for "{sentence}"" · "cited {id}, which isn't a source on this site" · "and {n} more like it." | none | `lib/verify.ts` — each string restates that function's output |
 | draft | `components/shell/answer.tsx` → uncited answers | "no sources cited · this answer doesn't point at a specific part of the record." Shown once, in place of per-sentence marks, when an answer cites nothing at all. | none | `lib/verify.ts` |
+| draft | `components/shell/panel-body.tsx` → requirement table | The row-level marks and their explanations: "cited no source — downgraded from {verdict}" · "the assessment didn't answer this one" · "the assessment restated this one without judging it" · "unverified · {tokens} — not in {chunk ids}" · "cited {id}, which isn't a source on this site" | none | `lib/role-fit.ts` — each string restates one branch of the reconciler |
+| draft | `components/shell/panel-body.tsx` → requirement table | Section labels: "What he doesn't have" (over `gaps`) and "No unmet requirements — why" (over `noGapsRationale`). | none | `lib/role-fit.ts` |
+| draft | `components/shell/panel-body.tsx` → requirement table | The closing note: "Each row is a judgment against the record, not a score, and the four tags don't add up to one. A row claiming a fit has to name the part of the record it stands on; where it didn't, the site downgraded it rather than the model." | none | `lib/role-fit.ts`, and decisions §3's rendering constraint |
 | draft | `components/shell/instruments.tsx` | Instrument labels and section titles — "Cost", "Rate", "Trace", "Failure theatre", "Sound", "session cost", "saved by the cache", "what came over the wire", etc. UI affordances rather than prose, logged as one row. | none | — |
+
+**A note on the requirement-table rows.** Same rule as the citation rows below, one
+level up: none of these strings says a requirement is unmet *in fact* — they say what
+the assessment claimed and what the site could check. "Downgraded" describes an action
+the code took, not a judgment about Sidhant. The requirement text beside them is the
+POSTING's words, quoted as input, and is not site copy or a claim about him. The
+closing note exists to stop four tags reading as a score, which is the rendering
+constraint `docs/idea-decisions.md` §3 attaches to this component — a rewrite that
+drops it gives the table a precision it doesn't have.
 
 **A note on the citation rows.** These are the site describing its own check,
 and the wording is load-bearing in one specific way: none of them says a

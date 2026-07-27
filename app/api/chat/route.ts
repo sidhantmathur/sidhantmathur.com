@@ -196,16 +196,20 @@ function jsonError(error: TurnErrorClass, status: number): Response {
 // truncated mid-tool-call loses the tool call entirely — the exact failure this
 // sprint is fixing, arriving by a different road.
 //
-// The JD ceiling is 2500 and not 1000 because of a measured failure, not a
-// guess: at 1000, `openai/gpt-5-mini` finished three of five postings with
+// The JD ceiling is high because of a measured failure, not a guess. At 1000,
+// `openai/gpt-5-mini` finished three of five postings with
 // `finishReason: "length"` and NOTHING to show — a reasoning model spends the
 // per-step budget on reasoning tokens before it ever emits the tool call. On a
-// forced-tool turn that reads exactly like the abandonment bug being fixed
-// here, which is why the eval runner now prints the finish reason. Non-
-// reasoning models are unaffected: this is a ceiling, not a target, and they
-// still answer in ~400.
+// forced-tool turn that reads exactly like the abandonment bug Sprint 1 fixed,
+// which is why the eval runner prints the finish reason.
+//
+// Sprint 4 raised it again, 2500 → 4000, for the same reason one step earlier:
+// a job-posting turn now spends a step EXTRACTING before it assesses, and the
+// same model burned 2,496 tokens of reasoning on that first step and stopped on
+// `length` having emitted nothing. Non-reasoning models are unaffected — this
+// is a ceiling, not a target, and they still answer in ~500.
 const MAX_OUTPUT_TOKENS = 600;
-const MAX_OUTPUT_TOKENS_JD = 2500;
+const MAX_OUTPUT_TOKENS_JD = 4000;
 
 /**
  * Rewrites the last user message so the posting arrives fenced and re-asserted.
