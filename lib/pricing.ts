@@ -14,14 +14,28 @@
 //     estimates with. They are not an invoice.
 //   * `input` and `output` are the two numbers already recorded against each
 //     model in `route.ts`. They are the ones to trust.
-//   * `cacheRead` and `cacheWrite` are DERIVED — each provider's published
-//     discount/surcharge applied to that model's input price, not a separately
-//     checked figure. Anthropic's 0.1x read / 1.25x write are documented and
-//     stable; the others are the provider's stated cached-input discount. They
-//     move the total by cents at this scale, but they are the soft numbers in
-//     this file, and the UI says "est." because of them.
+//   * `cacheRead` and `cacheWrite` are mostly DERIVED — each provider's
+//     published discount/surcharge applied to that model's input price, rather
+//     than a separately checked figure. Where a provider publishes the cached
+//     rate directly it is used as published and the comment says so.
 //
 // Anything rendering these must label the result as an estimate at list price.
+//
+// RE-CHECKED 2026-07-27 (roadmap Sprint 6, following Sprint 2's finding 3).
+// What that check found, per row, is in the comments below. The short version:
+//   * Anthropic's 0.1x read / 1.25x five-minute write are documented, and
+//     haiku 4.5's $1.00/$5.00 confirms — this row is verified end to end.
+//   * gpt-5-mini and gemini-3.5-flash-lite have confirmed input/output prices
+//     and still-derived cache rates.
+//   * deepseek-v4-flash was WRONG in both directions and is corrected here:
+//     input and output were understated, and the derived cache read was more
+//     than three times the published cache-hit rate. Sprint 2 called the
+//     derived figures the soft numbers in this file; the check found the
+//     supposedly-solid ones were the problem on this row.
+//   * gpt-5.6-luna could not be confirmed and is marked as such.
+//
+// Nothing on /measurements is denominated in money, deliberately, so no
+// published aggregate depends on any of these.
 
 /** When the `input`/`output` prices below were last checked against the Gateway. */
 export const PRICES_CHECKED = "2026-07-27";
@@ -40,15 +54,25 @@ type ModelPrice = {
 // An unknown model is priced as null rather than guessed — see costOfTurn.
 export const MODEL_PRICES: Record<string, ModelPrice> = {
   // Anthropic: cache reads bill at 0.1x input, 5-minute cache writes at 1.25x.
+  // Verified 2026-07-27: $1.00/$5.00 per 1M, and both multipliers are published.
   "anthropic/claude-haiku-4.5": { input: 1.0, output: 5.0, cacheRead: 0.1, cacheWrite: 1.25 },
   // OpenAI: cached input is discounted to 0.1x; cache writes are not billed.
+  // Input/output confirmed 2026-07-27; the cache rate is still derived.
   "openai/gpt-5-mini": { input: 0.25, output: 2.0, cacheRead: 0.025, cacheWrite: 0 },
+  // UNCONFIRMED as of 2026-07-27 — neither the input/output pair nor the cache
+  // discount could be checked against a published rate. Treat as the least
+  // trustworthy row here.
   "openai/gpt-5.6-luna": { input: 1.0, output: 6.0, cacheRead: 0.1, cacheWrite: 0 },
   // Google: cached input is discounted to 0.25x; storage is billed by time, not
   // by token, and this workload never holds an explicit cache, so it's zero.
+  // Input/output confirmed 2026-07-27; the cache rate is still derived.
   "google/gemini-3.5-flash-lite": { input: 0.3, output: 2.5, cacheRead: 0.075, cacheWrite: 0 },
-  // DeepSeek prices a cache hit at roughly a tenth of a miss.
-  "deepseek/deepseek-v4-flash": { input: 0.09, output: 0.18, cacheRead: 0.009, cacheWrite: 0 },
+  // DeepSeek publishes the cache-hit rate directly rather than as a multiplier,
+  // and it is ~50x below a miss, not the ~10x this row previously assumed.
+  // Corrected 2026-07-27: input was 0.09 (published 0.14), output was 0.18
+  // (published 0.28), and cacheRead was a derived 0.009 against a published
+  // 0.0028. This is the one row here whose cache read is NOT derived.
+  "deepseek/deepseek-v4-flash": { input: 0.14, output: 0.28, cacheRead: 0.0028, cacheWrite: 0 },
 };
 
 export type TurnCost = {
