@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Requirements as a checklist — mockup</title>
+<style>
+  :root{
+    --bg:#0B0A09; --panel:#111010; --raised:#171614;
+    --line:#231F1C; --line-strong:#332E29;
+    --text:#EFEBE4; --text-soft:#A9A29A; --text-faint:#6B655E;
+    --accent:#E4522B; --signal:#6FA85C;
+    --mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+    --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);
+       font-size:15px;line-height:1.55;padding:32px 20px 80px}
+  .wrap{max-width:1180px;margin:0 auto}
+  h1{font-size:17px;font-weight:600;margin:0 0 6px}
+  .lede{color:var(--text-soft);font-size:14px;margin:0 0 4px;max-width:78ch}
+  .note{color:var(--text-faint);font-size:12px;font-family:var(--mono);margin:0 0 28px}
+  .cols{display:grid;grid-template-columns:1fr;gap:22px}
+  @media(min-width:900px){.cols{grid-template-columns:1fr 1fr;gap:26px}}
+  .col > h2{font-family:var(--mono);font-size:11px;letter-spacing:.09em;
+            text-transform:uppercase;color:var(--text-faint);
+            margin:0 0 10px;font-weight:500}
+  .col > h2 em{font-style:normal;color:var(--accent)}
+  .panel{background:var(--panel);border:1px solid var(--line);padding:0}
+  .panel-head{padding:12px 14px;border-bottom:1px solid var(--line);
+              display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+  .role{font-family:var(--mono);font-size:12px;color:var(--text-soft)}
+  .role b{color:var(--text);font-weight:600}
+  .panel-body{padding:14px}
+
+  /* ---- A: current shape ---- */
+  .match{padding:10px 0;border-bottom:1px solid var(--line)}
+  .match:last-child{border-bottom:0}
+  .area{font-family:var(--mono);font-size:12px;color:var(--text);margin-bottom:3px}
+  .ev{font-size:13.5px;color:var(--text-soft);margin:0}
+  .caveat{margin-top:12px;padding:10px 12px;background:var(--raised);
+          border-left:2px solid var(--line-strong)}
+  .caveat .lbl{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;
+               text-transform:uppercase;color:var(--text-faint);display:block;margin-bottom:4px}
+  .caveat p{margin:0;font-size:13.5px;color:var(--text-soft)}
+
+  /* ---- B: checklist ---- */
+  .counts{display:flex;gap:14px;font-family:var(--mono);font-size:11px;color:var(--text-faint)}
+  .counts b{color:var(--text-soft);font-weight:500}
+  .row{display:grid;grid-template-columns:64px 1fr;gap:12px;
+       padding:11px 0;border-bottom:1px solid var(--line);align-items:start}
+  .row:last-of-type{border-bottom:0}
+  .tag{font-family:var(--mono);font-size:9.5px;letter-spacing:.07em;text-transform:uppercase;
+       padding:3px 0;text-align:center;border:1px solid var(--line-strong);
+       color:var(--text-faint);margin-top:2px;white-space:nowrap}
+  .tag.met{color:var(--signal);border-color:#2E4327}
+  .tag.partial{color:var(--text-soft)}
+  .tag.unmet{color:var(--accent);border-color:#4A2318}
+  .tag.unclear{color:var(--text-faint);border-style:dashed}
+  .req{font-size:13.5px;color:var(--text);margin:0 0 3px;line-height:1.4}
+  .why{font-size:12.5px;color:var(--text-soft);margin:0}
+  .cite{font-family:var(--mono);font-size:10.5px;color:var(--text-faint);
+        border-bottom:1px dotted var(--line-strong);cursor:help}
+  .nocite{font-family:var(--mono);font-size:10.5px;color:var(--accent);opacity:.8}
+  .verdict{margin-top:14px;padding-top:12px;border-top:1px solid var(--line);
+           font-size:13.5px;color:var(--text-soft)}
+  .verdict b{color:var(--text);font-weight:600}
+
+  .callout{margin-top:34px;border:1px solid var(--line);background:var(--panel);padding:16px 18px}
+  .callout h3{font-family:var(--mono);font-size:11px;letter-spacing:.09em;text-transform:uppercase;
+              color:var(--text-faint);margin:0 0 10px;font-weight:500}
+  .callout ul{margin:0;padding-left:18px;color:var(--text-soft);font-size:13.5px}
+  .callout li{margin-bottom:7px}
+  .callout li b{color:var(--text);font-weight:600}
+  .callout li:last-child{margin-bottom:0}
+  .src{margin-top:22px;font-family:var(--mono);font-size:11px;color:var(--text-faint);line-height:1.7}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Requirements as a literal checklist — Sonnet #12</h1>
+  <p class="lede">Same pasted posting, same underlying assessment, two renderings. Left is what
+     <code>roleFit</code> produces today. Right is the checklist shape. Every fact shown is from
+     <code>content/knowledge/resume.md</code> — nothing invented.</p>
+  <p class="note">mockup · site tokens, substitute fonts · not wired to anything</p>
+
+  <div class="cols">
+
+    <!-- ================= A ================= -->
+    <div class="col">
+      <h2>A · today — <em>matches + optional caveat</em></h2>
+      <div class="panel">
+        <div class="panel-head">
+          <span class="role">role &nbsp;<b>Revenue operations manager</b></span>
+        </div>
+        <div class="panel-body">
+
+          <div class="match">
+            <div class="area">Sales reporting ownership</div>
+            <p class="ev">Migrated all sales reporting from Salesforce Analytics to Power BI for
+               150+ users, owning data modeling, transformation logic, and the global rollout.</p>
+          </div>
+          <div class="match">
+            <div class="area">Quarter-end close infrastructure</div>
+            <p class="ev">Built a self-serve Power App used by 80+ stakeholders across 7 regions,
+               eliminating a manual process that consumed a finance analyst's entire workday.</p>
+          </div>
+          <div class="match">
+            <div class="area">SQL and data modeling</div>
+            <p class="ev">Owns transformation logic in SQL and DAX across the Nokia reporting
+               stack, plus PostgreSQL and Supabase on A Darle 20.</p>
+          </div>
+          <div class="match">
+            <div class="area">Building, not just configuring</div>
+            <p class="ev">Architected and shipped A Darle 20 solo — a live two-sided marketplace
+               with 1,400+ users and 2,100+ bookings.</p>
+          </div>
+
+          <div class="caveat">
+            <span class="lbl">caveats</span>
+            <p>Most of his BI work is in the Microsoft stack rather than Looker or Tableau, though
+               the fundamentals are transferable and that's a quick ramp.</p>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= B ================= -->
+    <div class="col">
+      <h2>B · checklist — <em>verdict per requirement</em></h2>
+      <div class="panel">
+        <div class="panel-head">
+          <span class="role">role &nbsp;<b>Revenue operations manager</b></span>
+          <span class="counts"><b>4</b> met <b>2</b> partial <b>1</b> unmet <b>1</b> unclear</span>
+        </div>
+        <div class="panel-body">
+
+          <div class="row">
+            <span class="tag met">met</span>
+            <div>
+              <p class="req">Own sales reporting and dashboards for a global org</p>
+              <p class="why">Power BI for 150+ users across 7 regions, migrated from Salesforce
+                 Analytics end-to-end. <span class="cite">resume §nokia</span></p>
+            </div>
+          </div>
+
+          <div class="row">
+            <span class="tag met">met</span>
+            <div>
+              <p class="req">Strong SQL</p>
+              <p class="why">SQL and DAX transformation logic at Nokia; PostgreSQL and Supabase on
+                 A Darle 20. <span class="cite">resume §skills</span></p>
+            </div>
+          </div>
+
+          <div class="row">
+            <span class="tag met">met</span>
+            <div>
+              <p class="req">Salesforce administration</p>
+              <p class="why">Listed GTM system, and the reporting migration was off Salesforce
+                 Analytics. <span class="cite">resume §skills</span></p>
+            </div>
+          </div>
+
+          <div class="row">
+            <span class="tag met">met</span>
+            <div>
+              <p class="req">Partner with sales and finance leadership</p>
+              <p class="why">Translates vague leadership requests into scoped requirements, then
+                 executive demos and global rollout. <span class="cite">resume §nokia</span></p>
+            </div>
+          </div>
+
+          <div class="row">
+            <span class="tag partial">partial</span>
+            <div>
+              <p class="req">5+ years in revenue operations</p>
+              <p class="why">3+ years owning RevOps infrastructure directly, against a longer
+                 overall track record. <span class="cite">resume §summary</span></p>
+            </div>
+          </div>
+
+          <div class="row">
+            <span class="tag partial">partial</span>
+            <div>
+              <p class="req">Forecasting and pipeline analytics</p>
+              <p class="why">Owns forecasting and quarter-end close; pipeline analytics
+                 specifically isn't evidenced. <span class="cite">resume §summary</span></p>
+            </div>
+          </div>
+
+          <div class="row">
+            <span class="tag unmet">unmet</span>
+            <div>
+              <p class="req">Looker or Tableau</p>
+              <p class="why">BI work is Power BI and DAX. No Looker or Tableau in the record.
+                 <span class="cite">resume §skills</span></p>
+            </div>
+          </div>
+
+          <div class="row">
+            <span class="tag unclear">unclear</span>
+            <div>
+              <p class="req">Experience managing a team of 2–3 analysts</p>
+              <p class="why">The corpus doesn't cover people management either way.
+                 <span class="nocite">no citation → downgraded</span></p>
+            </div>
+          </div>
+
+          <p class="verdict"><b>Strong operator fit, short on the BI-tool line and unproven on
+             management.</b> The Looker gap is real but narrow; the management requirement is the
+             one to ask him about.</p>
+
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="callout">
+    <h3>What changes, beyond looks</h3>
+    <ul>
+      <li><b>The soft-pedal has nowhere to hide.</b> Left, "that's a quick ramp" dissolves the
+          Looker gap mid-sentence — the exact phrasing the Stage 0 eval flagged. Right, it's a row
+          tagged <em>unmet</em>; the prose can still soften it, but the tag is already read.</li>
+      <li><b>"Unclear" stops becoming a false "met."</b> Nothing in the corpus covers people
+          management. Today that requirement silently vanishes. The checklist has a slot for
+          "the posting asks something the corpus can't answer," which is the honest answer.</li>
+      <li><b>Citations become enforceable per row</b> — a row that can't cite gets downgraded to
+          unclear by code, not by the model's judgment. That's idea #21, and the checklist is the
+          shape that makes it visible.</li>
+      <li><b>Counts are skimmable in about a second</b> — <em>4 met · 2 partial · 1 unmet ·
+          1 unclear</em> is the six-second-scan answer that a prose block isn't.</li>
+      <li><b>Cost:</b> rows resolve one at a time as they stream, which reads better than a block
+          appearing at once. But it's a bigger schema, a longer generation, and it makes the
+          assessment look more precise than it is — a tag reads as a measurement.</li>
+    </ul>
+  </div>
+
+  <p class="src">facts: content/knowledge/resume.md §summary, §experience/nokia, §technical-skills<br>
+     posting requirements are illustrative — the input, not a claim about Sidhant<br>
+     "quick ramp" phrasing on the left is quoted from the real Stage 0 eval run, idea-bank §6</p>
+</div>
+</body>
+</html>
