@@ -5,6 +5,29 @@
 :root {
   color-scheme: light;
 
+  /* ---------------------------------------------------------------------
+     DARK SYSTEM — the site's design system as of the instrument redesign.
+     Canonical definition: 00-decisions.md §2. Do not rename or re-derive.
+
+     Migration state: these tokens are live on the routes that have been
+     redesigned. The legacy paper/ink tokens below still back the routes that
+     have not (see §2.1 of the decisions doc for the phase order); they are
+     deleted once the last of those is migrated. Build new UI against THIS
+     block — nothing new should reference paper/ink.
+     --------------------------------------------------------------------- */
+  --bg: #0B0A09;          /* page */
+  --panel: #111010;       /* rail, status strip, input, context panel */
+  --raised: #171614;      /* user turns, inputs, inset blocks */
+  --line: #231F1C;        /* hairline divider */
+  --line-strong: #332E29; /* interactive / focusable border */
+  --text: #EFEBE4;        /* primary */
+  --text-soft: #A9A29A;   /* body */
+  --text-faint: #6B655E;  /* metadata, labels */
+  --accent: #E4522B;      /* the rubric red, lifted for dark backgrounds */
+  --signal: #6FA85C;      /* status dot only — never text, never borders */
+
+  /* Legacy light system — retiring. See the migration note above. */
+
   /* Design tokens — 00-decisions.md §2. Do not rename or re-derive. */
   --paper: #FAF7F1;
   --ink: #1B1916;
@@ -47,6 +70,20 @@
 }
 
 @theme inline {
+  /* Dark system → Tailwind utilities: bg-bg, bg-panel, border-line,
+     border-line-strong, text-text-soft, text-accent, bg-signal, … */
+  --color-bg: var(--bg);
+  --color-panel: var(--panel);
+  --color-raised: var(--raised);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-text: var(--text);
+  --color-text-soft: var(--text-soft);
+  --color-text-faint: var(--text-faint);
+  --color-accent: var(--accent);
+  --color-signal: var(--signal);
+
+  /* Legacy light system — retiring. */
   --color-paper: var(--paper);
   --color-ink: var(--ink);
   --color-ink-soft: var(--ink-soft);

@@ -19,28 +19,74 @@ on the site comes from `site-copy.md`, verbatim, sentence case, with `[TODO]`
 markers left visible. The export contributes: palette, type treatment, spacing,
 borders, layout patterns, and the sticky chat bar concept.
 
-## 2. Design tokens (extracted from the design export)
+## 2. Design tokens — dark instrument system
 
-Define as CSS variables in `globals.css` and map into Tailwind (v4 `@theme`) and
-shadcn variables. Radius is 0 everywhere (`--radius: 0rem`).
+**Superseded 2026-07-27.** The original light "paper and ink" palette in this
+section came from the design export. It shipped, and it was wrong: a print
+metaphor borrowed from a document that had nothing to do with this site's
+argument. The site is now an *instrument*, not a document — a dark, dense,
+monospace interface whose primary surface is a chat with the resume beside it.
+
+Define as CSS variables in `globals.css` and map into Tailwind (v4 `@theme`).
+Radius stays 0 everywhere (`--radius: 0rem`).
 
 | Token | Value | Use |
 |---|---|---|
-| `--paper` | `#FAF7F1` | Page background |
-| `--ink` | `#1B1916` | Primary text, strong 1px borders, filled accents |
-| `--ink-soft` | `#4A463F` | Body/secondary text |
-| `--muted` | `#6E6A62` | Mono section labels ("Selected work") |
-| `--faint` | `#9B968C` | Metadata labels, input placeholder, footer text |
-| `--hairline` | `#E0DBD1` | Light 1px borders / section dividers |
-| `--surface` | `#F2EEE5` | Light surface; also text color on the dark band |
-| `--surface-raised` | `#FFFEFB` | Sticky chat bar background |
-| `--band` | `#131110` | Dark stat band background |
-| `--band-muted` | `#97928A` | Secondary text on the dark band |
+| `--bg` | `#0B0A09` | Page background |
+| `--panel` | `#111010` | Rail, status strip, input bar, context panel |
+| `--raised` | `#171614` | User turns, inputs, inset blocks |
+| `--line` | `#231F1C` | Hairline dividers |
+| `--line-strong` | `#332E29` | Interactive / focusable borders |
+| `--text` | `#EFEBE4` | Primary text |
+| `--text-soft` | `#A9A29A` | Body text |
+| `--text-faint` | `#6B655E` | Metadata, labels, placeholders |
+| `--accent` | `#E4522B` | Sole accent — prompt caret, focus, active citation, link hover |
+| `--signal` | `#6FA85C` | Status dot only. Never text, never borders. |
 
-shadcn mapping: `background=paper`, `foreground=ink`, `muted-foreground=faint`,
+`--accent` is the original rubric red (`#C7391B`) lifted for legibility on a
+near-black ground; `#C7391B` fails contrast there. It stays a *single* accent —
+the discipline from the original system survives the palette change.
+
+`--signal` is the one addition: an instrument panel needs an at-a-glance
+"healthy" state that isn't the same color as the emphasis accent. It is
+permitted on the status dot and nowhere else.
+
+Tailwind utilities: `bg-bg`, `bg-panel`, `bg-raised`, `border-line`,
+`border-line-strong`, `text-text`, `text-text-soft`, `text-text-faint`,
+`text-accent`, `bg-signal`.
+
+### 2.1 Migration state
+
+The dark tokens and the legacy paper/ink tokens **coexist in `globals.css`**
+during the redesign. Routes are migrated a phase at a time; the legacy block
+(and the shadcn mapping onto it) is deleted when the last one lands.
+
+| Phase | Scope | State |
+|---|---|---|
+| 1 | Dark tokens in `globals.css`; `/lab` uses them; this doc | done |
+| 2 | `/lab` becomes `/`; rail + status strip become layout chrome | pending |
+| 3 | Mobile: context panel → bottom sheet, rail → slide-over | pending |
+| 4 | `/resume`, `/projects/*`, `/colophon`, 404 restyled dark | pending |
+| 5 | Web resume with depth and images | pending |
+| 6 | Build-time citation index, model routing, JD paste | pending |
+| 7 | Copy: hero, "why a chatbot", rail labels | pending |
+
+**Build new UI against the dark tokens only.** Nothing new should reference
+`--paper`, `--ink`, `--hairline`, `--band`, or their Tailwind equivalents.
+
+shadcn mapping (legacy, still pointing at the light palette until phase 4):
+`background=paper`, `foreground=ink`, `muted-foreground=faint`,
 `border=hairline`, `primary=ink`, `primary-foreground=paper`, `radius=0`.
 
 ## 3. Typography
+
+**Partly superseded 2026-07-27.** Geist Sans / Geist Mono, the 0 radius, and
+sentence case all survive the redesign. What does not: the light-system color
+references below (`--ink-soft`, `--muted`, `--faint`), the inverted-ink hero
+highlight, and the dark stat band with its scanline treatment. On the
+instrument system, mono is the primary voice rather than a metadata accent, and
+emphasis comes from `--accent` and `--line-strong` rather than from inverted
+blocks. Rewrite this section as phases 2–5 land the pages it describes.
 
 Fonts via `next/font/google`: **Geist** (400/500/600/700) and **Geist Mono**
 (400/500). No `geist` npm package — `next/font/google` covers it with zero deps.
@@ -62,6 +108,15 @@ Fonts via `next/font/google`: **Geist** (400/500/600/700) and **Geist Mono**
 - Sentence case everywhere. No all-caps, no `text-transform: uppercase`.
 
 ## 4. Layout patterns (from the export)
+
+**Superseded 2026-07-27, pending phases 2–5.** Everything below describes the
+light document-style site: centered 1200px column, stacked sections, header
+strip, numbered project cards, dark stat band, sticky chat bar, footer. The
+instrument layout replaces all of it with a three-column application shell —
+status strip across the top, index rail left, conversation center, context
+panel right — and the chat input pinned to the bottom of the conversation
+column. This section stays only as a record of what each not-yet-migrated route
+currently renders; do not build new layout from it.
 
 - Content max-width **1200px**, horizontal padding **48px** (less on mobile),
   sections separated by 1px `--hairline` rules; strong `--ink` rules for

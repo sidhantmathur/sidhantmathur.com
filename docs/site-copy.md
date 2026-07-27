@@ -238,3 +238,29 @@ Chat error state: Something went wrong on my end. Give it another try in a
 moment.
 Chat rate-limit state: You've hit the message limit for now — the resume has
 everything in the meantime.
+
+---
+
+## Why this site is a chatbot
+
+[DRAFT 2026-07-27 — written by Claude at Sidhant's request during the redesign.
+Rewrite in your own voice; the argument is right, the phrasing is a placeholder.]
+
+Panel heading: Why this site is a chatbot
+
+Body:
+A resume is a list of claims you have to take on faith. This is the same
+information, except you can interrogate it — ask what I actually did at Nokia,
+push back on whether the marketplace numbers mean anything, or find out where
+I'd struggle in the role you're hiring for.
+
+Every answer here is grounded in the same source files the resume is built
+from, and each one shows you which section it came from, so you can check the
+claim instead of trusting it.
+
+I also built it, which is most of the point. I'm not the strongest engineer
+you'll interview. What I'm good at is picking up an unfamiliar tool and getting
+something real and useful in front of people — so rather than write that down
+and hope you believe it, I made the thing you're reading it on.
+
+If you'd rather just read the resume, it's one click away in the panel.
