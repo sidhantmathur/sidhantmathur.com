@@ -657,6 +657,20 @@ turns an hour and this sprint spent them on the groups that could regress.
 
 ---
 
+### Sprint 8 — The model bake-off
+
+Not on the original list. It came out of a gap Sprint 6 left: the harness measures
+**five** models and the site published **one**, and the publisher's merge-by-model
+step meant a second run on a model **destroyed the first**. The run archive, the
+performance record the publisher had been discarding, and `/measurements/models`
+— the comparison charts — are the fix. Spec: `docs/sprint-8-model-comparison.md`.
+
+Independent of Sprint 7: it owns `evals/`, `scripts/`, new `lib/` and
+`components/charts/` modules, and `app/measurements/`. It does not touch the chat
+route, the shell, or the system prompt.
+
+---
+
 ## Track B — parallel, copy- and asset-gated
 
 Independent of the chat spine, touches static pages, and moves at the speed of
