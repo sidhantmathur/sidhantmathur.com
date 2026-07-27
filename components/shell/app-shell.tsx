@@ -27,6 +27,7 @@ import { ExportDeck } from "./export-deck";
 import { PrintSheet } from "./print-sheet";
 import { ManualMode } from "./manual-mode";
 import { RecruiterTldr } from "./recruiter-tldr";
+import { SUGGESTED_QUESTIONS as SUGGESTED } from "@/content/recruiter";
 import { costOfTurn, formatUsd, sumCosts } from "@/lib/pricing";
 import {
   textOf,
@@ -58,22 +59,6 @@ const REPLAY_BANNER =
 // header can't drift apart. Not prose — a name and a URL.
 const SITE_NAME = "Sidhant Mathur";
 const SITE_URL = "https://sidhantmathur.com";
-// Recruiter-tuned (#26, Track B) — a copy swap, per the decisions doc's note
-// that these replace the old set rather than adding a mode. The old three were
-// a demo of what the site can do; these are the first four things a recruiter
-// asks, including the screening question ("does he need sponsorship") that
-// otherwise costs an email and a day. Verbatim from docs/site-copy.md.
-//
-// None of them may trip `looksLikeJobPosting` or `looksLikeSiteQuestion` — a
-// suggested question that forces a roleFit call or loads the repo corpus turns
-// the site's own affordance into its worst path. Asserted in
-// evals/track-b.test.mjs.
-const SUGGESTED = [
-  "Give me the 30-second version",
-  "What has he shipped end to end?",
-  "Is he a fit for a RevOps role at an AI-forward company?",
-  "Does he need visa sponsorship?",
-];
 
 // Must stay a subset of the `MODELS` allowlist in app/api/chat/route.ts — an id
 // that isn't on the server list silently falls back to the default rather than

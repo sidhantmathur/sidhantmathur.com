@@ -195,6 +195,63 @@ This is the project that proves I can take an ambiguous idea to a revenue-
 generating product — including the unglamorous parts like refunds, payment
 edge cases, and infrastructure costs.
 
+### Everything in it (#19 — the feature surface)
+
+[DRAFT 2026-07-27 — assembled by Claude for Track B. Every line item is a
+capability already named in `content/knowledge/projects-adarle20.md` or the
+resume. Nothing was added because a marketplace probably has it.]
+
+Section heading: Everything in it
+Intro: The prose above is the story. This is the surface area — what a host or
+a player can actually do.
+
+- Discovery: Host profiles · Session listings
+- Booking: Bookings and reservations · Cancellations · Automated refunds
+- Payments: Stripe Connect · Host payouts · Platform fees · OXXO cash payments
+  at a convenience store
+- Communication: Real-time chat · Transactional email on Resend
+- Accounts: Authentication
+- Operations: End-to-end funnel instrumentation — bookings, conversion,
+  cancellations, refunds, host activation
+
+Closing note: This list is everything the written record names, which is not the
+same as everything the product does — [VERIFY: the features that exist in A
+Darle 20 but appear in no source file. Sidhant's own note on this page was that
+there is a lot buried up there; nothing can be added here until it is written
+down somewhere checkable.]
+
+### What it looks like (#19 — the media surface)
+
+[DRAFT 2026-07-27 — written by Claude for Track B. The frames ship; the files
+are Sidhant's. No caption below describes an asset that does not exist.]
+
+Section heading: What it looks like
+Intro: Frames with nothing in them are waiting on a file. Each one says what it
+is for rather than showing a stand-in, because a placeholder that looks like a
+product is a claim about a product.
+
+Empty-frame text: Nothing here yet — waiting on a {screenshot / screen
+recording / video}.
+Empty caption: {slot title} — not captured yet.
+
+The seven slots, and what each needs, live in `content/adarle20-media.ts` —
+the brief IS the placeholder text, so there is no second list to fall out of
+sync. Summary:
+
+| Slot | Kind | Shape | Must show |
+| --- | --- | --- | --- |
+| Session listings | screenshot | 152:69 | **Filled** — the existing `public/images/adarle20-listings.png` |
+| Booking a seat, end to end | screen recording | 16:9 | listing → checkout → confirmation, one take, test account |
+| Paying in cash | screenshot | 9:16 | the OXXO reference handed to the player |
+| What a host sees | screenshot | 16:9 | a host's profile, sessions and payouts |
+| Host and player chat | screenshot | 9:16 | a real thread, redacted or on test accounts |
+| The funnel, instrumented | screenshot | 16:9 | whatever he actually watches — live numbers, so check before sending |
+| The 251-player event | video | 16:9 | footage or photographs from the convention |
+
+Caption for the filled slot: Session listings. Each card carries the host,
+their rating, the price in pesos, the schedule and how many seats are still
+open.
+
 ---
 
 ## Case study — Reporting tools at Nokia

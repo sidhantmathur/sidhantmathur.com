@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { RECRUITER_TLDR, TLDR_FOOTER, TLDR_LABEL } from "./shell-data";
+import { RECRUITER_TLDR, TLDR_FOOTER, TLDR_LABEL } from "@/content/recruiter";
 
 // The recruiter TL;DR (#25, Track B).
 //
@@ -14,7 +14,7 @@ import { RECRUITER_TLDR, TLDR_FOOTER, TLDR_LABEL } from "./shell-data";
 //   1. It renders in the EMPTY STATE ONLY. Once a conversation exists the
 //      reader has asked a better question than this block answers, and leaving
 //      it above the transcript would make it chrome. It has done its job.
-//   2. Every value is corpus text, not drafted prose (see shell-data.ts).
+//   2. Every value is corpus text, not drafted prose (see content/recruiter.ts).
 //      Nothing here may say something the model could not also say and cite.
 //   3. It sits ABOVE the chips and BELOW the hero, so the scan order is
 //      positioning → facts → the question you can ask. Moving it under the

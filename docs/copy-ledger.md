@@ -68,7 +68,51 @@ The **Claims** column is the one that matters:
 | draft | `components/shell/shell-data.ts` → `RAIL_ITEMS`, `SLASH_COMMANDS` | Two rail labels ("The instructions", "What it won't do") and four slash-command hints ("/prompt — Read the instructions it was given", "/refusals — What it won't do, and why", "/site — How this site is built", "/roast — Ask it what's wrong with this site"). UI affordances rather than prose. | none | The page or panel each one opens |
 | draft | `app/llms.txt/route.ts` | Two page descriptions added to the machine-readable index: "/prompt — The full system prompt the site's assistant runs on." and "/refusals — What the assistant will not do, and which of those rules are enforced by code rather than asked of the model." Plus the existing `/measurements` line, which was missing. | none | The pages themselves |
 | draft | `lib/system-prompt.ts` → the site sections | **Model-facing, not screen-facing, but it changes what visitors are told.** A "## This site" section making the site's own construction in scope, a rule that criticism "never becomes a criticism of Sidhant", the decline-and-link line pointing at `/prompt`, and the appended block's rules for citing `repo:` ids and roasting specifically. | none | `docs/idea-decisions.md` §2 and §4; `scripts/build-repo-corpus.mjs` |
+| draft | `content/recruiter.ts` → `RECRUITER_TLDR` | **The recruiter TL;DR (#25) — the highest-risk rows in this ledger, and the only ones that make factual claims about Sidhant.** Six labelled lines in the homepage's empty state: `now` ("Sales operations specialist at Nokia, in Toronto. Co-founder and CTO of A Darle 20.") · `shipped` ("A Darle 20 — a two-sided marketplace, architected and shipped solo. 1,400+ registered users, 127 hosts and 2,100+ bookings in its first four months.") · `before that` ("At Nokia: a self-serve Power App used by 80+ stakeholders across seven regions, and a Salesforce Analytics to Power BI migration for 150+ users.") · `how he builds` ("An AI-agent-heavy workflow in Claude Code — agents write most of the code, he keeps architecture, code review and release.") · `looking for` ("A RevOps / GTM systems role at an AI-forward company.") · `where` ("Toronto, ON. Canadian citizen, no visa sponsorship needed."). | **factual** | Each row carries a `source` field naming the corpus file it came from — `bio.md`, `resume.md`, `projects-nokia.md`, `projects-adarle20.md`, `faq.md`. See the note below: the suite checks each row against that file with `lib/verify.ts`. |
+| draft | `content/recruiter.ts` → `TLDR_LABEL`, `TLDR_FOOTER` | The block's label ("tl;dr") and the link under it ("The resume has the rest, and so does the box below."). | none | — |
+| draft | `content/recruiter.ts` → `SUGGESTED_QUESTIONS` | **The recruiter chips (#26), replacing the previous three.** "Give me the 30-second version" · "What has he shipped end to end?" · "Is he a fit for a RevOps role at an AI-forward company?" · "Does he need visa sponsorship?" The third is also what `/fit` sends. | none | They are questions, not assertions — but two presuppose: "shipped end to end" (`resume.md`, "architected and shipped the entire marketplace") and the RevOps framing (`faq.md`, "RevOps / GTM systems roles at AI-forward companies"). Both hold. |
+| draft | `content/adarle20.mdx`, `content/nokia.mdx`, `content/dell-ml.mdx` → "In plain terms" | **The explain-like-I'm-five prose (#20).** One section at the head of each case study, two paragraphs each, in plain language with no stack names and no figures: A Darle 20 ("Tabletop roleplaying games are played in groups… The booking form is the easy part. The hard part is money."), Nokia ("A large company sells in a lot of places, and every quarter its executives need one picture of how that went…"), Dell ("A propensity model is a way of ranking that list… it was an internship, the model was one piece of a much larger sales machine, and the pipeline figure below is an estimate"). | none | Restatement only. Every claim in them is already in the section below it, in `docs/site-copy.md`; the suite asserts these sections contain **no numeral at all**. |
+| draft | `content/adarle20-media.ts` → `FEATURE_SURFACE` | **The A Darle 20 feature surface (#19).** Six groups and their items: Discovery (host profiles, session listings) · Booking (bookings and reservations, cancellations, automated refunds) · Payments (Stripe Connect, host payouts, platform fees, OXXO cash payments at a convenience store) · Communication (real-time chat, transactional email on Resend) · Accounts (authentication) · Operations (end-to-end funnel instrumentation — bookings, conversion, cancellations, refunds, host activation). Plus the section heading "Everything in it" and its intro. | **factual** | `content/knowledge/projects-adarle20.md` and `content/knowledge/resume.md`. Every item is checked against those two files by `lib/verify.ts` in the suite. Nothing was added because a marketplace probably has it. |
+| draft | `content/adarle20-media.ts` → `FEATURE_SURFACE_NOTE` | "This list is everything the written record names, which is not the same as everything the product does — [VERIFY: the features that exist in A Darle 20 but appear in no source file…]" | none | The gap is stated rather than filled. Listed in the pending table below. |
+| draft | `content/adarle20-media.ts` → `ADARLE_MEDIA` | **The media surface (#19) — seven slots, one filled.** Each slot's title and its `brief`, which is the on-page placeholder text: "Session listings" (filled), "Booking a seat, end to end", "Paying in cash", "What a host sees", "Host and player chat", "The funnel, instrumented", "The 251-player event". The briefs describe what the file must show, in the imperative, to Sidhant. | none | The briefs assert nothing about Sidhant or the product — they are requests. The one filled slot's `alt` and caption were written from the file itself (`public/images/adarle20-listings.png`), not from a description of it. |
+| draft | `components/project-media.tsx` | The frame chrome: "What it looks like", "Nothing here yet — waiting on a {kind}.", "{title} — not captured yet.", and the intro ("Frames with nothing in them are waiting on a file. Each one says what it is for rather than showing a stand-in, because a placeholder that looks like a product is a claim about a product."). | none | The component itself — each string describes the state it renders. |
 | draft | `components/shell/app-shell.tsx` → mobile controls | Affordance labels added with the mobile pass: the "↓ PDF" chip beside the resume citation, and the "Send" / "Open navigation" screen-reader labels on the two icon buttons. UI affordances rather than prose, logged as one row. | none | `public/resume.pdf` |
+
+**A note on the Track B rows — read this one first.** Every row above them says
+`none` in the Claims column, because Track A published claims about the *site*,
+and a claim about the site is checkable by anyone with this repo. **The TL;DR
+and the feature surface are the first rows in this ledger that say `factual`.**
+They are claims about a person, they sit above the fold on the homepage and on
+the project page a recruiter is most likely to open, and there is no way to walk
+one back after it has been read.
+
+Three things about how they were built, because the wording is not the point —
+the sourcing is.
+
+First, **nothing in the TL;DR was written.** Each row is corpus text
+re-registered into a shorter sentence, and each carries a `source` field naming
+the file it came from. `evals/track-b.test.mjs` runs `lib/verify.ts` — the same
+checker that marks a model's sentence unverified beside an answer — over every
+row against that file, and a row whose numbers or proper nouns stop appearing
+there fails the suite. It is the strictest thing on this site pointed at the
+site's own copy rather than at a model's, which is the right way round given
+which of the two a hiring manager will hold Sidhant to.
+
+Second, **the feature surface is short on purpose, and the note under it is
+part of the copy.** Sidhant's line about this page in `docs/idea-decisions.md`
+is that there is "a shit ton of features buried up there" — and the corpus names
+about a dozen. The gap between those two is real and it is not fillable by
+guessing: a plausible feature is a factual claim about software a hiring manager
+can go and use. So the list is what the record says, the note says the list is
+incomplete, and the missing half is a `[VERIFY]` in the table below rather than
+a paragraph somebody invented.
+
+Third, **no caption describes an asset that does not exist.** Six of the seven
+media slots are empty; they render as dashed frames carrying the brief for
+whoever has to capture them. `src`, `alt` and the caption travel together in one
+optional object, so a file cannot be added without being described and a
+description cannot be written ahead of a file. The one filled slot's alt text
+was written from looking at the image, not from the sentence next to it.
 
 **A note on the refusal ledger.** This is the row that most needs Sidhant's eyes,
 because it is the only page on the site that speaks for what he decided rather
@@ -143,4 +187,6 @@ here means a `[VERIFY]` left in a file can't quietly ship.
 
 | Where | What's needed |
 | --- | --- |
-| _(none)_ | |
+| `content/adarle20-media.ts` → `FEATURE_SURFACE_NOTE`, and the same sentence on `/projects/adarle20` | **The features of A Darle 20 that appear in no source file.** The list on the page is the dozen the record names; the note says so out loud. To resolve it: write the missing capabilities into `content/knowledge/projects-adarle20.md` — one line each is enough — and they can then be added to the surface and checked by the suite like the rest. Reviews and ratings are visible in the one screenshot the repo has and are still *not* on the list, because a screenshot is not the record. |
+| `content/knowledge/faq.md` → "What is he not looking for?" | Pre-existing, untouched by Track B, and now more visible than it was: the recruiter chips and the TL;DR both point a reader at what he *is* looking for, and the corpus has nothing for the other half of that question. |
+| `docs/site-copy.md` → Colophon | Pre-existing: "[TODO: confirm repo is public before linking]". |
