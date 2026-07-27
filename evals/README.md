@@ -68,10 +68,47 @@ npm run eval:live -- --group grounded
 npm run eval:publish                          # merge that run in as well
 ```
 
-Live runs merge **by model**, because a full corpus costs more than one hour of
-rate limit and the models get measured on different days. Publishing a run on one
-model replaces that model's entry and leaves the others alone. The static half is
-replaced wholesale — there is only ever one suite.
+Live runs **archive**. Every published run is kept, keyed by model *and* the time
+it was measured, because a full corpus costs more than one hour of rate limit and
+the models get measured on different days. Publishing a second run on a model
+adds it; nothing is replaced. Re-publishing the *same* run is idempotent. The
+static half is replaced wholesale — there is only ever one suite.
+
+Until Sprint 8 a run replaced its model's previous entry outright, which meant a
+second measurement destroyed the first: a regression was invisible, and a figure
+measured twice looked exactly like one measured once. `/measurements` and
+`/measurements/models` read the most recent run per model and list the rest.
+
+A run in which **nothing was measured is refused**, and the publisher exits `2`.
+That is the shape of a server that went away mid-run — every case a
+`fetch failed` — and it would otherwise be archived as a model scoring zero.
+
+## The bake-off (`node scripts/run-bakeoff.mjs`)
+
+Runs the whole corpus against every allowlisted model, one after another, and
+publishes each run as it finishes — so an interrupted bake-off leaves every
+completed model on the record. This is what produces `/measurements/models`.
+
+```bash
+npm run dev                                                  # with AI_GATEWAY_API_KEY set
+node scripts/run-bakeoff.mjs --base http://localhost:3000 --ip bakeoff-1
+```
+
+`--ip` is required and is a rate-limit bucket **prefix**: the runner sends a
+distinct `x-forwarded-for` per case, so a 22-case corpus is not cut off by a
+20-per-hour budget and five models are five full runs rather than one visitor's
+budget split five ways. Say what that costs: **a run with `--ip` set is not
+shaped by the rate limiter**, so it measures the models and says nothing about
+the budget. The limiter is asserted in the static suite instead. It is a plain
+request header, so it only does anything against a server that trusts it —
+localhost does; the deployed site, behind Vercel's proxy, does not.
+
+Each run publishes a **performance record** as well as verdicts: time to first
+token, duration, output tokens/sec, input, cached input and output tokens, steps,
+finish reason, and cost computed by `lib/pricing.ts` at list price. A missing
+measurement is published as `null` and never as `0` — a turn with no telemetry
+averaged in as 0 ms would make a broken run look like the fastest model on the
+page.
 
 What does **not** travel into the snapshot: the assistant's prose. Every answer
 in a live run is unreviewed model output making claims about Sidhant, and the
@@ -91,7 +128,8 @@ npm run dev                              # in one terminal, with AI_GATEWAY_API_
 npm run eval:live -- --group roleFit     # in another
 ```
 
-Options: `--group <name>`, `--model <id>`, `--base <url>`, `--delay <ms>`.
+Options: `--group <name>`, `--model <id>`, `--base <url>`, `--delay <ms>`,
+`--ip <prefix>` (see the bake-off section above for what that one costs).
 
 Every answer is also run through `lib/verify.ts` and the result printed under
 the case: how many chunks it cited, how many of its claims verified, and each

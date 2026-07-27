@@ -11,7 +11,7 @@
     "lint": "eslint",
     "eval": "node scripts/build-knowledge.mjs && node scripts/build-repo-corpus.mjs && node --test --experimental-strip-types --test-reporter=tap --test-reporter-destination=stdout --test-reporter=./evals/reporters/json.mjs --test-reporter-destination=evals/static-results.json \"evals/*.test.mjs\"",
     "eval:live": "node --experimental-strip-types evals/run-live.mjs",
-    "eval:publish": "node scripts/publish-evals.mjs"
+    "eval:publish": "node --experimental-strip-types --disable-warning=ExperimentalWarning scripts/publish-evals.mjs"
   },
   "dependencies": {
     "@ai-sdk/react": "^4.0.15",

@@ -14,9 +14,18 @@
 // Output:
 //   evals/published/latest.json — COMMITTED. This is the published artifact.
 //
-// Live runs MERGE by model: publishing a run on one model replaces that model's
-// previous entry and leaves the others alone, because a full corpus costs more
-// than one hour's rate limit and the models get measured on different days.
+// Live runs ARCHIVE. Every published run is kept, keyed by model AND run time,
+// because a full corpus costs more than one hour's rate limit and the models get
+// measured on different days. Publishing a second run on a model that already
+// has one adds it; nothing is replaced. Re-publishing the SAME run (same model,
+// same start time) is idempotent — it updates that entry in place, so running
+// the publisher twice does not double the archive.
+//
+// It did not always work that way. Until Sprint 8 a run replaced its model's
+// previous entry outright, so a second measurement destroyed the first and
+// there was no way to see a regression, or to tell a figure measured twice from
+// one measured once.
+//
 // Static results are replaced wholesale — there is only ever one suite.
 //
 // Usage:
@@ -29,10 +38,23 @@ import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from "no
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { runPerformance, turnPerformance } from "../evals/lib/performance.mjs";
+
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
-const STATIC_IN = join(ROOT, "evals", "static-results.json");
-const LIVE_IN = join(ROOT, "evals", "results.json");
-const OUT = join(ROOT, "evals", "published", "latest.json");
+// Overridable so evals/bakeoff.test.mjs can run this for real against fixtures
+// and read what it wrote, without touching the committed artifact. The archive
+// rule — a second run on a model KEEPS the first — is the kind of behaviour
+// that has to be exercised end to end, because the bug it replaces was a
+// one-line filter that looked correct.
+const STATIC_IN = process.env.EVALS_STATIC_IN
+  ? join(ROOT, process.env.EVALS_STATIC_IN)
+  : join(ROOT, "evals", "static-results.json");
+const LIVE_IN = process.env.EVALS_LIVE_IN
+  ? join(ROOT, process.env.EVALS_LIVE_IN)
+  : join(ROOT, "evals", "results.json");
+const OUT = process.env.EVALS_PUBLISHED_OUT
+  ? join(ROOT, process.env.EVALS_PUBLISHED_OUT)
+  : join(ROOT, "evals", "published", "latest.json");
 
 const args = process.argv.slice(2);
 const staticOnly = args.includes("--static-only");
@@ -92,10 +114,45 @@ function summariseStatic(raw) {
  * model output making claims about Sidhant, and CLAUDE.md's copy rule does not
  * have an exception for text that arrived via a JSON file. Verdicts, counts and
  * the citation summary are measurements about the run, not claims about him.
+ *
+ * Timings, token counts and costs travel for the same reason the verdicts do:
+ * they are facts about the run, and none of them is a sentence anyone wrote.
  */
 function summariseLive(raw, ranAt) {
   const results = raw?.results ?? [];
   if (!results.length) return null;
+
+  // A run where NOTHING was measured is not a result, and must never reach the
+  // archive as one. This is not hypothetical: a bake-off whose server was
+  // killed halfway through wrote three runs of "0/22 passed", every case a
+  // `fetch failed`, and the publisher took them — which would have rendered as
+  // three models scoring zero on a page whose whole argument is that its
+  // numbers are real. A model that answers badly is a measurement; a model that
+  // was never reached is not.
+  // A run must have reached the model for MOST of its cases to be a score at
+  // all. Both halves of this are things that actually happened while building
+  // Sprint 8, on the same afternoon:
+  //
+  //   * Nothing measured — a bake-off whose server was killed wrote three runs
+  //     of "0/22 passed", every case a `fetch failed`, and the publisher took
+  //     them. That would have rendered as three models scoring zero.
+  //   * Most of it measured — the same server died eight cases into another
+  //     model, which published as "13/22 passed" when the model never saw nine
+  //     of the questions. That one is worse, because it looks plausible.
+  //
+  // The threshold is a judgment call and it is deliberately generous: this
+  // refuses obvious wreckage, and a run that loses a couple of turns is still
+  // publishable with its `broke` count visible beside it.
+  const perf = runPerformance(results);
+  const reached = perf.turns.measured / results.length;
+  if (reached < 0.75) {
+    console.error(
+      `Refusing to publish this run: only ${perf.turns.measured} of its ${results.length} turn(s)\n` +
+        "reached the model. The rest failed in transport, and publishing them as failures would\n" +
+        "score the network as if it were the model's judgment. Check the server is up and re-run.",
+    );
+    return null;
+  }
 
   const model = raw.model ?? results.find((r) => r.model)?.model ?? "unknown";
   const groups = {};
@@ -124,15 +181,22 @@ function summariseLive(raw, ranAt) {
     total: results.length,
     broke: results.filter((r) => r.broke).length,
     citations,
+    // Sprint 8. Everything the comparison page plots lives under here; the
+    // shape above is untouched so Sprint 6's page keeps rendering unchanged.
+    performance: perf,
     cases: results.map((r) => ({
       group: r.group,
       id: r.id,
       label: r.label ?? null,
       pass: !!r.pass,
       broke: !!r.broke,
+      performance: turnPerformance(r),
     })),
   };
 }
+
+/** Identity of a run in the archive: which model, measured when. */
+const runKey = (run) => `${run.model}@${run.ranAt ?? "undated"}`;
 
 // --- write ------------------------------------------------------------------
 
@@ -140,19 +204,30 @@ const staticRaw = readJson(STATIC_IN);
 const nextStatic = summariseStatic(staticRaw) ?? existing.static;
 
 let runs = Array.isArray(existing.live?.runs) ? existing.live.runs : [];
-let mergedModel = null;
+let merged = null;
+let replacedExisting = false;
+/** A live run was present and was refused. Exits 2 so a driver can tell. */
+let rejectedLive = false;
 if (!staticOnly) {
   const liveRaw = readJson(LIVE_IN);
   if (liveRaw) {
-    // The runner writes no timestamp of its own, so the file's mtime is the
-    // best evidence of when the measurement happened. Recorded as what it is.
-    const ranAt = new Date(statSync(LIVE_IN).mtime).toISOString();
+    // The runner stamps its own start time now. The file's mtime is kept as the
+    // fallback for a results file written before it did — it is the best
+    // available evidence, and it is only evidence while nobody has touched the
+    // file since, which is why it is no longer the primary.
+    const ranAt = liveRaw.startedAt ?? new Date(statSync(LIVE_IN).mtime).toISOString();
     const run = summariseLive(liveRaw, ranAt);
     if (run) {
-      runs = [...runs.filter((r) => r.model !== run.model), run].sort((a, b) =>
-        a.model.localeCompare(b.model),
+      // Keyed on model AND time, so a new measurement is added and a
+      // re-publish of the same one is idempotent.
+      const key = runKey(run);
+      replacedExisting = runs.some((r) => runKey(r) === key);
+      runs = [...runs.filter((r) => runKey(r) !== key), run].sort(
+        (a, b) => a.model.localeCompare(b.model) || String(a.ranAt).localeCompare(String(b.ranAt)),
       );
-      mergedModel = run.model;
+      merged = run;
+    } else {
+      rejectedLive = true;
     }
   }
 }
@@ -175,6 +250,20 @@ console.log(`Published evals/published/latest.json`);
 if (nextStatic) {
   console.log(`  static: ${nextStatic.totals?.passed}/${nextStatic.totals?.tests} across ${nextStatic.files.length} file(s)`);
 }
-if (mergedModel) console.log(`  live:   merged run for ${mergedModel}`);
-console.log(`  live:   ${runs.length} model(s) on record — ${runs.map((r) => r.model).join(", ") || "none"}`);
+if (merged) {
+  const cost = merged.performance?.cost;
+  console.log(
+    `  live:   ${replacedExisting ? "re-published" : "archived"} ${merged.model} ` +
+      `(${merged.passed}/${merged.total}${cost ? `, $${cost.totalUsd.toFixed(4)} at list price` : ""})`,
+  );
+}
+const models = [...new Set(runs.map((r) => r.model))];
+console.log(
+  `  live:   ${runs.length} run(s) on record across ${models.length} model(s) — ${models.join(", ") || "none"}`,
+);
 console.log(`\nCommit it. The site publishes this file, not the machine it built on.`);
+
+// The static half may still have published fine, so this is not a failure — but
+// the caller asked for a live run to go in and it did not, and a driver looping
+// over five models must not report that as five published runs.
+if (rejectedLive) process.exit(2);

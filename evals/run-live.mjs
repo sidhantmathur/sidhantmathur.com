@@ -43,15 +43,21 @@ const BASE = flag("base", "http://localhost:3000").replace(/\/$/, "");
 const MODEL = flag("model", null);
 const GROUP = flag("group", null);
 const DELAY_MS = Number(flag("delay", "500"));
-// The rate-limit bucket this run spends from. The route keys its budget on
-// `x-forwarded-for`, so naming a bucket per run gives a five-model bake-off its
-// own budget per model instead of five models sharing one visitor's 20/hour.
+// Rate-limit bucket PREFIX. The route keys its hourly budget on
+// `x-forwarded-for`; given a prefix, this runner sends a distinct bucket per
+// case, so a corpus longer than the hourly budget runs end to end instead of
+// stopping two cases short — and a five-model bake-off is five full runs rather
+// than one visitor's 20 turns divided five ways.
 //
-// This is a LOCAL harness affordance and nothing else. It is a plain request
-// header, so it only does anything against a server that trusts the header —
-// which localhost does and the deployed site, sitting behind Vercel's proxy,
-// does not. Point it at production and the proxy overwrites it. Left unset, the
-// runner sends no such header and spends the same budget a visitor would.
+// What that costs, said plainly: a run with `--ip` set is NOT shaped by the
+// rate limiter, so it measures the models and says nothing about the budget.
+// The limiter has its own assertions in the static suite; this is not where it
+// gets tested. Left unset, the runner sends no such header and spends exactly
+// the budget a visitor would — which is the default for that reason.
+//
+// It is a plain request header, so it only does anything against a server that
+// trusts the header. Localhost does. The deployed site, behind Vercel's proxy,
+// does not — the proxy overwrites it.
 const IP = flag("ip", null);
 
 const groups = GROUP
@@ -76,12 +82,12 @@ class RateLimited extends Error {}
  * output is captured. A wire-format change in the SDK should degrade this to
  * missing metadata, not to a crash that looks like a model failure.
  */
-async function ask(text) {
+async function ask(text, bucket) {
   const res = await fetch(`${BASE}/api/chat`, {
     method: "POST",
     headers: {
       "content-type": "application/json",
-      ...(IP ? { "x-forwarded-for": IP } : {}),
+      ...(IP ? { "x-forwarded-for": `${IP}-${bucket}` } : {}),
     },
     body: JSON.stringify({
       messages: [{ id: "eval-1", role: "user", parts: [{ type: "text", text }] }],
@@ -337,6 +343,10 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 async function main() {
   console.log(`\nEvals — live run against ${BASE}${MODEL ? ` (model: ${MODEL})` : ""}\n`);
 
+  // When the measuring happened, recorded by the thing that did it. The
+  // publisher used to infer this from the results file's mtime, which is the
+  // best available evidence only while nobody has touched the file since.
+  const startedAt = new Date().toISOString();
   const results = [];
   let rateLimitedAt = null;
 
@@ -348,15 +358,34 @@ async function main() {
       const prompt = groupName === "roleFit" ? testCase.posting : testCase.prompt;
       let result;
       try {
-        result = await ask(prompt);
+        result = await ask(prompt, `${groupName}-${testCase.id}`);
       } catch (err) {
         if (err instanceof RateLimited) {
           rateLimitedAt = testCase.id;
           console.log(`  … stopped: rate limited before "${testCase.id}"`);
           break outer;
         }
-        console.log(`  ERROR ${testCase.id}: ${err.message}`);
-        results.push({ group: groupName, id: testCase.id, pass: false, failures: [err.message] });
+        // A request that never reached the model is a TRANSPORT failure, and
+        // the rest of this file is careful to keep those separate from a model
+        // answering badly — but this path was not, and recorded a plain
+        // `pass: false`. A bake-off whose server went away mid-run therefore
+        // published a model at "13/22 passed" when nine of those nine failures
+        // were `fetch failed` and the model never saw the question. Marked as
+        // what it is, so it is counted with the other broken turns and scored
+        // as none of them.
+        console.log(`  BROKE ${testCase.id}: ${err.message}`);
+        results.push({
+          group: groupName,
+          id: testCase.id,
+          label: testCase.label ?? null,
+          pass: false,
+          broke: err.message,
+          failures: [err.message],
+          notes: [],
+          detail: null,
+          telemetry: null,
+          citations: null,
+        });
         continue;
       }
 
@@ -462,7 +491,16 @@ async function main() {
   writeFileSync(
     target,
     JSON.stringify(
-      { base: BASE, model: MODEL, rateLimitedAt, passed, total: results.length, results },
+      {
+        base: BASE,
+        model: MODEL,
+        startedAt,
+        finishedAt: new Date().toISOString(),
+        rateLimitedAt,
+        passed,
+        total: results.length,
+        results,
+      },
       null,
       2,
     ),
