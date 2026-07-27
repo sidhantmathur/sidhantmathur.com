@@ -81,6 +81,46 @@ export type Claim = {
   verdict: ClaimVerdict;
 };
 
+/**
+ * One piece of text checked against the chunks it names.
+ *
+ * Extracted from `verifyAnswer`'s inner loop so the job-description rows
+ * (Sprint 4) get the SAME check as a sentence of prose. A second implementation
+ * of "does the chunk contain this" is a second thing to calibrate, and Sprint 3
+ * spent most of its time calibrating the first one.
+ */
+export type ClaimCheck = {
+  ids: string[];
+  unknownIds: string[];
+  missing: string[];
+  /** False when there is no number and no proper noun to check. */
+  checkable: boolean;
+  verdict: ClaimVerdict;
+};
+
+export function checkClaim(
+  text: string,
+  cited: string[],
+  lookup: Record<string, VerifiableChunk>,
+): ClaimCheck {
+  const ids = cited.filter((id) => lookup[id]);
+  const unknownIds = cited.filter((id) => !lookup[id]);
+  const tokens = checkableTokens(text);
+
+  if (!ids.length) {
+    return { ids, unknownIds, missing: [], checkable: tokens.length > 0, verdict: "uncited" };
+  }
+  const haystack = normalize(ids.map((id) => lookup[id]!.text).join("\n"));
+  const missing = tokens.filter((t) => !present(t, haystack));
+  return {
+    ids,
+    unknownIds,
+    missing,
+    checkable: tokens.length > 0,
+    verdict: missing.length || unknownIds.length ? "unverified" : "verified",
+  };
+}
+
 export type BlockCheck = {
   index: number;
   ids: string[];
@@ -274,28 +314,22 @@ export function verifyAnswer(
     for (const sentence of sentencesOf(block)) {
       const own = citationIds(sentence);
       const text = stripCitations(sentence).trim();
-      const tokens = checkableTokens(text);
+      // `uncited` below therefore means: either nothing was cited, or
+      // everything cited was invented. Both are the same failure to the
+      // reader — there is no source to open.
+      const check = checkClaim(text, own.length ? own : blockIds, lookup);
       // Not a claim: nothing here can be checked against anything.
-      if (!tokens.length) continue;
+      if (!check.checkable) continue;
 
-      const ids = (own.length ? own : blockIds).filter((id) => lookup[id]);
-      const unknown = (own.length ? own : blockIds).filter((id) => !lookup[id]);
-
-      let verdict: ClaimVerdict;
-      let missing: string[] = [];
-
-      if (!ids.length) {
-        // Either nothing was cited, or everything cited was invented. Both are
-        // the same failure to the reader: there is no source to open.
-        verdict = "uncited";
-      } else {
-        const haystack = normalize(ids.map((id) => lookup[id]!.text).join("\n"));
-        missing = tokens.filter((t) => !present(t, haystack));
-        verdict = missing.length || unknown.length ? "unverified" : "verified";
-      }
-
-      if (verdict !== "verified") downgraded += 1;
-      claims.push({ blockIndex: index, text, ids, unknownIds: unknown, missing, verdict });
+      if (check.verdict !== "verified") downgraded += 1;
+      claims.push({
+        blockIndex: index,
+        text,
+        ids: check.ids,
+        unknownIds: check.unknownIds,
+        missing: check.missing,
+        verdict: check.verdict,
+      });
     }
 
     blocks.push({ index, ids: blockValid, unknownIds: blockUnknown, downgraded });
