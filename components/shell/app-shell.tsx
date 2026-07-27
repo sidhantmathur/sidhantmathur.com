@@ -10,6 +10,7 @@ import {
   SOCIAL_LINKS,
   type RailItem,
 } from "./shell-data";
+import { Markdown } from "./markdown";
 import { PanelBody, panelTitle } from "./panel-body";
 import {
   textOf,
@@ -292,9 +293,7 @@ export function AppShell() {
                         </div>
                       ) : (
                         <>
-                          <p className="whitespace-pre-wrap text-[13px] leading-[1.7] text-text-soft">
-                            {text}
-                          </p>
+                          <Markdown text={text} />
                           {outs.length > 0 && (
                             <div className="flex flex-wrap gap-2 pt-1">
                               {outs.map((o, i) => (
