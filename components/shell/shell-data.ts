@@ -1,11 +1,12 @@
-// Prototype-only data for the /lab route.
+// Data for the app shell's context panel.
 //
-// Every string here is an excerpt of existing content — content/knowledge/resume.md
-// and content/projects.ts — reproduced verbatim so the context panel can "zoom
-// into" the resume without inventing copy. Nothing here is new site copy.
-// When /lab graduates, this file should be replaced by a real citation index
-// generated from content/knowledge/*.md at build time (same pipeline as
-// lib/knowledge.generated.ts).
+// Every string here is an excerpt of existing content — content/knowledge/resume.md,
+// content/projects.ts, and docs/site-copy.md — reproduced verbatim so the panel
+// can "zoom into" the resume without inventing copy.
+//
+// PHASE 6 will replace RESUME_SECTIONS with a real citation index generated from
+// content/knowledge/*.md at build time (same pipeline as lib/knowledge.generated.ts),
+// so the panel can't drift from what the model actually reads.
 
 export type ResumeSection = {
   id: string;
@@ -65,13 +66,37 @@ export const SLUG_TO_RESUME: Record<string, string> = {
   nokia: "nokia",
 };
 
-export const RAIL_LINKS = [
-  { label: "Resume", href: "/resume", external: false },
+// docs/site-copy.md → "Why this site is a chatbot". Marked DRAFT there pending
+// Sidhant's rewrite; this array follows that file.
+export const WHY_CHATBOT = [
+  "Most software is turning into a conversation. I don't build my own PostHog dashboards anymore — I describe what I want and the product's assistant builds it, because it knows the platform better than I do. That pattern is going to take over a lot of interfaces, and I don't see why a portfolio would be the exception.",
+  "A portfolio is a list standing in for a conversation you can't have. The better version is talking to me — about what I built, why, what it took, whether any of it maps to what you need. You can't do that at eleven at night while you're going through a stack of candidates. You can do this.",
+  "So come with the specific question. How the payments work. What the Nokia rollout actually involved. What I'd do in the first ninety days of the role you're hiring for. Skip everything you don't care about.",
+  "Every answer is built from the same source files as the resume, and it will show you which one, so you can open the long version whenever something is worth more than a paragraph.",
+];
+
+// Rail navigation. `panel` items open in the context panel with no navigation;
+// `href` items are real routes. PHASE 3 converts the href items to intercepting
+// routes so they open in the panel too while staying addressable and crawlable.
+export type RailItem =
+  | { label: string; panel: "resume" | "why" | "contact" }
+  | { label: string; href: string; external?: boolean };
+
+export const RAIL_ITEMS: RailItem[] = [
+  { label: "Resume", panel: "resume" },
   { label: "Resume PDF", href: "/resume.pdf", external: true },
-  { label: "A Darle 20", href: "/projects/adarle20", external: false },
-  { label: "Nokia", href: "/projects/nokia", external: false },
-  { label: "Dell", href: "/projects/dell-ml", external: false },
-  { label: "Colophon", href: "/colophon", external: false },
+  { label: "A Darle 20", href: "/projects/adarle20" },
+  { label: "Nokia", href: "/projects/nokia" },
+  { label: "Dell", href: "/projects/dell-ml" },
+  { label: "Colophon", href: "/colophon" },
+  { label: "Why this site is a chatbot", panel: "why" },
+  { label: "Contact", panel: "contact" },
+];
+
+export const PROJECT_LINKS = [
+  { label: "A Darle 20", href: "/projects/adarle20" },
+  { label: "Nokia", href: "/projects/nokia" },
+  { label: "Dell", href: "/projects/dell-ml" },
 ];
 
 export const SOCIAL_LINKS = [

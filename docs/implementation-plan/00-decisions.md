@@ -63,13 +63,33 @@ during the redesign. Routes are migrated a phase at a time; the legacy block
 
 | Phase | Scope | State |
 |---|---|---|
-| 1 | Dark tokens in `globals.css`; `/lab` uses them; this doc | done |
-| 2 | `/lab` becomes `/`; rail + status strip become layout chrome | pending |
-| 3 | Mobile: context panel → bottom sheet, rail → slide-over | pending |
-| 4 | `/resume`, `/projects/*`, `/colophon`, 404 restyled dark | pending |
+| 1 | Dark tokens in `globals.css`; this doc | done |
+| 2 | App shell at `/`, responsive incl. mobile sheets; 404 dark | done |
+| 3 | Intercepting routes: resume / case studies / colophon open in the panel | pending |
+| 4 | `(legacy)` routes restyled dark; delete the group, header, footer | pending |
 | 5 | Web resume with depth and images | pending |
 | 6 | Build-time citation index, model routing, JD paste | pending |
-| 7 | Copy: hero, "why a chatbot", rail labels | pending |
+| 7 | Copy: hero, "why a chatbot" (DRAFT in site-copy.md), rail labels | pending |
+
+Phase 3 (mobile) folded into phase 2 — the shell was built responsive rather
+than retrofitted — and the old phase 3 slot is now the intercepting-routes work.
+
+### 2.2 App shell layout
+
+Status strip (36px, full width) · index rail (224px, `lg:` and up) ·
+conversation (flexible, `max-w-[68ch]`) · context panel (resizable 300–640px,
+default 380px, `lg:` and up) · chat input (48px) pinned to the bottom of the
+conversation column. The document itself never scrolls: `body` is
+`overflow-hidden` and each pane scrolls independently.
+
+Below `lg` the rail becomes a left sheet (hamburger in the status strip) and the
+panel becomes a bottom sheet with peek (52dvh) and full (88dvh) states.
+
+**Panel-opening asymmetry — deliberate.** A tool call sets the panel *view*,
+which makes the panel appear on desktop, where it's always visible when a view
+is set. It does **not** raise the mobile sheet: a sheet covering half a phone
+screen mid-answer is hostile. On mobile the reader taps a citation chip to open
+it. Don't "fix" this into symmetry.
 
 **Build new UI against the dark tokens only.** Nothing new should reference
 `--paper`, `--ink`, `--hairline`, `--band`, or their Tailwind equivalents.
