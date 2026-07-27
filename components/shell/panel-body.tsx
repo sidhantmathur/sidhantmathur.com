@@ -2,6 +2,10 @@
 
 import { useEffect, useRef } from "react";
 import Link from "next/link";
+import Adarle20 from "@/content/adarle20.mdx";
+import DellMl from "@/content/dell-ml.mdx";
+import Nokia from "@/content/nokia.mdx";
+import { PROJECTS } from "@/content/projects";
 import {
   PROJECT_LINKS,
   RESUME_SECTIONS,
@@ -10,6 +14,12 @@ import {
   type ResumeSection,
 } from "./shell-data";
 import type { PanelView } from "./use-conversation";
+
+const CASE_STUDIES = {
+  adarle20: Adarle20,
+  nokia: Nokia,
+  "dell-ml": DellMl,
+} as const;
 
 export function panelTitle(panel: PanelView): string {
   switch (panel.kind) {
@@ -21,6 +31,10 @@ export function panelTitle(panel: PanelView): string {
       return "Contact";
     case "why":
       return "Why this site is a chatbot";
+    case "colophon":
+      return "How this site was built";
+    case "project":
+      return PROJECTS[panel.slug].title;
     case "roleFit":
       return `Role fit — ${panel.data.role}`;
     default:
@@ -75,6 +89,42 @@ export function PanelBody({ panel }: { panel: PanelView }) {
             {s.label} ↗
           </a>
         ))}
+      </div>
+    );
+  }
+
+  if (panel.kind === "project") {
+    // The same MDX the standalone route renders — one source of content, two
+    // presentations. mdx-components.tsx styles it for both.
+    const project = PROJECTS[panel.slug];
+    const Body = CASE_STUDIES[panel.slug];
+    return (
+      <div className="space-y-4">
+        <p className="text-[12px] leading-relaxed text-text-faint">{project.description}</p>
+        <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 border-y border-line py-3 text-[11px]">
+          <dt className="text-text-faint">Role</dt>
+          <dd className="text-text-soft">{project.role}</dd>
+          <dt className="text-text-faint">Stack</dt>
+          <dd className="text-text-soft">{project.stack.join(", ")}</dd>
+          <dt className="text-text-faint">Status</dt>
+          <dd className="text-text-soft">{project.status}</dd>
+        </dl>
+        <Body />
+        <PanelLink href={project.caseStudyHref}>Open as a page</PanelLink>
+      </div>
+    );
+  }
+
+  if (panel.kind === "colophon") {
+    return (
+      <div className="space-y-3">
+        <p className="text-[13px] leading-[1.7] text-text-soft">
+          Next.js, TypeScript, and Tailwind, deployed on Vercel. Type is Geist Sans and
+          Geist Mono. The chat assistant runs on Claude through Vercel&apos;s AI Gateway,
+          with the knowledge base injected directly into the prompt — at this scale, a
+          vector database would be complexity for its own sake, so there isn&apos;t one.
+        </p>
+        <PanelLink href="/colophon">Open as a page</PanelLink>
       </div>
     );
   }

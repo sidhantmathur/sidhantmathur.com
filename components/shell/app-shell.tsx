@@ -11,6 +11,7 @@ import {
   type RailItem,
 } from "./shell-data";
 import { Markdown } from "./markdown";
+import { usePanelUrl } from "./use-panel-url";
 import { PanelBody, panelTitle } from "./panel-body";
 import {
   textOf,
@@ -63,6 +64,8 @@ export function AppShell() {
     setPanel,
     turns,
   } = useConversation();
+
+  usePanelUrl(panel, setPanel);
 
   const [input, setInput] = useState("");
   const [model, setModel] = useState(MODELS[0]);
@@ -510,22 +513,44 @@ function RailLink({
   const cls =
     "border-b border-line py-2 text-left text-text-soft no-underline transition-colors hover:text-accent";
 
-  if ("panel" in item) {
-    return (
-      <button type="button" onClick={() => onOpenPanel({ kind: item.panel } as PanelView)} className={cls}>
-        {item.label}
-      </button>
-    );
-  }
-  if (item.external) {
+  if (item.external && item.href) {
     return (
       <a href={item.href} target="_blank" rel="noreferrer" className={cls}>
         {item.label} ↗
       </a>
     );
   }
+
+  // Rendered as a real anchor so cmd-click, middle-click and "open in new tab"
+  // reach the standalone page, and so crawlers see a link. A plain left-click
+  // is intercepted and opens the panel instead; usePanelUrl pushes the same
+  // href into the address bar.
+  if (item.view && item.href) {
+    return (
+      <a
+        href={item.href}
+        onClick={(e) => {
+          if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+          e.preventDefault();
+          onOpenPanel(item.view as PanelView);
+        }}
+        className={cls}
+      >
+        {item.label} →
+      </a>
+    );
+  }
+
+  if (item.view) {
+    return (
+      <button type="button" onClick={() => onOpenPanel(item.view as PanelView)} className={cls}>
+        {item.label}
+      </button>
+    );
+  }
+
   return (
-    <Link href={item.href} className={cls}>
+    <Link href={item.href ?? "/"} className={cls}>
       {item.label} →
     </Link>
   );

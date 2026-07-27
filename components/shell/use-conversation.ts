@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, type UIMessage } from "ai";
 import { track } from "@/lib/analytics";
-import { SLUG_TO_RESUME } from "./shell-data";
+
 
 const STORAGE_KEY = "conversation.v1";
 
@@ -22,6 +22,8 @@ export type PanelView =
   | { kind: "none" }
   | { kind: "resume"; focus?: string }
   | { kind: "projects" }
+  | { kind: "project"; slug: "adarle20" | "nokia" | "dell-ml" }
+  | { kind: "colophon" }
   | { kind: "contact" }
   | { kind: "why" }
   | { kind: "roleFit"; data: RoleFit };
@@ -52,8 +54,10 @@ export function panelForTool(outs: ToolOut[]): PanelView | null {
   for (const out of outs) {
     if (out.type === "tool-showProject") {
       const slug = (out.output as { slug?: string })?.slug ?? "";
-      const focus = SLUG_TO_RESUME[slug];
-      return focus ? { kind: "resume", focus } : { kind: "projects" };
+      if (slug === "adarle20" || slug === "nokia" || slug === "dell-ml") {
+        return { kind: "project", slug };
+      }
+      return { kind: "projects" };
     }
     if (out.type === "tool-showResume") return { kind: "resume" };
     if (out.type === "tool-contactCard") return { kind: "contact" };

@@ -10,14 +10,31 @@ import type { MDXComponents } from "mdx/types";
 // change for accessibility (heading-order).
 const components: MDXComponents = {
   h3: ({ children }) => (
-    <h2 className="mt-8 font-sans text-xl font-semibold tracking-tight text-ink first:mt-0">
+    <h2 className="mt-8 text-[15px] font-medium tracking-tight text-text first:mt-0">
       {children}
     </h2>
   ),
   p: ({ children }) => (
-    <p className="mt-4 max-w-[58ch] font-sans text-[15px] leading-relaxed text-ink-soft md:text-base">
+    <p className="mt-3 max-w-[68ch] text-[13px] leading-[1.7] text-text-soft">
       {children}
     </p>
+  ),
+  ul: ({ children }) => (
+    <ul className="mt-3 max-w-[68ch] list-disc space-y-1.5 pl-4 text-[13px] leading-[1.7] text-text-soft marker:text-text-faint">
+      {children}
+    </ul>
+  ),
+  strong: ({ children }) => (
+    <strong className="font-medium text-text">{children}</strong>
+  ),
+  a: ({ href, children }) => (
+    <a
+      href={href}
+      {...(href?.startsWith("/") ? {} : { target: "_blank", rel: "noreferrer" })}
+      className="text-text underline decoration-line-strong underline-offset-2 transition-colors hover:text-accent hover:decoration-accent"
+    >
+      {children}
+    </a>
   ),
 };
 

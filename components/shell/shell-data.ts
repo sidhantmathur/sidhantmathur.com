@@ -75,22 +75,39 @@ export const WHY_CHATBOT = [
   "Every answer is built from the same source files as the resume, and it will show you which one, so you can open the long version whenever something is worth more than a paragraph.",
 ];
 
-// Rail navigation. `panel` items open in the context panel with no navigation;
-// `href` items are real routes. PHASE 3 converts the href items to intercepting
-// routes so they open in the panel too while staying addressable and crawlable.
-export type RailItem =
-  | { label: string; panel: "resume" | "why" | "contact" }
-  | { label: string; href: string; external?: boolean };
+// A rail item with a `view` opens in the context panel and pushes `href` into
+// the address bar; the href is still a real route, so cmd-click, "open in new
+// tab", and crawlers all get the standalone page. Items with only an href
+// always navigate.
+export type RailItem = {
+  label: string;
+  href?: string;
+  external?: boolean;
+  view?: PanelViewSpec;
+};
+
+// Structural mirror of PanelView's opening cases, kept here so the data module
+// doesn't import from the conversation hook.
+export type PanelViewSpec =
+  | { kind: "resume" }
+  | { kind: "why" }
+  | { kind: "contact" }
+  | { kind: "colophon" }
+  | { kind: "project"; slug: "adarle20" | "nokia" | "dell-ml" };
 
 export const RAIL_ITEMS: RailItem[] = [
-  { label: "Resume", panel: "resume" },
+  { label: "Resume", href: "/resume", view: { kind: "resume" } },
   { label: "Resume PDF", href: "/resume.pdf", external: true },
-  { label: "A Darle 20", href: "/projects/adarle20" },
-  { label: "Nokia", href: "/projects/nokia" },
-  { label: "Dell", href: "/projects/dell-ml" },
-  { label: "Colophon", href: "/colophon" },
-  { label: "Why this site is a chatbot", panel: "why" },
-  { label: "Contact", panel: "contact" },
+  {
+    label: "A Darle 20",
+    href: "/projects/adarle20",
+    view: { kind: "project", slug: "adarle20" },
+  },
+  { label: "Nokia", href: "/projects/nokia", view: { kind: "project", slug: "nokia" } },
+  { label: "Dell", href: "/projects/dell-ml", view: { kind: "project", slug: "dell-ml" } },
+  { label: "Colophon", href: "/colophon", view: { kind: "colophon" } },
+  { label: "Why this site is a chatbot", view: { kind: "why" } },
+  { label: "Contact", view: { kind: "contact" } },
 ];
 
 export const PROJECT_LINKS = [

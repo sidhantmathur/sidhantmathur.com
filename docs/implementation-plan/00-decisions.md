@@ -72,7 +72,7 @@ Components needing a hover surface use `--muted`, mapped to `--raised`.
 | 1 | Dark tokens in `globals.css`; this doc | done |
 | 2 | App shell at `/`, responsive incl. mobile sheets; 404 dark | done |
 | 3 | Document routes restyled dark; legacy tokens and old chrome deleted | done |
-| 4 | Intercepting routes: resume / case studies / colophon open in the panel | pending |
+| 4 | Document content opens in the panel; URL follows the panel | done |
 | 5 | Web resume with depth and images | pending |
 | 6 | Build-time citation index, model routing, JD paste | pending |
 | 7 | Copy: hero, "why a chatbot" (DRAFT in site-copy.md), rail labels | pending |
@@ -94,6 +94,26 @@ conversation column. The document itself never scrolls: `body` is
 
 Below `lg` the rail becomes a left sheet (hamburger in the status strip) and the
 panel becomes a bottom sheet with peek (52dvh) and full (88dvh) states.
+
+### 2.3 Panel URL sync — why not intercepting routes
+
+The plan called for Next's parallel + intercepting routes. They're the right
+tool when a route is the *only* thing that opens a surface. Here it isn't: the
+panel is also opened by tool calls mid-conversation (a citation, a role-fit
+breakdown) which have no URL and never should. Driving one surface from both a
+route slot and client state means two owners of "what is the panel showing",
+and they drift.
+
+So the panel stays client state — one owner — and the URL follows it via
+`history.pushState`, which the App Router supports without a navigation or
+unmounting the shell (`components/shell/use-panel-url.ts`). A visitor gets the
+same result: no page load, a shareable address, a working back button. Direct
+hits and crawlers still get the real server-rendered page, because those routes
+are untouched.
+
+Rail items with a `view` render as real anchors. Left-click is intercepted and
+opens the panel; cmd/ctrl/shift/middle-click fall through to the standalone
+page. Don't turn them into buttons.
 
 **Panel-opening asymmetry — deliberate.** A tool call sets the panel *view*,
 which makes the panel appear on desktop, where it's always visible when a view
