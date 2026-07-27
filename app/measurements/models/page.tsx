@@ -55,10 +55,10 @@ const COPY = {
 
   frontierHeading: "Quality against cost",
   frontierNote:
-    "Median list-price cost of one graded turn, against the share of ANSWERED cases that passed. Better is up; cheaper is left. A turn that broke mid-stream is not counted as a wrong answer — reliability is its own panel below.",
+    "Median list-price cost of one graded turn, against the share of answered cases that passed. Better is up; cheaper is left. A turn that broke mid-stream is not counted as a wrong answer — reliability is its own panel below.",
   latencyHeading: "Quality against latency",
   latencyNote:
-    "Median time to the model's first token, against the share of ANSWERED cases that passed. Better is up; faster is left.",
+    "Median time to the model's first token, against the share of answered cases that passed. Better is up; faster is left.",
 
   panelsHeading: "The numbers underneath",
   panelsIntro:
@@ -252,13 +252,13 @@ export default function ModelComparisonPage() {
           />
           <RankedBars
             heading="Output tokens per turn"
-            note="Median. Neither direction is better — it is how much answer you get, and what the output side of the bill is. Counted by each provider\u2019s own tokenizer, so compare within a row rather than across them."
+            note="Median. Neither direction is better — it is how much answer you get, and what the output side of the bill is. Counted by each provider's own tokenizer, so compare within a row rather than across them."
             format={(v) => formatCount(v)}
             {...rank(rows, (r) => (r.outputTokens ? r.outputTokens.p50 : null), "none")}
           />
           <RankedBars
             heading="Input tokens per turn"
-            note="Median. The corpus is identical for every model, so most of the spread here is TOKENIZERS DIFFERING, not one model being sent more — these counts are not comparable across providers the way seconds and dollars are."
+            note="Median. The corpus is identical for every model, so most of the spread here is the tokenizers disagreeing about how to count the same text, not one model being sent more — these counts are not comparable across providers the way seconds and dollars are."
             bestLabel="fewest"
             format={(v) => formatCount(v)}
             {...rank(rows, (r) => (r.inputTokens ? r.inputTokens.p50 : null), "lower")}
