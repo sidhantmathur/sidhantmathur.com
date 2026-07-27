@@ -1,6 +1,8 @@
 import {
   streamText,
   convertToModelMessages,
+  createUIMessageStream,
+  createUIMessageStreamResponse,
   tool,
   stepCountIs,
   type UIMessage,
@@ -9,6 +11,14 @@ import { z } from "zod";
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 import { buildSystemPrompt } from "@/lib/system-prompt";
+import { looksLikeJobPosting } from "@/lib/job-posting";
+import {
+  TURN_PART_ID,
+  classifyTurnError,
+  type ChatUIMessage,
+  type TurnErrorClass,
+  type TurnTelemetry,
+} from "@/lib/chat-telemetry";
 import { PROJECTS } from "@/content/projects";
 
 // Node runtime: both @upstash/ratelimit and the in-memory fallback work fine on
@@ -168,11 +178,47 @@ function getClientIp(req: Request): string {
   return req.headers.get("x-real-ip") ?? "unknown";
 }
 
-function jsonError(error: string, status: number): Response {
+// Every early exit carries a telemetry error class as its body, so the client
+// reads one vocabulary whether a turn died before the model or during it.
+function jsonError(error: TurnErrorClass, status: number): Response {
   return new Response(JSON.stringify({ error }), {
     status,
     headers: { "content-type": "application/json" },
   });
+}
+
+// --- Per-turn output ceiling ---------------------------------------------
+//
+// 600 tokens is right for a conversational answer. A job-posting turn has to
+// fit a whole `roleFit` object AND the sentence that follows it, and a turn
+// truncated mid-tool-call loses the tool call entirely — the exact failure this
+// sprint is fixing, arriving by a different road.
+//
+// The JD ceiling is 2500 and not 1000 because of a measured failure, not a
+// guess: at 1000, `openai/gpt-5-mini` finished three of five postings with
+// `finishReason: "length"` and NOTHING to show — a reasoning model spends the
+// per-step budget on reasoning tokens before it ever emits the tool call. On a
+// forced-tool turn that reads exactly like the abandonment bug being fixed
+// here, which is why the eval runner now prints the finish reason. Non-
+// reasoning models are unaffected: this is a ceiling, not a target, and they
+// still answer in ~400.
+const MAX_OUTPUT_TOKENS = 600;
+const MAX_OUTPUT_TOKENS_JD = 2500;
+
+/** The last user turn's text, which is what the JD detector reads. */
+function lastUserText(messages: z.infer<typeof bodySchema>["messages"]): string {
+  for (let i = messages.length - 1; i >= 0; i -= 1) {
+    const msg = messages[i]!;
+    if (msg.role !== "user") continue;
+    return msg.parts
+      .filter(
+        (p): p is { type: "text"; text: string } =>
+          p.type === "text" && typeof p.text === "string",
+      )
+      .map((p) => p.text)
+      .join("\n");
+  }
+  return "";
 }
 
 // --- Chat tools ----------------------------------------------------------
@@ -325,52 +371,149 @@ export async function POST(req: Request): Promise<Response> {
   // the stream. This is also the graceful-degradation path for an empty
   // .env.local: the /chat UI maps this 502 to the copy's error state.
   if (!process.env.AI_GATEWAY_API_KEY) {
-    return jsonError("upstream_unavailable", 502);
+    return jsonError("upstream_unconfigured", 502);
   }
 
-  try {
-    const result = streamText({
-      model, // allowlisted above — never the raw client string
-      maxOutputTokens: 600,
-      tools: chatTools,
-      // The SDK's default stop condition is stepCountIs(1), which ends the
-      // stream at the tool call before the model can answer. Allow a second
-      // step so the model always follows a tool call with a short text answer
-      // (the tool is a visual aid, not a replacement for the answer — §2.5).
-      stopWhen: stepCountIs(3),
-      // System prompt supplied as a message so we can attach cache_control.
-      // The prompt is byte-identical across requests, so ephemeral caching hits
-      // on every request after the first.
-      allowSystemInMessages: true,
-      messages: [
-        {
-          role: "system",
-          content: buildSystemPrompt(),
-          providerOptions: {
-            anthropic: { cacheControl: { type: "ephemeral" } },
+  // (e) Is this a pasted job description? Decided once, up front, because it
+  // changes both the output ceiling and whether `roleFit` is optional.
+  const jobPosting = looksLikeJobPosting(lastUserText(messages));
+
+  const startedAt = Date.now();
+
+  // The record the client reads. Written twice under one part id: everything
+  // known now, then the measurements once the model is done. See
+  // lib/chat-telemetry.ts for why it's a data part and not a header.
+  const telemetry: TurnTelemetry = {
+    model,
+    tier,
+    budgetRemaining: budget.remaining,
+    budgetLimit: TIER_LIMITS[tier],
+    jobPosting,
+    usage: null,
+    timing: null,
+    steps: null,
+    toolsCalled: null,
+    finishReason: null,
+    error: null,
+  };
+
+  const stream = createUIMessageStream<ChatUIMessage>({
+    // The default masks every error as "An error occurred." The class is safe
+    // to expose — it's a closed vocabulary with no server detail in it — and
+    // the client needs it to tell "capped" from "broken" from "misconfigured".
+    onError: (err) => {
+      console.error("[chat] stream error", err);
+      return classifyTurnError(err);
+    },
+    execute: async ({ writer }) => {
+      // `start` and `finish` are written here rather than by the merged stream
+      // (hence sendStart/sendFinish below), so the final telemetry write lands
+      // inside the message rather than after it has already been closed.
+      writer.write({ type: "start" });
+      writer.write({ type: "data-turn", id: TURN_PART_ID, data: telemetry });
+
+      const result = streamText({
+        model, // allowlisted above — never the raw client string
+        maxOutputTokens: jobPosting ? MAX_OUTPUT_TOKENS_JD : MAX_OUTPUT_TOKENS,
+        tools: chatTools,
+        // The SDK's default stop condition is stepCountIs(1), which ends the
+        // stream at the tool call before the model can answer. Allow a second
+        // step so the model always follows a tool call with a short text answer
+        // (the tool is a visual aid, not a replacement for the answer — §2.5).
+        stopWhen: stepCountIs(3),
+        // THE JD FIX. On a job-posting turn the structured assessment is the
+        // feature, so it is not left to the model's discretion: step 0 must
+        // call `roleFit`. Steps after it get `toolChoice: "none"` — without
+        // that, a forced choice applies to every step and the model calls the
+        // tool again instead of writing the sentence that follows it.
+        //
+        // Non-JD turns are untouched: `undefined` means "use the outer
+        // setting", which is the default `auto`.
+        prepareStep: jobPosting
+          ? ({ stepNumber }) =>
+              stepNumber === 0
+                ? { toolChoice: { type: "tool", toolName: "roleFit" } }
+                : { toolChoice: "none" }
+          : undefined,
+        // System prompt supplied as a message so we can attach cache_control.
+        // The prompt is byte-identical across requests, so ephemeral caching
+        // hits on every request after the first.
+        allowSystemInMessages: true,
+        messages: [
+          {
+            role: "system",
+            content: buildSystemPrompt(),
+            providerOptions: {
+              anthropic: { cacheControl: { type: "ephemeral" } },
+            },
           },
-        },
-        ...(await convertToModelMessages(messages as Omit<UIMessage, "id">[])),
-      ],
-      // If the auth/setup fails synchronously it throws below; a mid-stream
-      // failure surfaces to the client's useChat onError via the stream.
-      onError: (err) => {
-        console.error("[chat] stream error", err);
-      },
-    });
+          ...(await convertToModelMessages(messages as Omit<UIMessage, "id">[])),
+        ],
+      });
 
-    // Surface the remaining budget so the status strip can display it. The
-    // constraint is part of the interface, not something to hide.
-    return result.toUIMessageStreamResponse({
-      headers: {
-        "x-model": model,
-        "x-tier": tier,
-        "x-tier-remaining": String(budget.remaining),
-        "x-tier-limit": String(TIER_LIMITS[tier]),
-      },
-    });
-  } catch (err) {
-    console.error("[chat] upstream error", err);
-    return jsonError("upstream_unavailable", 502);
-  }
+      writer.merge(result.toUIMessageStream({ sendStart: false, sendFinish: false }));
+
+      try {
+        const [steps, usage, finishReason] = await Promise.all([
+          result.steps,
+          result.totalUsage,
+          result.finishReason,
+        ]);
+
+        // TTFT is the first step's — the wait a reader actually experiences.
+        // Tokens/sec is measured over generation time only, so the queueing and
+        // tool-execution gaps between steps don't deflate it.
+        const generationMs = steps.reduce((ms, s) => ms + (s.performance?.stepTimeMs ?? 0), 0);
+        const outputTokens = usage.outputTokens ?? null;
+
+        telemetry.usage = {
+          inputTokens: usage.inputTokens ?? null,
+          cachedInputTokens: usage.inputTokenDetails?.cacheReadTokens ?? null,
+          cacheWriteTokens: usage.inputTokenDetails?.cacheWriteTokens ?? null,
+          outputTokens,
+          totalTokens: usage.totalTokens ?? null,
+        };
+        telemetry.timing = {
+          ttftMs: steps[0]?.performance?.timeToFirstOutputMs ?? null,
+          durationMs: Date.now() - startedAt,
+          tokensPerSecond:
+            outputTokens && generationMs > 0
+              ? Math.round((outputTokens / (generationMs / 1000)) * 10) / 10
+              : null,
+        };
+        telemetry.steps = steps.length;
+        telemetry.toolsCalled = steps.flatMap((s) => s.toolCalls.map((c) => c.toolName));
+        telemetry.finishReason = finishReason;
+      } catch (err) {
+        // The merged stream has already surfaced the failure to the reader.
+        // What's added here is the CLASS, so #6 can render the difference
+        // between a timeout and a misconfiguration instead of one grey box.
+        console.error("[chat] turn failed", err);
+        telemetry.error = {
+          class: classifyTurnError(err),
+          detail: err instanceof Error ? err.name : "error",
+        };
+        telemetry.timing = {
+          ttftMs: null,
+          durationMs: Date.now() - startedAt,
+          tokensPerSecond: null,
+        };
+      }
+
+      writer.write({ type: "data-turn", id: TURN_PART_ID, data: telemetry });
+      writer.write({ type: "finish" });
+    },
+  });
+
+  // Headers stay: they're the pre-stream budget signal the status strip reads
+  // before a single token arrives, and the live eval harness reads them too.
+  return createUIMessageStreamResponse({
+    stream,
+    headers: {
+      "x-model": model,
+      "x-tier": tier,
+      "x-tier-remaining": String(budget.remaining),
+      "x-tier-limit": String(TIER_LIMITS[tier]),
+    },
+  });
 }

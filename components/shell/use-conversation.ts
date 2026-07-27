@@ -2,8 +2,19 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useChat } from "@ai-sdk/react";
-import { DefaultChatTransport, type UIMessage } from "ai";
+import { DefaultChatTransport } from "ai";
 import { track } from "@/lib/analytics";
+import {
+  isRateLimitClass,
+  toTurnErrorClass,
+  type ChatUIMessage,
+  type TurnErrorClass,
+  type TurnTelemetry,
+} from "@/lib/chat-telemetry";
+
+// Alias so the rest of this file (and its callers) read as before while every
+// message is the app's typed variant, carrying the F1 telemetry data part.
+type UIMessage = ChatUIMessage;
 
 
 const STORAGE_KEY = "conversation.v1";
@@ -70,20 +81,37 @@ export function panelForTool(outs: ToolOut[]): PanelView | null {
 
 export type Budget = { tier: string; remaining: number; limit: number };
 
-// Distinguishes a 429 (rate-limit copy) from any other failure. useChat's
-// onError receives only an Error, not the HTTP status, so the status is read
-// here and encoded in the message. Also lifts the per-tier budget out of the
-// response headers, which is the only place it's exposed.
+/**
+ * One turn's telemetry as the client holds it (F1).
+ *
+ * `clientTtftMs` is deliberately kept alongside the server's `timing.ttftMs`
+ * rather than replacing it: the server measures model latency, the client
+ * measures what the reader waited through, and the gap between them is the
+ * network. Sprint 2's instruments want both.
+ */
+export type TurnRecord = TurnTelemetry & {
+  clientTtftMs: number | null;
+  messageId: string | null;
+};
+
+// Turns any failure into one of the telemetry error classes. useChat's onError
+// receives only an Error, not the HTTP status, so the class is read here — from
+// the JSON body the route sends on an early exit, or from the status — and
+// encoded as the message. Mid-stream failures already arrive as a class string,
+// because the route's stream `onError` returns one.
+//
+// Also lifts the per-tier budget out of the response headers, which is where it
+// lands before a single token has streamed.
 function makeChatFetch(onBudget: (b: Budget) => void): typeof fetch {
   return async (input, init) => {
     const res = await fetch(input, init);
     if (!res.ok) {
-      let code = "error";
+      let code: TurnErrorClass = res.status === 429 ? "rate_limited" : "upstream_unavailable";
       try {
         const body = (await res.clone().json()) as { error?: string };
-        if (res.status === 429 || body?.error === "rate_limited") code = "rate_limited";
+        if (body?.error) code = toTurnErrorClass(body.error);
       } catch {
-        if (res.status === 429) code = "rate_limited";
+        /* non-JSON body — the status-derived class above stands */
       }
       throw new Error(code);
     }
@@ -99,9 +127,14 @@ function makeChatFetch(onBudget: (b: Budget) => void): typeof fetch {
 
 export function useConversation(model: string) {
   const [errorKind, setErrorKind] = useState<"none" | "error" | "rate_limited">("none");
+  const [errorClass, setErrorClass] = useState<TurnErrorClass | null>(null);
   const [panel, setPanel] = useState<PanelView>({ kind: "none" });
   const [ttft, setTtft] = useState<number | null>(null);
   const [budget, setBudget] = useState<Budget | null>(null);
+  // One entry per turn, oldest first. In-memory only: the telemetry data part
+  // does persist on the message, but the derived log is cheap to rebuild and
+  // nothing yet reads it across a reload.
+  const [turnLog, setTurnLog] = useState<TurnRecord[]>([]);
 
   // The transport closes over the fetch wrapper, and the wrapper closes over
   // setBudget. Both are stable, so the transport is built once.
@@ -128,12 +161,77 @@ export function useConversation(model: string) {
   // the server exactly, so: start empty, restore after mount.
   const [hydrated, setHydrated] = useState(false);
 
-  const { messages, sendMessage, status, setMessages } = useChat({
+  // The client's own stopwatch, kept so the record can carry both latencies.
+  const clientTtft = useRef<number | null>(null);
+
+  const { messages, sendMessage, status, setMessages } = useChat<UIMessage>({
     transport,
+    // F1's channel. The route writes ONE `data-turn` part per turn under a
+    // fixed id: an opening write with the model, tier and budget, then a
+    // closing write with the measurements. The SDK reconciles them into a
+    // single part, but fires this for both — so the opening write (no usage,
+    // no error) appends a record and the closing one replaces it.
+    onData: (part) => {
+      if (part.type !== "data-turn") return;
+      const data = part.data;
+      const opening = data.usage == null && data.error == null;
+      const record: TurnRecord = {
+        ...data,
+        clientTtftMs: clientTtft.current,
+        messageId: null,
+      };
+      setTurnLog((prev) =>
+        opening || prev.length === 0 ? [...prev, record] : [...prev.slice(0, -1), record],
+      );
+      if (opening) return;
+
+      if (data.error) {
+        track("chat_turn_failed", {
+          error_class: data.error.class,
+          model: data.model,
+          tier: data.tier,
+          jd: data.jobPosting,
+        });
+        return;
+      }
+      const cached = data.usage?.cachedInputTokens ?? 0;
+      const input = data.usage?.inputTokens ?? 0;
+      track("chat_turn_complete", {
+        model: data.model,
+        tier: data.tier,
+        jd: data.jobPosting,
+        ttft_ms: data.timing?.ttftMs ?? null,
+        client_ttft_ms: clientTtft.current,
+        duration_ms: data.timing?.durationMs ?? null,
+        tokens_per_second: data.timing?.tokensPerSecond ?? null,
+        input_tokens: data.usage?.inputTokens ?? null,
+        cached_input_tokens: data.usage?.cachedInputTokens ?? null,
+        output_tokens: data.usage?.outputTokens ?? null,
+        cache_hit: cached > 0,
+        cache_hit_ratio: input > 0 ? Math.round((cached / input) * 100) / 100 : null,
+        steps: data.steps,
+        tools_called: data.toolsCalled,
+        finish_reason: data.finishReason,
+      });
+    },
+    // Stamps the record with the message it belongs to, so an instrument can
+    // go from an answer on screen to the numbers behind it.
+    onFinish: ({ message }) => {
+      setTurnLog((prev) =>
+        prev.length === 0
+          ? prev
+          : [...prev.slice(0, -1), { ...prev[prev.length - 1]!, messageId: message.id }],
+      );
+    },
     onError: (error) => {
-      const kind = error.message === "rate_limited" ? "rate_limited" : "error";
+      const cls = toTurnErrorClass(error.message);
+      const kind = isRateLimitClass(cls) ? "rate_limited" : "error";
       setErrorKind(kind);
-      track(kind === "rate_limited" ? "chat_rate_limited" : "chat_error");
+      setErrorClass(cls);
+      track(kind === "rate_limited" ? "chat_rate_limited" : "chat_error", {
+        error_class: cls,
+        model: modelRef.current,
+      });
     },
   });
 
@@ -177,6 +275,7 @@ export function useConversation(model: string) {
     if (status === "streaming" && sentAt.current != null) {
       const elapsed = Math.round(nowMs() - sentAt.current);
       sentAt.current = null;
+      clientTtft.current = elapsed;
       queueMicrotask(() => setTtft(elapsed));
     }
   }, [status]);
@@ -208,7 +307,9 @@ export function useConversation(model: string) {
     const q = text.trim();
     if (!q || isBusy) return;
     setErrorKind("none");
+    setErrorClass(null);
     sentAt.current = nowMs();
+    clientTtft.current = null;
     setTtft(null);
     track("chat_message_sent", { message_index: sentCount.current, message: q });
     sentCount.current += 1;
@@ -219,7 +320,10 @@ export function useConversation(model: string) {
     setMessages([]);
     setPanel({ kind: "none" });
     setErrorKind("none");
+    setErrorClass(null);
     setTtft(null);
+    setTurnLog([]);
+    clientTtft.current = null;
     lastToolKey.current = "";
   }
 
@@ -234,10 +338,15 @@ export function useConversation(model: string) {
     isBusy,
     awaitingReply,
     errorKind,
+    // The class behind `errorKind`. Nothing renders it yet — #6 (Sprint 2) is
+    // what it's here for; F1's job is that the number exists to be read.
+    errorClass,
     ttft,
     panel,
     setPanel,
     budget,
+    turnLog,
+    telemetry: turnLog.length ? turnLog[turnLog.length - 1]! : null,
     turns: messages.filter((m) => m.role === "user").length,
   };
 }
