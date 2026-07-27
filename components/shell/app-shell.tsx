@@ -25,6 +25,7 @@ import { permalinkFor } from "@/lib/permalink";
 import { track } from "@/lib/analytics";
 import { ExportDeck } from "./export-deck";
 import { PrintSheet } from "./print-sheet";
+import { ManualMode } from "./manual-mode";
 import { costOfTurn, formatUsd, sumCosts } from "@/lib/pricing";
 import {
   textOf,
@@ -620,8 +621,12 @@ export function AppShell() {
                 {errorKind === "error" && (
                   <p className="text-[13px] leading-relaxed text-text-faint">{ERROR_STATE}</p>
                 )}
+                {/* Out of turns is the one state where the thing this page is
+                    for stops working, and it used to be one grey sentence.
+                    Manual mode (#15) puts the corpus itself in its place — no
+                    model, no tokens, the same material. */}
                 {errorKind === "rate_limited" && (
-                  <p className="text-[13px] leading-relaxed text-text-faint">{RATE_LIMIT_STATE}</p>
+                  <ManualMode headline={RATE_LIMIT_STATE} onOpenSource={openPanel} />
                 )}
               </div>
 

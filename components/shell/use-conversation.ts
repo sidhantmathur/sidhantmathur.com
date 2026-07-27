@@ -47,6 +47,10 @@ export type PanelView =
   // `/sources`). Both are opened deliberately and never by a tool call.
   | { kind: "export" }
   | { kind: "corpus" }
+  // The two documents Sprint 7 publishes (#7, #10). Both are real pages as
+  // well; the panel view is the version that opens beside the conversation.
+  | { kind: "prompt" }
+  | { kind: "refusals" }
   // One chunk of the corpus, opened from a citation (Sprint 3, F2/#4). The
   // whole file renders; `id` is what gets highlighted and scrolled to.
   | { kind: "source"; id: string }
@@ -157,13 +161,24 @@ export function useConversation(model: string) {
 
   // The transport closes over the fetch wrapper, and the wrapper closes over
   // setBudget. Both are stable, so the transport is built once.
-  const [transport] = useState(
-    () =>
-      new DefaultChatTransport({
-        api: "/api/chat",
-        fetch: makeChatFetch((b) => setBudget(b)),
-      }),
-  );
+  //
+  // `?simulate=<class>` on the PAGE is forwarded to the chat endpoint, which
+  // already understands it (Sprint 2's failure theatre). The panel's buttons
+  // fire one request and report what came back; this makes the whole shell
+  // enter the state instead — which is the only way to look at what a
+  // rate-limited visitor actually sees (Sprint 7, #15) without waiting for one.
+  // It cannot produce an answer, cost a token, or bypass anything: the route
+  // looks the value up in a closed list of failures and ignores anything else.
+  const [transport] = useState(() => {
+    const simulate =
+      typeof window === "undefined"
+        ? null
+        : new URLSearchParams(window.location.search).get("simulate");
+    return new DefaultChatTransport({
+      api: simulate ? `/api/chat?simulate=${encodeURIComponent(simulate)}` : "/api/chat",
+      fetch: makeChatFetch((b) => setBudget(b)),
+    });
+  });
 
   // The selected model has to reach the request body. Kept in a ref so changing
   // it never rebuilds the transport mid-conversation. Synced in an effect

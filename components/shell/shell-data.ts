@@ -1,4 +1,5 @@
 import { JD_PREFIX } from "@/lib/job-posting";
+import { ROAST_REQUEST, SITE_REQUEST } from "@/lib/site-question";
 
 // Navigation and copy for the app shell.
 //
@@ -50,6 +51,8 @@ export type PanelViewSpec =
   | { kind: "colophon" }
   | { kind: "jd" }
   | { kind: "instruments" }
+  | { kind: "prompt" }
+  | { kind: "refusals" }
   | { kind: "project"; slug: "adarle20" | "nokia" | "dell-ml" };
 
 export const RAIL_ITEMS: RailItem[] = [
@@ -63,6 +66,10 @@ export const RAIL_ITEMS: RailItem[] = [
   { label: "Nokia", href: "/projects/nokia", view: { kind: "project", slug: "nokia" } },
   { label: "Dell", href: "/projects/dell-ml", view: { kind: "project", slug: "dell-ml" } },
   { label: "Colophon", href: "/colophon", view: { kind: "colophon" } },
+  // Sprint 7's two published documents (#7, #10). Both have a real page and
+  // open in the panel on a plain click, like everything else in this rail.
+  { label: "The instructions", href: "/prompt", view: { kind: "prompt" } },
+  { label: "What it won't do", href: "/refusals", view: { kind: "refusals" } },
   { label: "Why this site is a chatbot", view: { kind: "why" } },
   { label: "Paste a job description", view: { kind: "jd" } },
   // The header readouts are the desktop way in. Below md they're hidden, so the
@@ -75,8 +82,9 @@ export const RAIL_ITEMS: RailItem[] = [
 // nothing, so these can never become a generated line.
 //
 // Every one of them is a claim about the SITE, not about Sidhant, and each is
-// checkable in this repo — the sliding hour is in route.ts, the byte-identical
-// cached prompt is the reason `buildSystemPrompt()` takes no arguments. Nothing
+// checkable in this repo — the sliding hour is in route.ts, and the
+// byte-identical cached prompt is the base `buildSystemPrompt()` returns on
+// every turn that didn't ask about the site (Sprint 7, #8). Nothing
 // here asserts anything about his experience, which is what keeps this list on
 // the right side of the copy rule. Logged in docs/copy-ledger.md.
 export const IDLE_LINES = [
@@ -140,7 +148,16 @@ export type SlashCommand = {
    * `PanelView` kind in use-conversation.ts — a typo would open nothing, and
    * silently. evals/export.test.mjs asserts the two lists agree.
    */
-  panel?: "resume" | "projects" | "contact" | "jd" | "instruments" | "export" | "corpus";
+  panel?:
+    | "resume"
+    | "projects"
+    | "contact"
+    | "jd"
+    | "instruments"
+    | "export"
+    | "corpus"
+    | "prompt"
+    | "refusals";
   /** For kind==='send': the message text (verbatim from docs/site-copy.md). */
   message?: string;
 };
@@ -161,6 +178,20 @@ export const SLASH_COMMANDS: SlashCommand[] = [
   { name: "/budget", hint: "Turns, tokens and what they cost", kind: "panel", panel: "instruments" },
   { name: "/sources", hint: "Every source the answers are built from", kind: "panel", panel: "corpus" },
   { name: "/pdf", hint: "Export — markdown, print, link", kind: "panel", panel: "export" },
+  { name: "/prompt", hint: "Read the instructions it was given", kind: "panel", panel: "prompt" },
+  { name: "/refusals", hint: "What it won't do, and why", kind: "panel", panel: "refusals" },
+  {
+    name: "/site",
+    hint: "How this site is built",
+    kind: "send",
+    message: SITE_REQUEST,
+  },
+  {
+    name: "/roast",
+    hint: "Ask it what's wrong with this site",
+    kind: "send",
+    message: ROAST_REQUEST,
+  },
   {
     name: "/fit",
     hint: "Ask about role fit",
