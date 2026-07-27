@@ -48,9 +48,40 @@ export function readSystemPromptSource() {
   return read("lib/system-prompt.ts");
 }
 
+/** The repo corpus — the second corpus, this site's own source (Sprint 7). */
+export function readRepoCorpus() {
+  const src = read("lib/repo.generated.ts");
+  const match = src.match(/export const REPO_CORPUS = ("(?:[^"\\]|\\.)*");/);
+  if (!match) {
+    throw new Error(
+      "Could not parse REPO_CORPUS from lib/repo.generated.ts — run `node scripts/build-repo-corpus.mjs` first.",
+    );
+  }
+  return JSON.parse(match[1]);
+}
+
+/** The same, as chunks. */
+export function readRepoChunks() {
+  const src = read("lib/repo.generated.ts");
+  const match = src.match(/export const REPO_CHUNKS: Chunk\[\] = (\[[\s\S]*?\n\]);/);
+  if (!match) {
+    throw new Error(
+      "Could not parse REPO_CHUNKS from lib/repo.generated.ts — run `node scripts/build-repo-corpus.mjs` first.",
+    );
+  }
+  return JSON.parse(match[1]);
+}
+
+const unescape = (template) => template.replace(/\\`/g, "`").replace(/\\\$/g, "$");
+
 /**
- * The assembled system prompt, reconstructed the same way buildSystemPrompt()
- * does: the template literal with ${KNOWLEDGE_BASE} substituted.
+ * The BASE system prompt — what every turn sends — reconstructed the same way
+ * `basePrompt()` does: the template literal with ${KNOWLEDGE_BASE} substituted.
+ *
+ * Sprint 7 note: this deliberately stops at the base. The second corpus is a
+ * separate exported constant appended only on a site turn, and folding it in
+ * here would hide the number that matters — what an ORDINARY turn costs, which
+ * is the one that has to stay byte-identical for the cache to hit.
  *
  * This mirrors the TS rather than importing it, so it can drift. The structural
  * assertions in static.test.mjs are what catch that: they check the real source
@@ -60,15 +91,26 @@ export function readSystemPromptSource() {
 export function buildPromptApproximation() {
   const src = readSystemPromptSource();
   const start = src.indexOf("return `");
-  const end = src.lastIndexOf("`;");
+  const end = src.indexOf("`;", start);
   if (start === -1 || end === -1) {
     throw new Error("Could not locate the prompt template in lib/system-prompt.ts");
   }
-  const template = src.slice(start + "return `".length, end);
-  return template
-    .replace("${KNOWLEDGE_BASE}", readKnowledgeBase())
-    .replace(/\\`/g, "`")
-    .replace(/\\\$/g, "$");
+  return unescape(src.slice(start + "return `".length, end)).replace(
+    "${KNOWLEDGE_BASE}",
+    readKnowledgeBase(),
+  );
+}
+
+/** The block appended to the base prompt on a site turn, and nowhere else. */
+export function buildSiteAppendixApproximation() {
+  const src = readSystemPromptSource();
+  const start = src.indexOf("export const SITE_APPENDIX = `");
+  if (start === -1) {
+    throw new Error("Could not locate SITE_APPENDIX in lib/system-prompt.ts");
+  }
+  const from = start + "export const SITE_APPENDIX = `".length;
+  const end = src.indexOf("`;", from);
+  return unescape(src.slice(from, end)).replace("${REPO_CORPUS}", readRepoCorpus());
 }
 
 /** Model ids on the server allowlist, with their tiers. */

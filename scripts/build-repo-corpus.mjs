@@ -138,8 +138,8 @@ function clip(lines, max) {
 const MAX_CHARS = 520;
 
 const chunks = [];
-const add = ({ slug, heading, meta, lines }) => {
-  const clipped = clip(lines, MAX_CHARS);
+const add = ({ slug, heading, meta, lines, max = MAX_CHARS }) => {
+  const clipped = clip(lines, max);
   if (!clipped.length) throw new Error(`[build-repo-corpus] chunk "${slug}" came out empty`);
   chunks.push({
     id: `repo:${slug}`,
@@ -236,6 +236,11 @@ add({
   heading: "What the build knows is missing",
   meta: "docs/roadmap.md — each sprint's closing paragraph",
   lines: notDone.slice(-4).map((p) => clip([p], 340)[0]),
+  // Four times the usual ceiling, and the only chunk that gets one. This is
+  // the site's own account of what it hasn't done — the difference between a
+  // criticism someone could act on and an affectionate one — and clipping it
+  // to the length of a comment block would leave a roast with one example.
+  max: 4 * MAX_CHARS,
 });
 
 // --- Output ---------------------------------------------------------------

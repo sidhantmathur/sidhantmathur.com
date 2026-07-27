@@ -43,6 +43,16 @@ const BASE = flag("base", "http://localhost:3000").replace(/\/$/, "");
 const MODEL = flag("model", null);
 const GROUP = flag("group", null);
 const DELAY_MS = Number(flag("delay", "500"));
+// The rate-limit bucket this run spends from. The route keys its budget on
+// `x-forwarded-for`, so naming a bucket per run gives a five-model bake-off its
+// own budget per model instead of five models sharing one visitor's 20/hour.
+//
+// This is a LOCAL harness affordance and nothing else. It is a plain request
+// header, so it only does anything against a server that trusts the header —
+// which localhost does and the deployed site, sitting behind Vercel's proxy,
+// does not. Point it at production and the proxy overwrites it. Left unset, the
+// runner sends no such header and spends the same budget a visitor would.
+const IP = flag("ip", null);
 
 const groups = GROUP
   ? { [GROUP]: ALL_GROUPS[GROUP] }
@@ -69,7 +79,10 @@ class RateLimited extends Error {}
 async function ask(text) {
   const res = await fetch(`${BASE}/api/chat`, {
     method: "POST",
-    headers: { "content-type": "application/json" },
+    headers: {
+      "content-type": "application/json",
+      ...(IP ? { "x-forwarded-for": IP } : {}),
+    },
     body: JSON.stringify({
       messages: [{ id: "eval-1", role: "user", parts: [{ type: "text", text }] }],
       ...(MODEL ? { model: MODEL } : {}),
