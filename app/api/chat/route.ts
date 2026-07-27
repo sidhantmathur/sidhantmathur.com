@@ -67,11 +67,18 @@ const messageSchema = z
 // COST NOTE: `standard` is cheap-tier models only. `premium` is one
 // substantially more expensive model on a small bucket. Delete the premium
 // entry to turn the whole tier off; nothing else needs to change.
+//
+// Gateway list prices per 1M tokens (in / out), checked 2026-07-27. This
+// workload is input-dominated — the system prompt plus knowledge base is ~4k
+// tokens on every turn against ~300 tokens of answer — so input price is what
+// actually bills. Sonnet was the previous premium entry at $3/$15 and was not
+// worth 3x Luna here.
 const MODELS = {
-  "anthropic/claude-haiku-4.5": { tier: "standard" },
-  "google/gemini-2.5-flash": { tier: "standard" },
-  "openai/gpt-5-mini": { tier: "standard" },
-  "anthropic/claude-sonnet-4.5": { tier: "premium" },
+  "anthropic/claude-haiku-4.5": { tier: "standard" },   // $1.00 / $5.00
+  "openai/gpt-5-mini": { tier: "standard" },            // $0.25 / $2.00
+  "google/gemini-3.5-flash-lite": { tier: "standard" }, // $0.30 / $2.50
+  "deepseek/deepseek-v4-flash": { tier: "standard" },   // $0.09 / $0.18
+  "openai/gpt-5.6-luna": { tier: "premium" },           // $1.00 / $6.00
 } as const;
 
 type ModelId = keyof typeof MODELS;

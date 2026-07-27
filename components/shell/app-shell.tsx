@@ -40,10 +40,20 @@ const SUGGESTED = [
   "Is he a fit for a solutions engineering role?",
 ];
 
-// Display-only until PHASE 6. app/api/chat/route.ts hardcodes the model;
-// wiring this means accepting a model id in the request body, allowlisting it
-// server-side, and giving each tier its own rate-limit bucket.
-const MODELS = ["anthropic/claude-haiku-4.5", "google/gemini-2.5-flash", "openai/gpt-5-mini"];
+// Must stay a subset of the `MODELS` allowlist in app/api/chat/route.ts — an id
+// that isn't on the server list silently falls back to the default rather than
+// erroring, so a mismatch here is invisible. Order is the dropdown order; the
+// first entry is what the shell selects on load.
+//
+// The last entry is the `premium` tier. Selecting it switches the header budget
+// strip from "standard n/20" to "premium n/5", which is the point of showing it.
+const MODELS = [
+  "anthropic/claude-haiku-4.5",
+  "openai/gpt-5-mini",
+  "google/gemini-3.5-flash-lite",
+  "deepseek/deepseek-v4-flash",
+  "openai/gpt-5.6-luna",
+];
 
 const PANEL_WIDTH_KEY = "panel.width.v1";
 const PANEL_MIN = 300;
