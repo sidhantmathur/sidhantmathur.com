@@ -351,7 +351,11 @@ function JobDescriptionForm({ onSubmit }: { onSubmit?: (text: string) => void })
         onChange={(e) => setValue(e.target.value.slice(0, JD_MAX))}
         placeholder={JD_COPY.placeholder}
         rows={12}
-        className="w-full resize-y border border-line-strong bg-raised p-2 text-[12px] leading-relaxed text-text outline-none placeholder:text-text-faint focus:border-accent"
+        // 16px below md for the same reason as the ask input: iOS Safari
+        // zooms into any field under 16px on focus and does not zoom back out.
+        // Pasting a job posting is the longest interaction on the site — it is
+        // the worst place to strand someone at 1.4x.
+        className="w-full resize-y border border-line-strong bg-raised p-2 text-[16px] leading-relaxed text-text outline-none placeholder:text-text-faint focus:border-accent md:text-[12px]"
       />
       <div className="flex items-center justify-between">
         <span className="text-[11px] text-text-faint">

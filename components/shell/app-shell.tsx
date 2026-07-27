@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import {
@@ -290,13 +290,31 @@ export function AppShell() {
 
       {/* ---- Status strip ------------------------------------------------- */}
       <header className="flex h-9 shrink-0 items-center gap-3 border-b border-line bg-panel px-3 text-[11px] md:px-4">
+        {/* Tap target, not a glyph. The bare ☰ character rendered at the
+            header's 11px was an ~11px target — well under the 44px iOS asks
+            for, and it read as thin besides. This fills the full height of the
+            strip (36px): a shade under spec, but the strip is the constraint
+            and a taller header would cost the density everywhere else. Drawn
+            as an SVG because the Unicode trigram renders inconsistently
+            across platforms, hairline-thin on iOS in particular. */}
         <button
           type="button"
           onClick={() => setRailOpen(true)}
           aria-label="Open navigation"
-          className="text-text-soft hover:text-accent lg:hidden"
+          className="-ml-1.5 flex h-9 w-9 shrink-0 touch-manipulation items-center justify-center text-text-soft hover:text-accent lg:hidden"
         >
-          ☰
+          <svg
+            width="17"
+            height="17"
+            viewBox="0 0 17 17"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="square"
+            aria-hidden="true"
+          >
+            <path d="M2.5 4.5h12M2.5 8.5h12M2.5 12.5h12" />
+          </svg>
         </button>
         <Link href="/" className="text-text no-underline hover:text-accent">
           {SITE_NAME}
@@ -430,12 +448,34 @@ export function AppShell() {
                               page. */}
                           <div className="flex flex-wrap items-center gap-2 pt-1">
                             {outs.map((o, i) => (
-                              <CitationChip
-                                key={i}
-                                out={o}
-                                latest={m.id === lastId}
-                                onOpen={openPanel}
-                              />
+                              <Fragment key={i}>
+                                <CitationChip
+                                  out={o}
+                                  latest={m.id === lastId}
+                                  onOpen={openPanel}
+                                />
+                                {/* The resume chip opens the panel, where the
+                                    PDF link sits below the chunks. Asking for
+                                    the resume and being handed a panel to
+                                    scroll is a step too many, so the file gets
+                                    its own chip — a real anchor, so it works
+                                    whether or not the model remembered to
+                                    write a link in its sentence. */}
+                                {o.type === "tool-showResume" && (
+                                  <a
+                                    href="/resume.pdf"
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className={`border px-2 py-1 text-[11px] no-underline transition-colors hover:border-accent hover:text-accent ${
+                                      m.id === lastId
+                                        ? "border-line-strong text-text-soft"
+                                        : "border-line text-text-faint"
+                                    }`}
+                                  >
+                                    ↓ PDF
+                                  </a>
+                                )}
+                              </Fragment>
                             ))}
                             {!isBusy && (
                               <CopyButton
@@ -466,8 +506,10 @@ export function AppShell() {
             </div>
           </div>
 
-          {/* Input */}
-          <div className="relative shrink-0 border-t border-line bg-panel">
+          {/* Input. The bottom padding keeps the row clear of the home
+              indicator on notched iPhones, where it otherwise sits directly
+              under the bar; it resolves to 0 everywhere else. */}
+          <div className="relative shrink-0 border-t border-line bg-panel pb-[env(safe-area-inset-bottom)]">
             {slashMatches.length > 0 && (
               <div className="absolute bottom-full left-0 right-0 border-t border-line bg-panel">
                 {slashMatches.map((c) => (
@@ -507,10 +549,22 @@ export function AppShell() {
                 id="ask"
                 placeholder="Ask a question, or type / for commands"
                 aria-label="Ask a question"
-                className="ml-2 min-w-0 flex-1 bg-transparent text-text outline-none placeholder:text-text-faint"
+                enterKeyHint="send"
+                // 16px below md is not a style choice: iOS Safari zooms the
+                // viewport into any field it focuses whose font-size is under
+                // 16px, and it does not zoom back out. The row's other text
+                // stays 13px, so this only shows up on the phone — where the
+                // input wanted the extra size anyway. The alternative fix,
+                // maximum-scale=1 in the viewport, also kills pinch-zoom for
+                // everyone; that is not a trade worth making.
+                className="ml-2 min-w-0 flex-1 bg-transparent text-[16px] text-text outline-none placeholder:text-text-faint md:text-[13px]"
               />
+              {/* Below sm these two lose to the input for horizontal room —
+                  five controls in one non-wrapping row leaves the field a
+                  sliver. They move to the rail sheet, which already carries
+                  the readouts the header drops at this width. */}
               {hasMessages && (
-                <>
+                <div className="hidden items-center sm:flex">
                   <CopyButton
                     getText={() =>
                       conversationToMarkdown(messages, {
@@ -531,9 +585,20 @@ export function AppShell() {
                   >
                     reset
                   </button>
-                </>
+                </div>
               )}
               <span className="hidden text-[11px] text-text-faint sm:inline">enter ↵</span>
+              {/* Touch has no visible affordance for "press enter" and no
+                  hardware key to press. The hint above is the desktop half of
+                  this; below sm it becomes a real button. */}
+              <button
+                type="submit"
+                disabled={!input.trim() || isBusy}
+                aria-label="Send"
+                className="-mr-1.5 flex h-9 w-9 shrink-0 touch-manipulation items-center justify-center text-[15px] text-text-faint transition-colors hover:text-accent disabled:opacity-30 sm:hidden"
+              >
+                ↵
+              </button>
             </form>
           </div>
         </div>
@@ -580,7 +645,11 @@ export function AppShell() {
           <Sheet open={railOpen} onOpenChange={setRailOpen}>
             <SheetContent
               side="left"
-              className="w-72 border-line bg-panel p-4 text-[11px] text-text [font-family:var(--font-geist-mono)]"
+              // Scrolls because the rail now carries the readouts and the
+              // transcript controls the header and input row drop at this
+              // width — on a short phone that is more than one screen, and
+              // the overflow was landing on the controls at the bottom.
+              className="w-72 overflow-y-auto overscroll-contain border-line bg-panel p-4 text-[11px] text-text [font-family:var(--font-geist-mono)]"
             >
               <SheetHeader className="p-0">
                 <SheetTitle className="text-[11px] font-normal text-text-faint">
@@ -597,6 +666,38 @@ export function AppShell() {
                 <div>est. {formatUsd(sessionCost.total)}</div>
                 <div className="truncate">model {model}</div>
               </div>
+
+              {/* The transcript controls the input row drops below sm. Copy
+                  leaves the sheet open — its label is the confirmation, and
+                  closing would hide it. Reset closes, since the sheet is
+                  sitting on top of the conversation it just cleared. */}
+              {hasMessages && (
+                <div className="mt-3 flex flex-col items-start gap-1 border-t border-line pt-3">
+                  <CopyButton
+                    getText={() =>
+                      conversationToMarkdown(messages, {
+                        title: SITE_NAME,
+                        sourceUrl: SITE_URL,
+                        footer: DISCLAIMER,
+                      })
+                    }
+                    label="copy all"
+                    copiedLabel="copied all"
+                    event="chat_copy_conversation"
+                    className="py-1"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      reset();
+                      setRailOpen(false);
+                    }}
+                    className="py-1 text-[11px] text-text-faint hover:text-accent"
+                  >
+                    reset
+                  </button>
+                </div>
+              )}
             </SheetContent>
           </Sheet>
 

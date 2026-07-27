@@ -44,6 +44,7 @@ The **Claims** column is the one that matters:
 | draft | `components/shell/panel-body.tsx` → requirement table | Section labels: "What he doesn't have" (over `gaps`) and "No unmet requirements — why" (over `noGapsRationale`). | none | `lib/role-fit.ts` |
 | draft | `components/shell/panel-body.tsx` → requirement table | The closing note: "Each row is a judgment against the record, not a score, and the four tags don't add up to one. A row claiming a fit has to name the part of the record it stands on; where it didn't, the site downgraded it rather than the model." | none | `lib/role-fit.ts`, and decisions §3's rendering constraint |
 | draft | `components/shell/instruments.tsx` | Instrument labels and section titles — "Cost", "Rate", "Trace", "Failure theatre", "Sound", "session cost", "saved by the cache", "what came over the wire", etc. UI affordances rather than prose, logged as one row. | none | — |
+| draft | `components/shell/app-shell.tsx` → mobile controls | Affordance labels added with the mobile pass: the "↓ PDF" chip beside the resume citation, and the "Send" / "Open navigation" screen-reader labels on the two icon buttons. UI affordances rather than prose, logged as one row. | none | `public/resume.pdf` |
 
 **A note on the requirement-table rows.** Same rule as the citation rows below, one
 level up: none of these strings says a requirement is unmet *in fact* — they say what

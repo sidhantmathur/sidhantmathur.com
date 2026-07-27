@@ -15,8 +15,37 @@ import { Fragment, type ReactNode } from "react";
 // dropping content is not. No raw HTML is ever interpreted — output is built as
 // React elements, so there is no injection surface.
 
-const INLINE =
-  /(`[^`\n]+`)|(\[[^\]\n]+\]\([^)\s]+\))|(\*\*[^*\n]+\*\*)|(\*[^*\n]+\*)|(_[^_\n]+_)/g;
+// Bare site paths get linked even when the model writes them as plain text.
+// The prompt asks for [label](/path) and mostly gets it, but "download it at
+// /resume.pdf" is a dead string on a phone — an address to retype rather than
+// tap. An allowlist rather than a general /\S+ pattern: only paths that are
+// really routes here become links, so a sentence about "9/10 turns" or a
+// stray slash never turns into one.
+const SITE_PATHS = [
+  "/resume.pdf",
+  "/resume",
+  "/projects/adarle20",
+  "/projects/dell-ml",
+  "/projects/nokia",
+  "/colophon",
+];
+// Longest first, so /resume.pdf wins over the /resume prefix. The trailing
+// guard keeps /resume from matching inside /resumes.
+const BARE_PATH = new RegExp(
+  `(?<![\\w/(])(${SITE_PATHS.map((p) => p.replace(/[.]/g, "\\.")).join("|")})(?![\\w/])`,
+);
+
+const INLINE = new RegExp(
+  [
+    "(`[^`\\n]+`)",
+    "(\\[[^\\]\\n]+\\]\\([^)\\s]+\\))",
+    "(\\*\\*[^*\\n]+\\*\\*)",
+    "(\\*[^*\\n]+\\*)",
+    "(_[^_\\n]+_)",
+    `(${BARE_PATH.source})`,
+  ].join("|"),
+  "g",
+);
 
 function inline(text: string, keyPrefix: string): ReactNode[] {
   const out: ReactNode[] = [];
@@ -56,6 +85,20 @@ function inline(text: string, keyPrefix: string): ReactNode[] {
         ) : (
           <Fragment key={key}>{label}</Fragment>
         ),
+      );
+    } else if (token.startsWith("/")) {
+      // A bare path the model wrote as prose. The label is the path itself —
+      // rewriting it into nicer words would be putting copy in the reader's
+      // mouth that the model didn't write.
+      out.push(
+        <a
+          key={key}
+          href={token}
+          {...(token.endsWith(".pdf") ? { target: "_blank", rel: "noreferrer" } : {})}
+          className="text-text underline decoration-line-strong underline-offset-2 transition-colors hover:text-accent hover:decoration-accent"
+        >
+          {token}
+        </a>,
       );
     } else if (token.startsWith("**")) {
       out.push(
