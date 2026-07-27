@@ -38,6 +38,7 @@ export type PanelView =
   | { kind: "contact" }
   | { kind: "why" }
   | { kind: "jd" }
+  | { kind: "instruments" }
   | { kind: "roleFit"; data: RoleFit };
 
 export type ToolOut = { type: string; state?: string; output?: unknown };
@@ -288,7 +289,16 @@ export function useConversation(model: string) {
   // until the reader taps a citation chip — a sheet covering half the screen
   // mid-answer is hostile. That asymmetry is intentional; don't "fix" it by
   // opening the sheet here.
+  //
+  // The one exception is the instrument deck: it is only ever opened
+  // deliberately, and having a tool call yank it away mid-reading would make
+  // the instruments feel like they belong to the model rather than the reader.
+  // The citation chip under the answer is still there to open the evidence.
   const lastToolKey = useRef<string>("");
+  const panelRef = useRef(panel);
+  useEffect(() => {
+    panelRef.current = panel;
+  }, [panel]);
   useEffect(() => {
     const last = messages[messages.length - 1];
     if (!last || last.role !== "assistant") return;
@@ -297,6 +307,7 @@ export function useConversation(model: string) {
     const key = `${last.id}:${outs.length}`;
     if (key === lastToolKey.current) return;
     lastToolKey.current = key;
+    if (panelRef.current.kind === "instruments") return;
 
     const next = panelForTool(outs);
     // Deferred so the effect body doesn't setState synchronously.

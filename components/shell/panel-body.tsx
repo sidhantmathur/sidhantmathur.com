@@ -30,6 +30,10 @@ export function panelTitle(panel: PanelView): string {
       return "How this site was built";
     case "jd":
       return JD_COPY.heading;
+    // Rendered by app-shell, not PanelBody — the deck is instrument state, not
+    // content. The title still belongs here so both panel chromes agree.
+    case "instruments":
+      return "Instruments";
     case "project":
       return PROJECTS[panel.slug].title;
     case "roleFit":

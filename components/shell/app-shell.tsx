@@ -1,9 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import {
+  IDLE_LINES,
   JD_COPY,
   RAIL_ITEMS,
   SLASH_COMMANDS,
@@ -15,7 +16,12 @@ import { Markdown } from "./markdown";
 import { usePanelUrl } from "./use-panel-url";
 import { PanelBody, panelTitle } from "./panel-body";
 import { CopyButton } from "./copy-button";
+import { InstrumentDeck, Seismograph, lastSettledRate } from "./instruments";
+import { useTokenRate } from "./use-token-rate";
+import { useTeletype } from "./use-teletype";
+import { useIdle, useTypedText } from "./use-idle";
 import { conversationToMarkdown, messageToMarkdown } from "@/lib/transcript";
+import { costOfTurn, formatUsd, sumCosts } from "@/lib/pricing";
 import {
   textOf,
   toolOutputs,
@@ -81,9 +87,41 @@ export function AppShell() {
     setPanel,
     turns,
     budget,
+    turnLog,
   } = useConversation(model);
 
   usePanelUrl(panel, setPanel);
+
+  // ---- Instruments (Sprint 2) ----------------------------------------------
+  //
+  // All three of these read the SAME string: the text of the streaming answer.
+  // The seismograph samples how fast it grows, the teletype ticks when it does,
+  // and neither needs a channel of its own. Nothing here can change what the
+  // model does or what the reader has to do — see the note at the top of
+  // instruments.tsx.
+  const lastMessage = messages[messages.length - 1];
+  const streamingText = lastMessage?.role === "assistant" ? textOf(lastMessage) : "";
+  const rate = useTokenRate(streamingText, isBusy);
+  const settledRate = lastSettledRate(turnLog);
+  const { teletype, toggleTeletype } = useTeletype(streamingText, isBusy);
+  const sessionCost = useMemo(
+    () => sumCosts(turnLog.map((t) => (t.error ? null : costOfTurn(t.model, t.usage)))),
+    [turnLog],
+  );
+
+  // Idle mode. Suspended while a turn is in flight — an answer arriving is not
+  // an idle screen — and it never blocks anything: the input keeps focus and
+  // the first keystroke ends it.
+  const idle = useIdle(!isBusy);
+  const [idleIndex, setIdleIndex] = useState(0);
+  useEffect(() => {
+    if (!idle) return;
+    const id = window.setInterval(
+      () => setIdleIndex((i) => (i + 1) % IDLE_LINES.length),
+      14_000,
+    );
+    return () => window.clearInterval(id);
+  }, [idle]);
 
   const [input, setInput] = useState("");
   const [railOpen, setRailOpen] = useState(false);
@@ -220,6 +258,24 @@ export function AppShell() {
   const panelOpen = panel.kind !== "none";
   const lastId = messages[messages.length - 1]?.id;
 
+  // The deck is the one panel view that isn't built from content, so it's
+  // rendered here rather than inside PanelBody — which would otherwise need
+  // every instrument's state threaded through it.
+  const panelContent =
+    panel.kind === "instruments" ? (
+      <InstrumentDeck
+        turnLog={turnLog}
+        budget={budget}
+        model={model}
+        rate={rate}
+        teletype={teletype}
+        onToggleTeletype={toggleTeletype}
+        errorCopy={{ error: ERROR_STATE, rateLimited: RATE_LIMIT_STATE }}
+      />
+    ) : (
+      <PanelBody panel={panel} onSubmitJd={submitJd} />
+    );
+
   return (
     <div className="flex h-dvh flex-col bg-bg text-text [font-family:var(--font-geist-mono)]">
       {/* Skip link. The rail is ~10 links deep and sits before the input in
@@ -248,11 +304,27 @@ export function AppShell() {
         <span className="hidden text-text-faint sm:inline">Toronto, ON</span>
 
         <div className="ml-auto flex items-center gap-4 text-text-faint">
-          <Stat label="turns" value={`${turns}/10`} />
-          <Stat label="ttft" value={ttft == null ? "—" : `${ttft}ms`} />
-          {budget && (
-            <Stat label={budget.tier} value={`${budget.remaining}/${budget.limit}`} />
-          )}
+          {/* The always-visible half of the instruments. One click opens the
+              rest in the context panel — the readouts are the affordance, so
+              nothing new has to be added to the page to advertise them.
+              Hidden below md, where the rail item is the way in instead. */}
+          <button
+            type="button"
+            onClick={() => openPanel({ kind: "instruments" })}
+            title="Open the instruments"
+            aria-label="Open the instruments"
+            className="hidden items-center gap-4 transition-colors hover:text-accent md:flex"
+          >
+            <Stat label="turns" value={`${turns}/10`} />
+            <Stat label="ttft" value={ttft == null ? "—" : `${ttft}ms`} />
+            <span className="hidden lg:flex">
+              <Seismograph rate={rate} settled={settledRate} />
+            </span>
+            <Stat label="est." value={formatUsd(sessionCost.total)} />
+            {budget && (
+              <Stat label={budget.tier} value={`${budget.remaining}/${budget.limit}`} />
+            )}
+          </button>
           <label className="hidden items-center gap-1.5 xl:flex">
             <span>model</span>
             <select
@@ -292,7 +364,14 @@ export function AppShell() {
             onScroll={onScroll}
             className="min-h-0 flex-1 overflow-y-auto px-4 py-8 md:px-10"
           >
-            <div className="mx-auto max-w-[68ch]">
+            {/* Idle dims the column rather than covering it. The conversation
+                stays legible and every control stays live — this is a settle,
+                not a screensaver. */}
+            <div
+              className={`mx-auto max-w-[68ch] transition-opacity duration-700 ${
+                idle ? "opacity-70" : "opacity-100"
+              }`}
+            >
               {!hasMessages && (
                 <div className="space-y-5">
                   <h1 className="max-w-[24ch] text-[clamp(21px,3.2vw,34px)] font-medium leading-[1.2] tracking-[-0.02em] text-text">
@@ -375,6 +454,8 @@ export function AppShell() {
                   <p className="text-[13px] leading-relaxed text-text-faint">{RATE_LIMIT_STATE}</p>
                 )}
               </div>
+
+              {idle && <IdleLine key={idleIndex} line={IDLE_LINES[idleIndex]!} />}
             </div>
           </div>
 
@@ -479,7 +560,7 @@ export function AppShell() {
                 </button>
               </div>
               <div className="min-h-0 flex-1 overflow-y-auto p-4">
-                <PanelBody panel={panel} onSubmitJd={submitJd} />
+                {panelContent}
               </div>
             </aside>
           </>
@@ -500,9 +581,13 @@ export function AppShell() {
                 </SheetTitle>
               </SheetHeader>
               <RailContent onOpenPanel={openPanel} showHeading={false} />
+              {/* The header readouts are hidden at this width, so the rail
+                  carries the same four numbers. Tapping Instruments above
+                  opens the full deck as a sheet. */}
               <div className="mt-4 border-t border-line pt-3 text-text-faint">
                 <div>turns {turns}/10</div>
                 <div>ttft {ttft == null ? "—" : `${ttft}ms`}</div>
+                <div>est. {formatUsd(sessionCost.total)}</div>
                 <div className="truncate">model {model}</div>
               </div>
             </SheetContent>
@@ -527,7 +612,7 @@ export function AppShell() {
                 </button>
               </SheetHeader>
               <div className="min-h-0 flex-1 overflow-y-auto p-4">
-                <PanelBody panel={panel} onSubmitJd={submitJd} />
+                {panelContent}
               </div>
             </SheetContent>
           </Sheet>
@@ -624,10 +709,22 @@ function RailLink({
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <span className="hidden items-center gap-1.5 md:flex">
+    <span className="flex items-center gap-1.5">
       <span>{label}</span>
-      <span className="text-text-soft">{value}</span>
+      <span className="tabular-nums text-text-soft">{value}</span>
     </span>
+  );
+}
+
+// The idle one-liner types itself out and then holds. Deliberately the quietest
+// thing on the page: it sits below the conversation, never above it.
+function IdleLine({ line }: { line: string }) {
+  const typed = useTypedText(line);
+  return (
+    <p className="pt-6 text-[12px] leading-relaxed text-text-faint">
+      {typed}
+      <span className="animate-pulse text-accent">▍</span>
+    </p>
   );
 }
 

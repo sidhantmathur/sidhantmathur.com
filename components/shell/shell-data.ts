@@ -45,6 +45,7 @@ export type PanelViewSpec =
   | { kind: "contact" }
   | { kind: "colophon" }
   | { kind: "jd" }
+  | { kind: "instruments" }
   | { kind: "project"; slug: "adarle20" | "nokia" | "dell-ml" };
 
 export const RAIL_ITEMS: RailItem[] = [
@@ -60,7 +61,27 @@ export const RAIL_ITEMS: RailItem[] = [
   { label: "Colophon", href: "/colophon", view: { kind: "colophon" } },
   { label: "Why this site is a chatbot", view: { kind: "why" } },
   { label: "Paste a job description", view: { kind: "jd" } },
+  // The header readouts are the desktop way in. Below md they're hidden, so the
+  // rail is the only route to the instruments — see the note in instruments.tsx.
+  { label: "Instruments", view: { kind: "instruments" } },
   { label: "Contact", view: { kind: "contact" } },
+];
+
+// Idle mode (#14). Build-time constants, deliberately: an idle tab must cost
+// nothing, so these can never become a generated line.
+//
+// Every one of them is a claim about the SITE, not about Sidhant, and each is
+// checkable in this repo — the sliding hour is in route.ts, the byte-identical
+// cached prompt is the reason `buildSystemPrompt()` takes no arguments. Nothing
+// here asserts anything about his experience, which is what keeps this list on
+// the right side of the copy rule. Logged in docs/copy-ledger.md.
+export const IDLE_LINES = [
+  "Still here. These lines ship with the page — an idle tab costs nothing and calls nothing.",
+  "The knowledge base rides inside the prompt, byte for byte, so the cache hits on every turn after the first.",
+  "No tokens are moving. The needle is at rest.",
+  "The message budget refills on a sliding hour, so there's rarely anything to wait for.",
+  "Most of the rail has a real page underneath it. Cmd-click and see.",
+  "Ask the question you'd actually ask on a call.",
 ];
 
 // docs/site-copy.md → "Job-description fit". Marked DRAFT there.
