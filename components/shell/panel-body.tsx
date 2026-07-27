@@ -8,8 +8,9 @@ import Nokia from "@/content/nokia.mdx";
 import { PROJECTS } from "@/content/projects";
 import { CHUNKS, CHUNK_BY_ID, type Chunk } from "@/lib/chunks.generated";
 import { stripCitations } from "@/lib/verify";
+import type { RequirementVerdict } from "@/lib/role-fit";
 import { JD_COPY, PROJECT_LINKS, SOCIAL_LINKS, WHY_CHATBOT } from "./shell-data";
-import type { PanelView } from "./use-conversation";
+import type { PanelView, RoleFit } from "./use-conversation";
 
 const CASE_STUDIES = {
   adarle20: Adarle20,
@@ -51,9 +52,12 @@ export function panelTitle(panel: PanelView): string {
 export function PanelBody({
   panel,
   onSubmitJd,
+  onOpenSource,
 }: {
   panel: PanelView;
   onSubmitJd?: (text: string) => void;
+  /** Opens a cited chunk — the requirement table's rows link into the corpus. */
+  onOpenSource?: (view: PanelView) => void;
 }) {
   if (panel.kind === "jd") {
     return <JobDescriptionForm onSubmit={onSubmitJd} />;
@@ -174,34 +178,153 @@ export function PanelBody({
   }
 
   if (panel.kind === "roleFit") {
-    const { matches, caveats } = panel.data;
-    return (
-      <div className="space-y-4">
-        {matches.map((m, i) => (
-          <div key={i} className="border-l-2 border-accent pl-3">
-            <div className="text-[12px] text-text">{m.area}</div>
-            {/* Markers are stripped rather than rendered: the roleFit schema
-                has no citation field yet (that's Sprint 4's work with bank §6
-                Stage 1), so an id the model volunteers here has nothing to
-                open and would render as literal brackets. */}
-            <p className="mt-1 text-[12px] leading-relaxed text-text-soft">
-              {stripCitations(m.evidence)}
-            </p>
-          </div>
-        ))}
-        {caveats && (
-          <div className="border-t border-line pt-3">
-            <div className="text-[11px] text-text-faint">Worth knowing</div>
-            <p className="mt-1 text-[12px] leading-relaxed text-text-soft">
-              {stripCitations(caveats)}
-            </p>
-          </div>
-        )}
-      </div>
-    );
+    return <RequirementTable fit={panel.data} onOpenSource={onOpenSource} />;
   }
 
   return null;
+}
+
+// --- requirementTable (roadmap Sprint 4: #11, rendering bank §6 Stage 1) ----
+//
+// The first named component in the generative-UI vocabulary, and the shape that
+// makes the honesty work visible: one row per requirement the posting stated,
+// each with a verdict the model can't quietly skip and a source it either has
+// or is marked for not having.
+//
+// THE RENDERING CONSTRAINT (decisions §3): four crisp tags look more precise
+// than the assessment underneath them. So there is no score, no percentage, no
+// weighting, and no ordering by verdict — the rows stay in the posting's order,
+// the counts are counts, and the line under them says what a tag is. A row that
+// code changed says who changed it and why, next to the row it changed.
+
+const VERDICT_STYLE: Record<RequirementVerdict, string> = {
+  met: "border-line-strong text-text",
+  partial: "border-line-strong text-text-soft",
+  unmet: "border-accent text-accent",
+  unclear: "border-dashed border-line-strong text-text-faint",
+};
+
+/** Counts, in a fixed order so the row doesn't reshuffle between answers. */
+const COUNT_ORDER: RequirementVerdict[] = ["met", "partial", "unmet", "unclear"];
+
+function RequirementTable({
+  fit,
+  onOpenSource,
+}: {
+  fit: RoleFit;
+  onOpenSource?: (view: PanelView) => void;
+}) {
+  const { rows, counts, gaps, noGapsRationale, verdict } = fit;
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap gap-x-3 gap-y-1 border-b border-line pb-3 text-[11px] text-text-faint">
+        {COUNT_ORDER.filter((v) => counts[v] > 0).map((v) => (
+          <span key={v}>
+            <span className="tabular-nums text-text-soft">{counts[v]}</span> {v}
+          </span>
+        ))}
+      </div>
+
+      <div>
+        {rows.map((row, i) => (
+          <div
+            key={i}
+            className="grid grid-cols-[58px_1fr] gap-3 border-b border-line py-3 last:border-b-0"
+          >
+            <span
+              className={`border px-1 py-0.5 text-center text-[9.5px] uppercase tracking-[0.07em] ${VERDICT_STYLE[row.verdict]}`}
+            >
+              {row.verdict}
+            </span>
+            <div>
+              {/* The posting's words, not the site's — the input, not a claim. */}
+              <p className="text-[12px] leading-snug text-text">{row.requirement}</p>
+              {row.evidence && (
+                <p className="mt-1 text-[12px] leading-relaxed text-text-soft">
+                  {stripCitations(row.evidence)}
+                </p>
+              )}
+              <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px] text-text-faint">
+                {row.sources.map((id) => (
+                  <button
+                    key={id}
+                    type="button"
+                    onClick={() => onOpenSource?.({ kind: "source", id })}
+                    title={sourceTitle(id)}
+                    className="text-text-faint transition-colors hover:text-accent"
+                  >
+                    {id}
+                  </button>
+                ))}
+                {row.downgrade === "uncited" && (
+                  <span className="text-accent">
+                    cited no source — downgraded from {row.claimedVerdict}
+                  </span>
+                )}
+                {row.downgrade === "uncovered" && (
+                  <span>the assessment didn&apos;t answer this one</span>
+                )}
+                {row.downgrade === "unjudged" && (
+                  <span>the assessment restated this one without judging it</span>
+                )}
+                {row.unverified.length > 0 && (
+                  <span className="text-accent">
+                    unverified · {row.unverified.join(", ")} — not in {row.sources.join(", ")}
+                  </span>
+                )}
+                {row.unknownSources.length > 0 && (
+                  <span className="text-accent">
+                    cited {row.unknownSources.join(", ")}, which isn&apos;t a source on this site
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {gaps.length > 0 && (
+        <div className="border-t border-line pt-3">
+          <div className="text-[11px] text-text-faint">What he doesn&apos;t have</div>
+          <ul className="mt-1 space-y-1">
+            {gaps.map((gap, i) => (
+              <li key={i} className="text-[12px] leading-relaxed text-text-soft">
+                {stripCitations(gap)}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {!gaps.length && noGapsRationale && (
+        <div className="border-t border-line pt-3">
+          <div className="text-[11px] text-text-faint">No unmet requirements — why</div>
+          <p className="mt-1 text-[12px] leading-relaxed text-text-soft">
+            {stripCitations(noGapsRationale)}
+          </p>
+        </div>
+      )}
+
+      {verdict && (
+        <p className="border-t border-line pt-3 text-[12px] leading-relaxed text-text">
+          {stripCitations(verdict)}
+        </p>
+      )}
+
+      <p className="text-[11px] leading-relaxed text-text-faint">
+        Each row is a judgment against the record, not a score, and the four tags don&apos;t add
+        up to one. A row claiming a fit has to name the part of the record it stands on; where
+        it didn&apos;t, the site downgraded it rather than the model.
+      </p>
+    </div>
+  );
+}
+
+/** `resume:nokia` → `Resume — Nokia, Toronto ON`, for a row's source link. */
+function sourceTitle(id: string): string {
+  const chunk = CHUNK_BY_ID[id];
+  return chunk ? `${chunk.sourceLabel} — ${chunk.heading}` : id;
 }
 
 // The API caps a user turn at 4000 characters, so the textarea enforces the

@@ -27,8 +27,15 @@ export type TranscriptMessage = {
 
 type RoleFitOutput = {
   role?: string;
-  matches?: { area?: string; evidence?: string }[];
-  caveats?: string;
+  rows?: {
+    requirement?: string;
+    verdict?: string;
+    evidence?: string;
+    downgrade?: string | null;
+  }[];
+  gaps?: string[];
+  noGapsRationale?: string;
+  verdict?: string;
 };
 
 type ProjectOutput = {
@@ -93,21 +100,34 @@ export function toolPartToMarkdown(part: TranscriptPart): string | null {
       const lines: string[] = [];
       // "Role fit — {role}" is the existing citation-chip label in app-shell.
       lines.push(data.role ? `**Role fit — ${data.role}**` : "**Role fit**");
-      const matches = Array.isArray(data.matches) ? data.matches : [];
-      if (matches.length) {
+
+      // The verdict tags travel. A forwarded assessment that dropped them
+      // would read as a list of things he does, which is the flattering half
+      // of what the panel showed — the same soft-pedal the schema exists to
+      // prevent, arriving by way of the clipboard.
+      const rows = Array.isArray(data.rows) ? data.rows : [];
+      if (rows.length) {
         lines.push("");
-        for (const m of matches) {
-          if (!m?.area) continue;
-          const evidence = (m.evidence ?? "").replace(CITATION_MARKER, "").trim();
-          lines.push(`- **${m.area}** — ${evidence}`.trimEnd());
+        for (const row of rows) {
+          if (!row?.requirement) continue;
+          const evidence = (row.evidence ?? "").replace(CITATION_MARKER, "").trim();
+          const verdict = row.verdict ?? "unclear";
+          lines.push(`- **${verdict}** — ${row.requirement}${evidence ? ` — ${evidence}` : ""}`);
         }
       }
-      if (data.caveats) {
+
+      const gaps = Array.isArray(data.gaps) ? data.gaps.filter(Boolean) : [];
+      if (gaps.length) {
         lines.push("");
-        // "Worth knowing" is the label the panel already renders over this
-        // field (panel-body.tsx) — the copied artifact should say what the
-        // reader saw on screen, not expose the schema's field name.
-        lines.push(`Worth knowing: ${data.caveats.replace(CITATION_MARKER, "").trim()}`);
+        // The label the panel renders over this field, not the schema's name.
+        lines.push("What he doesn't have:");
+        for (const gap of gaps) lines.push(`- ${gap.replace(CITATION_MARKER, "").trim()}`);
+      } else if (data.noGapsRationale) {
+        lines.push("", data.noGapsRationale.replace(CITATION_MARKER, "").trim());
+      }
+
+      if (data.verdict) {
+        lines.push("", data.verdict.replace(CITATION_MARKER, "").trim());
       }
       return lines.join("\n");
     }

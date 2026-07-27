@@ -273,7 +273,7 @@ export function AppShell() {
         errorCopy={{ error: ERROR_STATE, rateLimited: RATE_LIMIT_STATE }}
       />
     ) : (
-      <PanelBody panel={panel} onSubmitJd={submitJd} />
+      <PanelBody panel={panel} onSubmitJd={submitJd} onOpenSource={openPanel} />
     );
 
   return (

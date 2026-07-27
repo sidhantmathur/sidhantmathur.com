@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { track } from "@/lib/analytics";
+import type { RoleFitResult } from "@/lib/role-fit";
 import {
   isRateLimitClass,
   toTurnErrorClass,
@@ -23,11 +24,10 @@ const STORAGE_KEY = "conversation.v1";
 // react-hooks/purity even from an event handler.
 const nowMs = () => performance.now();
 
-export type RoleFit = {
-  role: string;
-  matches: { area: string; evidence: string }[];
-  caveats?: string;
-};
+// The reconciled assessment, exactly as lib/role-fit.ts returns it — the client
+// re-derives none of it. Every verdict on screen was decided server-side, and
+// re-computing one here would be a second opinion nobody asked for.
+export type RoleFit = RoleFitResult;
 
 export type PanelView =
   | { kind: "none" }
@@ -53,6 +53,12 @@ export function textOf(message: UIMessage): string {
     .join("");
 }
 
+// Tool calls with no surface of their own. `extractRequirements` is the first
+// half of a job-description turn (Sprint 4): its output is the input to the
+// assessment that follows and is rendered inside it, so surfacing it separately
+// would put a chip on the page that opens the same table twice.
+const INTERNAL_TOOLS = new Set(["tool-extractRequirements"]);
+
 export function toolOutputs(message: UIMessage): ToolOut[] {
   return message.parts
     .map((p) => p as unknown as ToolOut)
@@ -60,6 +66,7 @@ export function toolOutputs(message: UIMessage): ToolOut[] {
       (p) =>
         typeof p.type === "string" &&
         p.type.startsWith("tool-") &&
+        !INTERNAL_TOOLS.has(p.type) &&
         p.state === "output-available" &&
         p.output != null,
     );
