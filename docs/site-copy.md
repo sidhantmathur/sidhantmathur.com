@@ -39,6 +39,29 @@ the "Ask me anything" / "View resume" buttons are retired. The status strip
 carries the name and location; the rail carries the resume link; the input is
 the only call to action.
 
+### Recruiter TL;DR (#25)
+
+[DRAFT 2026-07-27 — assembled by Claude for Track B. Every value is lifted from
+`content/knowledge/` or the resume; nothing here is drafted prose about
+Sidhant. Rewrite the wording freely, but a fact that leaves this block has to
+leave the corpus too.]
+
+Shown in the homepage's empty state only, between the hero subline and the
+suggested questions. Gone as soon as a conversation starts.
+
+Label: tl;dr
+
+| Row label | Value | From |
+| --- | --- | --- |
+| now | Sales operations specialist at Nokia, in Toronto. Co-founder and CTO of A Darle 20. | `bio.md` |
+| shipped | A Darle 20 — a two-sided marketplace, architected and shipped solo. 1,400+ registered users, 127 hosts and 2,100+ bookings in its first four months. | `resume.md` |
+| before that | At Nokia: a self-serve Power App used by 80+ stakeholders across seven regions, and a Salesforce Analytics to Power BI migration for 150+ users. | `projects-nokia.md` |
+| how he builds | An AI-agent-heavy workflow in Claude Code — agents write most of the code, he keeps architecture, code review and release. | `projects-adarle20.md` |
+| looking for | A RevOps / GTM systems role at an AI-forward company. | `faq.md`, `resume.md` |
+| where | Toronto, ON. Canadian citizen, no visa sponsorship needed. | `faq.md` |
+
+Footer link (to /resume): The resume has the rest, and so does the box below.
+
 ### Projects section
 
 Section heading: Selected work
@@ -87,9 +110,20 @@ projects, and it can answer the questions a resume can't — or just show you
 around. It's also a working demo of how I build with LLMs.
 
 Suggested questions (chips):
-- What did Sidhant build at Nokia?
-- How does A Darle 20 work?
-- Is he a fit for a solutions engineering role?
+
+[DRAFT 2026-07-27 — swapped for Track B (#26). The previous three were "What
+did Sidhant build at Nokia?", "How does A Darle 20 work?" and "Is he a fit for
+a solutions engineering role?" — a demo of the site's range rather than the
+questions the reader arrived with. These replace them; there is no
+recruiter/engineer toggle, per decisions #26.]
+
+- Give me the 30-second version
+- What has he shipped end to end?
+- Is he a fit for a RevOps role at an AI-forward company?
+- Does he need visa sponsorship?
+
+The `/fit` slash command sends the third one verbatim, so the two can't drift
+into different questions.
 
 Input placeholder: Ask a question about my work
 Disclaimer (small, mono): AI-generated answers about my professional background.
@@ -101,6 +135,24 @@ It can make mistakes — the resume is the authoritative version.
 
 Title: A Darle 20
 Subtitle: A marketplace for tabletop game sessions in Latin America.
+
+### In plain terms
+
+[DRAFT 2026-07-27 — written by Claude for Track B (#20). Explanation only: it
+restates facts already in the sections below in plain language and introduces
+none of its own. Rewrite in your own voice.]
+
+Tabletop roleplaying games are played in groups, and somebody has to run the
+game for everyone else. Finding a good one — and paying them — was word of
+mouth and a private arrangement. A Darle 20 is where that arrangement happens
+instead: a host lists a session, a player books a seat, the payment goes
+through the site, and both sides get an email about it.
+
+The booking form is the easy part. The hard part is money. It has to reach the
+host rather than sit with the company, some players have no card at all and pay
+cash at a convenience store instead, and any of it can be cancelled or refunded
+by someone who isn't you. Most of what's described below is the machinery for
+handling that without a person in the middle.
 
 ### The problem
 Tabletop roleplaying games are big in Latin America, but finding a good game
@@ -143,12 +195,86 @@ This is the project that proves I can take an ambiguous idea to a revenue-
 generating product — including the unglamorous parts like refunds, payment
 edge cases, and infrastructure costs.
 
+### Everything in it (#19 — the feature surface)
+
+[DRAFT 2026-07-27 — assembled by Claude for Track B. Every line item is a
+capability already named in `content/knowledge/projects-adarle20.md` or the
+resume. Nothing was added because a marketplace probably has it.]
+
+Section heading: Everything in it
+Intro: The prose above is the story. This is the surface area — what a host or
+a player can actually do.
+
+- Discovery: Host profiles · Session listings
+- Booking: Bookings and reservations · Cancellations · Automated refunds
+- Payments: Stripe Connect · Host payouts · Platform fees · OXXO cash payments
+  at a convenience store
+- Communication: Real-time chat · Transactional email on Resend
+- Accounts: Authentication
+- Operations: End-to-end funnel instrumentation — bookings, conversion,
+  cancellations, refunds, host activation
+
+Closing note: This list is everything the written record names, which is not the
+same as everything the product does — [VERIFY: the features that exist in A
+Darle 20 but appear in no source file. Sidhant's own note on this page was that
+there is a lot buried up there; nothing can be added here until it is written
+down somewhere checkable.]
+
+### What it looks like (#19 — the media surface)
+
+[DRAFT 2026-07-27 — written by Claude for Track B. The frames ship; the files
+are Sidhant's. No caption below describes an asset that does not exist.]
+
+Section heading: What it looks like
+Intro: Frames with nothing in them are waiting on a file. Each one says what it
+is for rather than showing a stand-in, because a placeholder that looks like a
+product is a claim about a product.
+
+Empty-frame text: Nothing here yet — waiting on a {screenshot / screen
+recording / video}.
+Empty caption: {slot title} — not captured yet.
+
+The seven slots, and what each needs, live in `content/adarle20-media.ts` —
+the brief IS the placeholder text, so there is no second list to fall out of
+sync. Summary:
+
+| Slot | Kind | Shape | Must show |
+| --- | --- | --- | --- |
+| Session listings | screenshot | 152:69 | **Filled** — the existing `public/images/adarle20-listings.png` |
+| Booking a seat, end to end | screen recording | 16:9 | listing → checkout → confirmation, one take, test account |
+| Paying in cash | screenshot | 9:16 | the OXXO reference handed to the player |
+| What a host sees | screenshot | 16:9 | a host's profile, sessions and payouts |
+| Host and player chat | screenshot | 9:16 | a real thread, redacted or on test accounts |
+| The funnel, instrumented | screenshot | 16:9 | whatever he actually watches — live numbers, so check before sending |
+| The 251-player event | video | 16:9 | footage or photographs from the convention |
+
+Caption for the filled slot: Session listings. Each card carries the host,
+their rating, the price in pesos, the schedule and how many seats are still
+open.
+
 ---
 
 ## Case study — Reporting tools at Nokia
 
 Title: Reporting tools at Nokia
 Subtitle: Internal tools for a global sales organization.
+
+### In plain terms
+
+[DRAFT 2026-07-27 — written by Claude for Track B (#20). Explanation only.
+Rewrite in your own voice.]
+
+A large company sells in a lot of places, and every quarter its executives need
+one picture of how that went. Getting to that picture meant asking people across
+the regions to send their numbers in, in whatever shape they kept them, and
+somebody assembling it by hand. Here that somebody was a finance analyst, and it
+took their entire workday, every day of the quarter-end close.
+
+The fix isn't clever, it's just the whole job: build something the regions can
+fill in themselves, get it in front of the people who have to use it, and keep
+it working when they run into trouble. The second half of this page is the same
+job wearing different clothes — the company was moving off one reporting system,
+and every report and every user had to come out the other side.
 
 ### The problem
 Quarterly executive reporting ran on manual data collection — a process that
@@ -180,6 +306,25 @@ and I close that gap myself rather than filing a ticket.
 
 Title: Sales prediction at Dell
 Subtitle: A propensity model for cross-sell targeting, built as an intern.
+
+### In plain terms
+
+[DRAFT 2026-07-27 — written by Claude for Track B (#20). Explanation only; the
+caveats it names are the ones already in the paragraph below it. Rewrite in
+your own voice.]
+
+A big company already sells to a lot of customers. Some of them would buy a
+second product as well, and nobody knows which — so the sales team calls
+everyone, or it guesses. A propensity model is a way of ranking that list:
+you show it who bought what in the past, and it scores the customers who most
+resemble the ones who already said yes.
+
+That's what this was, and it's worth reading with the caveats attached. It was
+an internship, the model was one piece of a much larger sales machine, and the
+pipeline figure below is an estimate built from average deal sizes rather than
+money anybody collected.
+
+### The project
 
 During a summer internship in 2018, I built a propensity model (Azure ML) on
 Dell's historical customer database to identify cross-sell targets for a

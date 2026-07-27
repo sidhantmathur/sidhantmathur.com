@@ -10,8 +10,10 @@ Two things were added that aren't in either doc, because sequencing surfaced the
 new features. They are the parts of accepted features that have to exist first.
 
 Status: **approved 2026-07-27. Track A is complete** — all seven sprints are
-built and green; see the results notes under them. **Track B is unspecced and
-unbuilt**, and is now the only thing left on this roadmap. The open question at
+built and green; see the results notes under them. **Track B is built and
+green too**, and what is left of it is not code: six media slots waiting on
+files from Sidhant, and a ledger full of `draft` copy waiting on his review.
+See the results note at the bottom. The open question at
 the bottom (#4) was resolved on 2026-07-27 and shipped in Sprint 3 as a post-hoc
 "sources touched" row.
 
@@ -669,6 +671,96 @@ invented — `[VERIFY]` instead of a plausible guess.
 
 **One conflict to watch:** #26 touches the same component as Sprint 2's instrument
 work. Sequence it after Sprint 2 or accept a small merge.
+
+#### Track B results — 2026-07-27
+
+**Done, with one item deliberately half-built and marked as such.** All four
+acceptance criteria in the spec are met for #20, #25 and #26; #19 ships the
+surface and **six of its seven media slots are empty by design** — the assets do
+not exist and were not invented. `npm run build`, `npm run lint` and `npm run
+eval` (**258/258**, up from 232) clean. No live run: nothing here changes the
+prompt, the corpus or what the model does.
+
+Spec: `docs/track-b-copy.md`. The shape it took: **one module of recruiter copy
+that imports nothing** (`content/recruiter.ts`), **one manifest of media slots
+and features** (`content/adarle20-media.ts`), and **three paragraphs of plain
+language at the head of three existing MDX files**. What shipped besides that:
+`components/shell/recruiter-tldr.tsx`, `components/project-media.tsx`, the copy
+in `docs/site-copy.md`, eight new ledger rows plus a note in
+`docs/copy-ledger.md`, and `evals/track-b.test.mjs` (26 cases).
+
+Six things worth carrying forward:
+
+1. **The site's own citation checker now runs over the site's own copy, and
+   that is the main deliverable of this track.** Every row of the recruiter
+   TL;DR carries the corpus file it came from, and the suite runs
+   `lib/verify.ts` — the same function that marks a model's sentence unverified
+   beside an answer — over each row against that file. A number or a proper noun
+   that stops appearing in `content/knowledge/` fails the build instead of
+   sitting above the fold. Sprint 3 built that checker to keep a model honest;
+   pointing it at hand-written copy cost about twenty lines, and it is the only
+   mechanism on this site that can catch the failure this track was most likely
+   to produce. **There is a second assertion under it** — that every row
+   contains something checkable at all — because a row of adjectives would
+   otherwise pass for free, which is the exact shape a drifting rewrite takes.
+2. **The pressure the brief warned about was real, and it arrived in the feature
+   list.** #19's premise is Sidhant's line that "there's a shit ton of features
+   buried up there", and the record names about a dozen. Every instinct while
+   writing that section was to add the things a marketplace obviously has —
+   reviews, search, filters, a calendar. Two of those are visible **in the one
+   screenshot in this repo** and are still not on the list, because a screenshot
+   is not the record. The list is what the corpus says, the note under it says
+   the list is incomplete, and the rest is a `[VERIFY]`. The cheapest fix is not
+   an agent: it is four lines added to
+   `content/knowledge/projects-adarle20.md`, after which they can be listed and
+   checked like everything else.
+3. **An empty frame is a design problem, not just a placeholder.** The first
+   version rendered each slot at its true aspect ratio inside the text column,
+   which made a phone screenshot's placeholder a **1,160-pixel-tall empty
+   rectangle**. Measured in a real browser, not guessed. Portrait slots are
+   capped at 300px now. The frames are also drawn as dashed outlines rather than
+   filled grey blocks on purpose — a solid rectangle at a screenshot's shape
+   reads as an image that failed to load, which is a worse lie than an obvious
+   hole. `src`, `alt` and the caption live in one optional object, so a file
+   cannot be added without being described and a description cannot be written
+   ahead of a file.
+4. **The plain-language sections carry no numeral at all, and that is a test.**
+   #20's job is to restate what is already below it, and the shape an invented
+   claim takes in explanatory prose is almost always a figure. "No numbers here"
+   is a rule a reviewer can check at a glance, where "the sourced numbers are
+   fine" is not. The one exception is the product's own name, which the test
+   strips before looking.
+5. **The chip and the slash command were the same sentence typed twice, and now
+   they are one export.** `/fit` sent a string that was a copy of a suggested
+   question; swapping the chips would have left the command asking the old one,
+   silently. The conflict warning about `app-shell.tsx` turned out to argue for
+   the same move — the shell's diff for #26 is an import line, and both surfaces
+   read `content/recruiter.ts`. That module imports nothing, which is also what
+   lets the eval suite read these strings as values rather than regexing them
+   out of a component.
+6. **The TL;DR is empty-state only, and the suite asserts where it renders.**
+   It is a substitute for having asked a question; above someone's transcript on
+   every reload it would be chrome. The test reads the `!hasMessages` branch
+   rather than trusting the comment.
+
+**Not done, and out of scope by design:** **#19 is a frame, not a page.** Six of
+seven slots hold nothing, the page says so in words, and the asset list is
+Sidhant's to work through — a screen recording of a booking, the OXXO cash path,
+the host view, the chat, the funnel dashboard, and anything at all from the
+251-player event, which is the largest thing this platform has done and has
+never been visible on this site. No video infrastructure was added: no player,
+no transcoding, no CDN, no hero reel — what it takes to serve a video well is a
+decision for when a file exists. The decisions doc's "interactive bits" for #19
+were not attempted; an embedded live product needs a product decision and an
+authentication story, and neither is a copy question. Nokia and Dell get the
+plain-language layer and nothing else — Nokia's own case study says its work is
+confidential, and Dell's is eight years old. Nothing was added to
+`content/knowledge/`, so the assistant cannot quote the plain-language prose or
+the feature surface; the knowledge base has a stated ~8k token budget and this
+text says nothing the model could not already say. And **every drafted string
+here is `draft` in the ledger, unreviewed** — this is the track whose output is
+a review queue rather than a feature, and the `factual` rows in it are the first
+in that file.
 
 ---
 

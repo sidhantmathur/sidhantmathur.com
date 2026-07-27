@@ -26,6 +26,8 @@ import { track } from "@/lib/analytics";
 import { ExportDeck } from "./export-deck";
 import { PrintSheet } from "./print-sheet";
 import { ManualMode } from "./manual-mode";
+import { RecruiterTldr } from "./recruiter-tldr";
+import { SUGGESTED_QUESTIONS as SUGGESTED } from "@/content/recruiter";
 import { costOfTurn, formatUsd, sumCosts } from "@/lib/pricing";
 import {
   textOf,
@@ -57,11 +59,6 @@ const REPLAY_BANNER =
 // header can't drift apart. Not prose — a name and a URL.
 const SITE_NAME = "Sidhant Mathur";
 const SITE_URL = "https://sidhantmathur.com";
-const SUGGESTED = [
-  "What did Sidhant build at Nokia?",
-  "How does A Darle 20 work?",
-  "Is he a fit for a solutions engineering role?",
-];
 
 // Must stay a subset of the `MODELS` allowlist in app/api/chat/route.ts — an id
 // that isn't on the server list silently falls back to the default rather than
@@ -520,6 +517,9 @@ export function AppShell() {
                     {HERO}
                   </h1>
                   <p className="text-[13px] leading-relaxed text-text-soft">{HERO_SUB}</p>
+                  {/* #25 — the six-second scan, above the chips. See the note
+                      in recruiter-tldr.tsx for why it is empty-state only. */}
+                  <RecruiterTldr />
                   <div className="flex flex-wrap gap-2 pt-1">
                     {SUGGESTED.map((q) => (
                       <button

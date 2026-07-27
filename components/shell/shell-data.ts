@@ -1,3 +1,4 @@
+import { FIT_QUESTION } from "@/content/recruiter";
 import { JD_PREFIX } from "@/lib/job-posting";
 import { ROAST_REQUEST, SITE_REQUEST } from "@/lib/site-question";
 
@@ -196,6 +197,8 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     name: "/fit",
     hint: "Ask about role fit",
     kind: "send",
-    message: "Is he a fit for a solutions engineering role?",
+    // Literally the same string as the third suggested chip — see
+    // content/recruiter.ts. One question, two surfaces.
+    message: FIT_QUESTION,
   },
 ];
