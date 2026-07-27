@@ -6,8 +6,11 @@ import Adarle20 from "@/content/adarle20.mdx";
 import DellMl from "@/content/dell-ml.mdx";
 import Nokia from "@/content/nokia.mdx";
 import { PROJECTS } from "@/content/projects";
-import { CHUNKS, CHUNK_BY_ID, type Chunk } from "@/lib/chunks.generated";
+import { CHUNKS } from "@/lib/chunks.generated";
+import { ALL_CHUNKS, ALL_CHUNKS_BY_ID, type Chunk } from "@/lib/corpus";
 import { stripCitations } from "@/lib/verify";
+import { buildSystemPrompt } from "@/lib/system-prompt";
+import { ENFORCEMENT_LABEL, REFUSALS } from "@/lib/refusals";
 import type { RequirementVerdict } from "@/lib/role-fit";
 import { FIT_LABELS, JD_COPY, PROJECT_LINKS, SOCIAL_LINKS, WHY_CHATBOT } from "./shell-data";
 import type { PanelView, RoleFit } from "./use-conversation";
@@ -17,6 +20,24 @@ const CASE_STUDIES = {
   nokia: Nokia,
   "dell-ml": DellMl,
 } as const;
+
+// Sits under the corpus index (Sprint 7, #8). Both halves are checkable in this
+// repo: the knowledge base is concatenated into every system prompt, and the
+// repo corpus is appended only when lib/site-question.ts recognises the turn.
+const CORPUS_NOTE =
+  "Two corpora. The record above — the resume, the projects, the FAQ — rides inside the prompt on every turn. This site's own source is the second one, and it is only loaded when you ask about the site, so an ordinary answer never pays for it.";
+
+// Sprint 7's two published documents, as they read beside a conversation.
+// Both restate what the code does and neither says anything about Sidhant.
+const PROMPT_NOTE = {
+  intro:
+    "Everything the model was told before it read your question, in order. It is published in full, and this list is read out of the prompt itself rather than kept beside it.",
+  decline:
+    "Ask it in the chat to recite them and it will decline and link here — the prompt is public, but talking it out of that rule is the first move in talking it out of the others.",
+};
+
+const REFUSALS_NOTE =
+  "What it won't do, and what it does instead. The label on the right says whether the rule is enforced by code or asked of the model, because those are not the same promise.";
 
 export function panelTitle(panel: PanelView): string {
   switch (panel.kind) {
@@ -42,10 +63,14 @@ export function panelTitle(panel: PanelView): string {
       return "Export";
     case "corpus":
       return "Sources";
+    case "prompt":
+      return "The instructions";
+    case "refusals":
+      return "What it won't do";
     case "project":
       return PROJECTS[panel.slug].title;
     case "source": {
-      const chunk = CHUNK_BY_ID[panel.id];
+      const chunk = ALL_CHUNKS_BY_ID[panel.id];
       return chunk ? `${chunk.sourceLabel} — ${chunk.heading}` : panel.id;
     }
     case "roleFit":
@@ -89,11 +114,11 @@ export function PanelBody({
   // citation is an invitation to check the answer and checking means reading
   // what sits around the sentence — the id is what gets highlighted.
   if (panel.kind === "source") {
-    const chunk = CHUNK_BY_ID[panel.id];
+    const chunk = ALL_CHUNKS_BY_ID[panel.id];
     if (!chunk) return null;
     return (
       <div className="space-y-6">
-        {CHUNKS.filter((c) => c.source === chunk.source).map((c) => (
+        {ALL_CHUNKS.filter((c) => c.source === chunk.source).map((c) => (
           <ChunkBlock key={c.id} chunk={c} focused={c.id === chunk.id} showId />
         ))}
       </div>
@@ -107,7 +132,7 @@ export function PanelBody({
   // than one you have to ask the model.
   if (panel.kind === "corpus") {
     const bySource = new Map<string, Chunk[]>();
-    for (const chunk of CHUNKS) {
+    for (const chunk of ALL_CHUNKS) {
       const list = bySource.get(chunk.sourceLabel) ?? [];
       list.push(chunk);
       bySource.set(chunk.sourceLabel, list);
@@ -132,6 +157,7 @@ export function PanelBody({
             </div>
           </div>
         ))}
+        <p className="text-[11px] leading-relaxed text-text-faint">{CORPUS_NOTE}</p>
       </div>
     );
   }
@@ -204,7 +230,58 @@ export function PanelBody({
         <div className="flex flex-wrap gap-2">
           <PanelLink href="/colophon">Open as a page</PanelLink>
           <PanelLink href="/measurements">What it scores</PanelLink>
+          <PanelLink href="/prompt">Its instructions</PanelLink>
+          <PanelLink href="/refusals">What it won&apos;t do</PanelLink>
         </div>
+      </div>
+    );
+  }
+
+  // #7 in the panel. The full prompt is a 17 kB document and belongs on its own
+  // page; what sits beside a conversation is what it contains, in order, and the
+  // way in. The section list is read off the prompt itself rather than typed
+  // here, so a section that gets added or renamed shows up without an edit.
+  if (panel.kind === "prompt") {
+    const sections = buildSystemPrompt()
+      .split("\n")
+      .filter((l) => l.startsWith("## "))
+      .map((l) => l.slice(3));
+    return (
+      <div className="space-y-3">
+        <p className="text-[12px] leading-relaxed text-text-soft">{PROMPT_NOTE.intro}</p>
+        <ul className="space-y-1">
+          {sections.map((s) => (
+            <li key={s} className="border-b border-line py-1.5 text-[12px] text-text-soft">
+              {s}
+            </li>
+          ))}
+        </ul>
+        <p className="text-[11px] leading-relaxed text-text-faint">{PROMPT_NOTE.decline}</p>
+        <PanelLink href="/prompt">Read the whole thing</PanelLink>
+      </div>
+    );
+  }
+
+  // #10 in the panel. The ledger is a list, so it renders here in full rather
+  // than as a teaser — what the page adds is the framing above it.
+  if (panel.kind === "refusals") {
+    return (
+      <div className="space-y-4">
+        <p className="text-[12px] leading-relaxed text-text-soft">{REFUSALS_NOTE}</p>
+        <div>
+          {REFUSALS.map((r) => (
+            <div key={r.id} className="border-b border-line py-2.5 last:border-b-0">
+              <div className="flex items-baseline justify-between gap-2">
+                <span className="text-[12px] leading-snug text-text">{r.title}</span>
+                <span className="shrink-0 text-[10px] text-text-faint">
+                  {ENFORCEMENT_LABEL[r.enforcedBy]}
+                </span>
+              </div>
+              <p className="mt-1 text-[11px] leading-relaxed text-text-soft">{r.instead}</p>
+            </div>
+          ))}
+        </div>
+        <PanelLink href="/refusals">Why each one exists</PanelLink>
       </div>
     );
   }
@@ -364,7 +441,7 @@ function RequirementTable({
 
 /** `resume:nokia` → `Resume — Nokia, Toronto ON`, for a row's source link. */
 function sourceTitle(id: string): string {
-  const chunk = CHUNK_BY_ID[id];
+  const chunk = ALL_CHUNKS_BY_ID[id];
   return chunk ? `${chunk.sourceLabel} — ${chunk.heading}` : id;
 }
 

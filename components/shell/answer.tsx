@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, type ReactNode } from "react";
-import { CHUNK_BY_ID } from "@/lib/chunks.generated";
+import { ALL_CHUNKS_BY_ID } from "@/lib/corpus";
 import { stripCitations, verifyAnswer, type Claim } from "@/lib/verify";
 import { Markdown } from "./markdown";
 import type { PanelView } from "./use-conversation";
@@ -35,7 +35,7 @@ export function Answer({
   settled: boolean;
   onOpenSource: (view: PanelView) => void;
 }) {
-  const check = useMemo(() => verifyAnswer(text, CHUNK_BY_ID), [text]);
+  const check = useMemo(() => verifyAnswer(text, ALL_CHUNKS_BY_ID), [text]);
 
   if (!settled) {
     return <Markdown text={stripCitations(text)} />;
@@ -161,7 +161,7 @@ function SourceRow({
 
 /** `resume:nokia` → `Resume — Nokia, Toronto ON`, for a chip or a tooltip. */
 function sourceTitle(id: string): string {
-  const chunk = CHUNK_BY_ID[id];
+  const chunk = ALL_CHUNKS_BY_ID[id];
   if (!chunk) return id;
   return `${chunk.sourceLabel} — ${chunk.heading}`;
 }
@@ -172,7 +172,7 @@ function sourceTitle(id: string): string {
  * enough to push every chip onto a row of its own.
  */
 function chipLabel(id: string): string {
-  const chunk = CHUNK_BY_ID[id];
+  const chunk = ALL_CHUNKS_BY_ID[id];
   if (!chunk) return id;
   const heading = chunk.heading.split("—")[0]!.replace(/\(.*?\)/g, "").trim();
   return heading && heading !== chunk.sourceLabel

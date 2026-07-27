@@ -347,6 +347,13 @@ function TraceInspector({ turnLog }: { turnLog: TurnRecord[] }) {
                   <Row label="model" value={turn.model} />
                   <Row label="tier" value={turn.tier} />
                   <Row label="job posting" value={turn.jobPosting ? "yes" : "no"} />
+                  {/* The only per-turn change to the system prompt on this
+                      site, and therefore the only honest explanation for an
+                      input count that doesn't match the turn above it. */}
+                  <Row
+                    label="corpus"
+                    value={turn.siteQuestion ? "knowledge + repo" : "knowledge"}
+                  />
                   <Row
                     label="ttft (server)"
                     value={turn.timing?.ttftMs != null ? `${turn.timing.ttftMs}ms` : "—"}

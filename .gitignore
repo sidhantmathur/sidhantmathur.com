@@ -45,6 +45,9 @@ next-env.d.ts
 /lib/knowledge.generated.ts
 /lib/chunks.generated.ts
 
+# generated repo corpus (built by scripts/build-repo-corpus.mjs)
+/lib/repo.generated.ts
+
 # claude code local tooling
 /.claude/
 /.playwright-mcp/

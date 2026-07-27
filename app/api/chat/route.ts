@@ -12,6 +12,7 @@ import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 import { buildSystemPrompt } from "@/lib/system-prompt";
 import { looksLikeJobPosting, wrapPosting } from "@/lib/job-posting";
+import { looksLikeSiteQuestion } from "@/lib/site-question";
 import { reconcileRoleFit } from "@/lib/role-fit";
 import { CHUNK_BY_ID } from "@/lib/chunks.generated";
 import {
@@ -543,6 +544,7 @@ function simulateStreamFailure(cls: TurnErrorClass, model: ModelId): Response {
     budgetRemaining: TIER_LIMITS[MODELS[model].tier],
     budgetLimit: TIER_LIMITS[MODELS[model].tier],
     jobPosting: false,
+    siteQuestion: false,
     usage: null,
     timing: null,
     steps: null,
@@ -632,7 +634,20 @@ export async function POST(req: Request): Promise<Response> {
 
   // (e) Is this a pasted job description? Decided once, up front, because it
   // changes both the output ceiling and whether `roleFit` is optional.
-  const jobPosting = looksLikeJobPosting(lastUserText(messages));
+  const turnText = lastUserText(messages);
+  const jobPosting = looksLikeJobPosting(turnText);
+
+  // (e1) Is it a question about the site itself (Sprint 7, #8)? If so the
+  // second corpus — this repo — is appended to the system prompt for this turn
+  // only. Never on a posting turn: that turn already carries a 3.5 kB posting
+  // and spends three steps, and nobody pasting a job description is asking
+  // about the rate limiter.
+  //
+  // The base prompt is byte-identical either way, and the appendix goes after
+  // it, so an ordinary turn sends exactly the string the provider already has
+  // cached. That is the whole reason this is a per-turn decision instead of a
+  // bigger prompt for everyone.
+  const siteQuestion = !jobPosting && looksLikeSiteQuestion(turnText);
 
   // (e2) A posting goes to the model fenced, labeled as data, and with the
   // untrusted-input rules restated underneath it (Sprint 4, bank §6 Stage 2).
@@ -656,6 +671,7 @@ export async function POST(req: Request): Promise<Response> {
     budgetRemaining: budget.remaining,
     budgetLimit: TIER_LIMITS[tier],
     jobPosting,
+    siteQuestion,
     usage: null,
     timing: null,
     steps: null,
@@ -718,7 +734,7 @@ export async function POST(req: Request): Promise<Response> {
         messages: [
           {
             role: "system",
-            content: buildSystemPrompt(),
+            content: buildSystemPrompt({ repoCorpus: siteQuestion }),
             providerOptions: {
               anthropic: { cacheControl: { type: "ephemeral" } },
             },

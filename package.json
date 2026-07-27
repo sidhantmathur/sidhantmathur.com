@@ -3,13 +3,13 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "predev": "node scripts/build-knowledge.mjs && node scripts/build-measurements.mjs",
+    "predev": "node scripts/build-knowledge.mjs && node scripts/build-repo-corpus.mjs && node scripts/build-measurements.mjs",
     "dev": "next dev",
-    "prebuild": "node scripts/build-knowledge.mjs && node scripts/build-measurements.mjs",
+    "prebuild": "node scripts/build-knowledge.mjs && node scripts/build-repo-corpus.mjs && node scripts/build-measurements.mjs",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "eval": "node scripts/build-knowledge.mjs && node --test --experimental-strip-types --test-reporter=tap --test-reporter-destination=stdout --test-reporter=./evals/reporters/json.mjs --test-reporter-destination=evals/static-results.json \"evals/*.test.mjs\"",
+    "eval": "node scripts/build-knowledge.mjs && node scripts/build-repo-corpus.mjs && node --test --experimental-strip-types --test-reporter=tap --test-reporter-destination=stdout --test-reporter=./evals/reporters/json.mjs --test-reporter-destination=evals/static-results.json \"evals/*.test.mjs\"",
     "eval:live": "node --experimental-strip-types evals/run-live.mjs",
     "eval:publish": "node scripts/publish-evals.mjs"
   },

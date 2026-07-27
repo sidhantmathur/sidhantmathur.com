@@ -91,6 +91,13 @@ export type TurnTelemetry = {
   budgetLimit: number;
   /** Whether the route classified this turn as a pasted job posting. */
   jobPosting: boolean;
+  /**
+   * Whether this turn carried the second corpus — the site's own source
+   * (Sprint 7, #8). It is the only thing that changes the system prompt from
+   * one turn to the next, so it is the one field that explains an input-token
+   * count that doesn't look like the others, and the trace shows it.
+   */
+  siteQuestion: boolean;
   /** Null until the turn completes. */
   usage: TurnUsage | null;
   timing: TurnTiming | null;
