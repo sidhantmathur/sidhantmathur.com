@@ -243,24 +243,28 @@ everything in the meantime.
 
 ## Why this site is a chatbot
 
-[DRAFT 2026-07-27 — written by Claude at Sidhant's request during the redesign.
-Rewrite in your own voice; the argument is right, the phrasing is a placeholder.]
+[DRAFT 2026-07-27 v2 — written by Claude to Sidhant's thesis. Rewrite in your
+own voice. v1 was scrapped: it framed the site as something to verify rather
+than something to use, and put false modesty in the author's mouth.]
 
 Panel heading: Why this site is a chatbot
 
 Body:
-A resume is a list of claims you have to take on faith. This is the same
-information, except you can interrogate it — ask what I actually did at Nokia,
-push back on whether the marketplace numbers mean anything, or find out where
-I'd struggle in the role you're hiring for.
+Most software is turning into a conversation. I don't build my own PostHog
+dashboards anymore — I describe what I want and the product's assistant builds
+it, because it knows the platform better than I do. That pattern is going to
+take over a lot of interfaces, and I don't see why a portfolio would be the
+exception.
 
-Every answer here is grounded in the same source files the resume is built
-from, and each one shows you which section it came from, so you can check the
-claim instead of trusting it.
+A portfolio is a list standing in for a conversation you can't have. The better
+version is talking to me — about what I built, why, what it took, whether any
+of it maps to what you need. You can't do that at eleven at night while you're
+going through a stack of candidates. You can do this.
 
-I also built it, which is most of the point. I'm not the strongest engineer
-you'll interview. What I'm good at is picking up an unfamiliar tool and getting
-something real and useful in front of people — so rather than write that down
-and hope you believe it, I made the thing you're reading it on.
+So come with the specific question. How the payments work. What the Nokia
+rollout actually involved. What I'd do in the first ninety days of the role
+you're hiring for. Skip everything you don't care about.
 
-If you'd rather just read the resume, it's one click away in the panel.
+Every answer is built from the same source files as the resume, and it will
+show you which one, so you can open the long version whenever something is
+worth more than a paragraph.
