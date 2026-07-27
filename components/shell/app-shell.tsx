@@ -25,10 +25,8 @@ import {
 // ---------------------------------------------------------------------------
 // Copy — verbatim from docs/site-copy.md.
 // ---------------------------------------------------------------------------
-const HERO =
-  "I build internal tools, revenue systems, and the occasional whole product.";
-const EMPTY_STATE =
-  "Ask me about my work at Nokia, A Darle 20, or anything on my resume.";
+const HERO = "I learn what the problem needs, then I build the thing.";
+const HERO_SUB = "Ask what you'd ask on a call.";
 const DISCLAIMER =
   "AI-generated answers about my professional background. It can make mistakes — the resume is the authoritative version.";
 const ERROR_STATE =
@@ -258,7 +256,7 @@ export function AppShell() {
                   <h1 className="max-w-[24ch] text-[clamp(21px,3.2vw,34px)] font-medium leading-[1.2] tracking-[-0.02em] text-text">
                     {HERO}
                   </h1>
-                  <p className="text-[13px] leading-relaxed text-text-soft">{EMPTY_STATE}</p>
+                  <p className="text-[13px] leading-relaxed text-text-soft">{HERO_SUB}</p>
                   <div className="flex flex-wrap gap-2 pt-1">
                     {SUGGESTED.map((q) => (
                       <button

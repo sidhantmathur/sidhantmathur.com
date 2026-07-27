@@ -6,13 +6,8 @@ import Adarle20 from "@/content/adarle20.mdx";
 import DellMl from "@/content/dell-ml.mdx";
 import Nokia from "@/content/nokia.mdx";
 import { PROJECTS } from "@/content/projects";
-import {
-  PROJECT_LINKS,
-  RESUME_SECTIONS,
-  SOCIAL_LINKS,
-  WHY_CHATBOT,
-  type ResumeSection,
-} from "./shell-data";
+import { CITATIONS, type Citation } from "@/lib/citations.generated";
+import { PROJECT_LINKS, SOCIAL_LINKS, WHY_CHATBOT } from "./shell-data";
 import type { PanelView } from "./use-conversation";
 
 const CASE_STUDIES = {
@@ -46,8 +41,8 @@ export function PanelBody({ panel }: { panel: PanelView }) {
   if (panel.kind === "resume") {
     return (
       <div className="space-y-6">
-        {RESUME_SECTIONS.map((s) => (
-          <ResumeBlock key={s.id} section={s} focused={panel.focus === s.id} />
+        {CITATIONS.map((c) => (
+          <ResumeBlock key={c.id} citation={c} focused={panel.focus === c.id} />
         ))}
         <div className="flex flex-wrap gap-2">
           <PanelLink href="/resume">Full resume</PanelLink>
@@ -190,7 +185,7 @@ function PanelLink({
   );
 }
 
-function ResumeBlock({ section, focused }: { section: ResumeSection; focused: boolean }) {
+function ResumeBlock({ citation, focused }: { citation: Citation; focused: boolean }) {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (focused) ref.current?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -202,11 +197,13 @@ function ResumeBlock({ section, focused }: { section: ResumeSection; focused: bo
       className={`border-l-2 pl-3 transition-colors ${focused ? "border-accent" : "border-line"}`}
     >
       <div className={`text-[12px] ${focused ? "text-accent" : "text-text"}`}>
-        {section.heading}
+        {citation.heading}
       </div>
-      <div className="mt-0.5 text-[11px] text-text-faint">{section.meta}</div>
+      {citation.meta && (
+        <div className="mt-0.5 text-[11px] text-text-faint">{citation.meta}</div>
+      )}
       <ul className="mt-2 space-y-2">
-        {section.bullets.map((b, i) => (
+        {citation.bullets.map((b, i) => (
           <li key={i} className="text-[12px] leading-relaxed text-text-soft">
             {b}
           </li>

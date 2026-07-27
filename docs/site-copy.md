@@ -19,19 +19,25 @@ its first four months.
 
 ### Hero
 
+Chosen 2026-07-27 from docs/hero-options.md. The previous heading ("I build
+internal tools, revenue systems, and the occasional whole product") entered
+Sidhant into a comparison with career software engineers, which is not the
+contest he wants to be judged in.
+
 Heading:
-I build internal tools, revenue systems, and the occasional whole product.
+I learn what the problem needs, then I build the thing.
 
 Subline:
-I work in sales operations at Nokia, where tools I've built are used by 150+
-people across seven regions. On the side I founded A Darle 20, a live marketplace
-processing real payments in Latin America.
+Ask what you'd ask on a call.
 
-Metadata line (mono, small):
-Sidhant Mathur · Toronto, ON · Open to new roles
+The two lines do different jobs and both are load-bearing: the heading is the
+positioning claim, the subline turns the chat input directly below it into the
+call to action. Don't drop the subline to "tighten" the hero.
 
-Primary button: Ask me anything
-(opens the chat — secondary link next to it: View resume)
+The old metadata line ("Sidhant Mathur · Toronto, ON · Open to new roles") and
+the "Ask me anything" / "View resume" buttons are retired. The status strip
+carries the name and location; the rail carries the resume link; the input is
+the only call to action.
 
 ### Projects section
 
