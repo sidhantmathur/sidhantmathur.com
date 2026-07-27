@@ -216,6 +216,16 @@ export function AppShell() {
 
   return (
     <div className="flex h-dvh flex-col bg-bg text-text [font-family:var(--font-geist-mono)]">
+      {/* Skip link. The rail is ~10 links deep and sits before the input in
+          tab order, so a keyboard user otherwise tabs through the entire nav
+          to reach the only call to action. Visually hidden until focused. */}
+      <a
+        href="#ask"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-3 focus:top-3 focus:z-50 focus:border focus:border-accent focus:bg-panel focus:px-3 focus:py-1.5 focus:text-[12px] focus:text-text focus:no-underline"
+      >
+        Skip to the question box
+      </a>
+
       {/* ---- Status strip ------------------------------------------------- */}
       <header className="flex h-9 shrink-0 items-center gap-3 border-b border-line bg-panel px-3 text-[11px] md:px-4">
         <button
@@ -390,6 +400,7 @@ export function AppShell() {
                   }
                   if (e.key === "Escape") setInput("");
                 }}
+                id="ask"
                 placeholder="Ask a question, or type / for commands"
                 aria-label="Ask a question"
                 className="ml-2 min-w-0 flex-1 bg-transparent text-text outline-none placeholder:text-text-faint"

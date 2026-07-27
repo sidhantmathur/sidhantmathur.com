@@ -94,3 +94,22 @@ body {
      --font-sans as a runtime custom property */
   font-family: var(--font-geist-sans);
 }
+
+/* Honour the OS "reduce motion" setting. Reduced, not removed: transitions
+   collapse to ~1ms so state changes still land in a single frame rather than
+   snapping mid-interaction, which is the behaviour the spec asks for.
+   Covers the sheet enter/exit animations, the streaming pulse, and the
+   hover transition-colors used throughout the shell.
+   `scroll-behavior: auto` matters here: the conversation auto-scrolls as
+   tokens stream, and smooth scrolling is the exact thing this setting is
+   most often turned on to stop. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
