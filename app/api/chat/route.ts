@@ -42,7 +42,10 @@ const messageSchema = z
             p.type === "text" && typeof p.text === "string",
         )
         .reduce((sum, p) => sum + p.text.length, 0);
-      return textLength <= (msg.role === "user" ? 500 : 8000);
+      // 4000 for user turns: the JD-paste flow sends a whole job description
+      // as one message, and 500 truncated every real posting. Abuse is bounded
+      // by the per-tier hourly budget, not by this cap.
+      return textLength <= (msg.role === "user" ? 4000 : 8000);
     },
     { message: "Message text exceeds the allowed length." },
   );
@@ -51,8 +54,45 @@ const messageSchema = z
 // (enforced below with the graceful 429) plus their assistant replies — with
 // headroom, so the >10-user-messages case reaches the rate-limit copy instead
 // of dying on a schema 400.
+// --- Model allowlist ------------------------------------------------------
+//
+// The client picks a model, so this is a security AND a cost boundary: the id
+// from the request is never passed through to the Gateway, only used to look up
+// an entry here. An unknown id falls back to the default rather than erroring,
+// so a stale client can't break the chat.
+//
+// Each tier has its own rate-limit bucket. The point is that the budget is
+// visible in the UI — showing the cost engineering rather than hiding it.
+//
+// COST NOTE: `standard` is cheap-tier models only. `premium` is one
+// substantially more expensive model on a small bucket. Delete the premium
+// entry to turn the whole tier off; nothing else needs to change.
+const MODELS = {
+  "anthropic/claude-haiku-4.5": { tier: "standard" },
+  "google/gemini-2.5-flash": { tier: "standard" },
+  "openai/gpt-5-mini": { tier: "standard" },
+  "anthropic/claude-sonnet-4.5": { tier: "premium" },
+} as const;
+
+type ModelId = keyof typeof MODELS;
+type Tier = (typeof MODELS)[ModelId]["tier"];
+
+const DEFAULT_MODEL: ModelId = "anthropic/claude-haiku-4.5";
+
+const TIER_LIMITS: Record<Tier, number> = {
+  standard: 20,
+  premium: 5,
+};
+
+function resolveModel(requested: string | undefined): ModelId {
+  return requested && requested in MODELS ? (requested as ModelId) : DEFAULT_MODEL;
+}
+
 const bodySchema = z.object({
   messages: z.array(messageSchema).min(1).max(30),
+  // Free-form string, validated by lookup rather than by enum, so adding a
+  // model here never requires a client deploy to avoid 400s.
+  model: z.string().max(100).optional(),
 });
 
 // --- Rate limiting -------------------------------------------------------
@@ -66,42 +106,52 @@ const bodySchema = z.object({
 // Real production rate limiting requires UPSTASH_REDIS_REST_URL /
 // UPSTASH_REDIS_REST_TOKEN to be set (README morning-checklist step 5).
 
-const RATE_LIMIT = 20;
 const WINDOW_MS = 60 * 60 * 1000; // 1 hour
 
 const hasUpstash =
   !!process.env.UPSTASH_REDIS_REST_URL &&
   !!process.env.UPSTASH_REDIS_REST_TOKEN;
 
-const upstashLimiter = hasUpstash
-  ? new Ratelimit({
-      redis: Redis.fromEnv(),
-      limiter: Ratelimit.slidingWindow(RATE_LIMIT, "1 h"),
-      prefix: "chat",
-    })
+// One limiter per tier, so spending the premium budget leaves the standard
+// budget intact.
+const upstashLimiters = hasUpstash
+  ? (Object.fromEntries(
+      (Object.keys(TIER_LIMITS) as Tier[]).map((tier) => [
+        tier,
+        new Ratelimit({
+          redis: Redis.fromEnv(),
+          limiter: Ratelimit.slidingWindow(TIER_LIMITS[tier], "1 h"),
+          prefix: `chat:${tier}`,
+        }),
+      ]),
+    ) as Record<Tier, Ratelimit>)
   : null;
 
 // Module-scope in-memory store for the fallback (per-instance, dev-only).
 const memoryStore = new Map<string, { count: number; resetAt: number }>();
 
-function inMemoryAllow(ip: string): boolean {
+function inMemoryConsume(key: string, limit: number): { ok: boolean; remaining: number } {
   const now = Date.now();
-  const entry = memoryStore.get(ip);
+  const entry = memoryStore.get(key);
   if (!entry || now > entry.resetAt) {
-    memoryStore.set(ip, { count: 1, resetAt: now + WINDOW_MS });
-    return true;
+    memoryStore.set(key, { count: 1, resetAt: now + WINDOW_MS });
+    return { ok: true, remaining: limit - 1 };
   }
-  if (entry.count >= RATE_LIMIT) return false;
+  if (entry.count >= limit) return { ok: false, remaining: 0 };
   entry.count += 1;
-  return true;
+  return { ok: true, remaining: Math.max(0, limit - entry.count) };
 }
 
-async function isRateLimited(ip: string): Promise<boolean> {
-  if (upstashLimiter) {
-    const { success } = await upstashLimiter.limit(ip);
-    return !success;
+async function consumeBudget(
+  ip: string,
+  tier: Tier,
+): Promise<{ ok: boolean; remaining: number }> {
+  const limit = TIER_LIMITS[tier];
+  if (upstashLimiters) {
+    const { success, remaining } = await upstashLimiters[tier].limit(ip);
+    return { ok: success, remaining: Math.max(0, remaining) };
   }
-  return !inMemoryAllow(ip);
+  return inMemoryConsume(`${tier}:${ip}`, limit);
 }
 
 function getClientIp(req: Request): string {
@@ -240,6 +290,8 @@ export async function POST(req: Request): Promise<Response> {
   }
 
   const { messages } = parsed;
+  const model = resolveModel(parsed.model);
+  const tier = MODELS[model].tier;
 
   // (b) Conversation cap: more than 10 user messages → rate-limit state.
   const userMessageCount = messages.filter((m) => m.role === "user").length;
@@ -247,9 +299,10 @@ export async function POST(req: Request): Promise<Response> {
     return jsonError("rate_limited", 429);
   }
 
-  // (c) Per-IP sliding-window rate limit.
+  // (c) Per-IP, per-tier sliding-window budget.
   const ip = getClientIp(req);
-  if (await isRateLimited(ip)) {
+  const budget = await consumeBudget(ip, tier);
+  if (!budget.ok) {
     return jsonError("rate_limited", 429);
   }
 
@@ -270,7 +323,7 @@ export async function POST(req: Request): Promise<Response> {
 
   try {
     const result = streamText({
-      model: "anthropic/claude-haiku-4.5", // Vercel AI Gateway — no provider SDK, no API key in code.
+      model, // allowlisted above — never the raw client string
       maxOutputTokens: 600,
       tools: chatTools,
       // The SDK's default stop condition is stepCountIs(1), which ends the
@@ -299,7 +352,16 @@ export async function POST(req: Request): Promise<Response> {
       },
     });
 
-    return result.toUIMessageStreamResponse();
+    // Surface the remaining budget so the status strip can display it. The
+    // constraint is part of the interface, not something to hide.
+    return result.toUIMessageStreamResponse({
+      headers: {
+        "x-model": model,
+        "x-tier": tier,
+        "x-tier-remaining": String(budget.remaining),
+        "x-tier-limit": String(TIER_LIMITS[tier]),
+      },
+    });
   } catch (err) {
     console.error("[chat] upstream error", err);
     return jsonError("upstream_unavailable", 502);

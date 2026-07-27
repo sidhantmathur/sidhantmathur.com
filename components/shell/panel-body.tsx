@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Adarle20 from "@/content/adarle20.mdx";
 import DellMl from "@/content/dell-ml.mdx";
 import Nokia from "@/content/nokia.mdx";
 import { PROJECTS } from "@/content/projects";
 import { CITATIONS, type Citation } from "@/lib/citations.generated";
-import { PROJECT_LINKS, SOCIAL_LINKS, WHY_CHATBOT } from "./shell-data";
+import { JD_COPY, PROJECT_LINKS, SOCIAL_LINKS, WHY_CHATBOT } from "./shell-data";
 import type { PanelView } from "./use-conversation";
 
 const CASE_STUDIES = {
@@ -28,6 +28,8 @@ export function panelTitle(panel: PanelView): string {
       return "Why this site is a chatbot";
     case "colophon":
       return "How this site was built";
+    case "jd":
+      return JD_COPY.heading;
     case "project":
       return PROJECTS[panel.slug].title;
     case "roleFit":
@@ -37,7 +39,17 @@ export function panelTitle(panel: PanelView): string {
   }
 }
 
-export function PanelBody({ panel }: { panel: PanelView }) {
+export function PanelBody({
+  panel,
+  onSubmitJd,
+}: {
+  panel: PanelView;
+  onSubmitJd?: (text: string) => void;
+}) {
+  if (panel.kind === "jd") {
+    return <JobDescriptionForm onSubmit={onSubmitJd} />;
+  }
+
   if (panel.kind === "resume") {
     return (
       <div className="space-y-6">
@@ -158,6 +170,48 @@ export function PanelBody({ panel }: { panel: PanelView }) {
   }
 
   return null;
+}
+
+// The API caps a user turn at 4000 characters, so the textarea enforces the
+// same limit rather than letting a long posting fail server-side.
+const JD_MAX = 3500;
+
+function JobDescriptionForm({ onSubmit }: { onSubmit?: (text: string) => void }) {
+  const [value, setValue] = useState("");
+  const trimmed = value.trim();
+
+  return (
+    <form
+      className="space-y-3"
+      onSubmit={(e) => {
+        e.preventDefault();
+        if (!trimmed || !onSubmit) return;
+        onSubmit(trimmed.slice(0, JD_MAX));
+        setValue("");
+      }}
+    >
+      <p className="text-[12px] leading-relaxed text-text-soft">{JD_COPY.body}</p>
+      <textarea
+        value={value}
+        onChange={(e) => setValue(e.target.value.slice(0, JD_MAX))}
+        placeholder={JD_COPY.placeholder}
+        rows={12}
+        className="w-full resize-y border border-line-strong bg-raised p-2 text-[12px] leading-relaxed text-text outline-none placeholder:text-text-faint focus:border-accent"
+      />
+      <div className="flex items-center justify-between">
+        <span className="text-[11px] text-text-faint">
+          {value.length}/{JD_MAX}
+        </span>
+        <button
+          type="submit"
+          disabled={!trimmed}
+          className="border border-line-strong px-2 py-1 text-[11px] text-text-soft transition-colors hover:border-accent hover:text-accent disabled:opacity-40"
+        >
+          {JD_COPY.submit} →
+        </button>
+      </div>
+    </form>
+  );
 }
 
 function PanelLink({

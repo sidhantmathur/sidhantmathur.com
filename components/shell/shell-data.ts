@@ -42,6 +42,7 @@ export type PanelViewSpec =
   | { kind: "why" }
   | { kind: "contact" }
   | { kind: "colophon" }
+  | { kind: "jd" }
   | { kind: "project"; slug: "adarle20" | "nokia" | "dell-ml" };
 
 export const RAIL_ITEMS: RailItem[] = [
@@ -56,8 +57,19 @@ export const RAIL_ITEMS: RailItem[] = [
   { label: "Dell", href: "/projects/dell-ml", view: { kind: "project", slug: "dell-ml" } },
   { label: "Colophon", href: "/colophon", view: { kind: "colophon" } },
   { label: "Why this site is a chatbot", view: { kind: "why" } },
+  { label: "Paste a job description", view: { kind: "jd" } },
   { label: "Contact", view: { kind: "contact" } },
 ];
+
+// docs/site-copy.md → "Job-description fit". Marked DRAFT there.
+export const JD_COPY = {
+  heading: "Paste a job description",
+  body: "Paste the posting and I'll map my experience onto it — including the parts I don't match.",
+  placeholder: "Paste the job description here",
+  submit: "Check the fit",
+  prefix:
+    "Here's a job description. Map my experience onto it, and be straight about where I don't match.",
+};
 
 export const PROJECT_LINKS = [
   { label: "A Darle 20", href: "/projects/adarle20" },

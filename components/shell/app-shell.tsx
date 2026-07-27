@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import {
+  JD_COPY,
   RAIL_ITEMS,
   SLASH_COMMANDS,
   SLUG_TO_RESUME,
@@ -50,6 +51,8 @@ const PANEL_MAX = 640;
 const PANEL_DEFAULT = 380;
 
 export function AppShell() {
+  const [model, setModel] = useState<string>(MODELS[0]);
+
   const {
     messages,
     submit,
@@ -61,12 +64,12 @@ export function AppShell() {
     panel,
     setPanel,
     turns,
-  } = useConversation();
+    budget,
+  } = useConversation(model);
 
   usePanelUrl(panel, setPanel);
 
   const [input, setInput] = useState("");
-  const [model, setModel] = useState(MODELS[0]);
   const [railOpen, setRailOpen] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [sheetFull, setSheetFull] = useState(false);
@@ -123,6 +126,16 @@ export function AppShell() {
     const el = scrollRef.current;
     if (el && stick.current) el.scrollTop = el.scrollHeight;
   }, [messages]);
+
+  const submitJd = useCallback(
+    (text: string) => {
+      stick.current = true;
+      submit(`${JD_COPY.prefix}\n\n${text}`);
+      setSheetOpen(false);
+      setPanel({ kind: "none" });
+    },
+    [submit, setPanel],
+  );
 
   function onScroll() {
     const el = scrollRef.current;
@@ -211,6 +224,9 @@ export function AppShell() {
         <div className="ml-auto flex items-center gap-4 text-text-faint">
           <Stat label="turns" value={`${turns}/10`} />
           <Stat label="ttft" value={ttft == null ? "—" : `${ttft}ms`} />
+          {budget && (
+            <Stat label={budget.tier} value={`${budget.remaining}/${budget.limit}`} />
+          )}
           <label className="hidden items-center gap-1.5 xl:flex">
             <span>model</span>
             <select
@@ -411,7 +427,7 @@ export function AppShell() {
                 </button>
               </div>
               <div className="min-h-0 flex-1 overflow-y-auto p-4">
-                <PanelBody panel={panel} />
+                <PanelBody panel={panel} onSubmitJd={submitJd} />
               </div>
             </aside>
           </>
@@ -459,7 +475,7 @@ export function AppShell() {
                 </button>
               </SheetHeader>
               <div className="min-h-0 flex-1 overflow-y-auto p-4">
-                <PanelBody panel={panel} />
+                <PanelBody panel={panel} onSubmitJd={submitJd} />
               </div>
             </SheetContent>
           </Sheet>

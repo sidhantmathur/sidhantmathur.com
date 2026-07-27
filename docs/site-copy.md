@@ -274,3 +274,19 @@ you're hiring for. Skip everything you don't care about.
 Every answer is built from the same source files as the resume, and it will
 show you which one, so you can open the long version whenever something is
 worth more than a paragraph.
+
+---
+
+## Job-description fit
+
+[DRAFT 2026-07-27 — written by Claude. Rewrite in your own voice.]
+
+Rail item: Paste a job description
+Panel heading: Paste a job description
+Panel body: Paste the posting and I'll map my experience onto it — including
+the parts I don't match.
+Textarea placeholder: Paste the job description here
+Submit button: Check the fit
+Message sent to the assistant (prefix before the pasted text):
+Here's a job description. Map my experience onto it, and be straight about
+where I don't match.

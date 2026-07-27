@@ -26,6 +26,7 @@ export type PanelView =
   | { kind: "colophon" }
   | { kind: "contact" }
   | { kind: "why" }
+  | { kind: "jd" }
   | { kind: "roleFit"; data: RoleFit };
 
 export type ToolOut = { type: string; state?: string; output?: unknown };
@@ -67,28 +68,59 @@ export function panelForTool(outs: ToolOut[]): PanelView | null {
   return null;
 }
 
+export type Budget = { tier: string; remaining: number; limit: number };
+
 // Distinguishes a 429 (rate-limit copy) from any other failure. useChat's
 // onError receives only an Error, not the HTTP status, so the status is read
-// here and encoded in the message.
-const chatFetch: typeof fetch = async (input, init) => {
-  const res = await fetch(input, init);
-  if (!res.ok) {
-    let code = "error";
-    try {
-      const body = (await res.clone().json()) as { error?: string };
-      if (res.status === 429 || body?.error === "rate_limited") code = "rate_limited";
-    } catch {
-      if (res.status === 429) code = "rate_limited";
+// here and encoded in the message. Also lifts the per-tier budget out of the
+// response headers, which is the only place it's exposed.
+function makeChatFetch(onBudget: (b: Budget) => void): typeof fetch {
+  return async (input, init) => {
+    const res = await fetch(input, init);
+    if (!res.ok) {
+      let code = "error";
+      try {
+        const body = (await res.clone().json()) as { error?: string };
+        if (res.status === 429 || body?.error === "rate_limited") code = "rate_limited";
+      } catch {
+        if (res.status === 429) code = "rate_limited";
+      }
+      throw new Error(code);
     }
-    throw new Error(code);
-  }
-  return res;
-};
+    const tier = res.headers.get("x-tier");
+    const remaining = Number(res.headers.get("x-tier-remaining"));
+    const limit = Number(res.headers.get("x-tier-limit"));
+    if (tier && Number.isFinite(remaining) && Number.isFinite(limit)) {
+      onBudget({ tier, remaining, limit });
+    }
+    return res;
+  };
+}
 
-export function useConversation() {
+export function useConversation(model: string) {
   const [errorKind, setErrorKind] = useState<"none" | "error" | "rate_limited">("none");
   const [panel, setPanel] = useState<PanelView>({ kind: "none" });
   const [ttft, setTtft] = useState<number | null>(null);
+  const [budget, setBudget] = useState<Budget | null>(null);
+
+  // The transport closes over the fetch wrapper, and the wrapper closes over
+  // setBudget. Both are stable, so the transport is built once.
+  const [transport] = useState(
+    () =>
+      new DefaultChatTransport({
+        api: "/api/chat",
+        fetch: makeChatFetch((b) => setBudget(b)),
+      }),
+  );
+
+  // The selected model has to reach the request body. Kept in a ref so changing
+  // it never rebuilds the transport mid-conversation. Synced in an effect
+  // rather than during render — writing a ref while rendering is a tearing
+  // hazard under concurrent rendering.
+  const modelRef = useRef(model);
+  useEffect(() => {
+    modelRef.current = model;
+  }, [model]);
 
   // `hydrated` gates BOTH halves of persistence. Reading localStorage during
   // render makes the server emit an empty conversation while the client emits
@@ -97,7 +129,7 @@ export function useConversation() {
   const [hydrated, setHydrated] = useState(false);
 
   const { messages, sendMessage, status, setMessages } = useChat({
-    transport: new DefaultChatTransport({ api: "/api/chat", fetch: chatFetch }),
+    transport,
     onError: (error) => {
       const kind = error.message === "rate_limited" ? "rate_limited" : "error";
       setErrorKind(kind);
@@ -180,7 +212,7 @@ export function useConversation() {
     setTtft(null);
     track("chat_message_sent", { message_index: sentCount.current, message: q });
     sentCount.current += 1;
-    void sendMessage({ text: q });
+    void sendMessage({ text: q }, { body: { model: modelRef.current } });
   }
 
   function reset() {
@@ -205,6 +237,7 @@ export function useConversation() {
     ttft,
     panel,
     setPanel,
+    budget,
     turns: messages.filter((m) => m.role === "user").length,
   };
 }
