@@ -35,6 +35,13 @@ export type MediaSlot = {
   /** Tailwind aspect-ratio class matching `aspect`. */
   aspectClass: string;
   /**
+   * How wide the frame is allowed to get. A phone screenshot held to the
+   * column width becomes a 1,100-pixel-tall rectangle — which is silly when
+   * it holds an image and absurd when it is an empty placeholder — so
+   * portrait slots are capped and everything else fills the column.
+   */
+  width: "column" | "narrow";
+  /**
    * Present only when a real file exists. `alt` travels with `src` so a file
    * can never be added without describing it, and a description can never be
    * written ahead of the file.
@@ -51,6 +58,7 @@ export const ADARLE_MEDIA: MediaSlot[] = [
       "The browse page a player lands on: several sessions side by side, each with its host, price, time and remaining seats.",
     aspect: "152:69",
     aspectClass: "aspect-[152/69]",
+    width: "column",
     // The one asset that exists. Description written from the file itself.
     asset: {
       src: "/images/adarle20-listings.png",
@@ -67,6 +75,7 @@ export const ADARLE_MEDIA: MediaSlot[] = [
       "One unbroken take from the listing page through checkout to the confirmation — the flow described under “what I built”, without cuts. Use a test account; no real player's name or email on screen.",
     aspect: "16:9",
     aspectClass: "aspect-video",
+    width: "column",
   },
   {
     id: "cash-payment",
@@ -76,6 +85,7 @@ export const ADARLE_MEDIA: MediaSlot[] = [
       "The OXXO path at the point where a player is handed a payment reference to take to a convenience store. This is the part of the product nobody outside Mexico has seen, and it is the reason the payments section on this page is longer than the rest.",
     aspect: "9:16",
     aspectClass: "aspect-[9/16]",
+    width: "narrow",
   },
   {
     id: "host",
@@ -85,6 +95,7 @@ export const ADARLE_MEDIA: MediaSlot[] = [
       "A host's own view: their profile, their upcoming sessions, and their payouts. A test host account, not a real one.",
     aspect: "16:9",
     aspectClass: "aspect-video",
+    width: "column",
   },
   {
     id: "chat",
@@ -94,6 +105,7 @@ export const ADARLE_MEDIA: MediaSlot[] = [
       "A conversation in the in-app chat, long enough to show it is a real thread rather than a contact form. Test accounts, or messages redacted.",
     aspect: "9:16",
     aspectClass: "aspect-[9/16]",
+    width: "narrow",
   },
   {
     id: "operations",
@@ -103,6 +115,7 @@ export const ADARLE_MEDIA: MediaSlot[] = [
       "Whatever you actually look at to run the business — bookings, conversion, cancellations, refunds, host activation. Check before sending: this is the one slot where the file would carry live numbers, and anything in it is published.",
     aspect: "16:9",
     aspectClass: "aspect-video",
+    width: "column",
   },
   {
     id: "convention",
@@ -112,6 +125,7 @@ export const ADARLE_MEDIA: MediaSlot[] = [
       "Footage or photographs from the flagship event at the convention. It is the largest single thing this platform has run and there is currently nothing on the site to show for it. A caption naming the event and the date will be written from whatever you send, not before.",
     aspect: "16:9",
     aspectClass: "aspect-video",
+    width: "column",
   },
 ];
 

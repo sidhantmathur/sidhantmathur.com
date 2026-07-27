@@ -68,8 +68,9 @@ export function AdarleMediaSurface() {
 }
 
 function MediaFrame({ slot }: { slot: MediaSlot }) {
+  const width = slot.width === "narrow" ? "max-w-[300px]" : "max-w-[68ch]";
   return (
-    <figure className="max-w-[68ch]">
+    <figure className={width}>
       <div className="flex items-baseline justify-between gap-3 text-[11px]">
         <span className="text-text-soft">{slot.title}</span>
         <span className="shrink-0 text-text-faint">
