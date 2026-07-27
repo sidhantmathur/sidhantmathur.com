@@ -2,7 +2,8 @@ import type { MetadataRoute } from "next";
 
 const BASE = "https://sidhantmathur.com";
 
-// Hand-listed rather than derived from the filesystem: there are six routes,
+// Hand-listed rather than derived from the filesystem: there are a handful of
+// routes,
 // they change rarely, and a generated list would also have to exclude
 // /api/chat, /llms.txt and /resume.md, which is more logic than the list.
 //
@@ -16,6 +17,8 @@ const ROUTES = [
   { path: "/projects/dell-ml", priority: 0.7 },
   { path: "/colophon", priority: 0.5 },
   { path: "/measurements", priority: 0.5 },
+  { path: "/prompt", priority: 0.4 },
+  { path: "/refusals", priority: 0.4 },
 ];
 
 export default function sitemap(): MetadataRoute.Sitemap {

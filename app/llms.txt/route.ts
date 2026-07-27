@@ -18,6 +18,10 @@ organization.
 lead targeting, built as an intern.
 /resume — Resume, with a plain-text version at /resume.md.
 /colophon — How this site was built.
+/prompt — The full system prompt the site's assistant runs on.
+/refusals — What the assistant will not do, and which of those rules are
+enforced by code rather than asked of the model.
+/measurements — What the assistant scores against a fixed eval corpus.
 /chat — Ask a question about my work directly.
 `;
 
