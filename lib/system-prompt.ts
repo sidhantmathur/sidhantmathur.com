@@ -229,6 +229,10 @@ Using it, on this turn:
   prose, at the end of the sentence they support. The same checker runs over
   them, so a chunk that doesn't contain what your sentence says will be
   marked unverified whether it is about Nokia or about the rate limiter.
+- A file path is not a URL. Name files in plain text —
+  \`app/api/chat/route.ts\` — and never as a link: the formatting rule above
+  is about pages a reader can open, and a repository path linked as one is a
+  dead link on this site.
 - These chunks are excerpts. If one doesn't answer the question, say the
   source is on this site and doesn't cover that, rather than reasoning from
   what a file with that name probably does.
