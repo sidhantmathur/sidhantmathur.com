@@ -7,6 +7,10 @@ export const size = {
 };
 export const contentType = "image/png";
 
+// Instrument palette, matching app/globals.css: --bg #0B0A09, --text #EFEBE4,
+// --text-soft #A9A29A, --accent #E4522B. This is what renders when the link is
+// pasted into Slack or LinkedIn, so it has to read as the same object as the
+// site.
 export default function Image() {
   return new ImageResponse(
     (
@@ -18,17 +22,27 @@ export default function Image() {
           flexDirection: "column",
           alignItems: "flex-start",
           justifyContent: "center",
-          background: "#FAF7F1",
+          background: "#0B0A09",
           padding: "80px",
         }}
       >
+        {/* The prompt caret's underscore, as a mark. Same accent as the
+            favicon and the live caret in the chat input. */}
+        <div
+          style={{
+            width: 72,
+            height: 6,
+            background: "#E4522B",
+            marginBottom: 40,
+          }}
+        />
         <div
           style={{
             fontFamily: "monospace",
             fontSize: 64,
             fontWeight: 500,
             letterSpacing: "-0.02em",
-            color: "#1B1916",
+            color: "#EFEBE4",
           }}
         >
           Sidhant Mathur
@@ -37,11 +51,12 @@ export default function Image() {
           style={{
             marginTop: 24,
             fontFamily: "monospace",
-            fontSize: 28,
-            color: "#1B1916",
+            fontSize: 32,
+            lineHeight: 1.4,
+            color: "#A9A29A",
           }}
         >
-          Sidhant Mathur · Toronto, ON · Open to new roles
+          I learn what the problem needs, then I build the thing.
         </div>
       </div>
     ),

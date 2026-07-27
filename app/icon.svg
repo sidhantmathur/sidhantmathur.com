@@ -1,12 +1,21 @@
 <svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
-  <rect width="32" height="32" fill="#FAF7F1" />
-  <text
-    x="16"
-    y="22"
-    text-anchor="middle"
-    font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace"
-    font-size="15"
-    font-weight="500"
-    fill="#1B1916"
-  >&gt;_</text>
+  <!-- Prompt caret on the instrument palette: panel #111010, text #EFEBE4,
+       accent #E4522B (00-decisions.md §2 lists the caret as one of the four
+       jobs the accent is allowed to do).
+       Drawn as geometry rather than <text>: the browser rasterizes this with
+       no guarantee about which monospace face it resolves, and the previous
+       version leaned on that. Stroke weight is set to hold up at 16px.
+       Note: no doubled hyphens anywhere in this comment. XML forbids them,
+       and writing the token names with their CSS prefix made the file fail
+       to parse, silently killing the favicon. -->
+  <rect width="32" height="32" fill="#111010" />
+  <path
+    d="M8 10 L14 16 L8 22"
+    fill="none"
+    stroke="#EFEBE4"
+    stroke-width="4.5"
+    stroke-linecap="square"
+    stroke-linejoin="miter"
+  />
+  <rect x="18" y="20" width="8" height="4" fill="#E4522B" />
 </svg>
