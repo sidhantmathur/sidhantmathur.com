@@ -20,6 +20,7 @@ import { InstrumentDeck, Seismograph, lastSettledRate } from "./instruments";
 import { useTokenRate } from "./use-token-rate";
 import { useTeletype } from "./use-teletype";
 import { useIdle, useTypedText } from "./use-idle";
+import { AmbientBackdrop } from "./ambient-backdrop";
 import { conversationToMarkdown, messageToMarkdown } from "@/lib/transcript";
 import { permalinkFor } from "@/lib/permalink";
 import { track } from "@/lib/analytics";
@@ -480,11 +481,16 @@ export function AppShell() {
         </nav>
 
         {/* Conversation */}
-        <div className="flex min-w-0 flex-1 flex-col">
+        <div className="relative flex min-w-0 flex-1 flex-col">
+          {/* Ambient backdrop (extends #14): under the empty state, back
+              during idle, gone while a conversation is on screen. It sits
+              behind the scroll area rather than inside it so it doesn't
+              scroll with the transcript. */}
+          <AmbientBackdrop visible={!hasMessages || idle} />
           <div
             ref={scrollRef}
             onScroll={onScroll}
-            className="min-h-0 flex-1 overflow-y-auto px-4 py-8 md:px-10"
+            className="relative min-h-0 flex-1 overflow-y-auto px-4 py-8 md:px-10"
           >
             {/* Idle dims the column rather than covering it. The conversation
                 stays legible and every control stays live — this is a settle,
@@ -543,15 +549,28 @@ export function AppShell() {
               )}
 
               <div className="space-y-6">
-                {messages.map((m) => {
+                {messages.map((m, mi) => {
                   const text = textOf(m);
                   const outs = toolOutputs(m);
                   if (!text && !outs.length) return null;
+                  // Exchange number for the ledger rule — the count of user
+                  // turns up to and including this message.
+                  const exchange = messages
+                    .slice(0, mi + 1)
+                    .filter((x) => x.role === "user").length;
                   return (
                     <div key={m.id} className="space-y-2">
                       {m.role === "user" ? (
-                        <div className="flex justify-end">
-                          <p className="max-w-[48ch] whitespace-pre-wrap border-l-2 border-accent bg-raised px-3 py-2 text-[13px] leading-relaxed text-text">
+                        // A ledger entry, not a chat bubble: full width, a
+                        // numbered mono rule on top, no floating-right box.
+                        // The right-aligned bubble is the single strongest
+                        // "this is a ChatGPT clone" signal, and this site is
+                        // an instrument log, not a messaging app.
+                        <div className={mi > 0 ? "border-t border-line pt-4" : ""}>
+                          <p className="mb-2 text-[10px] tracking-widest text-text-faint [font-family:var(--font-geist-mono)]">
+                            {String(exchange).padStart(2, "0")} · you
+                          </p>
+                          <p className="whitespace-pre-wrap border-l-2 border-accent pl-3 text-[13px] leading-relaxed text-text">
                             {text}
                           </p>
                         </div>

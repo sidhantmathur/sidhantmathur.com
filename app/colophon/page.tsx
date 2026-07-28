@@ -38,6 +38,27 @@ export default function ColophonPage() {
           </Link>
           .
         </p>
+        <h2 className="mt-10 text-[17px] font-medium tracking-[-0.01em] text-text">
+          The site shows its workings
+        </h2>
+        <p className="mt-4 max-w-[58ch] text-[15px] leading-relaxed text-text-soft md:text-base">
+          One rule holds everything here together: anything the machine does,
+          you can look at. The{" "}
+          <Link href="/prompt" className="text-accent">
+            instructions
+          </Link>{" "}
+          it runs on are published. What it{" "}
+          <Link href="/refusals" className="text-accent">
+            won&apos;t answer
+          </Link>{" "}
+          is a page, not a surprise. What each turn costs is printed next to
+          the turn, and{" "}
+          <Link href="/measurements" className="text-accent">
+            how often it&apos;s right
+          </Link>{" "}
+          is measured in public. A chatbot asking for a hiring manager&apos;s
+          trust should have to show its receipts.
+        </p>
       </DocPage>
   );
 }
