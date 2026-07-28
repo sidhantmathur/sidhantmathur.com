@@ -199,6 +199,14 @@ it blames the site rather than the reader, and it names the way out. An empty
 panel would have been the cheaper option and would have left someone staring at
 a blank space wondering what they'd broken.
 
+**Differentiation pass, 2026-07-28** (branch `feat/glyph-field`). Two strings and
+a label pattern:
+
+| Status | Where | What it says | Claims | Grounding |
+| --- | --- | --- | --- | --- |
+| draft | `app/colophon/page.tsx` → "The site shows its workings" | New colophon section naming the transparency thesis: "One rule holds everything here together: anything the machine does, you can look at… A chatbot asking for a hiring manager's trust should have to show its receipts." Links /prompt, /refusals, /measurements. | none | Describes site behaviour only — every linked page exists and does what the sentence says |
+| draft | `components/shell/app-shell.tsx` → ledger turn labels | `NN · you` mono rule above each visitor turn in the conversation (e.g. "01 · you"). | none | UI chrome |
+
 ## Pending `[VERIFY]` markers
 
 Sentences drafted with a fact-shaped hole in them, waiting on Sidhant. Listing them

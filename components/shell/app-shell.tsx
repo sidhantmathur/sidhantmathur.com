@@ -549,15 +549,28 @@ export function AppShell() {
               )}
 
               <div className="space-y-6">
-                {messages.map((m) => {
+                {messages.map((m, mi) => {
                   const text = textOf(m);
                   const outs = toolOutputs(m);
                   if (!text && !outs.length) return null;
+                  // Exchange number for the ledger rule — the count of user
+                  // turns up to and including this message.
+                  const exchange = messages
+                    .slice(0, mi + 1)
+                    .filter((x) => x.role === "user").length;
                   return (
                     <div key={m.id} className="space-y-2">
                       {m.role === "user" ? (
-                        <div className="flex justify-end">
-                          <p className="max-w-[48ch] whitespace-pre-wrap border-l-2 border-accent bg-raised px-3 py-2 text-[13px] leading-relaxed text-text">
+                        // A ledger entry, not a chat bubble: full width, a
+                        // numbered mono rule on top, no floating-right box.
+                        // The right-aligned bubble is the single strongest
+                        // "this is a ChatGPT clone" signal, and this site is
+                        // an instrument log, not a messaging app.
+                        <div className={mi > 0 ? "border-t border-line pt-4" : ""}>
+                          <p className="mb-2 text-[10px] tracking-widest text-text-faint [font-family:var(--font-geist-mono)]">
+                            {String(exchange).padStart(2, "0")} · you
+                          </p>
+                          <p className="whitespace-pre-wrap border-l-2 border-accent pl-3 text-[13px] leading-relaxed text-text">
                             {text}
                           </p>
                         </div>
