@@ -17,10 +17,15 @@ import { useEffect, useRef, useState } from "react";
 // holds — ambient around the conversation, never in front of it — via the
 // legibility scrim over the centre column and pointer-events-none throughout.
 //
-// Fallback order: reduced motion or no WebGL → the plain <img>, static.
+// Fallback order: reduced motion, narrow screen, or no WebGL → the plain
+// <img>, static.
 
 const IMAGE_ASPECT = 1792 / 1024;
 const FRAME_MS = 33; // ~30fps — a slow sweep gains nothing from 60
+// Must match the fade duration on the wrapper below. The shader keeps running
+// for this long after `visible` goes false, so the canvas isn't swapped for a
+// still frame of a different phase halfway through the fade.
+const FADE_MS = 1000;
 
 const VERT = `
 attribute vec2 p;
@@ -61,11 +66,36 @@ export function AmbientBackdrop({ visible }: { visible: boolean }) {
   // canvas in over the img, which has the same fit and opacity classes.
   const [live, setLive] = useState(false);
 
-  // The shader. Torn down whenever the backdrop is faded out so a hidden
-  // homepage tab spends nothing; the img underneath covers the gap on the
-  // way back in while the first frame compiles.
+  // The shader outlives `visible` by one fade, so teardown never lands
+  // mid-transition. See FADE_MS.
+  const [running, setRunning] = useState(visible);
+  // Turning on is immediate (adjusted during render); turning off waits out
+  // the fade.
+  if (visible && !running) setRunning(true);
   useEffect(() => {
-    if (!visible) return;
+    if (visible) return;
+    const t = setTimeout(() => setRunning(false), FADE_MS);
+    return () => clearTimeout(t);
+  }, [visible]);
+
+  // Below md the column is the full width, so the scrim sits at 55% over the
+  // whole thing and the motion is barely perceptible — not worth a canvas
+  // redrawing at 1.5× DPR on a phone battery. The static img is the honest
+  // mobile version.
+  const [wide, setWide] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 768px)");
+    const sync = () => setWide(mq.matches);
+    sync();
+    mq.addEventListener("change", sync);
+    return () => mq.removeEventListener("change", sync);
+  }, []);
+
+  // The shader. Torn down once the backdrop has finished fading out so a
+  // hidden homepage tab spends nothing; the img underneath covers the gap on
+  // the way back in while the first frame compiles.
+  useEffect(() => {
+    if (!running || !wide) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -150,7 +180,7 @@ export function AmbientBackdrop({ visible }: { visible: boolean }) {
       setLive(false);
       gl.getExtension("WEBGL_lose_context")?.loseContext();
     };
-  }, [visible]);
+  }, [running, wide]);
 
   return (
     <div
@@ -160,10 +190,17 @@ export function AmbientBackdrop({ visible }: { visible: boolean }) {
       }`}
     >
       <div className="absolute inset-0">
+        {/* Two encodings, not one. Downscaling this texture wrecks it — the
+            glyphs are the point and they turn to noise below ~1400px — so
+            desktop keeps the full 242 KB file the shader samples. Phones
+            never run the shader and sit under a 55% scrim, where a 900px
+            crop at 68 KB is indistinguishable and a quarter of the bytes. */}
         {/* eslint-disable-next-line @next/next/no-img-element -- a fixed
             decorative backdrop; next/image adds nothing here */}
         <img
           src="/ambient-wave.avif"
+          srcSet="/ambient-wave-sm.avif 900w, /ambient-wave.avif 1792w"
+          sizes="(min-width: 768px) 100vw, 900px"
           alt=""
           decoding="async"
           className={`ambient-drift h-full w-full object-cover opacity-35 md:opacity-50 ${
@@ -181,11 +218,16 @@ export function AmbientBackdrop({ visible }: { visible: boolean }) {
           middle. On small screens the column is the whole width, so the flat
           mobile scrim is heavier and the shaped one takes over from md up. */}
       <div className="absolute inset-0 bg-bg/55 md:hidden" />
+      {/* The stops derive from --bg rather than repeating its hex, so the
+          scrim can't drift away from the page behind it. */}
       <div
         className="absolute inset-0 hidden md:block"
         style={{
-          background:
-            "linear-gradient(90deg, rgba(11,10,9,0.1) 0%, rgba(11,10,9,0.72) 30%, rgba(11,10,9,0.72) 70%, rgba(11,10,9,0.1) 100%)",
+          background: `linear-gradient(90deg,
+            color-mix(in srgb, var(--bg) 10%, transparent) 0%,
+            color-mix(in srgb, var(--bg) 72%, transparent) 30%,
+            color-mix(in srgb, var(--bg) 72%, transparent) 70%,
+            color-mix(in srgb, var(--bg) 10%, transparent) 100%)`,
         }}
       />
     </div>

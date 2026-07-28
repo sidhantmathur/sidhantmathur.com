@@ -19,7 +19,7 @@ import { CopyButton } from "./copy-button";
 import { InstrumentDeck, Seismograph, lastSettledRate } from "./instruments";
 import { useTokenRate } from "./use-token-rate";
 import { useTeletype } from "./use-teletype";
-import { useIdle, useTypedText } from "./use-idle";
+import { useIdle } from "./use-idle";
 import { AmbientBackdrop } from "./ambient-backdrop";
 import { conversationToMarkdown, messageToMarkdown } from "@/lib/transcript";
 import { permalinkFor } from "@/lib/permalink";
@@ -993,14 +993,16 @@ function Stat({ label, value }: { label: string; value: string }) {
   );
 }
 
-// The idle one-liner types itself out and then holds. Deliberately the quietest
+// The idle one-liner arrives settled — a fade, not a typewriter. It used to
+// type itself out character by character, which put a second motion on screen
+// against the ambient wave; the §4 policy allows one, and the wave is it. The
+// caret stays as punctuation, no longer pulsing. Deliberately the quietest
 // thing on the page: it sits below the conversation, never above it.
 function IdleLine({ line }: { line: string }) {
-  const typed = useTypedText(line);
   return (
-    <p className="pt-6 text-[12px] leading-relaxed text-text-faint">
-      {typed}
-      <span className="animate-pulse text-accent">▍</span>
+    <p className="animate-idle-line pt-6 text-[12px] leading-relaxed text-text-faint">
+      {line}
+      <span className="text-accent">▍</span>
     </p>
   );
 }

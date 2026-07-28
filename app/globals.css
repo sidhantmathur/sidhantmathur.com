@@ -177,6 +177,21 @@ body {
   animation: ambient-drift 80s ease-in-out infinite alternate;
 }
 
+/* The idle one-liner settles in rather than typing itself out — one motion on
+   screen at a time, and during idle that motion is the backdrop. */
+@keyframes idle-line {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-idle-line {
+  animation: idle-line 700ms ease-out both;
+}
+
 /* Honour the OS "reduce motion" setting. Reduced, not removed: transitions
    collapse to ~1ms so state changes still land in a single frame rather than
    snapping mid-interaction, which is the behaviour the spec asks for.
