@@ -20,6 +20,7 @@ import { InstrumentDeck, Seismograph, lastSettledRate } from "./instruments";
 import { useTokenRate } from "./use-token-rate";
 import { useTeletype } from "./use-teletype";
 import { useIdle, useTypedText } from "./use-idle";
+import { GlyphField } from "./glyph-field";
 import { conversationToMarkdown, messageToMarkdown } from "@/lib/transcript";
 import { permalinkFor } from "@/lib/permalink";
 import { track } from "@/lib/analytics";
@@ -480,11 +481,16 @@ export function AppShell() {
         </nav>
 
         {/* Conversation */}
-        <div className="flex min-w-0 flex-1 flex-col">
+        <div className="relative flex min-w-0 flex-1 flex-col">
+          {/* Ambient glyph field (extends #14): under the empty state, back
+              during idle, gone while a conversation is on screen. It sits
+              behind the scroll area rather than inside it so it doesn't
+              scroll with the transcript. */}
+          <GlyphField visible={!hasMessages || idle} />
           <div
             ref={scrollRef}
             onScroll={onScroll}
-            className="min-h-0 flex-1 overflow-y-auto px-4 py-8 md:px-10"
+            className="relative min-h-0 flex-1 overflow-y-auto px-4 py-8 md:px-10"
           >
             {/* Idle dims the column rather than covering it. The conversation
                 stays legible and every control stays live — this is a settle,
