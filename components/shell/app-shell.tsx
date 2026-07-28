@@ -20,7 +20,7 @@ import { InstrumentDeck, Seismograph, lastSettledRate } from "./instruments";
 import { useTokenRate } from "./use-token-rate";
 import { useTeletype } from "./use-teletype";
 import { useIdle, useTypedText } from "./use-idle";
-import { GlyphField } from "./glyph-field";
+import { AmbientBackdrop } from "./ambient-backdrop";
 import { conversationToMarkdown, messageToMarkdown } from "@/lib/transcript";
 import { permalinkFor } from "@/lib/permalink";
 import { track } from "@/lib/analytics";
@@ -482,11 +482,11 @@ export function AppShell() {
 
         {/* Conversation */}
         <div className="relative flex min-w-0 flex-1 flex-col">
-          {/* Ambient glyph field (extends #14): under the empty state, back
+          {/* Ambient backdrop (extends #14): under the empty state, back
               during idle, gone while a conversation is on screen. It sits
               behind the scroll area rather than inside it so it doesn't
               scroll with the transcript. */}
-          <GlyphField visible={!hasMessages || idle} />
+          <AmbientBackdrop visible={!hasMessages || idle} />
           <div
             ref={scrollRef}
             onScroll={onScroll}

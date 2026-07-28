@@ -161,6 +161,22 @@ body {
   }
 }
 
+/* Ambient backdrop drift — movement measured in minutes, an exhale rather
+   than an animation. Alternate + ease-in-out means it never jumps, and the
+   reduced-motion rule below collapses it with everything else. */
+@keyframes ambient-drift {
+  from {
+    transform: translate3d(-12px, 0, 0) scale(1.04);
+  }
+  to {
+    transform: translate3d(12px, -8px, 0) scale(1.04);
+  }
+}
+
+.ambient-drift {
+  animation: ambient-drift 80s ease-in-out infinite alternate;
+}
+
 /* Honour the OS "reduce motion" setting. Reduced, not removed: transitions
    collapse to ~1ms so state changes still land in a single frame rather than
    snapping mid-interaction, which is the behaviour the spec asks for.
