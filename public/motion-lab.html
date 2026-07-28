@@ -1,0 +1,221 @@
+<!doctype html>
+<!-- Motion lab — dev-only comparison page for the ambient backdrop's motion.
+     Not linked from anywhere; visit /motion-lab.html directly. Delete when a
+     winner ships. Every mode renders the same committed texture
+     (/ambient-wave.avif); only the motion model changes. -->
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Motion lab</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #0B0A09; overflow: hidden; }
+  canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+  .ui {
+    position: fixed; left: 16px; bottom: 16px; z-index: 2;
+    font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+    font-size: 12px; color: #A9A29A;
+    background: rgba(17,16,16,.88); border: 1px solid #332E29; padding: 12px 14px;
+    max-width: 420px;
+  }
+  .ui b { color: #EFEBE4; font-weight: 600; }
+  .modes { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0; }
+  .modes button {
+    font: inherit; color: #A9A29A; background: #171614; border: 1px solid #332E29;
+    padding: 5px 9px; cursor: pointer; border-radius: 0;
+  }
+  .modes button.on { color: #EFEBE4; border-color: #E4522B; }
+  label { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
+  input[type=range] { flex: 1; accent-color: #E4522B; }
+  .desc { margin-top: 8px; color: #6B655E; min-height: 2.4em; }
+  .hint { margin-top: 8px; color: #6B655E; }
+  /* Fake content column so legibility can be judged, roughly the app's hero */
+  .col {
+    position: fixed; inset: 0; display: grid; place-items: center; z-index: 1;
+    pointer-events: none;
+  }
+  .colinner { max-width: 640px; padding: 0 24px; }
+  .colinner h1 {
+    font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+    color: #EFEBE4; font-size: 30px; line-height: 1.25; font-weight: 500;
+    letter-spacing: -0.02em; margin: 0 0 12px;
+  }
+  .colinner p { color: #A9A29A; font-size: 13px; font-family: ui-monospace, monospace; }
+  .scrim {
+    position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background: linear-gradient(90deg, rgba(11,10,9,.1) 0%, rgba(11,10,9,.72) 30%, rgba(11,10,9,.72) 70%, rgba(11,10,9,.1) 100%);
+  }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="scrim"></div>
+<div class="col"><div class="colinner">
+  <h1>I learn what the problem needs, then I build the thing.</h1>
+  <p>Ask what you'd ask on a call.</p>
+</div></div>
+<div class="ui">
+  <b>Motion lab</b> — same texture, five motion models. Keys 1–5 work too.
+  <div class="modes" id="modes"></div>
+  <label>speed <input id="speed" type="range" min="0.2" max="3" step="0.05" value="1"><span id="speedv">1.0×</span></label>
+  <label>strength <input id="amp" type="range" min="0.2" max="2.5" step="0.05" value="1"><span id="ampv">1.0×</span></label>
+  <div class="desc" id="desc"></div>
+  <div class="hint">Texture opacity here matches the site (50%). Judge the words, not just the waves.</div>
+</div>
+<script>
+const MODES = [
+  { name: "1 · swell", desc: "The surface itself undulates — big, slow vertical waves travel across the field, like cloth or open water. Nothing changes brightness; the texture moves." },
+  { name: "2 · tide", desc: "Nothing displaces — broad bands of glow roll through the field, brightening the glyphs as they pass. A lighthouse-slow sweep of light, not of stuff." },
+  { name: "3 · depths", desc: "Two copies of the texture drift over each other at different scales and speeds — a deep layer and a surface layer, like looking down into water." },
+  { name: "4 · churn", desc: "Organic domain-warp — the field slowly boils, glyphs eddy around each other with a faint shimmer where the warp is strongest. The most alive, least wave-like." },
+  { name: "5 · swell + tide", desc: "Mode 1's traveling undulation with a soft crest of light riding each wave — displacement leads, glow follows. The most literally ocean." },
+];
+
+const FRAG = `
+precision mediump float;
+uniform sampler2D t;
+uniform vec2 r;
+uniform float m;      // time, seconds * speed
+uniform float a;      // strength multiplier
+uniform int mode;
+
+vec2 cover(vec2 uv) {
+  vec2 st = uv - 0.5;
+  float ca = r.x / r.y, ia = 1.75;
+  if (ca > ia) { st.y *= ia / ca; } else { st.x *= ca / ia; }
+  return st + 0.5;
+}
+
+void main() {
+  vec2 uv = gl_FragCoord.xy / r;
+  uv.y = 1.0 - uv.y;
+  uv = cover(uv);
+  vec3 c;
+
+  if (mode == 0) {
+    // Swell: long-wavelength traveling displacement.
+    float y = a * (0.020 * sin(uv.x * 4.0 - m * 0.35)
+                 + 0.010 * sin(uv.x * 9.0 - m * 0.55 + 1.7)
+                 + 0.006 * sin(uv.x * 2.1 + m * 0.22));
+    float x = a * 0.006 * sin(uv.y * 5.0 + m * 0.25);
+    c = texture2D(t, uv + vec2(x, y)).rgb;
+
+  } else if (mode == 1) {
+    // Tide: broad traveling brightness, no displacement.
+    float sweep = 1.0
+      + a * 0.38 * sin(uv.x * 2.2 - m * 0.42 + 1.6 * sin(uv.y * 1.8 + m * 0.13))
+      + a * 0.14 * sin(uv.x * 5.5 + m * 0.27 + uv.y * 3.0);
+    c = texture2D(t, uv).rgb * max(sweep, 0.25);
+
+  } else if (mode == 2) {
+    // Depths: two layers, different scale and drift, screen-blended.
+    vec2 o1 = vec2(0.030 * sin(m * 0.06), 0.012 * sin(m * 0.045 + 1.0)) * a;
+    vec2 st2 = (uv - 0.5) * 0.78 + 0.5;
+    vec2 o2 = vec2(0.045 * sin(m * 0.085 + 2.2), 0.018 * sin(m * 0.07)) * a;
+    vec3 c1 = texture2D(t, uv + o1).rgb;
+    vec3 c2 = texture2D(t, st2 + o2).rgb;
+    c = 1.0 - (1.0 - c1 * 0.85) * (1.0 - c2 * 0.55);
+
+  } else if (mode == 3) {
+    // Churn: two-pass domain warp, slow boil.
+    vec2 q = vec2(sin(uv.y * 6.0 + m * 0.20) + 0.5 * sin(uv.x * 11.0 - m * 0.13),
+                  sin(uv.x * 7.0 - m * 0.17) + 0.5 * sin(uv.y * 13.0 + m * 0.11));
+    vec2 w = uv + a * 0.012 * q;
+    vec2 q2 = vec2(sin(w.y * 9.0 - m * 0.14), sin(w.x * 8.0 + m * 0.16));
+    w += a * 0.006 * q2;
+    c = texture2D(t, w).rgb * (1.0 + a * 0.10 * q.x * q2.y);
+
+  } else {
+    // Swell + tide: displacement with a crest of light in phase.
+    float ph = uv.x * 4.0 - m * 0.35;
+    float y = a * (0.018 * sin(ph) + 0.009 * sin(uv.x * 9.0 - m * 0.55 + 1.7));
+    c = texture2D(t, uv + vec2(0.0, y)).rgb;
+    float crest = 1.0 + a * 0.22 * cos(ph) + a * 0.08 * sin(uv.x * 7.0 - m * 0.45 + uv.y * 2.0);
+    c *= max(crest, 0.3);
+  }
+
+  gl_FragColor = vec4(c * 0.5, 1.0); // 0.5 ≈ the site's md:opacity-50
+}
+`;
+
+const canvas = document.getElementById("c");
+const gl = canvas.getContext("webgl", { antialias: false });
+const vs = gl.createShader(gl.VERTEX_SHADER);
+gl.shaderSource(vs, "attribute vec2 p; void main(){ gl_Position = vec4(p,0.,1.); }");
+gl.compileShader(vs);
+const fs = gl.createShader(gl.FRAGMENT_SHADER);
+gl.shaderSource(fs, FRAG);
+gl.compileShader(fs);
+if (!gl.getShaderParameter(fs, gl.COMPILE_STATUS)) {
+  document.getElementById("desc").textContent = "Shader failed: " + gl.getShaderInfoLog(fs);
+}
+const prog = gl.createProgram();
+gl.attachShader(prog, vs); gl.attachShader(prog, fs); gl.linkProgram(prog); gl.useProgram(prog);
+const buf = gl.createBuffer();
+gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 3,-1, -1,3]), gl.STATIC_DRAW);
+const loc = gl.getAttribLocation(prog, "p");
+gl.enableVertexAttribArray(loc);
+gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+const uR = gl.getUniformLocation(prog, "r");
+const uM = gl.getUniformLocation(prog, "m");
+const uA = gl.getUniformLocation(prog, "a");
+const uMode = gl.getUniformLocation(prog, "mode");
+
+let mode = 0, speed = 1, amp = 1, vt = 0, lastNow = 0;
+
+const modesEl = document.getElementById("modes");
+MODES.forEach((mo, i) => {
+  const b = document.createElement("button");
+  b.textContent = mo.name;
+  b.onclick = () => setMode(i);
+  modesEl.appendChild(b);
+});
+function setMode(i) {
+  mode = i;
+  [...modesEl.children].forEach((b, j) => b.classList.toggle("on", j === i));
+  document.getElementById("desc").textContent = MODES[i].desc;
+}
+setMode(0);
+document.addEventListener("keydown", e => {
+  const i = "12345".indexOf(e.key);
+  if (i >= 0) setMode(i);
+});
+const speedEl = document.getElementById("speed"), ampEl = document.getElementById("amp");
+speedEl.oninput = () => { speed = +speedEl.value; document.getElementById("speedv").textContent = speed.toFixed(2) + "×"; };
+ampEl.oninput = () => { amp = +ampEl.value; document.getElementById("ampv").textContent = amp.toFixed(2) + "×"; };
+
+const img = new Image();
+img.src = "/ambient-wave.avif";
+img.decode().then(() => {
+  const tex = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, tex);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, img);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  requestAnimationFrame(frame);
+});
+
+function frame(now) {
+  requestAnimationFrame(frame);
+  // Virtual clock advances by wall time * speed, so the slider changes pace
+  // without jumping phase.
+  vt += Math.min(now - lastNow, 100) / 1000 * speed;
+  lastNow = now;
+  const dpr = Math.min(devicePixelRatio || 1, 1.5);
+  const w = Math.round(canvas.clientWidth * dpr), h = Math.round(canvas.clientHeight * dpr);
+  if (canvas.width !== w || canvas.height !== h) {
+    canvas.width = w; canvas.height = h; gl.viewport(0, 0, w, h);
+  }
+  gl.uniform2f(uR, w, h);
+  gl.uniform1f(uM, vt);
+  gl.uniform1f(uA, amp);
+  gl.uniform1i(uMode, mode);
+  gl.drawArrays(gl.TRIANGLES, 0, 3);
+}
+</script>
+</body>
+</html>
