@@ -44,13 +44,13 @@ void main() {
   if (ca > ia) { st.y *= ia / ca; } else { st.x *= ca / ia; }
   uv = st + 0.5;
   vec2 w = vec2(
-    sin(uv.y * 8.0 + m * 0.10) + 0.6 * sin(uv.y * 17.0 - m * 0.06),
-    sin(uv.x * 9.0 - m * 0.08) + 0.6 * sin(uv.x * 15.0 + m * 0.05)
-  ) * 0.0032;
+    sin(uv.y * 8.0 + m * 0.26) + 0.6 * sin(uv.y * 17.0 - m * 0.15),
+    sin(uv.x * 9.0 - m * 0.21) + 0.6 * sin(uv.x * 15.0 + m * 0.12)
+  ) * 0.0038;
   vec3 c = texture2D(t, uv + w).rgb;
   float sweep = 1.0
-    + 0.16 * sin(uv.x * 5.0 - m * 0.22 + 1.5 * sin(uv.y * 3.0 + m * 0.07))
-    + 0.07 * sin(uv.x * 11.0 + m * 0.13 + uv.y * 4.0);
+    + 0.24 * sin(uv.x * 5.0 - m * 0.55 + 1.5 * sin(uv.y * 3.0 + m * 0.18))
+    + 0.10 * sin(uv.x * 11.0 + m * 0.34 + uv.y * 4.0);
   gl_FragColor = vec4(c * sweep, 1.0);
 }
 `;
