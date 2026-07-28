@@ -27,9 +27,11 @@ attribute vec2 p;
 void main() { gl_Position = vec4(p, 0.0, 1.0); }
 `;
 
-// The sweep is multiplicative, so dark stays dark and only the lit glyphs
-// swell; the warp is under half a glyph cell, so characters shimmer without
-// visibly swimming.
+// Swell + tide, the winner of the motion-lab comparison (2026-07-28): long
+// waves travel across the field displacing it like water, and a soft crest
+// of light rides each wave in phase. The crest is multiplicative, so dark
+// stays dark. One motion, nothing else — the pointer parallax was cut with
+// the same decision, because two motions fight and neither reads.
 const FRAG = `
 precision mediump float;
 uniform sampler2D t;
@@ -43,41 +45,21 @@ void main() {
   float ia = ${IMAGE_ASPECT.toFixed(4)};
   if (ca > ia) { st.y *= ia / ca; } else { st.x *= ca / ia; }
   uv = st + 0.5;
-  vec2 w = vec2(
-    sin(uv.y * 8.0 + m * 0.26) + 0.6 * sin(uv.y * 17.0 - m * 0.15),
-    sin(uv.x * 9.0 - m * 0.21) + 0.6 * sin(uv.x * 15.0 + m * 0.12)
-  ) * 0.0038;
-  vec3 c = texture2D(t, uv + w).rgb;
-  float sweep = 1.0
-    + 0.24 * sin(uv.x * 5.0 - m * 0.55 + 1.5 * sin(uv.y * 3.0 + m * 0.18))
-    + 0.10 * sin(uv.x * 11.0 + m * 0.34 + uv.y * 4.0);
-  gl_FragColor = vec4(c * sweep, 1.0);
+  float ph = uv.x * 4.0 - m * 0.28;
+  float y = 0.018 * sin(ph) + 0.009 * sin(uv.x * 9.0 - m * 0.44 + 1.7);
+  vec3 c = texture2D(t, uv + vec2(0.0, y)).rgb;
+  float crest = 1.0
+    + 0.22 * cos(ph)
+    + 0.08 * sin(uv.x * 7.0 - m * 0.36 + uv.y * 2.0);
+  gl_FragColor = vec4(c * max(crest, 0.3), 1.0);
 }
 `;
 
 export function AmbientBackdrop({ visible }: { visible: boolean }) {
-  const layerRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   // Static until the shader proves it can run; flipping to true swaps the
   // canvas in over the img, which has the same fit and opacity classes.
   const [live, setLive] = useState(false);
-
-  // Pointer parallax — a few pixels on the whole layer, shader or not.
-  useEffect(() => {
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const layer = layerRef.current;
-    if (!layer) return;
-
-    function onMove(e: PointerEvent) {
-      if (!layer) return;
-      const dx = (e.clientX / window.innerWidth - 0.5) * 14;
-      const dy = (e.clientY / window.innerHeight - 0.5) * 8;
-      layer.style.transform = `translate3d(${dx}px, ${dy}px, 0)`;
-    }
-
-    window.addEventListener("pointermove", onMove, { passive: true });
-    return () => window.removeEventListener("pointermove", onMove);
-  }, []);
 
   // The shader. Torn down whenever the backdrop is faded out so a hidden
   // homepage tab spends nothing; the img underneath covers the gap on the
@@ -177,14 +159,9 @@ export function AmbientBackdrop({ visible }: { visible: boolean }) {
         visible ? "opacity-100" : "opacity-0"
       }`}
     >
-      {/* Bled past the edges so the parallax never shows a seam. */}
-      <div
-        ref={layerRef}
-        className="absolute -inset-8 transition-transform duration-700 ease-out will-change-transform"
-      >
+      <div className="absolute inset-0">
         {/* eslint-disable-next-line @next/next/no-img-element -- a fixed
-            decorative backdrop; next/image's wrapper would fight the
-            parallax transform */}
+            decorative backdrop; next/image adds nothing here */}
         <img
           src="/ambient-wave.avif"
           alt=""
