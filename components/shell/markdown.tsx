@@ -287,6 +287,7 @@ function Table({ lines, keyPrefix }: { lines: string[]; keyPrefix: string }) {
 export function Markdown({
   text,
   gutter,
+  trailing,
 }: {
   text: string;
   /**
@@ -296,6 +297,20 @@ export function Markdown({
    * what "block 2" means.
    */
   gutter?: (blockIndex: number) => ReactNode;
+  /**
+   * Rendered at the very end of the last block — the streaming caret, and the
+   * only thing that has ever needed this.
+   *
+   * An explicit prop rather than a `:last-child::after` rule on a wrapper,
+   * which is what it looked like this wanted to be. The blocks below render as
+   * bare Fragments when there is no gutter and as grid rows when there is, so
+   * "the last child" is a different element in the two cases and a selector
+   * that worked while streaming would silently stop working the moment the turn
+   * settled. It is also the exact structure the block-index contract with
+   * lib/verify.ts depends on, and a CSS hook would be one more reason not to
+   * touch it.
+   */
+  trailing?: ReactNode;
 }) {
   // Blank lines separate blocks — the same split lib/verify.ts uses, so the two
   // agree on what "block 2" means. Streaming means this runs on partial text,
@@ -321,11 +336,36 @@ export function Markdown({
     );
   };
 
+  // The caret belongs INSIDE the last paragraph, on the same line as the last
+  // word — that is the whole point of it. Only the paragraph and heading
+  // branches below can hold it; if the answer currently ends in a list, a table
+  // or a fence it becomes a line of its own underneath, rendered after the map.
+  //
+  // Decided up front rather than by flipping a flag inside the map: the same
+  // branch conditions, run once against the last group. That duplicates three
+  // predicates, which is the price of the map staying a pure render — a
+  // variable written during one iteration and read after the loop is exactly
+  // the pattern the React compiler refuses, and it is right to.
+  const lastGroup = groups[groups.length - 1];
+  const trailingInline =
+    trailing != null &&
+    lastGroup != null &&
+    lastGroup.kind === "prose" &&
+    (() => {
+      const lines = lastGroup.block.split("\n").filter((l) => l.trim() !== "");
+      if (!lines.length) return false;
+      if (isTable(lines)) return false;
+      // A heading renders as a <p> too, so it is inline-capable and needs no
+      // case of its own here.
+      return !lines.every((l) => BULLET.test(l)) && !lines.every((l) => ORDERED.test(l));
+    })();
+
   return (
     <div className="space-y-3 text-[13px] leading-[1.7] text-text-soft">
       {groups.map((g, gi) => {
         const bi = g.index;
         const key = `${bi}-${gi}`;
+        const last = trailingInline && gi === groups.length - 1;
 
         if (g.kind === "code") {
           return wrap(bi, key, <CodeBlock lang={g.lang} code={g.code} />);
@@ -367,6 +407,7 @@ export function Markdown({
             key,
             <p className="font-medium text-text">
               {inline(lines[0].replace(/^#{1,6}\s+/, ""), `${key}-h`)}
+              {last && trailing}
             </p>,
           );
         }
@@ -374,9 +415,15 @@ export function Markdown({
         return wrap(
           bi,
           key,
-          <p className="whitespace-pre-wrap">{inline(lines.join("\n"), key)}</p>,
+          <p className="whitespace-pre-wrap">
+            {inline(lines.join("\n"), key)}
+            {last && trailing}
+          </p>,
         );
       })}
+      {/* The answer ends in a fence, a table or a list — or hasn't produced a
+          block yet, which is the first frame of every turn. */}
+      {trailing != null && !trailingInline && <p>{trailing}</p>}
     </div>
   );
 }

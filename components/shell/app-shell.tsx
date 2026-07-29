@@ -26,6 +26,8 @@ import { InstrumentDeck, Seismograph, lastSettledRate } from "./instruments";
 import { useTokenRate } from "./use-token-rate";
 import { useTeletype } from "./use-teletype";
 import { useIdle } from "./use-idle";
+import { useElapsed } from "./use-elapsed";
+import { PhaseLine } from "./phase-line";
 import { AmbientBackdrop } from "./ambient-backdrop";
 import { conversationToMarkdown, messageToMarkdown } from "@/lib/transcript";
 import { permalinkFor } from "@/lib/permalink";
@@ -120,6 +122,9 @@ export function AppShell() {
   const rate = useTokenRate(streamingText, isBusy);
   const settledRate = lastSettledRate(turnLog);
   const { teletype, toggleTeletype } = useTeletype(streamingText, isBusy);
+  // The fourth reading of the same event. Unlike the three above it survives
+  // the turn ending, because the finished duration is the interesting number.
+  const elapsed = useElapsed(isBusy);
   const sessionCost = useMemo(
     () => sumCosts(turnLog.map((t) => (t.error ? null : costOfTurn(t.model, t.usage)))),
     [turnLog],
@@ -590,7 +595,16 @@ export function AppShell() {
                     .slice(0, mi + 1)
                     .filter((x) => x.role === "user").length;
                   return (
-                    <div key={m.id} className="space-y-2">
+                    // A turn resolves in rather than appearing: opacity plus a
+                    // 4px blur clearing over 400ms. Ported from beautiful-ui's
+                    // `stream-in`, and the one place its instinct beat ours —
+                    // messages used to pop into a static column, which on a
+                    // fast turn reads as a layout jump rather than an arrival.
+                    //
+                    // Mount-only by construction: a CSS animation restarts when
+                    // the animation property changes, not when React re-renders,
+                    // so the streaming turn is not re-blurred on every token.
+                    <div key={m.id} className="animate-stream-in space-y-2">
                       {m.role === "user" ? (
                         // A ledger entry, not a chat bubble: full width, a
                         // numbered mono rule on top, no floating-right box.
@@ -670,19 +684,13 @@ export function AppShell() {
                 })}
 
                 {/* One line, and it names the step rather than the wait. The
-                    key restarts the fade when the step changes, so a turn that
+                    key restarts the entry when the step changes, so a turn that
                     moves from extracting to judging looks like it moved — a
-                    string swapping under a continuous pulse reads as a glitch.
-                    Aria-live so a screen reader hears the same progress a
-                    sighted reader watches. */}
+                    string swapping under a continuous animation reads as a
+                    glitch. The elapsed count is NOT keyed, so it measures the
+                    whole turn rather than restarting at each step. */}
                 {phase && (
-                  <p
-                    key={phase}
-                    aria-live="polite"
-                    className="animate-pulse text-[13px] text-text-faint"
-                  >
-                    {phase}
-                  </p>
+                  <PhaseLine key={phase} phase={phase} elapsed={elapsed} />
                 )}
                 {errorKind === "error" && (
                   <p className="text-[13px] leading-relaxed text-text-faint">{ERROR_STATE}</p>

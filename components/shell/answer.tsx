@@ -37,8 +37,27 @@ export function Answer({
 }) {
   const check = useMemo(() => verifyAnswer(text, ALL_CHUNKS_BY_ID), [text]);
 
+  // While the answer streams it carries a caret at the writing edge. The site
+  // had no marker for "this is still arriving" anywhere in the message column —
+  // the only signals were the header dot and the phase line, and the phase line
+  // deliberately disappears the moment prose exists (see phaseOf). So for the
+  // whole body of a long answer nothing on the page said it wasn't finished.
+  //
+  // The glyph is the one already used by the idle line, in the accent, so this
+  // reads as the same cursor rather than a new piece of vocabulary. It is a
+  // character rather than an animated element on purpose: one motion at a time,
+  // and during streaming that motion is the text itself.
   if (!settled) {
-    return <Markdown text={stripCitations(text)} />;
+    return (
+      <Markdown
+        text={stripCitations(text)}
+        trailing={
+          <span aria-hidden className="ml-0.5 text-accent">
+            ▍
+          </span>
+        }
+      />
+    );
   }
 
   // An answer that cited NOTHING gets one line saying so, rather than a mark

@@ -22,6 +22,15 @@
 
   --radius: 0rem;
 
+  /* One easing curve for every state change in the shell. Ported from the
+     beautiful-ui exploration, which is the one thing that library does that
+     this site was missing: a single strong ease-out (a fast start that settles
+     rather than decelerating evenly) applied everywhere, instead of Tailwind's
+     default `cubic-bezier(.4,0,.2,1)` on some transitions and nothing on the
+     rest. The curve is the craft; the rounded, drop-shadowed skin it arrived
+     wrapped in is NOT — see the note above the keyframes below. */
+  --ease-out-strong: cubic-bezier(0.23, 1, 0.32, 1);
+
   /* shadcn roles mapped onto the tokens above.
      NOTE: shadcn's generated theme also wants an `--accent` role (a hover
      background). That name collides with OUR brand accent, and when both were
@@ -81,6 +90,8 @@
   --color-destructive: var(--destructive);
 
   --radius: var(--radius);
+
+  --ease-out-strong: var(--ease-out-strong);
 
   /* next/font variables (set on <html> by app/fonts.ts) → Tailwind fonts */
   --font-sans: var(--font-geist-sans);
@@ -192,6 +203,90 @@ body {
   animation: idle-line 700ms ease-out both;
 }
 
+/* ---------------------------------------------------------------------------
+   Turn-in-flight motion, ported from the beautiful-ui exploration
+   ---------------------------------------------------------------------------
+   WHAT WAS TAKEN AND WHAT WASN'T. That library is a light-mode SaaS kit —
+   rounded-xl bubbles, layered drop shadows, a blue accent, right-aligned user
+   turns. Every one of those is the thing this site deliberately refuses (see
+   the ledger-entry note in app-shell.tsx), so none of it is here. What IS here
+   is the three pieces of motion craft it does better than we did:
+
+     shimmer-text  a gradient swept through clipped text, replacing the
+                   `animate-pulse` opacity throb on the phase line. A throb says
+                   "something is happening"; a sweep says "something is being
+                   read", and on a phosphor-adjacent palette it lands as a scan
+                   rather than a blink.
+     pixel-on      a 3×3 grid of cells blinking on a stagger. Their version
+                   rounds the cells to 1px; ours are square, because the radius
+                   is 0 everywhere else on this site.
+     stream-in     opacity + a 4px blur clearing, for a block arriving. Reads as
+                   resolving rather than appearing.
+
+   The §4 one-motion policy is not violated by any of this: the ambient backdrop
+   is hidden the moment a conversation is on screen (AmbientBackdrop's `visible`
+   prop), and idle is suspended while a turn is in flight — so during streaming
+   there is no other motion for these to compete with, and they are gone by the
+   time the backdrop comes back. */
+
+@keyframes shimmer-text {
+  from {
+    background-position: 150%;
+  }
+  to {
+    background-position: -50%;
+  }
+}
+
+.shimmer-text {
+  color: var(--text-faint);
+  background-image: linear-gradient(
+    90deg,
+    var(--text-faint) 35%,
+    var(--text) 50%,
+    var(--text-faint) 65%
+  );
+  background-size: 200% 100%;
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shimmer-text 1.4s linear infinite;
+}
+
+@keyframes pixel-on {
+  0%,
+  100% {
+    opacity: 0.15;
+  }
+  18%,
+  42% {
+    opacity: 1;
+  }
+  62% {
+    opacity: 0.15;
+  }
+}
+
+.pixel-on {
+  opacity: 0.15;
+  animation: pixel-on 650ms ease-in-out infinite;
+}
+
+@keyframes stream-in {
+  from {
+    opacity: 0;
+    filter: blur(4px);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+  }
+}
+
+.animate-stream-in {
+  animation: stream-in 400ms var(--ease-out-strong) both;
+}
+
 /* Honour the OS "reduce motion" setting. Reduced, not removed: transitions
    collapse to ~1ms so state changes still land in a single frame rather than
    snapping mid-interaction, which is the behaviour the spec asks for.
@@ -208,5 +303,22 @@ body {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+
+  /* The blanket rule above is not enough for the two clipped/faded indicators,
+     and gets them exactly backwards if left alone. Collapsing an animation to
+     0.01ms with one iteration parks it on its FINAL keyframe — which for
+     shimmer-text is a gradient swept off the end of transparent-filled text
+     (invisible), and for pixel-on is opacity 0.15 (a grid of ghosts). Both are
+     legibility bugs, not reduced motion. So each falls back to the still frame
+     it should have had: a solid label, and a grid that is simply on. */
+  .shimmer-text {
+    background-image: none !important;
+    -webkit-text-fill-color: currentColor;
+    color: var(--text-soft);
+  }
+
+  .pixel-on {
+    opacity: 0.55 !important;
   }
 }

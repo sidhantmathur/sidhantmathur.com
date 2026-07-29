@@ -342,7 +342,30 @@ function TraceInspector({ turnLog }: { turnLog: TurnRecord[] }) {
                 </span>
                 <span className="shrink-0 text-text-faint">{open ? "−" : "+"}</span>
               </button>
-              {open && (
+              {/* Opens by animating grid-template-rows from 0fr to 1fr, the one
+                  structural trick worth taking from beautiful-ui. A row's detail
+                  is twenty-odd lines of variable height, so the alternatives are
+                  a hard mount (what this was — the panel below it jumps by a few
+                  hundred pixels in one frame) or measuring the content and
+                  animating an explicit height, which needs a ref, a
+                  ResizeObserver and a re-measure whenever a number changes
+                  underneath it. This needs none of that and never has a wrong
+                  height, because the browser resolves 1fr against the real
+                  content on every frame.
+                  The inner overflow-hidden is load-bearing: without it the
+                  content spills out of the 0fr row instead of being clipped by
+                  it, and the row never appears to close. */}
+              <div
+                // The row is clipped, not unmounted, so without this the
+                // collapsed detail is still in the accessibility tree and still
+                // tabbable — a screen reader would read twenty rows of numbers
+                // out of a control reporting aria-expanded="false", and the raw
+                // record's <summary> would take a tab stop inside it.
+                inert={!open}
+                className="grid transition-[grid-template-rows,opacity] duration-300 ease-(--ease-out-strong)"
+                style={{ gridTemplateRows: open ? "1fr" : "0fr", opacity: open ? 1 : 0 }}
+              >
+                <div className="overflow-hidden">
                 <div className="space-y-1 border-t border-line px-2 py-2">
                   <Row label="model" value={turn.model} />
                   <Row label="tier" value={turn.tier} />
@@ -398,7 +421,8 @@ function TraceInspector({ turnLog }: { turnLog: TurnRecord[] }) {
                     </pre>
                   </details>
                 </div>
-              )}
+                </div>
+              </div>
             </div>
           );
         })}
