@@ -8,7 +8,7 @@ import { Fragment, type ReactNode } from "react";
 // handles exactly the subset the system prompt permits:
 //
 //   paragraphs · `- ` and `1. ` lists · **bold** · *italic* / _italic_
-//   · `code` · [text](url)
+//   · `code` · [text](url) · ```fenced``` blocks · | pipe | tables |
 //
 // Anything else falls through as literal text, which is the correct failure
 // mode: an unrendered character is a visible bug we can fix, whereas silently
@@ -123,6 +123,167 @@ function inline(text: string, keyPrefix: string): ReactNode[] {
 const BULLET = /^\s*[-*]\s+/;
 const ORDERED = /^\s*\d+[.)]\s+/;
 
+// ---------------------------------------------------------------------------
+// Fenced code blocks
+// ---------------------------------------------------------------------------
+//
+// The hard part isn't the rendering, it's the block indices. Blocks are split
+// on blank lines and `lib/verify.ts` splits the SAME answer the SAME way to
+// decide which margin note belongs to which paragraph. A fence containing a
+// blank line spans two of those blocks, so the renderer has to join them for
+// display while still reporting the original index to the gutter. Anything
+// that renumbers blocks here silently slides every citation one paragraph up.
+//
+// Streaming is the other constraint: half a fence arrives on its own, and an
+// unterminated fence renders as a code block rather than as three literal
+// backticks that turn into a code block a keystroke later.
+const FENCE = /^ {0,3}(`{3,}|~{3,})\s*([\w+#.-]*)\s*$/;
+
+type Group =
+  | { kind: "prose"; index: number; block: string }
+  | { kind: "code"; index: number; lang: string; code: string };
+
+/**
+ * Blank-line blocks → renderable groups, carrying the index each group came
+ * from. Two groups can share an index (prose and a fence in one block); the
+ * caller renders the gutter for the first of them only.
+ */
+function group(blocks: string[]): Group[] {
+  const groups: Group[] = [];
+  let open: { index: number; lang: string; lines: string[] } | null = null;
+
+  blocks.forEach((block, index) => {
+    let prose: string[] = [];
+    const flush = () => {
+      if (prose.some((l) => l.trim())) {
+        groups.push({ kind: "prose", index, block: prose.join("\n") });
+      }
+      prose = [];
+    };
+
+    for (const line of block.split("\n")) {
+      const fence = FENCE.exec(line);
+      if (fence && !open) {
+        flush();
+        open = { index, lang: fence[2] ?? "", lines: [] };
+      } else if (fence && open) {
+        groups.push({ kind: "code", index: open.index, lang: open.lang, code: open.lines.join("\n") });
+        open = null;
+      } else if (open) {
+        open.lines.push(line);
+      } else {
+        prose.push(line);
+      }
+    }
+    flush();
+    // The blank line that separated this block from the next was consumed by
+    // the split. Inside a fence it was part of the code.
+    if (open) open.lines.push("");
+  });
+
+  if (open) {
+    // Still streaming, or the model never closed it. Render what arrived.
+    const o: { index: number; lang: string; lines: string[] } = open;
+    groups.push({ kind: "code", index: o.index, lang: o.lang, code: o.lines.join("\n").trimEnd() });
+  }
+  return groups;
+}
+
+function CodeBlock({ lang, code }: { lang: string; code: string }) {
+  return (
+    <div className="border border-line bg-raised">
+      {/* The language, when the model wrote one. No syntax highlighting: it
+          means a parser dependency and a second palette to maintain, and this
+          site's whole type system is already one mono face on one background —
+          coloured tokens would be the loudest thing on the page. */}
+      {lang && (
+        <div className="border-b border-line px-3 py-1 text-[10px] tracking-widest text-text-faint [font-family:var(--font-geist-mono)]">
+          {lang.toLowerCase()}
+        </div>
+      )}
+      {/* Scrolls itself. A long line has to move inside this box rather than
+          widening the answer column and putting the whole page on a horizontal
+          scrollbar — which on a phone is how a chat stops being readable. */}
+      <pre className="overflow-x-auto px-3 py-2.5">
+        <code className="text-[12px] leading-[1.6] text-text [font-family:var(--font-geist-mono)]">
+          {code}
+        </code>
+      </pre>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Pipe tables
+// ---------------------------------------------------------------------------
+//
+// The `roleFit` requirement table is its own component in the panel and stays
+// that way — this is for the tables the model writes into ordinary prose.
+const DELIMITER = /^\s*\|?[\s:|-]*-[\s:|-]*\|?\s*$/;
+
+function cells(row: string): string[] {
+  return row
+    .trim()
+    .replace(/^\|/, "")
+    .replace(/\|$/, "")
+    .split("|")
+    .map((c) => c.trim());
+}
+
+/** A header row, a delimiter under it, and at least the start of a body. */
+function isTable(lines: string[]): boolean {
+  return (
+    lines.length >= 2 &&
+    lines[0]!.includes("|") &&
+    DELIMITER.test(lines[1]!) &&
+    lines[1]!.includes("|")
+  );
+}
+
+function Table({ lines, keyPrefix }: { lines: string[]; keyPrefix: string }) {
+  const head = cells(lines[0]!);
+  // Rows only — the delimiter is punctuation, not data. Ragged rows are padded
+  // rather than dropped: a table still streaming is short a cell for one frame,
+  // and collapsing the row would make the whole table jump when it arrives.
+  const body = lines.slice(2).map((l) => {
+    const row = cells(l);
+    while (row.length < head.length) row.push("");
+    return row.slice(0, head.length);
+  });
+
+  return (
+    <div className="overflow-x-auto border border-line">
+      <table className="w-full border-collapse text-left text-[12px]">
+        <thead>
+          <tr className="border-b border-line">
+            {head.map((c, i) => (
+              <th
+                key={i}
+                className="px-3 py-2 font-normal tracking-widest text-text-faint [font-family:var(--font-geist-mono)] text-[10px] align-top"
+              >
+                {c}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {body.map((row, ri) => (
+            // No zebra striping: the site has one raised surface and it means
+            // "this is a container", not "this is an odd row".
+            <tr key={ri} className="border-b border-line last:border-b-0">
+              {row.map((c, ci) => (
+                <td key={ci} className="px-3 py-2 align-top leading-[1.6] text-text-soft">
+                  {inline(c, `${keyPrefix}-${ri}-${ci}`)}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 export function Markdown({
   text,
   gutter,
@@ -136,27 +297,47 @@ export function Markdown({
    */
   gutter?: (blockIndex: number) => ReactNode;
 }) {
-  // Blank lines separate blocks. Streaming means this runs on partial text, so
-  // every branch has to tolerate an unterminated block.
-  const blocks = text.split(/\n{2,}/);
+  // Blank lines separate blocks — the same split lib/verify.ts uses, so the two
+  // agree on what "block 2" means. Streaming means this runs on partial text,
+  // so every branch has to tolerate an unterminated block.
+  const groups = group(text.split(/\n{2,}/));
+
+  // A block that produced both prose and a fence gets its margin note once,
+  // against the first thing rendered from it.
+  const seen = new Set<number>();
 
   // The margin is a grid column rather than an absolutely-positioned overlay so
   // a long note pushes its own row taller instead of colliding with the next.
-  const wrap = (bi: number, node: ReactNode) =>
-    gutter ? (
-      <div key={bi} className="lg:grid lg:grid-cols-[1fr_6.5rem] lg:gap-4">
+  const wrap = (bi: number, key: string, node: ReactNode) => {
+    const first = !seen.has(bi);
+    seen.add(bi);
+    return gutter ? (
+      <div key={key} className="lg:grid lg:grid-cols-[1fr_6.5rem] lg:gap-4">
         <div className="min-w-0">{node}</div>
-        <div className="hidden lg:block">{gutter(bi)}</div>
+        <div className="hidden lg:block">{first ? gutter(bi) : null}</div>
       </div>
     ) : (
-      <Fragment key={bi}>{node}</Fragment>
+      <Fragment key={key}>{node}</Fragment>
     );
+  };
 
   return (
     <div className="space-y-3 text-[13px] leading-[1.7] text-text-soft">
-      {blocks.map((block, bi) => {
+      {groups.map((g, gi) => {
+        const bi = g.index;
+        const key = `${bi}-${gi}`;
+
+        if (g.kind === "code") {
+          return wrap(bi, key, <CodeBlock lang={g.lang} code={g.code} />);
+        }
+
+        const block = g.block;
         const lines = block.split("\n").filter((l) => l.trim() !== "");
         if (lines.length === 0) return null;
+
+        if (isTable(lines)) {
+          return wrap(bi, key, <Table lines={lines} keyPrefix={key} />);
+        }
 
         const bulleted = lines.every((l) => BULLET.test(l));
         const numbered = lines.every((l) => ORDERED.test(l));
@@ -165,12 +346,13 @@ export function Markdown({
           const Tag = numbered ? "ol" : "ul";
           return wrap(
             bi,
+            key,
             <Tag
               className={`space-y-1.5 pl-4 ${numbered ? "list-decimal" : "list-disc"} marker:text-text-faint`}
             >
               {lines.map((l, li) => (
                 <li key={li} className="pl-1">
-                  {inline(l.replace(numbered ? ORDERED : BULLET, ""), `${bi}-${li}`)}
+                  {inline(l.replace(numbered ? ORDERED : BULLET, ""), `${key}-${li}`)}
                 </li>
               ))}
             </Tag>,
@@ -182,15 +364,17 @@ export function Markdown({
         if (isHeading) {
           return wrap(
             bi,
+            key,
             <p className="font-medium text-text">
-              {inline(lines[0].replace(/^#{1,6}\s+/, ""), `${bi}-h`)}
+              {inline(lines[0].replace(/^#{1,6}\s+/, ""), `${key}-h`)}
             </p>,
           );
         }
 
         return wrap(
           bi,
-          <p className="whitespace-pre-wrap">{inline(lines.join("\n"), String(bi))}</p>,
+          key,
+          <p className="whitespace-pre-wrap">{inline(lines.join("\n"), key)}</p>,
         );
       })}
     </div>

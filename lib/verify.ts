@@ -44,14 +44,40 @@ const MARKER = /\[([a-z0-9]+(?:-[a-z0-9]+)*:[a-z0-9]+(?:-[a-z0-9]+)*)\](?!\()/g;
 /** The last, half-arrived marker of a streaming answer: `[resume:nok`. */
 const PARTIAL_MARKER = /\[[a-z0-9:-]*$/;
 
-/** Removes citation markers, leaving the prose a reader should see. */
+/** An opening or closing code fence, alone on its line. */
+const FENCE_LINE = /^ {0,3}(`{3,}|~{3,})\s*[\w+#.-]*\s*$/;
+
+/**
+ * Removes citation markers, leaving the prose a reader should see.
+ *
+ * Fenced lines are returned untouched, and both reasons matter. The run-of-
+ * spaces collapse below is a prose repair — it cleans up after a removed
+ * marker — but applied to code it eats the indentation, which is the one thing
+ * a code block exists to preserve. And a marker-shaped token inside a snippet
+ * is code, not a citation: stripping it would silently edit what the block
+ * says it contains.
+ */
 export function stripCitations(text: string): string {
+  let inFence = false;
   return text
-    .replace(MARKER, "")
-    .replace(PARTIAL_MARKER, "")
-    // A marker sits after the full stop, so removing it leaves a doubled space.
-    .replace(/[ \t]{2,}/g, " ")
-    .replace(/[ \t]+$/gm, "");
+    .split("\n")
+    .map((line) => {
+      if (FENCE_LINE.test(line)) {
+        inFence = !inFence;
+        return line;
+      }
+      if (inFence) return line;
+      return (
+        line
+          .replace(MARKER, "")
+          .replace(PARTIAL_MARKER, "")
+          // A marker sits after the full stop, so removing it leaves a
+          // doubled space.
+          .replace(/[ \t]{2,}/g, " ")
+          .replace(/[ \t]+$/, "")
+      );
+    })
+    .join("\n");
 }
 
 /** Citation ids in a string, in order, without deduplication. */
@@ -274,19 +300,97 @@ function present(token: string, haystack: string): boolean {
 
 // --- Sentences ------------------------------------------------------------
 
+/** The `| --- | --- |` line under a table's header row. */
+const TABLE_DELIMITER = /^\s*\|?[\s:|-]*-[\s:|-]*\|?\s*$/;
+
+/**
+ * `| Role | Sales operations | Data science |` → `Sales operations, Data
+ * science` — the row's cells as one checkable sentence, minus its first.
+ *
+ * The first cell is the row's label, and it is a label in the same sense the
+ * header row is: the model writes "Users" or "Stack" to name what the row
+ * compares, and no such word is in the corpus, so checking it marked every
+ * otherwise-correct row unverified against a word the model chose for
+ * formatting.
+ *
+ * The cost, stated plainly: in a table whose first column holds data rather
+ * than labels — companies down the left, say — that column goes unchecked. The
+ * trade is deliberate. A false "unverified" on every row of every honest table
+ * is the failure that makes the whole margin ignorable, and the prompt asks for
+ * tables that compare fields across columns, which is the shape this assumes.
+ */
+function rowSentence(row: string): string {
+  return row
+    .trim()
+    .replace(/^\|/, "")
+    .replace(/\|$/, "")
+    .split("|")
+    .slice(1)
+    .map((c) => c.trim())
+    .filter(Boolean)
+    .join(", ");
+}
+
 /**
  * Splits a block into sentences, one list item per sentence at minimum.
  *
  * Deliberately simple. An over-eager split costs a claim its citation and shows
  * a false "uncited"; the abbreviation this corpus actually contains is `B.S.`,
  * which is handled by requiring a following space AND capital.
+ *
+ * A table is split by ROW instead, and three things had to be true for that to
+ * be the right call rather than exempting tables the way fences are exempted:
+ *
+ *   * A row states facts. "Nokia · sales operations · Jun 2024" is exactly the
+ *     kind of sentence this site exists to check, and a table that escaped the
+ *     checker would be the one place a claim could be laundered — worse now
+ *     that the prompt invites tables at all.
+ *   * The header row states none. It is column labels, so checking it produced
+ *     an "uncited" verdict against the word "Field", which is noise of the kind
+ *     that teaches a reader to stop reading the margin.
+ *   * The pipes are syntax, not words. Quoting them back at the reader — `no
+ *     source cited for "| Role | Sales operations |"` — describes the markup
+ *     rather than the claim.
  */
 function sentencesOf(block: string): string[] {
+  const lines = block.split("\n").filter((l) => l.trim());
+  if (lines.length >= 2 && lines[0]!.includes("|") && TABLE_DELIMITER.test(lines[1]!)) {
+    return lines.slice(2).map(rowSentence).filter(Boolean);
+  }
   return block
     .split("\n")
     .flatMap((line) => line.split(/(?<=[.!?])\s+(?=[A-Z[])/))
     .map((s) => s.trim())
     .filter(Boolean);
+}
+
+/**
+ * Blanks the inside of fenced code blocks before the check reads them.
+ *
+ * Code is not prose and a line of it is not a claim. Without this, an answer
+ * that shows a snippet gets one "uncited" verdict per line of it — the check
+ * asking which chunk of the resume supports `const rate = 0;`, which is both
+ * wrong and the fastest way to teach a reader to stop reading the margin.
+ *
+ * Each masked line becomes a single space rather than an empty string, which
+ * matters more than it looks: blocks are split on `\n{2,}` and the renderer
+ * splits the same way to line up the margin. An emptied line would read as a
+ * blank one, split a block in two, and shift every later block's index by one —
+ * silently moving citations onto the wrong paragraph. A space is non-blank, so
+ * the block structure comes out identical, and `sentencesOf` drops it.
+ */
+function maskFences(answer: string): string {
+  let open = false;
+  return answer
+    .split("\n")
+    .map((line) => {
+      if (FENCE_LINE.test(line)) {
+        open = !open;
+        return " ";
+      }
+      return open && line.trim() ? " " : line;
+    })
+    .join("\n");
 }
 
 // --- The check ------------------------------------------------------------
@@ -303,7 +407,9 @@ export function verifyAnswer(
   answer: string,
   lookup: Record<string, VerifiableChunk>,
 ): AnswerCheck {
-  const rawBlocks = answer.split(/\n{2,}/);
+  // Masked, not stripped — see maskFences. The indices this produces have to
+  // match the ones components/shell/markdown.tsx renders against.
+  const rawBlocks = maskFences(answer).split(/\n{2,}/);
   const blocks: BlockCheck[] = [];
   const claims: Claim[] = [];
   const citedIds: string[] = [];

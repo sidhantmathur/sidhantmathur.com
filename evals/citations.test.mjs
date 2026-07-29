@@ -392,3 +392,151 @@ describe("the real corpus verifies against itself", () => {
     });
   }
 });
+
+describe("fenced code is not prose", () => {
+  // Code blocks arrived with the aicss polish pass. The check has to ignore
+  // what's inside them, and — the part that fails silently — it has to keep
+  // counting blocks the way components/shell/markdown.tsx does, because the
+  // margin renders `blocks[i]` beside the paragraph the renderer calls `i`.
+
+  test("lines inside a fence produce no claims", () => {
+    const answer = [
+      "He built the rate meter. [adarle20:where-it-stands]",
+      "",
+      "```ts",
+      "const rate = samples.reduce((a, b) => a + b, 0) / samples.length;",
+      "return Math.round(rate);",
+      "```",
+    ].join("\n");
+    const result = verifyAnswer(answer, BY_ID);
+    const fromCode = result.claims.filter((c) => c.text.includes("samples"));
+    assert.deepEqual(fromCode, [], "a line of code was checked as a claim");
+  });
+
+  test("masking a fence does not shift later block indices", () => {
+    // The invariant, stated exactly: masking changes what a block SAYS and
+    // never how many there are. A blank line inside a fence already splits the
+    // answer into two blocks before the mask runs — the renderer joins them
+    // back for display and reports the first index — so what matters is that
+    // the mask agrees with the unmasked split, block for block.
+    //
+    // The failure this exists for: mask by emptying lines instead of spacing
+    // them, and `code` below becomes blank, splitting one more time and
+    // pushing the closing paragraph's citation into the margin of the
+    // paragraph above it.
+    const answer = [
+      "First paragraph. [resume:nokia]", // block 0
+      "",
+      "```", // blocks 1 and 2 — the fence, split by its own blank line
+      "code",
+      "",
+      "more code",
+      "```",
+      "",
+      "Last paragraph. [faq:location]", // block 3
+    ].join("\n");
+    const result = verifyAnswer(answer, BY_ID);
+    assert.equal(
+      result.blocks.length,
+      answer.split(/\n{2,}/).length,
+      "masking changed how many blocks the answer has",
+    );
+    assert.deepEqual(result.blocks[0].ids, ["resume:nokia"]);
+    assert.deepEqual(result.blocks[3].ids, ["faq:location"]);
+    // And the fence's own blocks carry nothing, so the margin stays empty
+    // beside the code rather than inheriting the paragraph above it.
+    assert.deepEqual(result.blocks[1].ids, []);
+    assert.deepEqual(result.blocks[2].ids, []);
+  });
+
+  test("an unterminated fence still swallows the rest", () => {
+    // Every frame of a streaming answer is a half-written one, and for most of
+    // them the closing fence hasn't arrived yet.
+    const result = verifyAnswer("Here it is.\n\n```ts\nconst x = 1;", BY_ID);
+    assert.deepEqual(
+      result.claims.filter((c) => c.text.includes("const x")),
+      [],
+      "a streaming code block was checked as prose",
+    );
+  });
+
+  test("prose after a closed fence is checked again", () => {
+    const answer = "```\ncode\n```\n\nHe worked at Nokia in Toronto. [resume:nokia]";
+    const result = verifyAnswer(answer, BY_ID);
+    assert.ok(
+      result.claims.some((c) => c.text.includes("Nokia")),
+      "the mask never turned back off",
+    );
+  });
+});
+
+describe("stripCitations leaves code alone", () => {
+  test("indentation inside a fence survives", () => {
+    // The collapse of runs of spaces is a prose repair for the gap a removed
+    // marker leaves behind. Applied to code it eats the indentation, which is
+    // the one thing a code block is for.
+    const answer = ["```ts", "if (x) {", "    return 1;", "}", "```"].join("\n");
+    assert.equal(stripCitations(answer), answer);
+  });
+
+  test("a marker-shaped token inside a fence is not stripped", () => {
+    const answer = ["```", "const key = map[resume:nokia];", "```"].join("\n");
+    assert.ok(stripCitations(answer).includes("map[resume:nokia]"));
+  });
+
+  test("prose outside the fence is still cleaned", () => {
+    const out = stripCitations("He works at Nokia. [resume:nokia]\n\n```\ncode\n```");
+    assert.ok(!out.includes("[resume:nokia]"));
+    assert.ok(out.includes("He works at Nokia."));
+  });
+});
+
+describe("a table row is a claim, its header is not", () => {
+  const table = [
+    "| Field | Nokia |",
+    "| --- | --- |",
+    "| Role | Sales operations specialist |",
+    "| Users | Power App used by 80+ stakeholders across 7 regions [resume:nokia] |",
+  ].join("\n");
+
+  test("the header and delimiter rows produce no claims", () => {
+    const result = verifyAnswer(table, FIXTURE);
+    assert.ok(
+      !result.claims.some((c) => c.text.startsWith("Field")),
+      "the column labels were checked as a factual claim",
+    );
+    assert.ok(
+      !result.claims.some((c) => c.text.includes("---")),
+      "the delimiter row was checked as a factual claim",
+    );
+  });
+
+  test("a body row is checked, without its pipes or its row label", () => {
+    const result = verifyAnswer(table, FIXTURE);
+    const row = result.claims.find((c) => c.text.includes("80+"));
+    assert.ok(row, "a row stating facts was not checked at all");
+    assert.ok(!row.text.includes("|"), `the markup was quoted as the claim: ${row.text}`);
+    // "Users" is the row's label, chosen by the model for formatting. It is
+    // not in any chunk and never will be, so checking it would fail every
+    // honest row.
+    assert.ok(!row.text.startsWith("Users"), `the row label was checked: ${row.text}`);
+    assert.equal(row.verdict, "verified", "a row quoting its cited chunk did not verify");
+  });
+
+  test("a row whose numbers aren't in the chunk it cites is downgraded", () => {
+    // The point of checking rows at all: a table must not be a way to state a
+    // number without one.
+    const bad = [
+      "| Field | Nokia |",
+      "| --- | --- |",
+      "| Users | Power App used by 900+ stakeholders [resume:nokia] |",
+    ].join("\n");
+    const result = verifyAnswer(bad, FIXTURE);
+    // The tokenizer normalises "900+" to "900" — the check is on the number,
+    // not on how it was written.
+    assert.ok(
+      result.downgraded.some((c) => c.missing.includes("900")),
+      "a wrong number inside a table cell was not caught",
+    );
+  });
+});
