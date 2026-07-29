@@ -108,7 +108,7 @@ function ManualLink({
   children: React.ReactNode;
 }) {
   const cls =
-    "border border-line-strong px-2 py-1 text-[11px] text-text-soft no-underline transition-colors hover:border-accent hover:text-accent";
+    "inline-flex items-center border border-line-strong px-2.5 py-2 text-[11px] text-text-soft no-underline transition-colors hover:border-accent hover:text-accent";
   if (onClick) {
     return (
       <button type="button" onClick={onClick} className={cls}>

@@ -37,7 +37,10 @@ export default function ResumePage() {
 
         <nav
           aria-label="Resume sections"
-          className="mt-10 flex flex-wrap gap-x-4 gap-y-2 border-y border-line py-3 text-[11px]"
+          // These wrap to two rows on a phone. At 11px each link was a 17px
+          // band with 8px between rows, which is one target's worth of slop
+          // for five destinations — the padding is what separates them.
+          className="mt-10 flex flex-wrap gap-x-3 border-y border-line py-1.5 text-[11px]"
         >
           {[
             ["Summary", "#summary"],
@@ -49,7 +52,7 @@ export default function ResumePage() {
             <a
               key={href}
               href={href}
-              className="text-text-faint no-underline transition-colors hover:text-accent"
+              className="-mx-1 flex h-9 touch-manipulation items-center px-1 text-text-faint no-underline transition-colors hover:text-accent"
             >
               {label}
             </a>

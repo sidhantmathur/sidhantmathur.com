@@ -21,14 +21,20 @@ export function DocPage({
   return (
     <div className="h-dvh overflow-y-auto bg-bg text-text [font-family:var(--font-geist-mono)]">
       <header className="sticky top-0 z-10 flex h-9 items-center border-b border-line bg-panel px-4 text-[11px] md:px-6">
+        {/* Fills the strip. This is the only way out of a document on a phone
+            and it was an 11px line of text to aim at. */}
         <Link
           href="/"
-          className="text-text-soft no-underline transition-colors hover:text-accent"
+          className="-mx-2 flex h-full touch-manipulation items-center px-2 text-text-soft no-underline transition-colors hover:text-accent"
         >
           ← Back to the conversation
         </Link>
       </header>
-      <main className="mx-auto max-w-[80ch] px-4 py-10 md:px-6">{children}</main>
+      {/* The bottom pad clears the home indicator on a notched phone; these
+          pages own their scroll container, so nothing else does it for them. */}
+      <main className="mx-auto max-w-[80ch] px-4 pb-[calc(2.5rem+env(safe-area-inset-bottom))] pt-10 md:px-6">
+        {children}
+      </main>
     </div>
   );
 }

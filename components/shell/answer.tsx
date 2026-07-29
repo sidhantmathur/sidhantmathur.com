@@ -123,7 +123,10 @@ function SourceRow({
               type="button"
               onClick={() => onOpenSource({ kind: "source", id })}
               title={sourceTitle(id)}
-              className="border border-line px-2 py-1 text-[11px] text-text-faint transition-colors hover:border-accent hover:text-accent"
+              // Below lg the margin doesn't exist, so this row is the only way
+              // to open a source — and it is opened with a thumb. py-2 makes
+              // the chip a real target rather than a 26px band of text.
+              className="border border-line px-2.5 py-2 text-[11px] text-text-faint transition-colors hover:border-accent hover:text-accent"
             >
               ↗ {chipLabel(id)}
             </button>

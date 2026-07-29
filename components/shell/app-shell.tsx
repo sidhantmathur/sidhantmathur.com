@@ -2,7 +2,13 @@
 
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import {
   IDLE_LINES,
   JD_COPY,
@@ -226,7 +232,11 @@ export function AppShell() {
   const stick = useRef(true);
   useEffect(() => {
     const el = scrollRef.current;
-    if (el && stick.current) el.scrollTop = el.scrollHeight;
+    // Not when there's nothing to stick to. The empty state is taller than a
+    // phone, so this fired on first paint and landed the visitor halfway down
+    // the tl;dr with the headline scrolled off — the one screen the site gets
+    // to make its case, skipped, and only on mobile.
+    if (el && stick.current && messages.length) el.scrollTop = el.scrollHeight;
   }, [messages]);
 
   const submitJd = useCallback(
@@ -421,7 +431,12 @@ export function AppShell() {
             <path d="M2.5 4.5h12M2.5 8.5h12M2.5 12.5h12" />
           </svg>
         </button>
-        <Link href="/" className="text-text no-underline hover:text-accent">
+        {/* Fills the strip for the same reason the hamburger beside it does —
+            an 11px line of text is not a touch target. */}
+        <Link
+          href="/"
+          className="-mx-2 flex h-full touch-manipulation items-center px-2 text-text no-underline hover:text-accent"
+        >
           {SITE_NAME}
         </Link>
         <span className="hidden text-text-faint sm:inline">Toronto, ON</span>
@@ -609,7 +624,7 @@ export function AppShell() {
                                     href="/resume.pdf"
                                     target="_blank"
                                     rel="noreferrer"
-                                    className={`border px-2 py-1 text-[11px] no-underline transition-colors hover:border-accent hover:text-accent ${
+                                    className={`border px-2.5 py-2 text-[11px] no-underline transition-colors hover:border-accent hover:text-accent ${
                                       m.id === lastId
                                         ? "border-line-strong text-text-soft"
                                         : "border-line text-text-faint"
@@ -625,6 +640,10 @@ export function AppShell() {
                                 getText={() => messageToMarkdown(m)}
                                 label="copy"
                                 event="chat_copy_message"
+                                // Borderless, but it shares a row with the
+                                // chips and has to be the same height to be
+                                // aimed at alongside them.
+                                className="flex touch-manipulation items-center px-1 py-2"
                               />
                             )}
                           </div>
@@ -704,7 +723,10 @@ export function AppShell() {
                 // input wanted the extra size anyway. The alternative fix,
                 // maximum-scale=1 in the viewport, also kills pinch-zoom for
                 // everyone; that is not a trade worth making.
-                className="ml-2 min-w-0 flex-1 bg-transparent text-[16px] text-text outline-none placeholder:text-text-faint md:text-[13px]"
+                // h-full so the whole 48px row focuses the field. The input's
+                // own line box is 24px, so half the row it sits in used to be
+                // dead space that swallowed a tap.
+                className="ml-2 h-full min-w-0 flex-1 bg-transparent text-[16px] text-text outline-none placeholder:text-text-faint md:text-[13px]"
               />
               <span className="hidden text-[11px] text-text-faint sm:inline">enter ↵</span>
               {/* Touch has no visible affordance for "press enter" and no
@@ -740,7 +762,9 @@ export function AppShell() {
                     label="copy"
                     copiedLabel="copied"
                     event="chat_copy_conversation"
-                    className={emphasis ? "text-text-soft" : ""}
+                    className={`flex h-full shrink-0 touch-manipulation items-center ${
+                      emphasis ? "text-text-soft" : ""
+                    }`}
                     onCopied={bumpStrip}
                   />
                   <StripButton
@@ -819,12 +843,25 @@ export function AppShell() {
               // transcript controls the header and input row drop at this
               // width — on a short phone that is more than one screen, and
               // the overflow was landing on the controls at the bottom.
-              className="w-72 overflow-y-auto overscroll-contain border-line bg-panel p-4 text-[11px] text-text [font-family:var(--font-geist-mono)]"
+              // The bottom pad clears the home indicator: the readouts are the
+              // last thing in this column and they used to end flush with the
+              // sheet's edge, under the bar on a notched phone.
+              showCloseButton={false}
+              className="w-72 overflow-y-auto overscroll-contain border-line bg-panel p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] text-[11px] text-text [font-family:var(--font-geist-mono)]"
             >
-              <SheetHeader className="p-0">
-                <SheetTitle className="text-[11px] font-normal text-text-faint">
+              {/* Title and close on one row, sized and worded like the bottom
+                  sheet's — the default floating ✕ was a different glyph at a
+                  different size sitting off the title's baseline. */}
+              <SheetHeader className="-mr-2 -my-2 flex-row items-center gap-2 space-y-0 p-0">
+                <SheetTitle className="min-w-0 flex-1 truncate text-[11px] font-normal text-text-faint">
                   Index
                 </SheetTitle>
+                <SheetClose
+                  aria-label="Close"
+                  className="flex h-10 w-10 shrink-0 touch-manipulation items-center justify-center text-[11px] text-text-faint transition-colors hover:text-accent"
+                >
+                  ✕
+                </SheetClose>
               </SheetHeader>
               <RailContent onOpenPanel={openPanel} showHeading={false} />
               {/* The header readouts are hidden at this width, so the rail
@@ -844,25 +881,51 @@ export function AppShell() {
             </SheetContent>
           </Sheet>
 
-          <Sheet open={sheetOpen && panelOpen} onOpenChange={setSheetOpen}>
+          {/* Dismissing the sheet closes the panel outright rather than only
+              hiding it. They used to disagree: tapping away left `panel` set,
+              so the address bar still read /resume with nothing open, and that
+              was the URL you'd copy. */}
+          <Sheet
+            open={sheetOpen && panelOpen}
+            onOpenChange={(open) => (open ? setSheetOpen(true) : closePanel())}
+          >
             <SheetContent
               side="bottom"
               style={{ height: sheetFull ? "88dvh" : "52dvh" }}
+              // The sheet supplies its own close control in the header row, so
+              // the default floating one is off: it is positioned top-right,
+              // which is exactly where the size toggle sits, and the two
+              // overlapped by 24px — the close button won, and expand was
+              // unhittable.
+              showCloseButton={false}
               className="border-line bg-panel p-0 text-text transition-[height] duration-200 [font-family:var(--font-geist-mono)]"
             >
-              <SheetHeader className="flex-row items-center justify-between space-y-0 border-b border-line px-4 py-2">
-                <SheetTitle className="truncate text-[11px] font-normal text-text-faint">
+              <SheetHeader className="flex-row items-center gap-2 space-y-0 border-b border-line py-0 pl-4 pr-1">
+                <SheetTitle className="min-w-0 flex-1 truncate text-[11px] font-normal text-text-faint">
                   {panelTitle(panel)}
                 </SheetTitle>
+                {/* Both controls fill the header's height. At 11px the labels
+                    were ~16px tall targets on the surface that is only ever
+                    touched. */}
                 <button
                   type="button"
                   onClick={() => setSheetFull((v) => !v)}
-                  className="shrink-0 text-[11px] text-text-faint hover:text-accent"
+                  aria-expanded={sheetFull}
+                  className="flex h-10 shrink-0 touch-manipulation items-center px-2 text-[11px] text-text-faint transition-colors hover:text-accent"
                 >
                   {sheetFull ? "collapse ↓" : "expand ↑"}
                 </button>
+                <SheetClose
+                  aria-label="Close"
+                  className="flex h-10 w-10 shrink-0 touch-manipulation items-center justify-center text-[11px] text-text-faint transition-colors hover:text-accent"
+                >
+                  ✕
+                </SheetClose>
               </SheetHeader>
-              <div className="min-h-0 flex-1 overflow-y-auto p-4">
+              {/* The pad clears the home indicator on a notched phone, where
+                  the last row of a panel otherwise sits under the bar. It
+                  resolves to 0 everywhere else. */}
+              <div className="min-h-0 flex-1 overflow-y-auto p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
                 {panelContent}
               </div>
             </SheetContent>
@@ -975,7 +1038,10 @@ function StripButton({
     <button
       type="button"
       onClick={onClick}
-      className={`shrink-0 transition-colors hover:text-accent ${
+      // Full-height rather than text-height. The label is 11px, so the hit
+      // area used to be a 17px band inside a 32px strip — fine with a cursor,
+      // a coin toss with a thumb.
+      className={`flex h-full shrink-0 touch-manipulation items-center transition-colors hover:text-accent ${
         emphasis ? "text-text-soft" : "text-text-faint"
       }`}
     >
@@ -1042,7 +1108,9 @@ function CitationChip({
     <button
       type="button"
       onClick={() => onOpen(view)}
-      className={`border px-2 py-1 text-[11px] transition-colors hover:border-accent hover:text-accent ${
+      // Same padding as the source chips in answer.tsx — they sit in adjacent
+      // rows under the same answer and were two different sizes.
+      className={`border px-2.5 py-2 text-[11px] transition-colors hover:border-accent hover:text-accent ${
         latest ? "border-line-strong text-text-soft" : "border-line text-text-faint"
       }`}
     >

@@ -126,7 +126,7 @@ export function ExportDeck({
           label="copy the conversation"
           copiedLabel="copied"
           event="chat_copy_conversation"
-          className="border border-line-strong px-2 py-1 hover:border-accent"
+          className="border border-line-strong px-2.5 py-2 hover:border-accent"
           onCopied={onAction}
         />
         <button type="button" onClick={download} className={BUTTON}>
@@ -160,7 +160,7 @@ export function ExportDeck({
                 label="copy the link"
                 copiedLabel="copied"
                 event="chat_export"
-                className="border border-line-strong px-2 py-1 hover:border-accent"
+                className="border border-line-strong px-2.5 py-2 hover:border-accent"
                 onCopied={onAction}
               />
             )}
@@ -199,7 +199,7 @@ export function ExportDeck({
             label="copy the scorecard"
             copiedLabel="copied"
             event="chat_export"
-            className="border border-line-strong px-2 py-1 hover:border-accent"
+            className="border border-line-strong px-2.5 py-2 hover:border-accent"
             onCopied={onAction}
           />
           <a
@@ -228,7 +228,7 @@ export function ExportDeck({
 }
 
 const BUTTON =
-  "border border-line-strong px-2 py-1 text-[11px] text-text-soft transition-colors hover:border-accent hover:text-accent disabled:opacity-40";
+  "border border-line-strong px-2.5 py-2 text-[11px] text-text-soft transition-colors hover:border-accent hover:text-accent disabled:opacity-40";
 
 function Section({
   label,
