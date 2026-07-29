@@ -206,6 +206,8 @@ a label pattern:
 | --- | --- | --- | --- | --- |
 | draft | `app/colophon/page.tsx` → "The site shows its workings" | New colophon section naming the transparency thesis: "One rule holds everything here together: anything the machine does, you can look at… A chatbot asking for a hiring manager's trust should have to show its receipts." Links /prompt, /refusals, /measurements. | none | Describes site behaviour only — every linked page exists and does what the sentence says |
 | draft | `components/shell/app-shell.tsx` → ledger turn labels | `NN · you` mono rule above each visitor turn in the conversation (e.g. "01 · you"). | none | UI chrome |
+| draft | `components/shell/use-conversation.ts` → `TOOL_PHASE`, `OPENING_PHASE`, `WRITING_PHASE` | The one-line status under a turn in flight, now naming the step instead of the wait. "reading the resume…" (unchanged, the default) · "reading the job description…" · "checking it against the record…" · "pulling up the project…" · "pulling up the resume…" · "finding the contact details…" · "writing the answer…" | none | Each string is read off a live stream part — the tool actually running when it shows. Nothing here asserts anything about Sidhant, and nothing claims work that isn't happening. |
+| draft | `lib/system-prompt.ts` → Formatting | Rewritten paragraph now permitting fenced code blocks and pipe tables, with the guidance on when each earns its place ("A table with one column is a list, and a table with one row is a sentence." · "Never reformat a plain answer into a table to look thorough."). Published verbatim at `/prompt`. | none | Describes the renderer's capabilities, which `components/shell/markdown.tsx` now has |
 
 ## Pending `[VERIFY]` markers
 
