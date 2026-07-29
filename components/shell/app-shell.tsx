@@ -95,7 +95,7 @@ export function AppShell() {
     submit,
     reset,
     isBusy,
-    awaitingReply,
+    phase,
     errorKind,
     ttft,
     panel,
@@ -238,6 +238,22 @@ export function AppShell() {
     // to make its case, skipped, and only on mobile.
     if (el && stick.current && messages.length) el.scrollTop = el.scrollHeight;
   }, [messages]);
+
+  // The composer sizes itself to its content. Measurement, not a CSS trick:
+  // reset to auto first, because scrollHeight of an already-tall textarea
+  // reports the height it currently has, so a field that grew for a long paste
+  // would never shrink back when the paste was cleared.
+  //
+  // Runs on `input` rather than in onChange so the slash commands and the
+  // suggested questions — which set the value straight through setInput — get
+  // resized too, instead of leaving a one-line box holding six lines of text.
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+  useEffect(() => {
+    const el = inputRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${el.scrollHeight}px`;
+  }, [input]);
 
   const submitJd = useCallback(
     (text: string) => {
@@ -653,8 +669,20 @@ export function AppShell() {
                   );
                 })}
 
-                {awaitingReply && (
-                  <p className="animate-pulse text-[13px] text-text-faint">reading the resume…</p>
+                {/* One line, and it names the step rather than the wait. The
+                    key restarts the fade when the step changes, so a turn that
+                    moves from extracting to judging looks like it moved — a
+                    string swapping under a continuous pulse reads as a glitch.
+                    Aria-live so a screen reader hears the same progress a
+                    sighted reader watches. */}
+                {phase && (
+                  <p
+                    key={phase}
+                    aria-live="polite"
+                    className="animate-pulse text-[13px] text-text-faint"
+                  >
+                    {phase}
+                  </p>
                 )}
                 {errorKind === "error" && (
                   <p className="text-[13px] leading-relaxed text-text-faint">{ERROR_STATE}</p>
@@ -695,18 +723,29 @@ export function AppShell() {
               </div>
             )}
             <form
-              className="flex h-12 items-center px-4 text-[13px] md:px-10"
+              // Was a fixed h-12 row around a single-line input. The composer
+              // grows now, so the height is a floor rather than a size, and the
+              // prompt and the hints align to the FIRST line instead of the
+              // centre — on a ten-line pasted job description, a vertically
+              // centred ">" sits in the middle of the paste with nothing to do
+              // with it.
+              className="flex min-h-12 items-start px-4 text-[13px] md:px-10"
               onSubmit={(e) => {
                 e.preventDefault();
                 trySend();
               }}
             >
-              <span className="text-accent">&gt;</span>
-              <input
+              <span className="py-3 leading-6 text-accent">&gt;</span>
+              <textarea
+                ref={inputRef}
                 value={input}
+                rows={1}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.nativeEvent.isComposing) {
+                  // Enter still sends — this is a chat composer, not an
+                  // editor. Shift+Enter is the newline, which is what makes a
+                  // multi-line question writable at all.
+                  if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
                     e.preventDefault();
                     trySend();
                   }
@@ -723,12 +762,23 @@ export function AppShell() {
                 // input wanted the extra size anyway. The alternative fix,
                 // maximum-scale=1 in the viewport, also kills pinch-zoom for
                 // everyone; that is not a trade worth making.
-                // h-full so the whole 48px row focuses the field. The input's
-                // own line box is 24px, so half the row it sits in used to be
-                // dead space that swallowed a tap.
-                className="ml-2 h-full min-w-0 flex-1 bg-transparent text-[16px] text-text outline-none placeholder:text-text-faint md:text-[13px]"
+                // The field carries the row's vertical padding rather than the
+                // form doing it, so the full 48px of a one-line composer is
+                // still a tap target — the reason the old input was h-full.
+                // That trick doesn't survive auto-sizing, since a height set in
+                // CSS is exactly what the measurement has to override.
+                //
+                // max-h caps the growth at eight lines and scrolls past that.
+                // A pasted job description is the case this exists for, and one
+                // of those can be sixty lines long; without a cap it eats the
+                // conversation it was supposed to be asking about.
+                className="ml-2 max-h-[216px] min-w-0 flex-1 resize-none bg-transparent py-3 text-[16px] leading-6 text-text outline-none placeholder:text-text-faint md:text-[13px]"
               />
-              <span className="hidden text-[11px] text-text-faint sm:inline">enter ↵</span>
+              {/* Aligned to the first line with the prompt, not the growing
+                  field's centre. */}
+              <span className="hidden py-3 text-[11px] leading-6 text-text-faint sm:inline">
+                enter ↵
+              </span>
               {/* Touch has no visible affordance for "press enter" and no
                   hardware key to press. The hint above is the desktop half of
                   this; below sm it becomes a real button. */}
@@ -736,7 +786,9 @@ export function AppShell() {
                 type="submit"
                 disabled={!input.trim() || isBusy}
                 aria-label="Send"
-                className="-mr-1.5 flex h-9 w-9 shrink-0 touch-manipulation items-center justify-center text-[15px] text-text-faint transition-colors hover:text-accent disabled:opacity-30 sm:hidden"
+                // my-1.5 centres it against the first line of a growing field
+                // rather than against the whole composer.
+                className="-mr-1.5 my-1.5 flex h-9 w-9 shrink-0 touch-manipulation items-center justify-center text-[15px] text-text-faint transition-colors hover:text-accent disabled:opacity-30 sm:hidden"
               >
                 ↵
               </button>
