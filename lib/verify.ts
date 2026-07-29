@@ -311,8 +311,13 @@ export function verifyAnswer(
 
   rawBlocks.forEach((block, index) => {
     const blockIds = citationIds(block);
-    const blockValid = blockIds.filter((id) => lookup[id]);
-    const blockUnknown = blockIds.filter((id) => !lookup[id]);
+    // Deduped: a block that cites the same chunk in two sentences names one
+    // source, not two. Undeduped, the margin listed it twice and React saw
+    // two children under one key — so it dropped one and warned.
+    // `citationIds` stays raw because per-sentence checking wants the
+    // sentence's own list exactly as written.
+    const blockValid = [...new Set(blockIds.filter((id) => lookup[id]))];
+    const blockUnknown = [...new Set(blockIds.filter((id) => !lookup[id]))];
 
     for (const id of blockValid) if (!citedIds.includes(id)) citedIds.push(id);
     for (const id of blockUnknown) if (!unknownIds.includes(id)) unknownIds.push(id);

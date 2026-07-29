@@ -159,7 +159,7 @@ export function InstrumentDeck({
           type="button"
           onClick={onToggleTeletype}
           aria-pressed={teletype}
-          className="border border-line-strong px-2 py-1 text-[11px] text-text-soft transition-colors hover:border-accent hover:text-accent"
+          className="border border-line-strong px-2.5 py-2 text-[11px] text-text-soft transition-colors hover:border-accent hover:text-accent"
         >
           teletype {teletype ? "on" : "off"}
         </button>

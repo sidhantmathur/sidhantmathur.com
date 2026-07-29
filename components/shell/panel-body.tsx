@@ -505,7 +505,7 @@ function JobDescriptionForm({ onSubmit }: { onSubmit?: (text: string) => void })
         <button
           type="submit"
           disabled={!trimmed}
-          className="border border-line-strong px-2 py-1 text-[11px] text-text-soft transition-colors hover:border-accent hover:text-accent disabled:opacity-40"
+          className="border border-line-strong px-2.5 py-2 text-[11px] text-text-soft transition-colors hover:border-accent hover:text-accent disabled:opacity-40"
         >
           {JD_COPY.submit} →
         </button>
@@ -523,8 +523,10 @@ function PanelLink({
   external?: boolean;
   children: React.ReactNode;
 }) {
+  // py-2 rather than py-1: below lg every panel is a sheet, so these are
+  // thumb targets, and 11px text with 4px of padding made a 26px button.
   const cls =
-    "inline-block border border-line-strong px-2 py-1 text-[11px] text-text-soft no-underline transition-colors hover:border-accent hover:text-accent";
+    "inline-flex items-center border border-line-strong px-2.5 py-2 text-[11px] text-text-soft no-underline transition-colors hover:border-accent hover:text-accent";
   if (external) {
     return (
       <a href={href} target="_blank" rel="noreferrer" className={cls}>
