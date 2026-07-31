@@ -1,10 +1,10 @@
 {
-  "publishedAt": "2026-07-27T21:21:36.683Z",
+  "publishedAt": "2026-07-31T20:55:14.493Z",
   "static": {
-    "ranAt": "2026-07-27T21:21:30.868Z",
+    "ranAt": "2026-07-31T20:49:34.582Z",
     "totals": {
-      "tests": 253,
-      "passed": 253,
+      "tests": 297,
+      "passed": 297,
       "failed": 0
     },
     "files": [
@@ -66,8 +66,8 @@
       },
       {
         "file": "evals/citations.test.mjs",
-        "total": 38,
-        "passed": 38,
+        "total": 48,
+        "passed": 48,
         "suites": [
           {
             "name": "the id space",
@@ -154,6 +154,37 @@
               "a sentence quoted from resume:nokia verifies against it",
               "a sentence quoted from adarle20:where-it-stands verifies against it",
               "a sentence quoted from faq:location verifies against it"
+            ]
+          },
+          {
+            "name": "fenced code is not prose",
+            "total": 4,
+            "passed": 4,
+            "tests": [
+              "lines inside a fence produce no claims",
+              "masking a fence does not shift later block indices",
+              "an unterminated fence still swallows the rest",
+              "prose after a closed fence is checked again"
+            ]
+          },
+          {
+            "name": "stripCitations leaves code alone",
+            "total": 3,
+            "passed": 3,
+            "tests": [
+              "indentation inside a fence survives",
+              "a marker-shaped token inside a fence is not stripped",
+              "prose outside the fence is still cleaned"
+            ]
+          },
+          {
+            "name": "a table row is a claim, its header is not",
+            "total": 3,
+            "passed": 3,
+            "tests": [
+              "the header and delimiter rows produce no claims",
+              "a body row is checked, without its pipes or its row label",
+              "a row whose numbers aren't in the chunk it cites is downgraded"
             ]
           }
         ]
@@ -536,6 +567,35 @@
         ]
       },
       {
+        "file": "evals/stale-conversation.test.mjs",
+        "total": 8,
+        "passed": 8,
+        "suites": [
+          {
+            "name": "stored conversations are versioned",
+            "total": 4,
+            "passed": 4,
+            "tests": [
+              "the storage key carries a version",
+              "the pre-Sprint-4 key is retired rather than left in the attic",
+              "the current key is not also listed as retired",
+              "restoring removes every retired key"
+            ]
+          },
+          {
+            "name": "the requirement table survives a payload it doesn't recognise",
+            "total": 4,
+            "passed": 4,
+            "tests": [
+              "it guards before it destructures",
+              "it accepts a fit that may be undefined",
+              "an unreadable assessment says so rather than rendering empty",
+              "the guard covers all three fields the render reads off the object"
+            ]
+          }
+        ]
+      },
+      {
         "file": "evals/static.test.mjs",
         "total": 27,
         "passed": 27,
@@ -593,6 +653,81 @@
               "ordinary questions are not detected as job postings",
               "the JD panel prefix is the one the server matches on",
               "the unqualified postings really are unqualified"
+            ]
+          }
+        ]
+      },
+      {
+        "file": "evals/track-b.test.mjs",
+        "total": 26,
+        "passed": 26,
+        "suites": [
+          {
+            "name": "#25 — the recruiter TL;DR",
+            "total": 6,
+            "passed": 6,
+            "tests": [
+              "every row's facts are in the corpus file it names",
+              "every row's source file exists",
+              "every row actually asserts something checkable",
+              "carries no unresolved markers",
+              "renders in the empty state only",
+              "is in docs/site-copy.md"
+            ]
+          },
+          {
+            "name": "#26 — the recruiter chips",
+            "total": 5,
+            "passed": 5,
+            "tests": [
+              "no chip is read as a pasted job posting",
+              "no chip loads the repo corpus",
+              "the /fit command sends a chip verbatim",
+              "every chip is in docs/site-copy.md",
+              "the chips replaced the old set rather than adding to it"
+            ]
+          },
+          {
+            "name": "#20 — plain-language prose",
+            "total": 4,
+            "passed": 4,
+            "tests": [
+              "every case study opens with it",
+              "it is static, not generated",
+              "introduces no figures of its own",
+              "is in docs/site-copy.md"
+            ]
+          },
+          {
+            "name": "#19 — the media surface",
+            "total": 5,
+            "passed": 5,
+            "tests": [
+              "no slot describes an asset that does not exist",
+              "every empty slot briefs the person who has to capture it",
+              "at least one slot is still empty, and the page says so",
+              "slot ids are unique",
+              "every slot is one of the three named kinds"
+            ]
+          },
+          {
+            "name": "#19 — the feature surface",
+            "total": 4,
+            "passed": 4,
+            "tests": [
+              "every feature is named in the corpus",
+              "the gap between the list and the product is marked, not filled",
+              "is in docs/site-copy.md",
+              "the page renders both surfaces"
+            ]
+          },
+          {
+            "name": "the copy ledger",
+            "total": 2,
+            "passed": 2,
+            "tests": [
+              "every [VERIFY] marker in shipped copy is listed in the ledger",
+              "Track B's surfaces all have a ledger row"
             ]
           }
         ]
@@ -1158,6 +1293,194 @@
               "steps": 3,
               "finishReason": "stop",
               "costUsd": 0.0096721
+            }
+          }
+        ]
+      },
+      {
+        "model": "anthropic/claude-haiku-4.5",
+        "ranAt": "2026-07-31T20:54:42.769Z",
+        "groups": {
+          "grounded": {
+            "total": 6,
+            "passed": 6,
+            "broke": 0
+          }
+        },
+        "passed": 6,
+        "total": 6,
+        "broke": 0,
+        "citations": {
+          "answers": 6,
+          "claims": 12,
+          "verified": 10,
+          "inventedIds": 0
+        },
+        "performance": {
+          "turns": {
+            "measured": 6,
+            "missing": 0
+          },
+          "ttftMs": {
+            "n": 6,
+            "p50": 696.5,
+            "min": 633,
+            "max": 1240
+          },
+          "durationMs": {
+            "n": 6,
+            "p50": 2804,
+            "min": 1503,
+            "max": 4046
+          },
+          "tokensPerSecond": {
+            "n": 6,
+            "p50": 50.150000000000006,
+            "min": 41.5,
+            "max": 55.3
+          },
+          "inputTokens": {
+            "n": 6,
+            "p50": 11861.5,
+            "min": 7854,
+            "max": 15897
+          },
+          "cachedInputTokens": {
+            "n": 6,
+            "p50": 7521,
+            "min": 7521,
+            "max": 15042
+          },
+          "outputTokens": {
+            "n": 6,
+            "p50": 141,
+            "min": 63,
+            "max": 216
+          },
+          "steps": {
+            "n": 6,
+            "p50": 1.5,
+            "min": 1,
+            "max": 2
+          },
+          "cacheHitRate": 0.8449849731764177,
+          "finishReasons": {
+            "stop": 6
+          },
+          "cost": {
+            "pricedTurns": 6,
+            "totalUsd": 0.023250049999999998,
+            "perTurnP50Usd": 0.00236315,
+            "savedUsd": 0.0541512
+          }
+        },
+        "cases": [
+          {
+            "group": "grounded",
+            "id": "nokia-powerbi",
+            "label": null,
+            "pass": true,
+            "broke": false,
+            "performance": {
+              "ttftMs": 1240,
+              "durationMs": 4046,
+              "tokensPerSecond": 53.6,
+              "inputTokens": 15897,
+              "cachedInputTokens": 7521,
+              "outputTokens": 216,
+              "steps": 2,
+              "finishReason": "stop",
+              "costUsd": 0.01208835
+            }
+          },
+          {
+            "group": "grounded",
+            "id": "adarle20-scale",
+            "label": null,
+            "pass": true,
+            "broke": false,
+            "performance": {
+              "ttftMs": 659,
+              "durationMs": 2473,
+              "tokensPerSecond": 48.2,
+              "inputTokens": 7854,
+              "cachedInputTokens": 7521,
+              "outputTokens": 119,
+              "steps": 1,
+              "finishReason": "stop",
+              "costUsd": 0.0016801000000000001
+            }
+          },
+          {
+            "group": "grounded",
+            "id": "adarle20-payments",
+            "label": null,
+            "pass": true,
+            "broke": false,
+            "performance": {
+              "ttftMs": 710,
+              "durationMs": 3135,
+              "tokensPerSecond": 52.1,
+              "inputTokens": 7856,
+              "cachedInputTokens": 7521,
+              "outputTokens": 163,
+              "steps": 1,
+              "finishReason": "stop",
+              "costUsd": 0.0019021
+            }
+          },
+          {
+            "group": "grounded",
+            "id": "dell-model",
+            "label": null,
+            "pass": true,
+            "broke": false,
+            "performance": {
+              "ttftMs": 998,
+              "durationMs": 3681,
+              "tokensPerSecond": 55.3,
+              "inputTokens": 15878,
+              "cachedInputTokens": 15042,
+              "outputTokens": 203,
+              "steps": 2,
+              "finishReason": "stop",
+              "costUsd": 0.0033552
+            }
+          },
+          {
+            "group": "grounded",
+            "id": "education",
+            "label": null,
+            "pass": true,
+            "broke": false,
+            "performance": {
+              "ttftMs": 683,
+              "durationMs": 1503,
+              "tokensPerSecond": 42.2,
+              "inputTokens": 7854,
+              "cachedInputTokens": 7521,
+              "outputTokens": 63,
+              "steps": 1,
+              "finishReason": "stop",
+              "costUsd": 0.0014001
+            }
+          },
+          {
+            "group": "grounded",
+            "id": "unknown-fact",
+            "label": null,
+            "pass": true,
+            "broke": false,
+            "performance": {
+              "ttftMs": 633,
+              "durationMs": 2396,
+              "tokensPerSecond": 41.5,
+              "inputTokens": 15867,
+              "cachedInputTokens": 15042,
+              "outputTokens": 99,
+              "steps": 2,
+              "finishReason": "stop",
+              "costUsd": 0.0028242
             }
           }
         ]
