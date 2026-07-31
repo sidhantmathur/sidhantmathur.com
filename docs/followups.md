@@ -33,24 +33,34 @@ mark on a light ground, which will look wrong in a dark browser tab.
 
 ## 2. Model selection
 
+**Done — `700459b` refreshed the allowlist.** Sonnet is gone, and the two
+open questions below it resolved along the way. Original brief kept at the
+bottom for the reasoning.
+
 The routing is real and working — `app/api/chat/route.ts` has an allowlist,
 per-tier rate-limit buckets, and returns the remaining budget in response
-headers, which the status strip renders. What needs revisiting is *which*
-models are in it.
+headers, which the status strip renders.
 
-- **Sidhant leans toward dropping Sonnet entirely.** It is currently the only
-  `premium`-tier entry (`anthropic/claude-sonnet-4.5`, 5/hour). Deleting that
-  one line in `MODELS` turns the whole tier off; nothing else needs to change.
-  It is a public endpoint and that model is substantially more expensive than
-  the others.
-- If the premium tier goes, decide whether the tier *machinery* stays. The
-  visible `standard 17/20` budget in the status strip is a deliberate design
-  point — showing the cost engineering rather than hiding it — and it still
-  works with a single tier. Keep it.
-- Worth adding more cheap models to `standard` for variety. The client list is
-  `MODELS` in `components/shell/app-shell.tsx` and must stay a subset of the
-  server allowlist. An id that isn't on the server list silently falls back to
-  the default rather than erroring, so a mismatch is invisible — check both.
+What shipped, on the resolution of each point:
+
+- **Sonnet is dropped.** The premium tier did *not* go with it — it was
+  re-tenanted rather than turned off. `openai/gpt-5.6-luna` ($1.00/$6.00 per
+  1M) holds the slot at 5/hour. The reasoning is in the commit message: this
+  workload is input-dominated (~4k tokens of system prompt and knowledge base
+  against ~300 tokens of answer), so input price is what bills, and Sonnet at
+  $3/1M input was not worth 3x Luna here.
+- **The tier machinery stays**, as this note argued it should — and since
+  premium still has a tenant, the two-tier budget strip is still doing its
+  original job rather than surviving as vestigial structure.
+- **More cheap models were added to `standard`**: it is now haiku-4.5,
+  gpt-5-mini, gemini-3.5-flash-lite, and deepseek-v4-flash. Gateway list
+  prices are noted inline in `MODELS` as checked 2026-07-27.
+
+Still true, and still the thing to be careful about: the client list is
+`MODELS` in `components/shell/app-shell.tsx` and must stay a subset of the
+server allowlist. An id that isn't on the server list silently falls back to
+the default rather than erroring, so a mismatch is invisible — check both.
+`evals/static.test.mjs` now asserts this, but it only catches what it runs on.
 
 ## 3. Copy — Sidhant is doing this, do not write it
 
