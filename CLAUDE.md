@@ -52,7 +52,7 @@ Voice-and-tone drafting is yours. Claims about his experience are not.
 Feature branches for multi-step work; atomic commits with clear messages.
 
 ## Commands
-Run inside WSL (`wsl -e bash -lc "cd ~/sidhantmathur && <cmd>"`) — never npm from Windows.
+Native Ubuntu — run directly from the repo root (the old WSL wrapper is gone).
 - `npm run dev` — dev server at http://localhost:3000 (`predev` regenerates the knowledge base)
 - `npm run build` — production build (`prebuild` regenerates the knowledge base); must pass with zero errors
 - `npm run start` — serve the production build
