@@ -11,7 +11,15 @@ Do not undo those without reading the reasoning.
 
 ## 1. Favicon
 
-Not started. The site has `app/icon.svg` from the light-system era; it has not
+**Done — `f33d629` redrew the favicon, apple icon, and OG image on the
+instrument palette.** Verified 2026-07-31: all three render dark
+(`#111010`/`#0B0A09` grounds, `#E4522B` accent), and `/opengraph-image`
+renders correctly from a live server. One nit remains: the OG image asks for
+`monospace` but satori loads no monospace font, so it renders its default
+sans instead of Geist Mono — filed as its own task. Original brief kept below
+for the palette references.
+
+The site has `app/icon.svg` from the light-system era; it has not
 been looked at since the redesign and is very likely still the old paper/ink
 mark on a light ground, which will look wrong in a dark browser tab.
 
