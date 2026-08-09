@@ -749,6 +749,17 @@ export function AppShell() {
             // spacing. 744 → 660 against a 655px fold, so the whole disclaimer
             // now sits 11px clear of it and the only thing still below the
             // line is 5px of this element's own bottom padding.
+            //
+            // RE-MEASURED, AND THE CAVEAT IS PART OF THE RESULT. That 11px
+            // holds at 1280×800 and grows to 111px at 1440×900. It does not
+            // survive a shorter window: at 1280×720 the disclaimer ends 69px
+            // below the fold and at 1024×768 it ends 21px below, because the
+            // empty state is 660px tall and a 720px-high window leaves a 575px
+            // fold. Closing an 85px gap needs either smaller type or a
+            // different reading order on a phone, and neither is worth paying
+            // for a line that is still one short scroll away. Recorded here so
+            // the next person measures at 800 knowing what happens at 720
+            // rather than discovering it as a bug.
             className="relative min-h-0 flex-1 overflow-y-auto px-4 py-6 md:px-10 md:py-4"
           >
             {/* Idle dims the column rather than covering it. The conversation
