@@ -263,7 +263,17 @@ for (const route of routes) {
       parseFloat(s.style.outlineWidth) > 0 &&
       !isTransparent(s.style.outlineColor);
     const nonOutline = changed.filter((p) => !p.startsWith("outline"));
-    const hasIndicator = nonOutline.length > 0 || (changed.length > 0 && visibleOutline);
+    // `before` is null for a stop the baseline pass never tagged — Chrome makes
+    // scrollable regions and some <pre> blocks focusable so the arrow keys can
+    // scroll them, and those are plain elements no focusable-selector list
+    // predicts. With nothing to diff against, judge the focused state on its own
+    // terms: a visible, accented outline is a focus indicator whether or not
+    // this script saw the element beforehand. (Reporting those as "no focus
+    // indicator" while they wore a perfectly good accent ring was this file
+    // accusing the site of its own blind spot for the third time.)
+    const hasIndicator = before
+      ? nonOutline.length > 0 || (changed.length > 0 && visibleOutline)
+      : visibleOutline;
 
     // And an indicator is not the same as the site's indicator. This site has
     // one accent and a policy of using it; a browser-default ring is a

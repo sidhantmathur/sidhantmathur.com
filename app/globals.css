@@ -234,7 +234,13 @@ body {
    `outline-none` a dozen components carry rather than losing to it by source
    order. :where() keeps its specificity at zero so a component that genuinely
    needs a different indicator can still say so with a single class. */
-:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+/* The selector is `*`, not a list of the usual controls, and that is the fix
+   for a stop the list missed: Chrome makes any scrollable region keyboard
+   focusable so it can be scrolled with the arrow keys, so the charts' overflow
+   containers on /measurements/models are real tab stops — wearing a 1px browser
+   default because they are plain divs. Anything the browser will focus gets the
+   site's ring. */
+:where(*):focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }

@@ -610,6 +610,13 @@ export function AppShell() {
           type="button"
           onClick={() => setRailOpen(true)}
           aria-label="Open navigation"
+          // `disabled` as well as the CSS gate, and the difference is the
+          // keyboard. `pointer-events: none` stops a tap and nothing else: the
+          // button stayed in the tab order before hydration, so Enter on it was
+          // still a keystroke that silently did nothing — the exact bug this
+          // pass exists to remove, surviving for the people least able to guess
+          // what happened. A disabled button leaves the tab order entirely.
+          disabled={!hydrated}
           data-js-control
           className="-ml-1.5 flex h-11 w-11 shrink-0 touch-manipulation items-center justify-center text-text-soft hover:text-accent lg:hidden"
         >
@@ -646,6 +653,7 @@ export function AppShell() {
             onClick={() => openPanel({ kind: "instruments" })}
             title="Open the instruments"
             aria-label="Open the instruments"
+            disabled={!hydrated}
             data-js-control
             className="hidden items-center gap-4 transition-colors hover:text-accent md:flex"
           >
@@ -711,7 +719,7 @@ export function AppShell() {
       <div className="flex min-h-0 flex-1">
         {/* Rail — desktop */}
         <nav className="hidden w-56 shrink-0 flex-col border-r border-line bg-panel p-4 text-[13px] lg:flex">
-          <RailContent onOpenPanel={openPanel} />
+          <RailContent onOpenPanel={openPanel} hydrated={hydrated} />
         </nav>
 
         {/* Conversation */}
@@ -1005,6 +1013,27 @@ export function AppShell() {
               </div>
             )}
             <form
+              // NO NATIVE SUBMIT, EVER — not "not while disabled".
+              //
+              // A <form> with no action is a live navigation waiting for a
+              // submit event: the browser GETs the current URL with the fields
+              // in the query string and throws away the page. Disabling the
+              // submit button closes every path a person has to that, which was
+              // the fix, and then the pre-hydration check reached the form
+              // through `requestSubmit()` and navigated anyway. Nothing on this
+              // page calls that — but "no user can reach it" is a weaker claim
+              // than the one worth making, and it stops being true the moment
+              // an extension, a bookmarklet or a future line of our own code
+              // touches this form.
+              //
+              // method="dialog" is the whole fix. Per the HTML submit
+              // algorithm, a dialog-method form that is not inside a <dialog>
+              // does nothing at all on submit — no request, no navigation —
+              // while still firing the submit event that the handler below
+              // listens for. So Enter still sends a question, and the browser
+              // has no way to navigate off this page whether the JavaScript
+              // arrived, hasn't yet, or threw.
+              method="dialog"
               // Was a fixed h-12 row around a single-line input. The composer
               // grows now, so the height is a floor rather than a size, and the
               // prompt and the hints align to the FIRST line instead of the
@@ -1154,6 +1183,7 @@ export function AppShell() {
                 label="paste a job description"
                 emphasis={emphasis}
                 onClick={() => openPanel({ kind: "jd" })}
+                disabled={!hydrated}
                 // Strip-worthy on desktop, where the strip is idle real estate;
                 // on a phone it was the only thing under the composer and not
                 // worth that space. The rail item is the mobile way in.
@@ -1250,7 +1280,7 @@ export function AppShell() {
           }}
           railOpen={railOpen}
           onRailOpenChange={setRailOpen}
-          rail={<RailContent onOpenPanel={openPanel} showHeading={false} />}
+          rail={<RailContent onOpenPanel={openPanel} hydrated={hydrated} showHeading={false} />}
           readouts={{
             turns: `${turns}/10`,
             ttft: ttft == null ? "—" : `${ttft}ms`,
@@ -1274,9 +1304,12 @@ export function AppShell() {
 
 function RailContent({
   onOpenPanel,
+  hydrated,
   showHeading = true,
 }: {
   onOpenPanel: (v: PanelView) => void;
+  /** Rail entries with no href need JavaScript; see RailLink. */
+  hydrated: boolean;
   showHeading?: boolean;
 }) {
   return (
@@ -1284,7 +1317,12 @@ function RailContent({
       {showHeading && <div className="text-text-faint">Index</div>}
       <div className={`flex flex-col ${showHeading ? "mt-3" : "mt-2"}`}>
         {RAIL_ITEMS.map((item) => (
-          <RailLink key={item.label} item={item} onOpenPanel={onOpenPanel} />
+          <RailLink
+            key={item.label}
+            item={item}
+            onOpenPanel={onOpenPanel}
+            hydrated={hydrated}
+          />
         ))}
       </div>
       <div className="mt-auto flex flex-wrap gap-x-3 gap-y-1 pt-6">
@@ -1307,9 +1345,11 @@ function RailContent({
 function RailLink({
   item,
   onOpenPanel,
+  hydrated,
 }: {
   item: RailItem;
   onOpenPanel: (v: PanelView) => void;
+  hydrated: boolean;
 }) {
   // A rail item is a row of text, and a row of text is not a target. min-h
   // plus items-center makes each one a full 44px band without changing what it
@@ -1347,9 +1387,14 @@ function RailLink({
 
   if (item.view) {
     return (
+      // The rail entries with no page of their own. The anchors above are
+      // untouched — a click on those before hydration navigates, which is a
+      // working outcome rather than a no-op — but these four can only open a
+      // panel, and that needs JavaScript.
       <button
         type="button"
         onClick={() => onOpenPanel(item.view as PanelView)}
+        disabled={!hydrated}
         data-js-control
         className={cls}
       >
@@ -1372,17 +1417,21 @@ function StripButton({
   label,
   emphasis,
   onClick,
+  disabled,
   className = "flex",
 }: {
   label: string;
   emphasis: boolean;
   onClick: () => void;
+  /** Only the job-description entry is on screen before hydration. */
+  disabled?: boolean;
   className?: string;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
+      disabled={disabled}
       data-js-control
       // Full-height rather than text-height. The label is a single line, so
       // the hit area used to be a 17px band inside a 32px strip — fine with a

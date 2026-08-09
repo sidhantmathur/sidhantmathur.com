@@ -181,11 +181,45 @@ await page
     }
   })
   .catch(() => {});
-await page.waitForTimeout(500);
+// Generous, and deliberately so: at 300ms RTT on a throttled connection a
+// same-URL GET takes well over half a second to commit, and a 500ms wait here
+// reported "did not navigate" for a page that was already navigating. The
+// check that catches a silent failure must not have one of its own.
+await page.waitForTimeout(3000);
 check(
   "clicking send before hydration does not navigate",
   !navigated && page.url() === urlBefore,
   page.url() === urlBefore ? "" : `url became ${page.url()}`,
+);
+
+// THE KEYBOARD HALF OF THE GATE. `pointer-events: none` stops a tap and nothing
+// else — a control gated only in CSS stays in the tab order, so Enter on it is
+// still a keystroke that silently does nothing, for the people least able to
+// guess why. Nothing that needs JavaScript should be reachable by Tab yet.
+const reachable = [];
+for (let i = 0; i < 25; i += 1) {
+  await page.keyboard.press("Tab");
+  const stop = await page.evaluate(() => {
+    const el = document.activeElement;
+    if (!el || el === document.body) return null;
+    return {
+      tag: el.tagName.toLowerCase(),
+      js: el.hasAttribute("data-js-control"),
+      href: el.getAttribute("href"),
+      name:
+        el.getAttribute("aria-label") ||
+        (el.textContent ?? "").replace(/\s+/g, " ").trim().slice(0, 40),
+    };
+  });
+  if (!stop) break;
+  // An anchor is fine however it is gated: following it before hydration
+  // navigates to a real server-rendered page, which is a working outcome.
+  if (stop.js && !stop.href) reachable.push(stop.name || stop.tag);
+}
+check(
+  "nothing that needs JavaScript is reachable by Tab before hydration",
+  reachable.length === 0,
+  reachable.length ? `reached ${reachable.join(", ")}` : "",
 );
 
 // Now let it finish, and confirm the gate opens.
