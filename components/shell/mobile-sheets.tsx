@@ -24,6 +24,8 @@ import {
 // dismiss-closes-the-panel rule, because that is a property of the sheet rather
 // than of the shell — see the note on the bottom sheet.
 export function MobileSheets({
+  onRailClosed,
+  onPanelClosed,
   railOpen,
   onRailOpenChange,
   rail,
@@ -37,6 +39,10 @@ export function MobileSheets({
   sheetFull,
   onToggleFull,
 }: {
+  /** Hands focus back to the control that opened the rail. See app-shell.tsx. */
+  onRailClosed: () => void;
+  /** The same for the context panel, which can be opened from several places. */
+  onPanelClosed: () => void;
   railOpen: boolean;
   onRailOpenChange: (open: boolean) => void;
   rail: ReactNode;
@@ -55,6 +61,14 @@ export function MobileSheets({
       <Sheet open={railOpen} onOpenChange={onRailOpenChange}>
         <SheetContent
           side="left"
+          // The primitive is meant to return focus to whatever opened the
+          // dialog and does not — measured, `npm run a11y`: focus landed on
+          // <body>. preventDefault stops the library's own (absent) restore and
+          // the shell puts it where it belongs.
+          onCloseAutoFocus={(e) => {
+            e.preventDefault();
+            onRailClosed();
+          }}
           // Scrolls because the rail now carries the readouts and the
           // transcript controls the header and input row drop at this
           // width — on a short phone that is more than one screen, and
@@ -107,6 +121,10 @@ export function MobileSheets({
       >
         <SheetContent
           side="bottom"
+          onCloseAutoFocus={(e) => {
+            e.preventDefault();
+            onPanelClosed();
+          }}
           style={{ height: sheetFull ? "88dvh" : "52dvh" }}
           // The sheet supplies its own close control in the header row, so
           // the default floating one is off: it is positioned top-right,

@@ -220,8 +220,67 @@ export function AppShell() {
     return () => window.clearInterval(id);
   }, [idle]);
 
+  // ---- What assistive tech is told ----------------------------------------
+  //
+  // A streamed answer arrives silently. The prose appears in the transcript a
+  // token at a time, which is exactly the wrong thing to put in a live region —
+  // a screen reader would read the answer over itself for the length of the
+  // turn — so nothing was in one, and the result was that a turn finished with
+  // no announcement of any kind. A blind visitor had to guess when to go and
+  // read, or tab away and back to find out.
+  //
+  // So: one polite announcement per completed turn, and the answer itself stays
+  // out of the region so it is read once, on purpose, when the reader navigates
+  // to it. The turn number rides along because it makes each announcement a
+  // distinct string — a live region does not re-announce text identical to what
+  // it already holds, so "Answer complete." twice in a row would be said once.
+  //
+  // Failures do NOT come through here. TurnError carries role="alert", which is
+  // the assertive counterpart and interrupts rather than waits, which is right
+  // for a turn that did not happen.
+  const [announcement, setAnnouncement] = useState("");
+  // Counted, not edge-triggered. The first version watched `isBusy` for a
+  // true→false transition and missed the announcement entirely on a fast turn,
+  // where the whole answer arrives inside one render batch and there is no
+  // intermediate commit to observe — caught by the mocked-stream check in
+  // scripts/a11y-audit.mjs, which is exactly the case a live model on a good
+  // connection produces and a developer on localhost never notices. Counting
+  // settled answers has no such window: whenever the shell is idle and there is
+  // one more finished answer than was last announced, that is the event.
+  const announcedCount = useRef(0);
+  useEffect(() => {
+    if (isBusy) return;
+    const answered = messages.filter((m) => m.role === "assistant" && textOf(m)).length;
+    // Fewer than before means the conversation was reset, which is not an
+    // answer and must not leave the counter high enough to swallow the next one.
+    if (answered <= announcedCount.current) {
+      announcedCount.current = answered;
+      return;
+    }
+    announcedCount.current = answered;
+    // The error block and the rate-limit block announce themselves; an aborted
+    // turn was the reader's own doing and renders nothing on purpose.
+    //
+    // `!== "none"`, and the string is the whole point: errorKind is a union of
+    // three STRINGS, so a truthiness test on it is true even when nothing has
+    // gone wrong. The first version of this guard read `if (errorKind) return`
+    // and silently suppressed every announcement the feature exists to make.
+    if (errorKind !== "none") return;
+    queueMicrotask(() => setAnnouncement(`Answer ${answered} complete.`));
+  }, [isBusy, errorKind, messages]);
+
   const [input, setInput] = useState("");
   const [railOpen, setRailOpen] = useState(false);
+  // ---- Where focus goes when a sheet closes --------------------------------
+  //
+  // Measured, not assumed: closing the rail sheet dropped focus on <body>, which
+  // strands a keyboard user at the top of the document with no idea the sheet
+  // ever existed. The dialog primitive is supposed to hand focus back to
+  // whatever opened it and did not, so the shell does it itself — it is two
+  // refs, and it is the difference between a modal a keyboard can use and one
+  // it can only fall out of.
+  const railTriggerRef = useRef<HTMLButtonElement>(null);
+  const panelOpenerRef = useRef<HTMLElement | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [sheetFull, setSheetFull] = useState(false);
   const [panelWidth, setPanelWidth] = useState(PANEL_DEFAULT);
@@ -289,6 +348,14 @@ export function AppShell() {
   // use-conversation.ts about why they must not open the sheet.
   const openPanel = useCallback(
     (view: PanelView) => {
+      // Whatever was focused when the panel was asked for. Read before any
+      // state changes, because the element may be inside a sheet that is about
+      // to close — in which case it will fail the isConnected test on the way
+      // back and focus lands on the composer instead, which is the honest
+      // fallback rather than a guess.
+      const opener = document.activeElement;
+      panelOpenerRef.current =
+        opener instanceof HTMLElement && opener !== document.body ? opener : null;
       // Opening a citation is the other post-action moment the decisions doc
       // names — someone checking a source is someone taking this seriously.
       if (view.kind === "source") bumpStrip();
@@ -500,6 +567,25 @@ export function AppShell() {
           footer={DISCLAIMER}
         />
       )}
+      {/* Announcements only. Visually nothing, and in three ways deliberately
+          placed:
+
+          outside the transcript, so the answer text is never itself inside a
+          live region and never read twice;
+
+          outside `.screen-only`, and this one was learned by measurement. When
+          a sheet opens, Radix hides everything behind it from assistive tech by
+          marking the dialog's siblings aria-hidden — except that the library
+          doing the marking deliberately spares any subtree containing an
+          [aria-live] element, so parking this paragraph inside the shell left
+          THE ENTIRE PAGE reachable behind an open modal. `npm run a11y` caught
+          it as "the sheet is a modal dialog: FAIL";
+
+          and outside the print document, which is where it would otherwise have
+          landed by symmetry — a status line is not part of the paper. */}
+      <p role="status" aria-live="polite" className="sr-only">
+        {announcement}
+      </p>
       <div className="screen-only flex h-dvh flex-col bg-bg text-text [font-family:var(--font-geist-mono)]">
       {/* Skip link. The rail is ~10 links deep and sits before the input in
           tab order, so a keyboard user otherwise tabs through the entire nav
@@ -520,6 +606,7 @@ export function AppShell() {
             SVG because the Unicode trigram renders inconsistently across
             platforms, hairline-thin on iOS in particular. */}
         <button
+          ref={railTriggerRef}
           type="button"
           onClick={() => setRailOpen(true)}
           aria-label="Open navigation"
@@ -597,6 +684,7 @@ export function AppShell() {
                 happening, agreeing that everything was fine. It now says what
                 is true. */}
             <span
+              aria-hidden="true"
               className={`inline-block h-1.5 w-1.5 rounded-full ${
                 !hydrated ? "bg-text-dim" : isBusy ? "bg-accent" : "bg-signal"
               }`}
@@ -607,7 +695,12 @@ export function AppShell() {
                 is the device this whole pass is about. So it shows at every
                 width until hydration and then collapses back to the settled
                 design. */}
-            <span className={!hydrated ? "inline" : "hidden sm:inline"}>
+            {/* sr-only rather than hidden below sm: the dot beside it is
+                decorative, so a screen reader at phone width was being told
+                nothing at all about whether the page was working. The word is
+                in the accessibility tree at every width; only its visibility
+                changes. */}
+            <span className={!hydrated ? "inline" : "sr-only sm:not-sr-only sm:inline"}>
               {!hydrated ? "loading" : isBusy ? "streaming" : "ready"}
             </span>
           </span>
@@ -1031,7 +1124,10 @@ export function AppShell() {
                     label="copy"
                     copiedLabel="copied"
                     event="chat_copy_conversation"
-                    className={`flex h-full shrink-0 touch-manipulation items-center ${
+                    // focus-inset for the same reason the strip's other
+                    // buttons carry it: this row scrolls horizontally, and a
+                    // ring drawn outside the control is clipped at either end.
+                    className={`focus-inset flex h-full shrink-0 touch-manipulation items-center ${
                       emphasis ? "text-text-soft" : ""
                     }`}
                     onCopied={bumpStrip}
@@ -1073,18 +1169,50 @@ export function AppShell() {
         {/* Context panel — desktop, resizable */}
         {panelOpen && (
           <>
+            {/* A splitter, and until now a pointer-only one: it announced
+                itself as a separator and then offered a keyboard no way to
+                move it. Arrows nudge, shift-arrows jump, Home and End go to the
+                stops, Enter restores the default — the same set the double
+                click already had. aria-valuenow makes the width audible rather
+                than something to discover by listening to the layout. */}
             <div
               role="separator"
               aria-orientation="vertical"
               aria-label="Resize panel"
+              aria-valuenow={Math.round(panelWidth)}
+              aria-valuemin={PANEL_MIN}
+              aria-valuemax={PANEL_MAX}
+              tabIndex={0}
               onPointerDown={() => {
                 dragging.current = true;
                 document.body.style.userSelect = "none";
               }}
               onDoubleClick={() => setPanelWidth(PANEL_DEFAULT)}
-              className="hidden w-1 shrink-0 cursor-col-resize bg-line transition-colors hover:bg-accent lg:block"
+              onKeyDown={(e) => {
+                const step = e.shiftKey ? 64 : 16;
+                let next: number | null = null;
+                if (e.key === "ArrowLeft") next = panelWidth + step;
+                else if (e.key === "ArrowRight") next = panelWidth - step;
+                else if (e.key === "Home") next = PANEL_MAX;
+                else if (e.key === "End") next = PANEL_MIN;
+                else if (e.key === "Enter") next = PANEL_DEFAULT;
+                if (next == null) return;
+                e.preventDefault();
+                const clamped = Math.min(PANEL_MAX, Math.max(PANEL_MIN, next));
+                setPanelWidth(clamped);
+                try {
+                  window.localStorage.setItem(PANEL_WIDTH_KEY, String(clamped));
+                } catch {
+                  /* persistence is a nicety */
+                }
+              }}
+              className="hidden w-1 shrink-0 cursor-col-resize bg-line transition-colors hover:bg-accent focus-visible:bg-accent lg:block"
             />
+            {/* Named, so it is a landmark a screen reader can jump to and
+                identify rather than an unlabelled complementary region — and
+                named with the same string its own header shows. */}
             <aside
+              aria-label={panelTitle(panel)}
               style={{ width: panelWidth }}
               className="hidden shrink-0 flex-col border-l border-line bg-panel lg:flex"
             >
@@ -1114,6 +1242,12 @@ export function AppShell() {
           on a phone it is fetched after hydration rather than before it. */}
       {isMobile && (idleReady || railOpen || panelOpen) && (
         <MobileSheets
+          onRailClosed={() => railTriggerRef.current?.focus()}
+          onPanelClosed={() => {
+            const opener = panelOpenerRef.current;
+            if (opener?.isConnected && opener.offsetParent !== null) opener.focus();
+            else inputRef.current?.focus();
+          }}
           railOpen={railOpen}
           onRailOpenChange={setRailOpen}
           rail={<RailContent onOpenPanel={openPanel} showHeading={false} />}
@@ -1253,7 +1387,7 @@ function StripButton({
       // Full-height rather than text-height. The label is a single line, so
       // the hit area used to be a 17px band inside a 32px strip — fine with a
       // cursor, a coin toss with a thumb. The strip is 44px now.
-      className={`${className} h-full shrink-0 touch-manipulation items-center transition-colors hover:text-accent ${
+      className={`${className} focus-inset h-full shrink-0 touch-manipulation items-center transition-colors hover:text-accent ${
         emphasis ? "text-text-soft" : "text-text-faint"
       }`}
     >
