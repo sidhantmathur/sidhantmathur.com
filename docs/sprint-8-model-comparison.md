@@ -88,8 +88,8 @@ and by the table; colour does one job only — emphasis and magnitude:
 | Role | Token | Contrast vs `--bg` |
 | --- | --- | --- |
 | The measured value / the emphasised model | `--accent` `#E4522B` | 5.22:1 |
-| Context — the models that aren't the point | `--text-faint` `#6B655E` | 3.44:1 |
-| Grid, axes | `--line-strong` `#332E29` | recessive, hairline, solid |
+| Context — the models that aren't the point | `--text-faint` `#97918A` | 6.34:1 |
+| Grid, axes | `--line` `#2C2825` | recessive, hairline, solid |
 | Heatmap magnitude ramp (5 ordinal steps, accent hue) | `#782e1a` → `#9a3a1f` → `#bf4625` → `#e4522b` → `#fba57f` | 2.08 → 10.16 |
 
 Both the mark colours and the ramp were checked with the data-viz validator, not

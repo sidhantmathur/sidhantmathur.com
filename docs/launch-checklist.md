@@ -46,9 +46,17 @@ forwarding exists, mail to it bounces.
 
 ## C. Design sign-offs (decisions only you can make)
 
-- [ ] `--faint` (#9B968C) contrast is ~2.6:1 — below WCAG AA, Lighthouse
-      flags it on every page (accessibility still scores 95–96). Accept, or
-      approve darkening toward ~#767167. **[→ Claude if changing]**
+- [x] Faint-ink contrast — **done, no decision needed.** The contrast
+      overhaul raised every ink and line token by lightness alone (hue and
+      chroma held), so the palette got brighter rather than grayer:
+      `--text-soft` #A9A29A → #C4BCB4 (7.84 → 10.55:1), `--text-faint`
+      #6B655E → #97918A (3.44 → 6.34:1), `--line-strong` #332E29 → #645C53
+      (1.47 → 3.01:1, which clears the 3:1 non-text floor and is what makes
+      the link underlines visible), `--line` #231F1C → #2C2825. The mobile
+      backdrop scrim went 55% → 78% so faint text over the brightest patch
+      of texture still clears 4.5:1. Every reading colour is now AA or
+      better; the one sub-AA token left is `--text-dim` (#6B655E, 3.44:1),
+      which is disabled-state and decoration only and never carries content.
 - [ ] `/chat` mobile Lighthouse is 91–93 (desktop 100). Accept, or budget a
       lazy-load follow-up. **[→ Claude if changing]**
 - [ ] Browser QA pass: console clean, ⌘K palette, sticky bar → /chat

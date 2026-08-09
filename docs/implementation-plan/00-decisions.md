@@ -30,18 +30,28 @@ monospace interface whose primary surface is a chat with the resume beside it.
 Define as CSS variables in `globals.css` and map into Tailwind (v4 `@theme`).
 Radius stays 0 everywhere (`--radius: 0rem`).
 
-| Token | Value | Use |
-|---|---|---|
-| `--bg` | `#0B0A09` | Page background |
-| `--panel` | `#111010` | Rail, status strip, input bar, context panel |
-| `--raised` | `#171614` | User turns, inputs, inset blocks |
-| `--line` | `#231F1C` | Hairline dividers |
-| `--line-strong` | `#332E29` | Interactive / focusable borders |
-| `--text` | `#EFEBE4` | Primary text |
-| `--text-soft` | `#A9A29A` | Body text |
-| `--text-faint` | `#6B655E` | Metadata, labels, placeholders |
-| `--accent` | `#E4522B` | Sole accent — prompt caret, focus, active citation, link hover |
-| `--signal` | `#6FA85C` | Status dot only. Never text, never borders. |
+| Token | Value | Contrast on `--bg` | Use |
+|---|---|---|---|
+| `--bg` | `#0B0A09` | — | Page background |
+| `--panel` | `#111010` | — | Rail, status strip, input bar, context panel |
+| `--raised` | `#171614` | — | User turns, inputs, inset blocks |
+| `--line` | `#2C2825` | 1.35:1 | Hairline dividers, chart gridlines |
+| `--line-strong` | `#645C53` | 3.01:1 | Interactive / focusable borders |
+| `--text` | `#EFEBE4` | 16.65:1 | Primary text |
+| `--text-soft` | `#C4BCB4` | 10.55:1 | Body text |
+| `--text-faint` | `#97918A` | 6.34:1 | Metadata, labels, placeholders |
+| `--text-dim` | `#6B655E` | 3.44:1 | Disabled controls and decoration **only** — never content |
+| `--accent` | `#E4522B` | 5.22:1 | Sole accent — prompt caret, focus, active citation, link hover |
+| `--signal` | `#6FA85C` | 7.00:1 | Status dot only. Never text, never borders. |
+
+The ink and line values above are the post-contrast-overhaul set. Hue and
+chroma are unchanged from the original palette — only lightness was raised, so
+this is a brighter phosphor rather than a grayer one. `--line-strong` was lifted
+specifically to clear the 3:1 WCAG floor for non-text UI, which is what makes
+the link underlines (`decoration-line-strong`) visible at all; `--line` moved up
+to roughly where `--line-strong` used to sit, so dividers and gridlines keep
+their old weight. `--text-dim` is the one token deliberately left dark: it now
+reads as unavailable rather than merely quiet next to `--text-faint`.
 
 `--accent` is the original rubric red (`#C7391B`) lifted for legibility on a
 near-black ground; `#C7391B` fails contrast there. It stays a *single* accent —
@@ -53,7 +63,7 @@ permitted on the status dot and nowhere else.
 
 Tailwind utilities: `bg-bg`, `bg-panel`, `bg-raised`, `border-line`,
 `border-line-strong`, `text-text`, `text-text-soft`, `text-text-faint`,
-`text-accent`, `bg-signal`.
+`text-text-dim`, `text-accent`, `bg-signal`.
 
 ### 2.1 Migration state
 
