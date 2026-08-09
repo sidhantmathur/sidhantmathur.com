@@ -49,7 +49,11 @@ export function RankedBars({
           {bars.map(({ row, value, fraction, best }) => (
             <div key={row.model}>
               <div className="flex items-baseline justify-between gap-2">
-                <span className="t-meta truncate text-text-soft" title={row.model}>
+                {/* Not truncated, for the reason spelled out on the heatmap's
+                    row headers: these panels reflow into a ~380px context
+                    panel, and a clipped model name on a touch surface has no
+                    second way to be read. It wraps instead. */}
+                <span className="t-meta min-w-0 break-words text-text-soft" title={row.model}>
                   {row.short}
                 </span>
                 {/* The value is direct-labelled on every bar here rather than
