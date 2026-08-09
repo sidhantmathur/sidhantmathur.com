@@ -559,7 +559,7 @@ export function AppShell() {
                 not a screensaver. */}
             <div
               className={`mx-auto max-w-[68ch] transition-opacity duration-700 ${
-                idle ? "opacity-70" : "opacity-100"
+                idle ? "opacity-90" : "opacity-100"
               }`}
             >
               {/* A replayed conversation says so, once, at the top of the
@@ -888,7 +888,7 @@ export function AppShell() {
                 WebkitMaskImage: "linear-gradient(to right, black 85%, transparent)",
               }}
               className={`flex h-11 items-center gap-4 overflow-x-auto whitespace-nowrap border-t px-4 text-[13px] transition-colors md:px-10 ${
-                emphasis ? "border-accent/60" : "border-line"
+                emphasis ? "border-accent" : "border-line"
               }`}
             >
               {hasMessages && (
