@@ -12,6 +12,7 @@
     "shot": "node scripts/shot.mjs",
     "perf": "node scripts/perf.mjs",
     "check:load": "node scripts/check-pre-hydration.mjs",
+    "a11y": "node scripts/a11y-audit.mjs",
     "eval": "node scripts/build-knowledge.mjs && node scripts/build-repo-corpus.mjs && node --test --experimental-strip-types --test-reporter=tap --test-reporter-destination=stdout --test-reporter=./evals/reporters/json.mjs --test-reporter-destination=evals/static-results.json \"evals/*.test.mjs\"",
     "eval:live": "node --experimental-strip-types evals/run-live.mjs",
     "eval:publish": "node --experimental-strip-types --disable-warning=ExperimentalWarning scripts/publish-evals.mjs"
