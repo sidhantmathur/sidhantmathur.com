@@ -232,6 +232,15 @@ routing to ManualMode, which answers with the corpus instead of an apology, and
 `aborted` renders nothing, because the reader pressed stop and telling someone what
 they just did is not information.
 
+**Typography and ergonomics pass, 2026-08-09** (branch `ux/resilience-readability`).
+A type scale replaced eleven ad-hoc sizes, and two composer strings changed with it.
+Both are UI chrome; neither says anything about Sidhant.
+
+| Status | Where | What it says | Claims | Grounding |
+| --- | --- | --- | --- | --- |
+| draft | `components/shell/app-shell.tsx` → composer placeholder | "Ask a question" — shortened from "Ask a question, or type / for commands", which was clipped mid-word at every phone width. Logged in `docs/site-copy.md`. | none | UI chrome. The dropped half taught the slash menu, which still announces itself the moment a "/" is typed. |
+| draft | `components/shell/app-shell.tsx` → send button | "send ↵" — replaces a bare "↵" glyph below sm and an "enter ↵" hint above it. One labelled button at every width. Logged in `docs/site-copy.md`. | none | UI chrome; it submits the form, and ↵ is still the key that does it |
+
 ## Pending `[VERIFY]` markers
 
 Sentences drafted with a fact-shaped hole in them, waiting on Sidhant. Listing them

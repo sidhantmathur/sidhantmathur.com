@@ -125,7 +125,8 @@ recruiter/engineer toggle, per decisions #26.]
 The `/fit` slash command sends the third one verbatim, so the two can't drift
 into different questions.
 
-Input placeholder: Ask a question about my work
+Input placeholder: Ask a question
+Send button: send ↵
 Disclaimer (small, mono): AI-generated answers about my professional background.
 It can make mistakes — the resume is the authoritative version.
 
