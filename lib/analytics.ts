@@ -83,7 +83,12 @@ export type AnalyticsEvent =
   // A turn that failed with a class attached — the reliability half of #23,
   // and the difference between "the site is down" and "the model timed out".
   //   error_class, model, tier, jd
-  | "chat_turn_failed";
+  | "chat_turn_failed"
+  // A failed turn was sent again from the error block. Paired with
+  // `chat_turn_failed` it answers the only question that matters about the
+  // failure copy: did the reader try again, or did they leave.
+  //   model
+  | "chat_retry";
 
 // Safe no-op when PostHog isn't configured, or when the SDK hasn't finished
 // loading yet — events fired in that window are dropped (see note above).

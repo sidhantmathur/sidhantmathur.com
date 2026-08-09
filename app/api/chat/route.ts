@@ -28,6 +28,14 @@ import { PROJECTS } from "@/content/projects";
 // Node, and there's no edge-specific requirement here.
 export const runtime = "nodejs";
 
+// The platform's own ceiling on a turn. A job-posting turn spends three model
+// steps and can legitimately run well past the default, and a function killed
+// mid-stream is indistinguishable, from the browser, from the stall this
+// sprint's client-side watchdog exists to catch. Ninety seconds is above
+// anything measured here and still bounded — an unbounded turn bills for a
+// reader who closed the tab.
+export const maxDuration = 90;
+
 // --- Request validation --------------------------------------------------
 //
 // useChat (@ai-sdk/react v4 / ai v7, v5-era wire format) POSTs UIMessages:
@@ -697,6 +705,12 @@ export async function POST(req: Request): Promise<Response> {
 
       const result = streamText({
         model, // allowlisted above — never the raw client string
+        // When the reader hits stop, or their phone drops the connection, the
+        // request aborts here — and without this the model kept generating (and
+        // billing) into a socket nobody was reading. The client now aborts
+        // deliberately in two cases besides stop: a connect timeout and a
+        // stalled stream. Each of those used to leave a turn running.
+        abortSignal: req.signal,
         maxOutputTokens: jobPosting ? MAX_OUTPUT_TOKENS_JD : MAX_OUTPUT_TOKENS,
         tools: chatTools,
         // The SDK's default stop condition is stepCountIs(1), which ends the

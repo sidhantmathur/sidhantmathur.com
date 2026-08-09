@@ -195,6 +195,8 @@ export type TurnRecord = TurnTelemetry & {
   messageId: string | null;
 };
 
+// --- The guarded fetch ------------------------------------------------------
+//
 // Turns any failure into one of the telemetry error classes. useChat's onError
 // receives only an Error, not the HTTP status, so the class is read here — from
 // the JSON body the route sends on an early exit, or from the status — and
@@ -203,9 +205,129 @@ export type TurnRecord = TurnTelemetry & {
 //
 // Also lifts the per-tier budget out of the response headers, which is where it
 // lands before a single token has streamed.
+//
+// AND IT PUTS A CLOCK ON THE WHOLE THING, which is the reason this file was
+// reopened. There was no timeout anywhere on the client path: a stream that
+// simply stopped arriving — iOS Safari suspending the tab mid-answer is the
+// case this was reported from, at a restaurant, on a phone — left `status` at
+// "streaming" forever. `isBusy` stays true, `submit()` returns early on every
+// later send, and the site is silently dead until the visitor reloads it. They
+// don't reload. They leave.
+//
+// Two clocks, because one would have to be wrong:
+//
+//   connect   15s to the response HEADERS. A request that hasn't been answered
+//             in fifteen seconds isn't slow, it's gone.
+//   inactive  20s between CHUNKS. This is the one that catches the reported
+//             failure, where the connection is established and then stops.
+//
+// Deliberately NOT `AbortSignal.timeout` over the whole request: a healthy
+// job-posting turn spends three model steps and can legitimately run past a
+// minute, and a total-duration abort would kill it mid-answer.
+
+/** Headers must arrive within this. */
+const CONNECT_TIMEOUT_MS = 15_000;
+/** And once they have, a chunk must arrive at least this often. */
+const STREAM_IDLE_TIMEOUT_MS = 20_000;
+
+/** True for the shape a browser reports when the network itself failed. */
+function isNetworkError(err: unknown): boolean {
+  // Safari says "Load failed", Chrome and Firefox say "Failed to fetch"; all
+  // three raise a TypeError, which no other path here throws.
+  return err instanceof TypeError;
+}
+
+/**
+ * Wraps a response body so a stream that goes quiet fails instead of hanging.
+ *
+ * The wrapped stream is errored with a real class, which is the whole point:
+ * the SDK surfaces it, `onError` fires, `status` becomes "error", `isBusy`
+ * goes false, and the NEXT SEND WORKS. A silent stall does none of that.
+ */
+function watchStream(body: ReadableStream<Uint8Array>, abort: () => void): ReadableStream<Uint8Array> {
+  const reader = body.getReader();
+  let timer: ReturnType<typeof setTimeout> | null = null;
+  let firedTimeout = false;
+
+  return new ReadableStream<Uint8Array>({
+    start(controller) {
+      const clear = () => {
+        if (timer != null) clearTimeout(timer);
+        timer = null;
+      };
+      const bump = () => {
+        clear();
+        timer = setTimeout(() => {
+          firedTimeout = true;
+          // Release the socket first, then fail the stream. The other order
+          // works too, but this way the abort can't race a reader that is
+          // already unwinding.
+          abort();
+          controller.error(new Error("upstream_timeout"));
+          void reader.cancel().catch(() => {});
+        }, STREAM_IDLE_TIMEOUT_MS);
+      };
+
+      bump();
+      void (async () => {
+        try {
+          for (;;) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            controller.enqueue(value);
+            bump();
+          }
+          clear();
+          controller.close();
+        } catch (err) {
+          clear();
+          // Already errored above — a second `controller.error` would throw.
+          // An AbortError here is the reader pressing stop, and it is passed
+          // through untouched so the SDK takes its abort path (status back to
+          // "ready", no error rendered) rather than its failure path.
+          if (!firedTimeout) controller.error(err);
+        }
+      })();
+    },
+    cancel(reason) {
+      if (timer != null) clearTimeout(timer);
+      return reader.cancel(reason);
+    },
+  });
+}
+
 function makeChatFetch(onBudget: (b: Budget) => void): typeof fetch {
   return async (input, init) => {
-    const res = await fetch(input, init);
+    // Our own controller rather than the caller's, so the timers below can
+    // abort a request the SDK has no reason to abort. The SDK's signal is
+    // forwarded into it, so `stop()` still works.
+    const ctrl = new AbortController();
+    const outer = init?.signal;
+    if (outer) {
+      if (outer.aborted) ctrl.abort(outer.reason);
+      else outer.addEventListener("abort", () => ctrl.abort(outer.reason), { once: true });
+    }
+
+    let connectTimedOut = false;
+    const connectTimer = setTimeout(() => {
+      connectTimedOut = true;
+      ctrl.abort();
+    }, CONNECT_TIMEOUT_MS);
+
+    let res: Response;
+    try {
+      res = await fetch(input, { ...init, signal: ctrl.signal });
+    } catch (err) {
+      // Rethrown as a class rather than as whatever the platform said. The
+      // distinction that matters to the reader is "your connection" versus
+      // "my server", and it is only knowable here.
+      if (connectTimedOut) throw new Error("upstream_timeout");
+      if (isNetworkError(err)) throw new Error("network");
+      throw err;
+    } finally {
+      clearTimeout(connectTimer);
+    }
+
     if (!res.ok) {
       let code: TurnErrorClass = res.status === 429 ? "rate_limited" : "upstream_unavailable";
       try {
@@ -222,7 +344,13 @@ function makeChatFetch(onBudget: (b: Budget) => void): typeof fetch {
     if (tier && Number.isFinite(remaining) && Number.isFinite(limit)) {
       onBudget({ tier, remaining, limit });
     }
-    return res;
+    if (!res.body) return res;
+    // Rebuilt from the original response so status, statusText and every header
+    // survive — the budget read above is not the only thing that reads them.
+    return new Response(
+      watchStream(res.body, () => ctrl.abort()),
+      res,
+    );
   };
 }
 
@@ -280,7 +408,20 @@ export function useConversation(model: string) {
   // The client's own stopwatch, kept so the record can carry both latencies.
   const clientTtft = useRef<number | null>(null);
 
-  const { messages, sendMessage, status, setMessages } = useChat<UIMessage>({
+  const {
+    messages,
+    sendMessage,
+    status,
+    setMessages,
+    // The recovery surface. `regenerate` resends the last turn — it slices a
+    // partial assistant message off first, so a turn that died mid-answer is
+    // retried rather than continued — and `stop` aborts one in flight. The SDK
+    // treats an abort as a non-event: status goes back to "ready" and onError
+    // never fires, which is exactly right. Pressing stop is not a failure.
+    regenerate,
+    stop,
+    clearError,
+  } = useChat<UIMessage>({
     transport,
     // F1's channel. The route writes ONE `data-turn` part per turn under a
     // fixed id: an opening write with the model, tier and budget, then a
@@ -491,6 +632,25 @@ export function useConversation(model: string) {
     void sendMessage({ text: q }, { body: { model: modelRef.current } });
   }
 
+  /**
+   * Send the last turn again, after it failed.
+   *
+   * The stopwatch is restarted exactly as `submit` does it, because from the
+   * reader's side this IS a send — the ttft it produces should measure the wait
+   * they're actually sitting through, not the one that failed.
+   */
+  function retry() {
+    if (isBusy) return;
+    setErrorKind("none");
+    setErrorClass(null);
+    clearError();
+    sentAt.current = nowMs();
+    clientTtft.current = null;
+    setTtft(null);
+    track("chat_retry", { model: modelRef.current });
+    void regenerate({ body: { model: modelRef.current } });
+  }
+
   function reset() {
     setMessages([]);
     setPanel({ kind: "none" });
@@ -511,6 +671,10 @@ export function useConversation(model: string) {
   return {
     messages,
     submit,
+    /** Resend the turn that just failed. Rendered by TurnError. */
+    retry,
+    /** Abort the turn in flight. Renders nothing — see the note above. */
+    stop,
     reset,
     isBusy,
     /**

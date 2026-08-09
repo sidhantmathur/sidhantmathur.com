@@ -45,6 +45,14 @@ export type TurnErrorClass =
   | "upstream_timeout"
   /** The Gateway or the model itself failed. */
   | "upstream_unavailable"
+  /**
+   * Client-detected connection failure — the request never reached the server,
+   * or the socket died on the way back. THE SERVER NEVER EMITS THIS ONE: it is
+   * raised in the browser's fetch wrapper (see `makeChatFetch` in
+   * use-conversation.ts), because a turn that dies on the network never gets far
+   * enough for the route to have an opinion about it.
+   */
+  | "network"
   /** The reader navigated away or hit stop. Not a failure to report as one. */
   | "aborted"
   /** Classification fell through. Always worth reading the server log for. */
@@ -159,8 +167,59 @@ export function toTurnErrorClass(value: unknown): TurnErrorClass {
     "upstream_auth",
     "upstream_timeout",
     "upstream_unavailable",
+    "network",
     "aborted",
     "unknown",
   ];
   return known.includes(value as TurnErrorClass) ? (value as TurnErrorClass) : "unknown";
+}
+
+// --- What the reader is told -----------------------------------------------
+//
+// One sentence per class, and the class is what picks it. The site used to show
+// a single grey line for every failure, which is how a dropped connection on a
+// phone read as "the model is broken" — the one reading that makes a visitor
+// stop rather than try again. Each of these says what happened and what to do
+// about it, and the two that are the site's own fault say so.
+//
+// `rate_limited` is deliberately absent: it is not an error state, it is the
+// budget running out, and it routes to ManualMode instead. `aborted` is absent
+// because the reader pressed stop — telling someone what they just did is not
+// information.
+export const TURN_ERROR_COPY: Partial<Record<TurnErrorClass, string>> = {
+  network:
+    "The connection dropped before the answer made it through. Check your signal and try again.",
+  upstream_timeout:
+    "The server stopped responding partway through. Give it another try.",
+  upstream_unavailable:
+    "Something went wrong on my end. Give it another try in a moment.",
+  unknown: "Something went wrong on my end. Give it another try in a moment.",
+  upstream_unconfigured:
+    "The chat backend is misconfigured — this one is on me, not you.",
+  upstream_auth: "The chat backend is misconfigured — this one is on me, not you.",
+  invalid_request: "That message couldn't be sent as written. Try shortening it.",
+};
+
+/** The sentence for a class, falling back to the generic one. */
+export function turnErrorCopy(cls: TurnErrorClass): string {
+  return TURN_ERROR_COPY[cls] ?? TURN_ERROR_COPY.unknown!;
+}
+
+/**
+ * The short label above the sentence — the site's own register for the class,
+ * not the class id. Rendered as `turn failed · <label>`.
+ */
+const TURN_ERROR_LABEL: Partial<Record<TurnErrorClass, string>> = {
+  network: "connection",
+  upstream_timeout: "server timeout",
+  upstream_unavailable: "upstream",
+  upstream_unconfigured: "misconfigured",
+  upstream_auth: "misconfigured",
+  invalid_request: "bad request",
+  unknown: "unknown",
+};
+
+/** `network` → "connection". Falls back to the class id, which is never wrong. */
+export function turnErrorLabel(cls: TurnErrorClass): string {
+  return TURN_ERROR_LABEL[cls] ?? cls;
 }
