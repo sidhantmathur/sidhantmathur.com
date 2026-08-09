@@ -288,7 +288,8 @@ export default function ModelComparisonPage() {
 
       {/* --- the table -------------------------------------------------- */}
       <Section heading={COPY.tableHeading} intro={COPY.tableIntro}>
-        <div className="mt-4 overflow-x-auto">
+        <div className="@container">
+        <div className="mt-4 overflow-x-auto [mask-image:linear-gradient(to_right,black_92%,transparent)] @[820px]:[mask-image:none]">
           <table className="t-meta w-full min-w-[820px] text-left">
             <thead className="t-label text-text-faint">
               <tr className="border-b border-line">
@@ -351,6 +352,7 @@ export default function ModelComparisonPage() {
               ))}
             </tbody>
           </table>
+        </div>
         </div>
         <Note>
           Prices checked {PRICES_CHECKED}. A median is withheld and shown as an em dash under{" "}

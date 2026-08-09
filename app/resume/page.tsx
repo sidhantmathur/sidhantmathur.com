@@ -251,16 +251,19 @@ export default function ResumePage() {
             <MonoLabel>Technical skills</MonoLabel>
             <ul className="mt-3 max-w-[58ch] list-disc space-y-2 pl-5 text-[15px] leading-relaxed text-text-soft">
               <li>
-                <strong className="text-text">GTM systems &amp; analytics:</strong> Salesforce,
+                <strong className="text-text">GTM systems &amp; analytics:</strong>{" "}
+                Salesforce,
                 Power BI, DAX, Power Apps / Power Automate, SharePoint, Excel/VBA, forecasting
               </li>
               <li>
-                <strong className="text-text">AI &amp; automation:</strong> LLM integration &amp;
+                <strong className="text-text">AI &amp; automation:</strong>{" "}
+                LLM integration &amp;
                 agentic workflows (Claude Code, Anthropic API), prompt engineering, Python
                 automation
               </li>
               <li>
-                <strong className="text-text">Engineering:</strong> TypeScript, React, Next.js,
+                <strong className="text-text">Engineering:</strong>{" "}
+                TypeScript, React, Next.js,
                 Node.js, Python, SQL, PostgreSQL, Supabase, Stripe, REST APIs, ETL &amp;
                 data workflows
               </li>
