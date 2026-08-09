@@ -38,24 +38,24 @@ export function RankedBars({
   return (
     <figure className="m-0">
       <figcaption>
-        <div className="text-[12px] text-text">{heading}</div>
-        <div className="mt-0.5 text-[11px] leading-relaxed text-text-faint">{note}</div>
+        <div className="t-meta font-medium text-text">{heading}</div>
+        <div className="t-meta mt-0.5 text-text-faint">{note}</div>
       </figcaption>
 
       {bars.length === 0 ? (
-        <p className="mt-3 text-[11px] text-text-faint">Not measured in any published run.</p>
+        <p className="t-meta mt-3 text-text-faint">Not measured in any published run.</p>
       ) : (
         <div className="mt-3 space-y-2">
           {bars.map(({ row, value, fraction, best }) => (
             <div key={row.model}>
               <div className="flex items-baseline justify-between gap-2">
-                <span className="truncate text-[11px] text-text-soft" title={row.model}>
+                <span className="t-meta truncate text-text-soft" title={row.model}>
                   {row.short}
                 </span>
                 {/* The value is direct-labelled on every bar here rather than
                     selectively: five rows is a readable number of labels, and
                     it removes the tooltip from the critical path entirely. */}
-                <span className="shrink-0 text-[11px] tabular-nums text-text">
+                <span className="t-meta shrink-0 tabular-nums text-text">
                   {format(value)}
                   {best && <span className="ml-1.5 text-accent">{bestLabel}</span>}
                 </span>
@@ -86,7 +86,7 @@ export function RankedBars({
       )}
 
       {missing.length > 0 && (
-        <p className="mt-2 text-[11px] text-text-faint">
+        <p className="t-meta mt-2 text-text-faint">
           Not measured for {missing.map((m) => m.short).join(", ")}.
         </p>
       )}

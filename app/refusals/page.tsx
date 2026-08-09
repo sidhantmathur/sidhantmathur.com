@@ -19,18 +19,18 @@ export const metadata: Metadata = {
 export default function RefusalsPage() {
   return (
     <DocPage>
-      <h1 className="text-[24px] font-medium tracking-[-0.02em] text-text">
+      <h1 className="t-title font-medium text-text">
         What this assistant won&apos;t do
       </h1>
 
-      <p className="mt-6 max-w-[62ch] text-[15px] leading-relaxed text-text-soft md:text-base">
+      <p className="t-body mt-6 max-w-[62ch] text-text-soft">
         Most of the interesting decisions in a system like this are decisions
         about what it will not say. They are usually invisible — you only meet
         one by asking for something and being told no, and by then it looks like
         a limitation rather than a choice. So here they are as a list, with the
         file that holds each one.
       </p>
-      <p className="mt-4 max-w-[62ch] text-[15px] leading-relaxed text-text-soft md:text-base">
+      <p className="t-body mt-4 max-w-[62ch] text-text-soft">
         The last column is the one worth reading. A refusal written into the
         prompt is a request: it holds because the model cooperates with it, and
         a determined visitor may eventually find a phrasing that gets around it.
@@ -39,7 +39,7 @@ export default function RefusalsPage() {
         pretending a request is a guarantee is the kind of claim this site tries
         not to make.
       </p>
-      <p className="mt-4 max-w-[62ch] text-[15px] leading-relaxed text-text-soft md:text-base">
+      <p className="t-body mt-4 max-w-[62ch] text-text-soft">
         Nothing here is a new rule written for this page. Each one already ran
         before it was listed — you can read{" "}
         <Link href="/prompt" className="text-accent">
@@ -55,18 +55,18 @@ export default function RefusalsPage() {
               <h2 className="max-w-[48ch] text-[16px] font-medium leading-snug text-text">
                 {r.title}
               </h2>
-              <span className="shrink-0 text-[11px] text-text-faint">
+              <span className="t-label shrink-0 text-text-faint">
                 {ENFORCEMENT_LABEL[r.enforcedBy]}
               </span>
             </div>
-            <p className="mt-3 max-w-[62ch] text-[14px] leading-relaxed text-text-soft">
+            <p className="t-body mt-3 max-w-[62ch] text-text-soft">
               {r.why}
             </p>
-            <p className="mt-3 max-w-[62ch] text-[14px] leading-relaxed text-text">
+            <p className="t-body mt-3 max-w-[62ch] text-text">
               <span className="text-text-faint">Instead: </span>
               {r.instead}
             </p>
-            <p className="mt-2 font-mono text-[11px] text-text-faint">{r.anchor.path}</p>
+            <p className="t-label mt-2 font-mono text-text-faint">{r.anchor.path}</p>
           </section>
         ))}
       </div>

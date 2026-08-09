@@ -86,8 +86,8 @@ export function FrontierScatter({
   if (!points.length) {
     return (
       <figure className="m-0">
-        <figcaption className="text-[12px] text-text">{heading}</figcaption>
-        <p className="mt-2 text-[11px] text-text-faint">
+        <figcaption className="t-meta font-medium text-text">{heading}</figcaption>
+        <p className="t-meta mt-2 text-text-faint">
           Nothing published carries both axes, so there is no chart to draw.
         </p>
       </figure>
@@ -130,8 +130,8 @@ export function FrontierScatter({
   return (
     <figure className="m-0">
       <figcaption>
-        <div className="text-[12px] text-text">{heading}</div>
-        <div className="mt-0.5 max-w-[62ch] text-[11px] leading-relaxed text-text-faint">
+        <div className="t-meta font-medium text-text">{heading}</div>
+        <div className="t-meta mt-0.5 max-w-[62ch] text-text-faint">
           {note} The vertical axis is zoomed to the measured range, not to zero.
         </div>
       </figcaption>
@@ -238,7 +238,7 @@ export function FrontierScatter({
         </svg>
       </div>
 
-      <p className="mt-2 max-w-[62ch] text-[11px] leading-relaxed text-text-faint">
+      <p className="t-meta mt-2 max-w-[62ch] text-text-faint">
         <span className="text-accent">Highlighted</span> models sit on the frontier — nothing
         measured here is both better and {xScale === "log" ? "cheaper" : "faster"}.
         {unplotted.length > 0 &&

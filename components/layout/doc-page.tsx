@@ -20,9 +20,9 @@ export function DocPage({
 }) {
   return (
     <div className="h-dvh overflow-y-auto bg-bg text-text [font-family:var(--font-geist-mono)]">
-      <header className="sticky top-0 z-10 flex h-9 items-center border-b border-line bg-panel px-4 text-[11px] md:px-6">
+      <header className="sticky top-0 z-10 flex h-11 items-center border-b border-line bg-panel px-4 text-[13px] md:px-6">
         {/* Fills the strip. This is the only way out of a document on a phone
-            and it was an 11px line of text to aim at. */}
+            and it was a bare line of text to aim at. */}
         <Link
           href="/"
           className="-mx-2 flex h-full touch-manipulation items-center px-2 text-text-soft no-underline transition-colors hover:text-accent"

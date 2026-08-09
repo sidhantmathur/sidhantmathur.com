@@ -27,7 +27,7 @@ const BASE = buildSystemPrompt();
 export default function PromptPage() {
   return (
     <DocPage>
-      <h1 className="text-[24px] font-medium tracking-[-0.02em] text-text">
+      <h1 className="t-title font-medium text-text">
         The instructions this assistant was given
       </h1>
 
@@ -57,12 +57,12 @@ export default function PromptPage() {
         has the longer version.
       </p>
 
-      <h2 className="mt-10 text-[15px] font-medium text-text">
+      <h2 className="t-head mt-10 font-medium text-text">
         Sent on every turn · {BASE.length.toLocaleString()} characters
       </h2>
       <PromptBlock text={BASE} />
 
-      <h2 className="mt-10 text-[15px] font-medium text-text">
+      <h2 className="t-head mt-10 font-medium text-text">
         Appended only when you ask about the site · {SITE_APPENDIX.length.toLocaleString()}{" "}
         characters
       </h2>
@@ -81,7 +81,7 @@ export default function PromptPage() {
 
 function PromptBlock({ text }: { text: string }) {
   return (
-    <pre className="mt-4 overflow-x-auto border border-line bg-panel p-4 text-[12px] leading-relaxed text-text-soft">
+    <pre className="mt-4 overflow-x-auto border border-line bg-panel p-4 text-[13px] leading-relaxed text-text-soft">
       {text}
     </pre>
   );

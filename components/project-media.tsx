@@ -21,19 +21,19 @@ import {
 export function AdarleFeatureSurface() {
   return (
     <section className="mt-12 border-t border-line pt-8">
-      <h2 className="text-[15px] font-medium tracking-tight text-text">
+      <h2 className="t-head font-medium text-text">
         Everything in it
       </h2>
-      <p className="mt-3 max-w-[68ch] text-[13px] leading-[1.7] text-text-soft">
+      <p className="t-body mt-3 max-w-[68ch] text-text-soft">
         The prose above is the story. This is the surface area — what a host or a
         player can actually do.
       </p>
       <dl className="mt-6 grid gap-x-8 gap-y-5 sm:grid-cols-2">
         {FEATURE_SURFACE.map((group) => (
           <div key={group.group}>
-            <dt className="text-[11px] text-text-faint">{group.group}</dt>
+            <dt className="t-label text-text-faint">{group.group}</dt>
             <dd>
-              <ul className="mt-1.5 space-y-1 text-[13px] leading-[1.6] text-text-soft">
+              <ul className="t-body mt-1.5 space-y-1 text-text-soft">
                 {group.items.map((item) => (
                   <li key={item}>{item}</li>
                 ))}
@@ -42,7 +42,7 @@ export function AdarleFeatureSurface() {
           </div>
         ))}
       </dl>
-      <p className="mt-6 max-w-[68ch] text-[11px] leading-[1.7] text-text-faint">
+      <p className="t-meta mt-6 max-w-[68ch] text-text-faint">
         {FEATURE_SURFACE_NOTE}
       </p>
     </section>
@@ -52,10 +52,10 @@ export function AdarleFeatureSurface() {
 export function AdarleMediaSurface() {
   return (
     <section className="mt-12 border-t border-line pt-8">
-      <h2 className="text-[15px] font-medium tracking-tight text-text">
+      <h2 className="t-head font-medium text-text">
         What it looks like
       </h2>
-      <p className="mt-3 max-w-[68ch] text-[13px] leading-[1.7] text-text-soft">
+      <p className="t-body mt-3 max-w-[68ch] text-text-soft">
         {MEDIA_SURFACE_NOTE}
       </p>
       <div className="mt-6 space-y-8">
@@ -71,7 +71,7 @@ function MediaFrame({ slot }: { slot: MediaSlot }) {
   const width = slot.width === "narrow" ? "max-w-[300px]" : "max-w-[68ch]";
   return (
     <figure className={width}>
-      <div className="flex items-baseline justify-between gap-3 text-[11px]">
+      <div className="t-meta flex items-baseline justify-between gap-3">
         <span className="text-text-soft">{slot.title}</span>
         <span className="shrink-0 text-text-faint">
           {slot.kind} · {slot.aspect}
@@ -95,16 +95,16 @@ function MediaFrame({ slot }: { slot: MediaSlot }) {
         <div
           className={`mt-2 flex flex-col justify-center gap-2 border border-dashed border-line-strong px-4 py-4 ${slot.aspectClass}`}
         >
-          <span className="text-[11px] text-text-faint">
+          <span className="t-meta text-text-faint">
             Nothing here yet — waiting on a {slot.kind}.
           </span>
-          <p className="max-w-[52ch] text-[12px] leading-[1.6] text-text-soft">
+          <p className="t-meta max-w-[52ch] text-text-soft">
             {slot.brief}
           </p>
         </div>
       )}
 
-      <figcaption className="mt-2 max-w-[62ch] text-[11px] leading-[1.6] text-text-faint">
+      <figcaption className="t-meta mt-2 max-w-[62ch] text-text-faint">
         {slot.asset ? slot.asset.caption : `${slot.title} — not captured yet.`}
       </figcaption>
     </figure>

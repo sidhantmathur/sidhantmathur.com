@@ -25,7 +25,7 @@ export function ScorecardHeatmap({ rows, groups }: ScorecardHeatmapProps) {
     <>
       <ScaleKey />
       <div className="mt-3 overflow-x-auto">
-      <table className="w-full min-w-[440px] border-separate border-spacing-[2px] text-[11px]">
+      <table className="t-meta w-full min-w-[520px] border-separate border-spacing-[2px]">
         <caption className="sr-only">
           Pass rate by model and eval group. Each cell prints its own value.
         </caption>
@@ -74,7 +74,7 @@ export function ScorecardHeatmap({ rows, groups }: ScorecardHeatmapProps) {
  */
 function ScaleKey() {
   return (
-    <div className="mt-4 flex items-center gap-2 text-[11px] text-text-faint">
+    <div className="t-meta mt-4 flex items-center gap-2 text-text-faint">
       <span>lower</span>
       <span className="flex" aria-hidden>
         {RAMP.map((step) => (

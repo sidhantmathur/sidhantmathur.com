@@ -123,7 +123,7 @@ export default function ModelComparisonPage() {
     return (
       <DocPage>
         <Header />
-        <p className="mt-8 max-w-[62ch] border-l-2 border-line-strong pl-3 text-[13px] leading-relaxed text-text-faint">
+        <p className="t-body mt-8 max-w-[62ch] border-l-2 border-line-strong pl-3 text-text-faint">
           {COPY.empty}
         </p>
       </DocPage>
@@ -156,11 +156,11 @@ export default function ModelComparisonPage() {
     <DocPage>
       <Header />
 
-      <p className="mt-6 max-w-[62ch] text-[15px] leading-relaxed text-text-soft md:text-base">
+      <p className="t-body mt-6 max-w-[62ch] text-text-soft">
         {COPY.intro}
       </p>
-      <p className="mt-4 max-w-[62ch] text-[13px] leading-relaxed text-text-soft">{COPY.why}</p>
-      <p className="mt-4 max-w-[62ch] text-[13px] leading-relaxed text-text-faint">
+      <p className="t-body mt-4 max-w-[62ch] text-text-soft">{COPY.why}</p>
+      <p className="t-body mt-4 max-w-[62ch] text-text-faint">
         Measured {measuredOn.length ? formatDate(measuredOn[0]) : "on an unknown date"}
         {measuredOn.length > 1 && formatDate(measuredOn[0]) !== formatDate(measuredOn.at(-1))
           ? ` to ${formatDate(measuredOn.at(-1))}`
@@ -172,7 +172,7 @@ export default function ModelComparisonPage() {
 
       {/* --- the sample everything below rests on ----------------------- */}
       <div className="mt-8 border-t border-line pt-6">
-        <div className="text-[11px] text-text-faint">turns graded</div>
+        <div className="t-label text-text-faint">turns graded</div>
         <div className="text-[44px] leading-none text-text">{turnsGraded}</div>
         <div className="mt-4 flex flex-wrap gap-x-8 gap-y-4">
           <Figure label="models" value={String(rows.length)} />
@@ -289,8 +289,8 @@ export default function ModelComparisonPage() {
       {/* --- the table -------------------------------------------------- */}
       <Section heading={COPY.tableHeading} intro={COPY.tableIntro}>
         <div className="mt-4 overflow-x-auto">
-          <table className="w-full min-w-[720px] text-left text-[11px]">
-            <thead className="text-text-faint">
+          <table className="t-meta w-full min-w-[820px] text-left">
+            <thead className="t-label text-text-faint">
               <tr className="border-b border-line">
                 {[
                   "model",
@@ -367,8 +367,8 @@ export default function ModelComparisonPage() {
         <div className="mt-4 space-y-2">
           {history.map(({ model, runs }) => (
             <div key={model} className="border-b border-line pb-2 last:border-b-0">
-              <div className="text-[12px] text-text">{model}</div>
-              <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-text-faint">
+              <div className="t-meta text-text">{model}</div>
+              <div className="t-meta mt-1 flex flex-wrap gap-x-4 gap-y-1 text-text-faint">
                 {runs.map((run, i) => (
                   <span key={`${run.ranAt}-${i}`}>
                     {formatDate(run.ranAt)}{" "}
@@ -389,8 +389,8 @@ export default function ModelComparisonPage() {
         <dl className="mt-4 space-y-4">
           {LIMITS.map((limit) => (
             <div key={limit.title}>
-              <dt className="text-[12px] text-text">{limit.title}</dt>
-              <dd className="mt-1 max-w-[62ch] text-[13px] leading-relaxed text-text-faint">
+              <dt className="t-meta font-medium text-text">{limit.title}</dt>
+              <dd className="t-body mt-1 max-w-[62ch] text-text-faint">
                 {limit.body}
               </dd>
             </div>
@@ -406,10 +406,10 @@ export default function ModelComparisonPage() {
 function Header() {
   return (
     <>
-      <h1 className="text-[24px] font-medium tracking-[-0.02em] text-text">
+      <h1 className="t-title font-medium text-text">
         Five models, one corpus
       </h1>
-      <p className="mt-3 text-[12px] text-text-faint">
+      <p className="t-meta mt-3 text-text-faint">
         A companion to{" "}
         <Link href="/measurements" className="text-accent">
           what this assistant scores
@@ -440,9 +440,9 @@ function Section({
 }) {
   return (
     <section className="mt-12 border-t border-line pt-8">
-      <h2 className="text-[17px] font-medium tracking-[-0.01em] text-text">{heading}</h2>
+      <h2 className="t-head font-medium text-text">{heading}</h2>
       {intro && (
-        <p className="mt-3 max-w-[62ch] text-[13px] leading-relaxed text-text-soft">{intro}</p>
+        <p className="t-body mt-3 max-w-[62ch] text-text-soft">{intro}</p>
       )}
       {children}
     </section>
@@ -453,14 +453,14 @@ function Figure({ label, value, note }: { label: string; value: string; note?: s
   return (
     <div>
       <div className="text-[20px] leading-none text-text">{value}</div>
-      <div className="mt-1.5 text-[11px] text-text-faint">{label}</div>
-      {note && <div className="text-[11px] text-text-faint">{note}</div>}
+      <div className="t-label mt-1.5 text-text-faint">{label}</div>
+      {note && <div className="t-meta text-text-faint">{note}</div>}
     </div>
   );
 }
 
 function Note({ children }: { children: React.ReactNode }) {
   return (
-    <p className="mt-4 max-w-[62ch] text-[12px] leading-relaxed text-text-faint">{children}</p>
+    <p className="t-meta mt-4 max-w-[62ch] text-text-faint">{children}</p>
   );
 }

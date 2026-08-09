@@ -111,16 +111,16 @@ export default function MeasurementsPage() {
 
   return (
     <DocPage>
-      <h1 className="text-[24px] font-medium tracking-[-0.02em] text-text">
+      <h1 className="t-title font-medium text-text">
         What this assistant scores
       </h1>
-      <p className="mt-6 max-w-[62ch] text-[15px] leading-relaxed text-text-soft md:text-base">
+      <p className="t-body mt-6 max-w-[62ch] text-text-soft">
         {COPY.intro}
       </p>
-      <p className="mt-4 max-w-[62ch] text-[13px] leading-relaxed text-text-faint">
+      <p className="t-body mt-4 max-w-[62ch] text-text-faint">
         {COPY.freshness} Built {formatDate(BUILT_AT)}.
       </p>
-      <p className="mt-2 max-w-[62ch] text-[13px] leading-relaxed text-text-faint">
+      <p className="t-body mt-2 max-w-[62ch] text-text-faint">
         {COPY.honesty}
       </p>
 
@@ -143,14 +143,14 @@ export default function MeasurementsPage() {
             <div className="mt-5 space-y-1">
               {evals.static.files.map((file) => (
                 <details key={file.file} className="border-b border-line pb-1 last:border-b-0">
-                  <summary className="cursor-pointer list-none py-1.5 text-[12px] text-text-soft transition-colors hover:text-accent">
+                  <summary className="t-meta cursor-pointer list-none py-2 text-text-soft transition-colors hover:text-accent">
                     <span className="tabular-nums text-text">{file.passed}</span>
                     <span className="text-text-faint">/{file.total}</span> {file.file}
                   </summary>
                   <div className="pb-2 pl-4">
                     {file.suites.map((suite) => (
                       <div key={suite.name} className="mt-2">
-                        <div className="text-[11px] text-text-faint">
+                        <div className="t-meta text-text-faint">
                           {suite.name}{" "}
                           <span className="tabular-nums">
                             {suite.passed}/{suite.total}
@@ -158,7 +158,7 @@ export default function MeasurementsPage() {
                         </div>
                         <ul className="mt-1 space-y-0.5">
                           {suite.tests.map((name) => (
-                            <li key={name} className="text-[12px] leading-relaxed text-text-soft">
+                            <li key={name} className="t-meta text-text-soft">
                               {name}
                             </li>
                           ))}
@@ -183,18 +183,18 @@ export default function MeasurementsPage() {
               {runs.map((run) => (
                 <div key={run.model} className="border-b border-line py-3 last:border-b-0">
                   <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                    <span className="text-[12px] text-text">{run.model}</span>
-                    <span className="text-[11px] text-text-faint">{formatDate(run.ranAt)}</span>
-                    <span className="text-[11px] text-text-soft tabular-nums">
+                    <span className="t-meta text-text">{run.model}</span>
+                    <span className="t-meta text-text-faint">{formatDate(run.ranAt)}</span>
+                    <span className="t-meta text-text-soft tabular-nums">
                       {run.passed}/{run.total} passed
                     </span>
                     {run.broke > 0 && (
-                      <span className="text-[11px] text-accent tabular-nums">
+                      <span className="t-meta text-accent tabular-nums">
                         {run.broke} broke in transport
                       </span>
                     )}
                   </div>
-                  <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-text-faint">
+                  <div className="t-meta mt-1.5 flex flex-wrap gap-x-3 gap-y-1 text-text-faint">
                     {Object.entries(run.groups).map(([group, g]) => (
                       <span key={group}>
                         {group}{" "}
@@ -244,12 +244,12 @@ export default function MeasurementsPage() {
                 return (
                   <div key={model.model} className="border-b border-line py-3 last:border-b-0">
                     <div className="flex flex-wrap items-baseline gap-x-3">
-                      <span className="text-[12px] text-text">{model.model}</span>
-                      <span className="text-[11px] text-text-faint tabular-nums">
+                      <span className="t-meta text-text">{model.model}</span>
+                      <span className="t-meta text-text-faint tabular-nums">
                         {readout.turns} turn{readout.turns === 1 ? "" : "s"}
                       </span>
                     </div>
-                    <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 text-[11px]">
+                    <div className="t-meta mt-1.5 flex flex-wrap gap-x-4 gap-y-1">
                       <Stat label="p50 first token" maybe={readout.p50Ms} format={formatMs} />
                       <Stat label="p95 first token" maybe={readout.p95Ms} format={formatMs} />
                       <Stat label="prompt cache hit" maybe={readout.cacheHitRate} format={formatPercent} />
@@ -261,8 +261,8 @@ export default function MeasurementsPage() {
 
             {ANALYTICS.byClass.length > 0 && (
               <div className="mt-5">
-                <div className="text-[11px] text-text-faint">Failures by class</div>
-                <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-text-soft">
+                <div className="t-label text-text-faint">Failures by class</div>
+                <div className="t-meta mt-1 flex flex-wrap gap-x-4 gap-y-1 text-text-soft">
                   {ANALYTICS.byClass.map((c) => (
                     <span key={c.class}>
                       {c.class} <span className="tabular-nums text-text">{c.count}</span>
@@ -302,12 +302,12 @@ export default function MeasurementsPage() {
               <Figure label="invented sources" value={String(ground.inventedIds)} />
             </Figures>
             {ground.rate.reason === "too-few" && (
-              <p className="mt-4 max-w-[62ch] text-[13px] leading-relaxed text-accent">
+              <p className="t-body mt-4 max-w-[62ch] text-accent">
                 Under {MIN_CLAIMS_FOR_RATE} published claims, so no rate is shown — {ground.verified}{" "}
                 of {ground.claims} is a pair of counts, not a percentage anyone should carry away.
               </p>
             )}
-            <p className="mt-4 max-w-[62ch] text-[13px] leading-relaxed text-text-faint">
+            <p className="t-body mt-4 max-w-[62ch] text-text-faint">
               Measured on {ground.models.join(", ")}, over the {ground.groups.join(" and ")} group
               {ground.groups.length === 1 ? "" : "s"}.
             </p>
@@ -318,19 +318,19 @@ export default function MeasurementsPage() {
               groundedness, which they are not.
             */}
             {!ground.groups.includes("grounded") && (
-              <p className="mt-3 max-w-[62ch] text-[13px] leading-relaxed text-text-soft">
+              <p className="t-body mt-3 max-w-[62ch] text-text-soft">
                 {COPY.groundedJdOnly}
               </p>
             )}
           </>
         )}
-        <p className="mt-4 max-w-[62ch] text-[13px] leading-relaxed text-text-soft">
+        <p className="t-body mt-4 max-w-[62ch] text-text-soft">
           {COPY.groundedNarrow}
         </p>
-        <p className="mt-3 max-w-[62ch] text-[13px] leading-relaxed text-text-faint">
+        <p className="t-body mt-3 max-w-[62ch] text-text-faint">
           {COPY.groundedCalibration}
         </p>
-        <p className="mt-3 max-w-[62ch] text-[13px] leading-relaxed text-text-faint">
+        <p className="t-body mt-3 max-w-[62ch] text-text-faint">
           {COPY.groundedBlind}
         </p>
       </Section>
@@ -357,13 +357,13 @@ function Section({
       <Heading
         className={
           level === 2
-            ? "text-[17px] font-medium tracking-[-0.01em] text-text"
-            : "text-[14px] font-medium text-text"
+            ? "t-head font-medium text-text"
+            : "t-meta font-medium text-text"
         }
       >
         {heading}
       </Heading>
-      <p className="mt-3 max-w-[62ch] text-[13px] leading-relaxed text-text-soft">{intro}</p>
+      <p className="t-body mt-3 max-w-[62ch] text-text-soft">{intro}</p>
       {children}
     </section>
   );
@@ -377,8 +377,8 @@ function Figure({ label, value, note }: { label: string; value: string; note?: s
   return (
     <div>
       <div className="text-[20px] tabular-nums leading-none text-text">{value}</div>
-      <div className="mt-1.5 text-[11px] text-text-faint">{label}</div>
-      {note && <div className="text-[11px] text-text-faint">{note}</div>}
+      <div className="t-label mt-1.5 text-text-faint">{label}</div>
+      {note && <div className="t-meta text-text-faint">{note}</div>}
     </div>
   );
 }
@@ -404,10 +404,10 @@ function MaybeFigure({
       <div className="text-[20px] tabular-nums leading-none text-text">
         {maybe.value == null ? "—" : format(maybe.value)}
       </div>
-      <div className="mt-1.5 text-[11px] text-text-faint">{label}</div>
-      {note && <div className="text-[11px] text-text-faint">{note}</div>}
+      <div className="t-label mt-1.5 text-text-faint">{label}</div>
+      {note && <div className="t-meta text-text-faint">{note}</div>}
       {maybe.value == null && (
-        <div className="text-[11px] text-text-faint">
+        <div className="t-meta text-text-faint">
           {maybe.reason === "too-few" ? "too few to report" : "not measured"}
         </div>
       )}
@@ -440,7 +440,7 @@ function Stat({
 
 function Empty({ children }: { children: React.ReactNode }) {
   return (
-    <p className="mt-4 max-w-[62ch] border-l-2 border-line-strong pl-3 text-[13px] leading-relaxed text-text-faint">
+    <p className="t-body mt-4 max-w-[62ch] border-l-2 border-line-strong pl-3 text-text-faint">
       {children}
     </p>
   );
@@ -448,6 +448,6 @@ function Empty({ children }: { children: React.ReactNode }) {
 
 function Note({ children }: { children: React.ReactNode }) {
   return (
-    <p className="mt-4 max-w-[62ch] text-[12px] leading-relaxed text-text-faint">{children}</p>
+    <p className="t-meta mt-4 max-w-[62ch] text-text-faint">{children}</p>
   );
 }
