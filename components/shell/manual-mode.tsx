@@ -49,31 +49,31 @@ export function ManualMode({
   return (
     <div className="space-y-4 border-l-2 border-line bg-raised px-3 py-3">
       <div className="space-y-2">
-        <p className="text-[13px] leading-relaxed text-text">{headline}</p>
-        <p className="text-[12px] leading-relaxed text-text-soft">{MANUAL_COPY.body}</p>
+        <p className="t-body text-text">{headline}</p>
+        <p className="t-meta text-text-soft">{MANUAL_COPY.body}</p>
       </div>
 
       <div>
-        <div className="text-[11px] text-text-faint">{MANUAL_COPY.faqHeading}</div>
+        <div className="t-label text-text-faint">{MANUAL_COPY.faqHeading}</div>
         <dl className="mt-2 space-y-3">
           {faq.map((chunk) => (
             <div key={chunk.id}>
-              <dt className="text-[12px] text-text">{chunk.heading}</dt>
+              <dt className="t-meta text-text">{chunk.heading}</dt>
               {chunk.lines.map((line, i) => (
-                <dd key={i} className="text-[12px] leading-relaxed text-text-soft">
+                <dd key={i} className="t-meta text-text-soft">
                   {line}
                 </dd>
               ))}
               {/* The id it would have cited, so the manual answer and the
                   assisted one are visibly the same piece of the record. */}
-              <dd className="mt-0.5 text-[10px] text-text-faint">{chunk.id}</dd>
+              <dd className="mt-0.5 text-[12px] text-text-faint">{chunk.id}</dd>
             </div>
           ))}
         </dl>
       </div>
 
       <div>
-        <div className="text-[11px] text-text-faint">{MANUAL_COPY.corpusHeading}</div>
+        <div className="t-label text-text-faint">{MANUAL_COPY.corpusHeading}</div>
         <div className="mt-2 flex flex-wrap gap-2">
           <ManualLink onClick={() => onOpenSource({ kind: "corpus" })}>
             Every source, listed
@@ -91,7 +91,7 @@ export function ManualMode({
         </div>
       </div>
 
-      <p className="text-[11px] leading-relaxed text-text-faint">{MANUAL_COPY.footer}</p>
+      <p className="t-meta text-text-faint">{MANUAL_COPY.footer}</p>
     </div>
   );
 }
@@ -108,7 +108,7 @@ function ManualLink({
   children: React.ReactNode;
 }) {
   const cls =
-    "inline-flex items-center border border-line-strong px-2.5 py-2 text-[11px] text-text-soft no-underline transition-colors hover:border-accent hover:text-accent";
+    "inline-flex min-h-[44px] items-center border border-line-strong px-3 py-2.5 text-[13px] text-text-soft no-underline transition-colors hover:border-accent hover:text-accent";
   if (onClick) {
     return (
       <button type="button" onClick={onClick} className={cls}>

@@ -139,10 +139,10 @@ export function InstrumentDeck({
       </Section>
 
       <Section title="Rate">
-        <div className="flex items-center gap-3 text-[11px] text-text-faint">
+        <div className="t-meta flex items-center gap-3 text-text-faint">
           <Seismograph rate={rate} settled={settled} width={120} height={22} />
         </div>
-        <p className="mt-2 text-[11px] leading-relaxed text-text-faint">
+        <p className="t-meta mt-2 text-text-faint">
           The live needle is sampled from the text as it arrives and marked{" "}
           <span className="text-text-soft">≈</span>. The number without one is the
           server&apos;s own measurement of the last finished turn.
@@ -162,11 +162,11 @@ export function InstrumentDeck({
           type="button"
           onClick={onToggleTeletype}
           aria-pressed={teletype}
-          className="border border-line-strong px-2.5 py-2 text-[11px] text-text-soft transition-colors hover:border-accent hover:text-accent"
+          className="border border-line-strong px-3 py-3 text-[13px] text-text-soft transition-colors hover:border-accent hover:text-accent"
         >
           teletype {teletype ? "on" : "off"}
         </button>
-        <p className="mt-2 text-[11px] leading-relaxed text-text-faint">
+        <p className="t-meta mt-2 text-text-faint">
           A tick per chunk of text, pitched to how fast it&apos;s arriving. Synthesized in
           the browser, off until you switch it on, and remembered after that.
         </p>
@@ -187,8 +187,8 @@ function Section({
   return (
     <section>
       <div className="mb-2 flex items-baseline justify-between gap-2 border-b border-line pb-1">
-        <h3 className="text-[11px] text-text">{title}</h3>
-        {hint && <span className="shrink-0 text-[10px] text-text-faint">{hint}</span>}
+        <h3 className="text-[12px] text-text">{title}</h3>
+        {hint && <span className="shrink-0 text-[12px] text-text-faint">{hint}</span>}
       </div>
       {children}
     </section>
@@ -206,7 +206,7 @@ function Row({
   emphasis?: boolean;
 }) {
   return (
-    <div className="flex items-baseline justify-between gap-3 text-[11px]">
+    <div className="flex items-baseline justify-between gap-3 text-[12px]">
       <span className="text-text-faint">{label}</span>
       <span className={`tabular-nums ${emphasis ? "text-accent" : "text-text-soft"}`}>{value}</span>
     </div>
@@ -265,7 +265,7 @@ function CostMeter({
 
       {latest && latestCost && (
         <div className="space-y-1 border-t border-line pt-2">
-          <div className="text-[10px] text-text-faint">last turn · {latest.model}</div>
+          <div className="text-[12px] text-text-faint">last turn · {latest.model}</div>
           <Row label="fresh input" value={formatUsd(latestCost.freshInput)} />
           <Row label="cached input" value={formatUsd(latestCost.cacheRead)} />
           {latestCost.cacheWrite > 0 && (
@@ -277,18 +277,18 @@ function CostMeter({
       )}
 
       {!priced && (
-        <p className="text-[11px] leading-relaxed text-text-faint">
+        <p className="t-meta text-text-faint">
           No list price on file for {model}, so its turns are left out of the total rather
           than estimated.
         </p>
       )}
 
-      <p className="text-[11px] leading-relaxed text-text-faint">
+      <p className="t-meta text-text-faint">
         Estimated at published list price. The knowledge base is byte-identical on every
         request, so once it is cached that part of the input bills at a fraction of the
         fresh rate — the saving is the line above.
       </p>
-      <p className="text-[11px] leading-relaxed text-text-faint">
+      <p className="t-meta text-text-faint">
         Nothing you type is stored on the server. The conversation lives in this browser
         until you reset it, and the only thing kept server-side is a per-IP counter for the
         hourly limit.
@@ -311,7 +311,7 @@ function TraceInspector({ turnLog }: { turnLog: TurnRecord[] }) {
 
   if (!turnLog.length) {
     return (
-      <p className="text-[11px] leading-relaxed text-text-faint">
+      <p className="t-meta text-text-faint">
         Nothing yet. Ask a question and every number behind the answer lands here.
       </p>
     );
@@ -331,7 +331,7 @@ function TraceInspector({ turnLog }: { turnLog: TurnRecord[] }) {
                 type="button"
                 onClick={() => setOpenIndex(open ? null : i)}
                 aria-expanded={open}
-                className="flex w-full items-baseline gap-2 px-2 py-1.5 text-left text-[11px] hover:bg-raised"
+                className="flex min-h-[44px] w-full items-baseline gap-2 px-2 py-2.5 text-left text-[12px] hover:bg-raised"
               >
                 <span className="tabular-nums text-text-faint">#{i + 1}</span>
                 <span className={turn.error ? "text-accent" : "text-text-soft"}>
@@ -416,10 +416,10 @@ function TraceInspector({ turnLog }: { turnLog: TurnRecord[] }) {
                   <Row label="finish reason" value={turn.finishReason ?? "—"} />
                   {turn.error && <Row label="error" value={turn.error.class} emphasis />}
                   <details className="pt-1">
-                    <summary className="cursor-pointer text-[10px] text-text-faint hover:text-accent">
+                    <summary className="cursor-pointer py-1 text-[12px] text-text-faint hover:text-accent">
                       raw record
                     </summary>
-                    <pre className="mt-1 overflow-x-auto bg-raised p-2 text-[10px] leading-relaxed text-text-soft">
+                    <pre className="mt-1 overflow-x-auto bg-raised p-2 text-[12px] leading-relaxed text-text-soft">
                       {JSON.stringify(turn, null, 2)}
                     </pre>
                   </details>
@@ -429,7 +429,7 @@ function TraceInspector({ turnLog }: { turnLog: TurnRecord[] }) {
             </div>
           );
         })}
-      <p className="pt-1 text-[10px] leading-relaxed text-text-faint">
+      <p className="t-meta pt-1 text-text-faint">
         Two latencies on purpose: the server measures the model, the browser measures the
         wait. The gap between them is the network.
       </p>
@@ -545,7 +545,7 @@ function FailureTheatre({ errorCopy }: { errorCopy: ErrorCopy }) {
 
   return (
     <div className="space-y-3">
-      <p className="text-[11px] leading-relaxed text-text-faint">
+      <p className="t-meta text-text-faint">
         Every way this site can fail, on demand. Each button takes the real exit in the
         chat route — no model is called, no budget is spent, and nothing here can produce
         an answer.
@@ -557,13 +557,13 @@ function FailureTheatre({ errorCopy }: { errorCopy: ErrorCopy }) {
               type="button"
               onClick={() => run(f.cls)}
               disabled={running != null}
-              className="flex w-full items-baseline gap-2 px-2 py-1.5 text-left text-[11px] hover:bg-raised disabled:opacity-40"
+              className="flex min-h-[44px] w-full items-baseline gap-2 px-2 py-2.5 text-left text-[12px] hover:bg-raised disabled:text-text-dim"
             >
               <span className="text-text-soft">{f.cls}</span>
               <span className="ml-auto shrink-0 text-text-faint">{f.wire}</span>
               <span className="shrink-0 text-accent">{running === f.cls ? "…" : "run"}</span>
             </button>
-            <p className="border-t border-line px-2 py-1.5 text-[10px] leading-relaxed text-text-faint">
+            <p className="t-meta border-t border-line px-2 py-2 text-text-faint">
               {f.cause}
             </p>
           </div>
@@ -573,10 +573,10 @@ function FailureTheatre({ errorCopy }: { errorCopy: ErrorCopy }) {
         <div className="space-y-1 border border-line-strong p-2">
           <Row label="class" value={result.cls} emphasis />
           <Row label="http status" value={String(result.status)} />
-          <div className="pt-1 text-[10px] text-text-faint">what you would have seen</div>
-          <p className="text-[11px] leading-relaxed text-text-soft">{result.shown}</p>
-          <div className="pt-1 text-[10px] text-text-faint">what came over the wire</div>
-          <pre className="overflow-x-auto bg-raised p-2 text-[10px] leading-relaxed text-text-soft">
+          <div className="pt-1 text-[12px] text-text-faint">what you would have seen</div>
+          <p className="t-meta text-text-soft">{result.shown}</p>
+          <div className="pt-1 text-[12px] text-text-faint">what came over the wire</div>
+          <pre className="overflow-x-auto bg-raised p-2 text-[12px] leading-relaxed text-text-soft">
             {result.raw || "(empty body)"}
           </pre>
         </div>
