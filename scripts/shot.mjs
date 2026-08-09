@@ -42,6 +42,12 @@ const viewport = mobile
 rmSync(OUT, { recursive: true, force: true });
 mkdirSync(OUT, { recursive: true });
 
+// Vercel deployment protection, when it's on, answers a headless request with a
+// login page rather than the site — which screenshots as a perfectly clean
+// image of the wrong thing. The automation bypass secret turns that off for
+// this request. Unset is fine and normal; protection is currently off.
+const bypass = process.env.VERCEL_AUTOMATION_BYPASS_SECRET;
+
 const browser = await chromium.launch();
 const page = await browser.newPage({
   viewport,
@@ -49,6 +55,9 @@ const page = await browser.newPage({
   isMobile: mobile,
   hasTouch: mobile,
   colorScheme: "dark",
+  extraHTTPHeaders: bypass
+    ? { "x-vercel-protection-bypass": bypass, "x-vercel-set-bypass-cookie": "true" }
+    : {},
 });
 
 // Console and page errors are collected and printed with the result. Half the

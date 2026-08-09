@@ -36,9 +36,10 @@ Chat: Vercel AI SDK via Vercel AI Gateway · Rate limiting: Upstash · Analytics
 - `npm run build` must pass with zero errors before any task is "done".
 
 ## Cloud dev
-Most work happens in a cloud sandbox now. `npm ci` is the whole setup — no services, no
-Docker, and `npm run build` needs no network (fonts come from the `geist` package, not
-Google, and `scripts/build-measurements.mjs` treats missing credentials as a normal path).
+Most work happens in a cloud sandbox now. Setup is `npm ci && npx playwright install
+chromium` — no services, no Docker. `npm run build` itself needs no network (fonts come
+from the `geist` package, not Google, and `scripts/build-measurements.mjs` treats missing
+credentials as a normal path); the Chromium download does, from `cdn.playwright.dev`.
 
 Keys are optional. Add `AI_GATEWAY_API_KEY` only when touching chat or live evals; without
 it `/api/chat` returns its error state and everything else is unaffected. Upstash and
