@@ -4,7 +4,6 @@ import * as React from "react"
 import { Dialog as SheetPrimitive } from "radix-ui"
 
 import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
 import { XIcon } from "lucide-react"
 
 function Sheet({ ...props }: React.ComponentProps<typeof SheetPrimitive.Root>) {
@@ -68,17 +67,20 @@ function SheetContent({
         {...props}
       >
         {children}
+        {/* The default close control, inlined rather than reached for through
+            the shadcn Button. Every call site in this repo passes
+            showCloseButton={false} and supplies its own header control, so the
+            only thing Button was still doing here was carrying a radius, a
+            focus ring and six variants none of which this site uses. Radius 0,
+            44px, and the same faint-until-hover vocabulary as the rest of the
+            chrome. */}
         {showCloseButton && (
-          <SheetPrimitive.Close data-slot="sheet-close" asChild>
-            <Button
-              variant="ghost"
-              className="absolute top-3 right-3"
-              size="icon-sm"
-            >
-              <XIcon
-              />
-              <span className="sr-only">Close</span>
-            </Button>
+          <SheetPrimitive.Close
+            data-slot="sheet-close"
+            className="absolute right-2 top-2 flex h-11 w-11 items-center justify-center text-text-faint transition-colors hover:text-accent focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent"
+          >
+            <XIcon className="h-4 w-4" />
+            <span className="sr-only">Close</span>
           </SheetPrimitive.Close>
         )}
       </SheetPrimitive.Content>
