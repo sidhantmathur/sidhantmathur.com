@@ -79,14 +79,14 @@ export function Answer({
     if (!block.ids.length && !downgraded.length) return null;
 
     return (
-      <div className="space-y-1 pt-1 text-[10px] leading-[1.5]">
+      <div className="space-y-1 pt-1 text-[12px] leading-[1.5]">
         {block.ids.map((id) => (
           <button
             key={id}
             type="button"
             onClick={() => onOpenSource({ kind: "source", id })}
             title={sourceTitle(id)}
-            className="block w-full truncate text-left text-text-faint transition-colors hover:text-accent"
+            className="block w-full truncate py-1 text-left text-text-faint transition-colors hover:text-accent"
           >
             {shortLabel(id)}
           </button>
@@ -145,7 +145,7 @@ function SourceRow({
               // Below lg the margin doesn't exist, so this row is the only way
               // to open a source — and it is opened with a thumb. py-2 makes
               // the chip a real target rather than a 26px band of text.
-              className="border border-line px-2.5 py-2 text-[11px] text-text-faint transition-colors hover:border-accent hover:text-accent"
+              className="border border-line px-3 py-2.5 text-[13px] text-text-faint transition-colors hover:border-accent hover:text-accent"
             >
               ↗ {chipLabel(id)}
             </button>
@@ -160,7 +160,7 @@ function SourceRow({
           them at the same volume would flatten the distinction the check exists
           to draw. */}
       {shown.map((claim, i) => (
-        <p key={i} className="text-[11px] leading-relaxed text-text-faint">
+        <p key={i} className="t-meta text-text-faint">
           <span className={claim.verdict === "uncited" ? "text-text-soft" : "text-accent"}>
             {claim.verdict === "uncited" ? "uncited" : "unverified"}
           </span>{" "}
@@ -168,11 +168,11 @@ function SourceRow({
         </p>
       ))}
       {rest > 0 && (
-        <p className="text-[11px] text-text-faint">and {rest} more like it.</p>
+        <p className="t-meta text-text-faint">and {rest} more like it.</p>
       )}
 
       {nothingCited && check.claims.length > 0 && (
-        <p className="text-[11px] leading-relaxed text-text-faint">
+        <p className="t-meta text-text-faint">
           <span className="text-text-soft">no sources cited</span> · this answer doesn&apos;t
           point at a specific part of the record.
         </p>

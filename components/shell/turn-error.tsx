@@ -33,19 +33,17 @@ export function TurnError({
   const cls = errorClass ?? "unknown";
   return (
     <div className="border-l-2 border-accent bg-raised px-3 py-2" role="alert">
-      <p className="text-[10px] tracking-widest text-text-faint [font-family:var(--font-geist-mono)]">
+      <p className="text-[12px] tracking-widest text-text-faint [font-family:var(--font-geist-mono)]">
         turn failed · {turnErrorLabel(cls)}
       </p>
-      <p className="mt-1.5 text-[13px] leading-relaxed text-text-soft">
-        {turnErrorCopy(cls)}
-      </p>
+      <p className="t-body mt-1.5 text-text-soft">{turnErrorCopy(cls)}</p>
       {/* Bordered like the suggested-question and citation chips, at their
           padding, because it is the same kind of object: the one thing there is
           to do next. */}
       <button
         type="button"
         onClick={onRetry}
-        className="mt-2 border border-line-strong px-2.5 py-2 text-[11px] text-text-soft transition-colors hover:border-accent hover:text-accent"
+        className="mt-2 flex min-h-[44px] items-center border border-line-strong px-3 py-2.5 text-[13px] text-text-soft transition-colors hover:border-accent hover:text-accent"
       >
         try again
       </button>

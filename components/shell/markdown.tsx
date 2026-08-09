@@ -197,7 +197,7 @@ function CodeBlock({ lang, code }: { lang: string; code: string }) {
           site's whole type system is already one mono face on one background —
           coloured tokens would be the loudest thing on the page. */}
       {lang && (
-        <div className="border-b border-line px-3 py-1 text-[10px] tracking-widest text-text-faint [font-family:var(--font-geist-mono)]">
+        <div className="border-b border-line px-3 py-1 text-[12px] tracking-widest text-text-faint [font-family:var(--font-geist-mono)]">
           {lang.toLowerCase()}
         </div>
       )}
@@ -205,7 +205,7 @@ function CodeBlock({ lang, code }: { lang: string; code: string }) {
           widening the answer column and putting the whole page on a horizontal
           scrollbar — which on a phone is how a chat stops being readable. */}
       <pre className="overflow-x-auto px-3 py-2.5">
-        <code className="text-[12px] leading-[1.6] text-text [font-family:var(--font-geist-mono)]">
+        <code className="text-[13px] leading-[1.6] text-text [font-family:var(--font-geist-mono)]">
           {code}
         </code>
       </pre>
@@ -253,13 +253,13 @@ function Table({ lines, keyPrefix }: { lines: string[]; keyPrefix: string }) {
 
   return (
     <div className="overflow-x-auto border border-line">
-      <table className="w-full border-collapse text-left text-[12px]">
+      <table className="w-full border-collapse text-left text-[14px]">
         <thead>
           <tr className="border-b border-line">
             {head.map((c, i) => (
               <th
                 key={i}
-                className="px-3 py-2 font-normal tracking-widest text-text-faint [font-family:var(--font-geist-mono)] text-[10px] align-top"
+                className="px-3 py-2 font-normal tracking-widest text-text-faint [font-family:var(--font-geist-mono)] text-[12px] align-top"
               >
                 {c}
               </th>
@@ -361,7 +361,10 @@ export function Markdown({
     })();
 
   return (
-    <div className="space-y-3 text-[13px] leading-[1.7] text-text-soft">
+    // The single most-read surface on the site, and it spent the whole build at
+    // 13px — a caption size carrying a conversation. `t-body` is 16px on a
+    // phone and 15px on a desktop.
+    <div className="t-body space-y-3 text-text-soft">
       {groups.map((g, gi) => {
         const bi = g.index;
         const key = `${bi}-${gi}`;

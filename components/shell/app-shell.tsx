@@ -266,12 +266,21 @@ export function AppShell() {
   // Runs on `input` rather than in onChange so the slash commands and the
   // suggested questions — which set the value straight through setInput — get
   // resized too, instead of leaving a one-line box holding six lines of text.
+  //
+  // The floor is Math.max rather than the raw scrollHeight, and the field
+  // carries a min-height in CSS to back it. An empty textarea can report a
+  // scrollHeight computed against no content at all — measured before the font
+  // has swapped, or on the first paint of a hydrated field — and writing that
+  // number back as an explicit height locks the composer to a box shorter than
+  // its own placeholder. `auto` resolves against the min-height; offsetHeight
+  // reads what that resolved to, so the measurement can never shrink the field
+  // below the size CSS already guaranteed it.
   const inputRef = useRef<HTMLTextAreaElement>(null);
   useEffect(() => {
     const el = inputRef.current;
     if (!el) return;
     el.style.height = "auto";
-    el.style.height = `${el.scrollHeight}px`;
+    el.style.height = `${Math.max(el.scrollHeight, el.offsetHeight)}px`;
   }, [input]);
 
   const submitJd = useCallback(
@@ -439,19 +448,18 @@ export function AppShell() {
       </a>
 
       {/* ---- Status strip ------------------------------------------------- */}
-      <header className="flex h-9 shrink-0 items-center gap-3 border-b border-line bg-panel px-3 text-[11px] md:px-4">
+      <header className="flex h-11 shrink-0 items-center gap-3 border-b border-line bg-panel px-3 text-[12px] md:px-4">
         {/* Tap target, not a glyph. The bare ☰ character rendered at the
-            header's 11px was an ~11px target — well under the 44px iOS asks
-            for, and it read as thin besides. This fills the full height of the
-            strip (36px): a shade under spec, but the strip is the constraint
-            and a taller header would cost the density everywhere else. Drawn
-            as an SVG because the Unicode trigram renders inconsistently
-            across platforms, hairline-thin on iOS in particular. */}
+            header's own size was an ~11px target — well under the 44px iOS asks
+            for, and it read as thin besides. The strip is 44px tall now, so
+            this finally fills it at spec instead of a shade under. Drawn as an
+            SVG because the Unicode trigram renders inconsistently across
+            platforms, hairline-thin on iOS in particular. */}
         <button
           type="button"
           onClick={() => setRailOpen(true)}
           aria-label="Open navigation"
-          className="-ml-1.5 flex h-9 w-9 shrink-0 touch-manipulation items-center justify-center text-text-soft hover:text-accent lg:hidden"
+          className="-ml-1.5 flex h-11 w-11 shrink-0 touch-manipulation items-center justify-center text-text-soft hover:text-accent lg:hidden"
         >
           <svg
             width="17"
@@ -467,7 +475,7 @@ export function AppShell() {
           </svg>
         </button>
         {/* Fills the strip for the same reason the hamburger beside it does —
-            an 11px line of text is not a touch target. */}
+            a 12px line of text is not a touch target. */}
         <Link
           href="/"
           className="-mx-2 flex h-full touch-manipulation items-center px-2 text-text no-underline hover:text-accent"
@@ -503,7 +511,7 @@ export function AppShell() {
             <select
               value={model}
               onChange={(e) => setModel(e.target.value)}
-              className="cursor-pointer border border-line-strong bg-raised px-1.5 py-0.5 text-[11px] text-text-soft outline-none focus:border-accent"
+              className="min-h-[36px] cursor-pointer border border-line-strong bg-raised px-1.5 py-0.5 text-[13px] text-text-soft outline-none focus:border-accent"
             >
               {MODELS.map((m) => (
                 <option key={m} value={m}>
@@ -526,7 +534,7 @@ export function AppShell() {
       {/* ---- Body --------------------------------------------------------- */}
       <div className="flex min-h-0 flex-1">
         {/* Rail — desktop */}
-        <nav className="hidden w-56 shrink-0 flex-col border-r border-line bg-panel p-4 text-[11px] lg:flex">
+        <nav className="hidden w-56 shrink-0 flex-col border-r border-line bg-panel p-4 text-[13px] lg:flex">
           <RailContent onOpenPanel={openPanel} />
         </nav>
 
@@ -540,7 +548,11 @@ export function AppShell() {
           <div
             ref={scrollRef}
             onScroll={onScroll}
-            className="relative min-h-0 flex-1 overflow-y-auto px-4 py-8 md:px-10"
+            // py-6 rather than py-8: at 1280×800 the empty state ran two lines
+            // past the bottom of the viewport, and the two lines it lost were
+            // the disclaimer — the one paragraph on the page that has to be
+            // seen without being looked for.
+            className="relative min-h-0 flex-1 overflow-y-auto px-4 py-6 md:px-10"
           >
             {/* Idle dims the column rather than covering it. The conversation
                 stays legible and every control stays live — this is a settle,
@@ -556,11 +568,11 @@ export function AppShell() {
                   reader passes on the way in — not a badge in the chrome. */}
               {replayed && (
                 <div className="mb-6 border-l-2 border-accent bg-raised px-3 py-2">
-                  <p className="text-[12px] leading-relaxed text-text-soft">{REPLAY_BANNER}</p>
+                  <p className="t-meta text-text-soft">{REPLAY_BANNER}</p>
                   <button
                     type="button"
                     onClick={reset}
-                    className="mt-1 text-[11px] text-text-faint hover:text-accent"
+                    className="t-label flex min-h-[44px] touch-manipulation items-center text-text-faint hover:text-accent"
                   >
                     start a fresh one
                   </button>
@@ -568,15 +580,29 @@ export function AppShell() {
               )}
 
               {!hasMessages && (
-                <div className="space-y-5">
-                  <h1 className="max-w-[24ch] text-[clamp(21px,3.2vw,34px)] font-medium leading-[1.2] tracking-[-0.02em] text-text">
+                // A flex column rather than space-y, because the reading order
+                // is not the source order below sm — see the chips.
+                <div className="flex flex-col gap-3">
+                  {/* 30ch, not 24. The measure is set in the h1's OWN ch, so
+                      the bigger hero was wrapping to three lines inside a
+                      column wide enough for two — and the line it bought
+                      pushed the disclaimer off a 800px-tall desktop. At 30ch
+                      the column itself is the constraint again. */}
+                  <h1 className="t-hero order-1 max-w-[30ch] font-medium text-text">
                     {HERO}
                   </h1>
-                  <p className="text-[13px] leading-relaxed text-text-soft">{HERO_SUB}</p>
-                  {/* #25 — the six-second scan, above the chips. See the note
-                      in recruiter-tldr.tsx for why it is empty-state only. */}
-                  <RecruiterTldr />
-                  <div className="flex flex-wrap gap-2 pt-1">
+                  <p className="t-body order-2 text-text-soft">{HERO_SUB}</p>
+                  {/* THE CHIPS COME BEFORE THE TL;DR ON A PHONE.
+                      The tl;dr is the six-second scan and it wants to be first,
+                      which is what it got — but it has grown to six rows since,
+                      and on a 390×844 screen those six rows plus the hero fill
+                      the viewport exactly. The chips were never on screen at
+                      all: the one control that shows a visitor what this site
+                      is for sat below the fold on the only device where the
+                      fold is the whole page. Above sm both fit, and the
+                      original scan order — positioning, facts, the question you
+                      can ask — is restored. */}
+                  <div className="order-3 flex flex-wrap gap-2 sm:order-4 sm:pt-1">
                     {SUGGESTED.map((q) => (
                       <button
                         key={q}
@@ -586,13 +612,18 @@ export function AppShell() {
                           submit(q);
                         }}
                         disabled={isBusy}
-                        className="border border-line-strong px-2.5 py-1.5 text-left text-[12px] text-text-soft transition-colors hover:border-accent hover:text-text disabled:opacity-40"
+                        className="border border-line-strong px-3 py-2.5 text-left text-[14px] text-text-soft transition-colors hover:border-accent hover:text-text disabled:border-line disabled:text-text-dim"
                       >
                         {q}
                       </button>
                     ))}
                   </div>
-                  <p className="max-w-[58ch] pt-2 text-[11px] leading-relaxed text-text-faint">
+                  {/* #25 — the six-second scan. See the note in
+                      recruiter-tldr.tsx for why it is empty-state only. */}
+                  <div className="order-4 sm:order-3">
+                    <RecruiterTldr />
+                  </div>
+                  <p className="t-meta order-5 max-w-[58ch] text-text-faint">
                     {DISCLAIMER}
                   </p>
                 </div>
@@ -626,10 +657,10 @@ export function AppShell() {
                         // "this is a ChatGPT clone" signal, and this site is
                         // an instrument log, not a messaging app.
                         <div className={mi > 0 ? "border-t border-line pt-4" : ""}>
-                          <p className="mb-2 text-[10px] tracking-widest text-text-faint [font-family:var(--font-geist-mono)]">
+                          <p className="mb-2 text-[12px] tracking-widest text-text-faint [font-family:var(--font-geist-mono)]">
                             {String(exchange).padStart(2, "0")} · you
                           </p>
-                          <p className="whitespace-pre-wrap border-l-2 border-accent pl-3 text-[13px] leading-relaxed text-text">
+                          <p className="t-body whitespace-pre-wrap border-l-2 border-accent pl-3 text-text">
                             {text}
                           </p>
                         </div>
@@ -668,7 +699,7 @@ export function AppShell() {
                                     href="/resume.pdf"
                                     target="_blank"
                                     rel="noreferrer"
-                                    className={`border px-2.5 py-2 text-[11px] no-underline transition-colors hover:border-accent hover:text-accent ${
+                                    className={`border px-3 py-2.5 text-[13px] no-underline transition-colors hover:border-accent hover:text-accent ${
                                       m.id === lastId
                                         ? "border-line-strong text-text-soft"
                                         : "border-line text-text-faint"
@@ -687,7 +718,7 @@ export function AppShell() {
                                 // Borderless, but it shares a row with the
                                 // chips and has to be the same height to be
                                 // aimed at alongside them.
-                                className="flex touch-manipulation items-center px-1 py-2"
+                                className="flex touch-manipulation items-center px-1 py-2.5"
                               />
                             )}
                           </div>
@@ -717,7 +748,7 @@ export function AppShell() {
                       <button
                         type="button"
                         onClick={stop}
-                        className="shrink-0 text-[11px] text-text-faint transition-colors hover:text-accent"
+                        className="shrink-0 text-[13px] text-text-faint transition-colors hover:text-accent"
                       >
                         stop
                       </button>
@@ -757,7 +788,7 @@ export function AppShell() {
                       e.preventDefault();
                       runSlash(c.name);
                     }}
-                    className="flex w-full items-baseline gap-3 px-4 py-2 text-left text-[12px] hover:bg-raised md:px-10"
+                    className="flex min-h-[44px] w-full items-center gap-3 px-4 py-2.5 text-left text-[14px] hover:bg-raised md:px-10"
                   >
                     <span className="text-accent">{c.name}</span>
                     <span className="text-text-faint">{c.hint}</span>
@@ -772,13 +803,13 @@ export function AppShell() {
               // centre — on a ten-line pasted job description, a vertically
               // centred ">" sits in the middle of the paste with nothing to do
               // with it.
-              className="flex min-h-12 items-start px-4 text-[13px] md:px-10"
+              className="flex min-h-12 items-start px-4 text-[15px] md:px-10"
               onSubmit={(e) => {
                 e.preventDefault();
                 trySend();
               }}
             >
-              <span className="py-3 leading-6 text-accent">&gt;</span>
+              <span className="py-3 text-[15px] leading-[1.6] text-accent">&gt;</span>
               <textarea
                 ref={inputRef}
                 value={input}
@@ -795,7 +826,12 @@ export function AppShell() {
                   if (e.key === "Escape") setInput("");
                 }}
                 id="ask"
-                placeholder="Ask a question, or type / for commands"
+                // Short enough to survive a 320px phone intact. The long
+                // version — "Ask a question, or type / for commands" — was
+                // clipped mid-word at every width a phone actually has, and the
+                // half of it that got cut was the half doing the teaching. The
+                // slash menu advertises itself the moment a "/" is typed.
+                placeholder="Ask a question"
                 aria-label="Ask a question"
                 enterKeyHint="send"
                 // 16px below md is not a style choice: iOS Safari zooms the
@@ -815,25 +851,23 @@ export function AppShell() {
                 // A pasted job description is the case this exists for, and one
                 // of those can be sixty lines long; without a cap it eats the
                 // conversation it was supposed to be asking about.
-                className="ml-2 max-h-[216px] min-w-0 flex-1 resize-none bg-transparent py-3 text-[16px] leading-6 text-text outline-none placeholder:text-text-faint md:text-[13px]"
+                className="ml-2 max-h-[216px] min-h-[48px] min-w-0 flex-1 resize-none bg-transparent py-3 text-[16px] leading-[1.6] text-text outline-none placeholder:text-text-faint md:text-[15px]"
               />
-              {/* Aligned to the first line with the prompt, not the growing
-                  field's centre. */}
-              <span className="hidden py-3 text-[11px] leading-6 text-text-faint sm:inline">
-                enter ↵
-              </span>
-              {/* Touch has no visible affordance for "press enter" and no
-                  hardware key to press. The hint above is the desktop half of
-                  this; below sm it becomes a real button. */}
+              {/* One send control at every width.
+                  It used to be two half-controls: an "enter ↵" hint on desktop
+                  and a bare ↵ glyph below sm, so the widest screens had no
+                  button at all and the narrowest had a 36px unlabelled one at
+                  30% opacity when disabled — which reads as a rendering bug
+                  rather than as a state. This is a real button: bordered,
+                  labelled, 44px tall, and legible in both states.
+                  my-1.5 centres it against the first line of a growing field
+                  rather than against the whole composer. */}
               <button
                 type="submit"
                 disabled={!input.trim() || isBusy}
-                aria-label="Send"
-                // my-1.5 centres it against the first line of a growing field
-                // rather than against the whole composer.
-                className="-mr-1.5 my-1.5 flex h-9 w-9 shrink-0 touch-manipulation items-center justify-center text-[15px] text-text-faint transition-colors hover:text-accent disabled:opacity-30 sm:hidden"
+                className="-mr-1.5 my-1.5 ml-2 flex h-11 min-w-[44px] shrink-0 touch-manipulation items-center justify-center border border-line-strong bg-raised px-3 text-[14px] text-text-soft transition-colors hover:border-accent hover:text-accent disabled:border-line disabled:text-text-dim"
               >
-                ↵
+                send ↵
               </button>
             </form>
 
@@ -846,7 +880,14 @@ export function AppShell() {
                 detect an ending. Scrolls horizontally rather than wrapping
                 on a narrow phone, so the input row above it never moves. */}
             <div
-              className={`flex h-8 items-center gap-4 overflow-x-auto whitespace-nowrap border-t px-4 text-[11px] transition-colors md:px-10 ${
+              // The fade is the only thing that says this row scrolls. It has
+              // no scrollbar on a phone, so a strip whose last action sat
+              // exactly at the edge looked like a strip that ended there.
+              style={{
+                maskImage: "linear-gradient(to right, black 85%, transparent)",
+                WebkitMaskImage: "linear-gradient(to right, black 85%, transparent)",
+              }}
+              className={`flex h-11 items-center gap-4 overflow-x-auto whitespace-nowrap border-t px-4 text-[13px] transition-colors md:px-10 ${
                 emphasis ? "border-accent/60" : "border-line"
               }`}
             >
@@ -910,12 +951,12 @@ export function AppShell() {
               style={{ width: panelWidth }}
               className="hidden shrink-0 flex-col border-l border-line bg-panel lg:flex"
             >
-              <div className="flex h-9 shrink-0 items-center justify-between border-b border-line px-4 text-[11px]">
+              <div className="flex h-11 shrink-0 items-center justify-between border-b border-line px-4 text-[13px]">
                 <span className="truncate text-text-faint">{panelTitle(panel)}</span>
                 <button
                   type="button"
                   onClick={closePanel}
-                  className="shrink-0 text-text-faint hover:text-accent"
+                  className="-mr-2 flex h-full shrink-0 items-center px-2 text-text-faint hover:text-accent"
                 >
                   close ✕
                 </button>
@@ -942,18 +983,18 @@ export function AppShell() {
               // last thing in this column and they used to end flush with the
               // sheet's edge, under the bar on a notched phone.
               showCloseButton={false}
-              className="w-72 overflow-y-auto overscroll-contain border-line bg-panel p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] text-[11px] text-text [font-family:var(--font-geist-mono)]"
+              className="w-72 overflow-y-auto overscroll-contain border-line bg-panel p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] text-[13px] text-text [font-family:var(--font-geist-mono)]"
             >
               {/* Title and close on one row, sized and worded like the bottom
                   sheet's — the default floating ✕ was a different glyph at a
                   different size sitting off the title's baseline. */}
               <SheetHeader className="-mr-2 -my-2 flex-row items-center gap-2 space-y-0 p-0">
-                <SheetTitle className="min-w-0 flex-1 truncate text-[11px] font-normal text-text-faint">
+                <SheetTitle className="min-w-0 flex-1 truncate text-[13px] font-normal text-text-faint">
                   Index
                 </SheetTitle>
                 <SheetClose
                   aria-label="Close"
-                  className="flex h-10 w-10 shrink-0 touch-manipulation items-center justify-center text-[11px] text-text-faint transition-colors hover:text-accent"
+                  className="flex h-11 w-11 shrink-0 touch-manipulation items-center justify-center text-[13px] text-text-faint transition-colors hover:text-accent"
                 >
                   ✕
                 </SheetClose>
@@ -996,23 +1037,23 @@ export function AppShell() {
               className="border-line bg-panel p-0 text-text transition-[height] duration-200 [font-family:var(--font-geist-mono)]"
             >
               <SheetHeader className="flex-row items-center gap-2 space-y-0 border-b border-line py-0 pl-4 pr-1">
-                <SheetTitle className="min-w-0 flex-1 truncate text-[11px] font-normal text-text-faint">
+                <SheetTitle className="min-w-0 flex-1 truncate text-[13px] font-normal text-text-faint">
                   {panelTitle(panel)}
                 </SheetTitle>
-                {/* Both controls fill the header's height. At 11px the labels
+                {/* Both controls fill the header's height. As bare labels they
                     were ~16px tall targets on the surface that is only ever
                     touched. */}
                 <button
                   type="button"
                   onClick={() => setSheetFull((v) => !v)}
                   aria-expanded={sheetFull}
-                  className="flex h-10 shrink-0 touch-manipulation items-center px-2 text-[11px] text-text-faint transition-colors hover:text-accent"
+                  className="flex h-11 shrink-0 touch-manipulation items-center px-2 text-[13px] text-text-faint transition-colors hover:text-accent"
                 >
                   {sheetFull ? "collapse ↓" : "expand ↑"}
                 </button>
                 <SheetClose
                   aria-label="Close"
-                  className="flex h-10 w-10 shrink-0 touch-manipulation items-center justify-center text-[11px] text-text-faint transition-colors hover:text-accent"
+                  className="flex h-11 w-11 shrink-0 touch-manipulation items-center justify-center text-[13px] text-text-faint transition-colors hover:text-accent"
                 >
                   ✕
                 </SheetClose>
@@ -1054,7 +1095,7 @@ function RailContent({
             href={s.href}
             target="_blank"
             rel="noreferrer"
-            className="text-text-faint no-underline hover:text-accent"
+            className="-mx-1 flex min-h-[44px] touch-manipulation items-center px-1 text-[13px] text-text-faint no-underline hover:text-accent"
           >
             {s.label}
           </a>
@@ -1071,8 +1112,11 @@ function RailLink({
   item: RailItem;
   onOpenPanel: (v: PanelView) => void;
 }) {
+  // A rail item is a row of text, and a row of text is not a target. min-h
+  // plus items-center makes each one a full 44px band without changing what it
+  // looks like — the border sits where the padding already put it.
   const cls =
-    "border-b border-line py-2 text-left text-text-soft no-underline transition-colors hover:text-accent";
+    "flex min-h-[44px] items-center border-b border-line py-2 text-left text-text-soft no-underline transition-colors hover:text-accent";
 
   if (item.external && item.href) {
     return (
@@ -1133,9 +1177,9 @@ function StripButton({
     <button
       type="button"
       onClick={onClick}
-      // Full-height rather than text-height. The label is 11px, so the hit
-      // area used to be a 17px band inside a 32px strip — fine with a cursor,
-      // a coin toss with a thumb.
+      // Full-height rather than text-height. The label is a single line, so
+      // the hit area used to be a 17px band inside a 32px strip — fine with a
+      // cursor, a coin toss with a thumb. The strip is 44px now.
       className={`flex h-full shrink-0 touch-manipulation items-center transition-colors hover:text-accent ${
         emphasis ? "text-text-soft" : "text-text-faint"
       }`}
@@ -1161,7 +1205,7 @@ function Stat({ label, value }: { label: string; value: string }) {
 // thing on the page: it sits below the conversation, never above it.
 function IdleLine({ line }: { line: string }) {
   return (
-    <p className="animate-idle-line pt-6 text-[12px] leading-relaxed text-text-faint">
+    <p className="t-meta animate-idle-line pt-6 text-text-faint">
       {line}
       <span className="text-accent">▍</span>
     </p>
@@ -1205,7 +1249,7 @@ function CitationChip({
       onClick={() => onOpen(view)}
       // Same padding as the source chips in answer.tsx — they sit in adjacent
       // rows under the same answer and were two different sizes.
-      className={`border px-2.5 py-2 text-[11px] transition-colors hover:border-accent hover:text-accent ${
+      className={`border px-3 py-2.5 text-[13px] transition-colors hover:border-accent hover:text-accent ${
         latest ? "border-line-strong text-text-soft" : "border-line text-text-faint"
       }`}
     >

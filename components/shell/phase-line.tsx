@@ -44,7 +44,7 @@ export function PhaseLine({
       // below, because a counter announced ten times a second is not progress,
       // it is a denial of service on the announcement queue.
       aria-live="polite"
-      className="flex items-center gap-2.5 text-[13px]"
+      className="flex items-center gap-2.5 text-[15px]"
     >
       <span aria-hidden className="grid shrink-0 grid-cols-3 gap-px">
         {Array.from({ length: PIXELS }, (_, i) => (
@@ -59,7 +59,7 @@ export function PhaseLine({
       {elapsed != null && (
         <span
           aria-hidden
-          className="tabular-nums text-[11px] text-text-faint [font-family:var(--font-geist-mono)]"
+          className="tabular-nums text-[13px] text-text-faint [font-family:var(--font-geist-mono)]"
         >
           {formatElapsed(elapsed)}
         </span>
