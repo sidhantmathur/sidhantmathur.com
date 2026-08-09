@@ -206,6 +206,72 @@ body {
 }
 
 /* ---------------------------------------------------------------------------
+   Focus
+   ---------------------------------------------------------------------------
+   Measured with `npm run a11y` before this rule existed: 24 of the homepage's
+   26 tab stops had no focus style of the site's own. Twenty-two were showing
+   the browser's default ring — a rounded blue-white halo, arriving uninvited on
+   a square-cornered amber palette — and the composer, the single most important
+   control on the page, had NOTHING: its class list carries Tailwind's
+   `outline-none`, which is a 2px TRANSPARENT outline, so a keyboard user
+   tabbing into the question box got no indication they had arrived.
+
+   One rule, in the site's one accent. 2px because 1px disappears against the
+   hairlines already on screen; square because everything here is; offset by 2px
+   so it reads as a ring around the control rather than a second border on it.
+
+   --accent measures 5.25:1 against --bg, 5.05:1 on --panel and 4.9:1 on
+   --raised, so the indicator clears the 3:1 that WCAG 1.4.11 asks of it on
+   every surface the shell puts a control on.
+
+   :focus-visible, not :focus — a mouse click on a button should not leave a
+   ring behind, and the browser's own heuristic already knows the difference. A
+   text field is the exception the heuristic makes for itself, and it is the
+   right one: a caret needs a frame around it however it was reached.
+
+   DECLARED OUTSIDE @layer ON PURPOSE, for the same reason the type scale is:
+   an unlayered rule beats a layered utility, which is what lets it override the
+   `outline-none` a dozen components carry rather than losing to it by source
+   order. :where() keeps its specificity at zero so a component that genuinely
+   needs a different indicator can still say so with a single class. */
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* The actions strip scrolls horizontally, so a ring drawn 2px outside a button
+   at either end is clipped by the scroll container. Inset instead: same colour,
+   same weight, drawn just inside the control's own edge. */
+:where(.focus-inset):focus-visible {
+  outline-offset: -2px;
+}
+
+/* ---------------------------------------------------------------------------
+   Selection
+   ---------------------------------------------------------------------------
+   The browser default is a saturated blue, which is the one hue this palette
+   does not contain — and a portfolio whose argument is that the details were
+   considered cannot have its own text turn blue the moment a recruiter drags a
+   cursor across a sentence to copy it.
+
+   The accent at 40% over the dark ground, with the ink forced to --text rather
+   than left to inherit. BOTH HALVES ARE LOAD-BEARING, and the numbers say why.
+   The 40% tint composites to rgb(98, 39, 23) over --bg. Left to inherit, the
+   --text-faint metadata this site uses for exactly the sentences people select
+   — the disclaimer, the source lines — would sit at 3.69:1 inside its own
+   highlight, under the 4.5:1 floor, and selected text is by definition the text
+   someone is reading most closely. Forced to --text it lands at 9.7:1.
+
+   40 rather than 30: at 30% the highlight itself was only 1.43:1 against the
+   page and read as a smudge rather than a selection. 40% takes that to 1.72:1,
+   which is visible on a dark ground, and costs the ink nothing that matters
+   (11.6:1 → 9.7:1). */
+::selection {
+  background: color-mix(in srgb, var(--accent) 40%, transparent);
+  color: var(--text);
+}
+
+/* ---------------------------------------------------------------------------
    Before hydration
    ---------------------------------------------------------------------------
    The seconds between the page painting and its JavaScript arriving. On a
