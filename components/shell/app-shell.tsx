@@ -548,11 +548,24 @@ export function AppShell() {
           <div
             ref={scrollRef}
             onScroll={onScroll}
-            // py-6 rather than py-8: at 1280×800 the empty state ran two lines
-            // past the bottom of the viewport, and the two lines it lost were
-            // the disclaimer — the one paragraph on the page that has to be
-            // seen without being looked for.
-            className="relative min-h-0 flex-1 overflow-y-auto px-4 py-6 md:px-10"
+            // py-6 rather than py-8, and py-4 again from md up.
+            //
+            // The comment that used to sit here said py-8 → py-6 had brought
+            // the disclaimer above the fold at 1280×800. It had not, and the
+            // claim survived because nobody measured it. Measured: this scroll
+            // area is 655px tall at that size and the empty state was 744, so
+            // the disclaimer's first line ended 24px BELOW the fold and the
+            // paragraph entire was 65px below it. The one thing on the page
+            // that has to be read without being looked for was the one thing
+            // you had to scroll for.
+            //
+            // Four md-scoped trims close it, the chips being half of it on
+            // their own (149px of chip rows down to 107): two-up chips, this
+            // padding, gap-3 → gap-2 on the stack, and the TL;DR's row
+            // spacing. 744 → 660 against a 655px fold, so the whole disclaimer
+            // now sits 11px clear of it and the only thing still below the
+            // line is 5px of this element's own bottom padding.
+            className="relative min-h-0 flex-1 overflow-y-auto px-4 py-6 md:px-10 md:py-4"
           >
             {/* Idle dims the column rather than covering it. The conversation
                 stays legible and every control stays live — this is a settle,
@@ -582,7 +595,7 @@ export function AppShell() {
               {!hasMessages && (
                 // A flex column rather than space-y, because the reading order
                 // is not the source order below sm — see the chips.
-                <div className="flex flex-col gap-3">
+                <div className="flex flex-col gap-3 md:gap-2">
                   {/* 30ch, not 24. The measure is set in the h1's OWN ch, so
                       the bigger hero was wrapping to three lines inside a
                       column wide enough for two — and the line it bought
@@ -602,7 +615,17 @@ export function AppShell() {
                       fold is the whole page. Above sm both fit, and the
                       original scan order — positioning, facts, the question you
                       can ask — is restored. */}
-                  <div className="order-3 flex flex-wrap gap-2 sm:order-4 sm:pt-1">
+                  {/* TWO-UP FROM md, and the reason is arithmetic rather than
+                      taste. Wrapped inline, the four chips take three rows at
+                      1280 — the first two share a row, the long fit question
+                      takes one alone, the visa question takes a third — and
+                      those two extra rows are most of what was pushing the
+                      disclaimer off the screen. A grid puts the fit question
+                      beside the visa question, costs one wrapped line inside
+                      it, and buys back 42px. Below md they still wrap: at 390
+                      a two-column grid would put four chips at 175px each and
+                      every one of them would be three lines deep. */}
+                  <div className="order-3 flex flex-wrap gap-2 sm:order-4 sm:pt-1 md:grid md:grid-cols-2 md:pt-0">
                     {SUGGESTED.map((q) => (
                       <button
                         key={q}
@@ -612,7 +635,13 @@ export function AppShell() {
                           submit(q);
                         }}
                         disabled={isBusy}
-                        className="border border-line-strong px-3 py-2.5 text-left text-[14px] text-text-soft transition-colors hover:border-accent hover:text-text disabled:border-line disabled:text-text-dim"
+                        // py-2.5 keeps a chip over 44px on a phone, where it is
+                        // a finger target. md:py-2 takes it to 39px, which is
+                        // the height the model select in the header already
+                        // uses on the same screens — a pointer does not need
+                        // the thumb allowance, and four chips at the phone
+                        // height cost the disclaimer eight more pixels.
+                        className="border border-line-strong px-3 py-2.5 text-left text-[14px] text-text-soft transition-colors hover:border-accent hover:text-text disabled:border-line disabled:text-text-dim md:py-2"
                       >
                         {q}
                       </button>

@@ -128,7 +128,9 @@ export function FrontierScatter({
   const yTicks = linearTicks(yMin, yMax, 3).filter(inDomain(yMin, yMax));
 
   return (
-    <figure className="m-0">
+    // A query container, so the fade below can ask how wide the chart actually
+    // is instead of how wide the window is.
+    <figure className="@container m-0">
       <figcaption>
         <div className="t-meta font-medium text-text">{heading}</div>
         <div className="t-meta mt-0.5 max-w-[62ch] text-text-faint">
@@ -136,10 +138,29 @@ export function FrontierScatter({
         </div>
       </figcaption>
 
-      <div className="mt-3 overflow-x-auto">
+      {/* The same right-edge fade the actions strip uses, for the same reason:
+          there is no scrollbar on a phone, and a plot whose rightmost model
+          label sat exactly at the edge looked like a plot that ended there —
+          the label clipped mid-word and nothing on screen saying so.
+
+          A container query rather than a breakpoint, because the fade is a lie
+          when there is nothing to scroll and the thing that decides that is
+          this box's width, not the window's. Below 560px — the SVG's floor
+          width, and now its viewBox width — the box scrolls and the fade earns
+          its place; at or above it the drawing fits and the fade would only be
+          dimming real data. A media query would get this right on a phone and
+          wrong in any narrow column on a wide screen. */}
+      <div className="mt-3 overflow-x-auto [mask-image:linear-gradient(to_right,black_92%,transparent)] @[560px]:[mask-image:none]">
         <svg
           viewBox={`0 0 ${W} ${H}`}
-          className="h-auto w-full min-w-[480px]"
+          // The floor width IS the viewBox width. It was 480 against a 560
+          // viewBox, which scales the whole drawing to 0.857 — so the 10px
+          // ticks and model labels rendered at 8.6px on the one device that
+          // hits the floor. A type size that only means what it says at one
+          // width is not a type size; pinning the two together makes 10px
+          // 10px, and the box scrolls the extra 80px like it was already
+          // scrolling the rest.
+          className="h-auto w-full min-w-[560px]"
           role="img"
           aria-label={`${heading}. ${points
             .map((p) => `${p.row.short}: ${formatX(p.x)}, ${formatY(p.y)}`)

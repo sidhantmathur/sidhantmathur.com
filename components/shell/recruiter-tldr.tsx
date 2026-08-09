@@ -31,7 +31,11 @@ export function RecruiterTldr() {
   return (
     <section aria-label="Summary" className="max-w-[62ch] border-l-2 border-line-strong pl-3">
       <h2 className="t-label text-text-faint">{TLDR_LABEL}</h2>
-      <dl className="mt-1.5 space-y-1">
+      {/* space-y-1 on a phone, half that from md. Six rows of a two-line
+          average is 250px of text however it is spaced; the gaps between them
+          are the only part that is negotiable, and on the 1280×800 fold they
+          were pixels the disclaimer needed more than they did. */}
+      <dl className="mt-1.5 space-y-1 md:space-y-0.5">
         {RECRUITER_TLDR.map((row) => (
           <div key={row.label} className="sm:flex sm:gap-3">
             <dt className="t-label shrink-0 pt-0.5 text-text-faint sm:w-[92px]">

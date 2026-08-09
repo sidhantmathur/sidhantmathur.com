@@ -10,7 +10,7 @@
 //   node scripts/shot.mjs                      # / at desktop
 //   node scripts/shot.mjs /resume /measurements
 //   node scripts/shot.mjs / --mobile
-//   node scripts/shot.mjs / --full             # full-page, not just viewport
+//   node scripts/shot.mjs / --full             # grow the viewport to the content
 //   BASE=https://<preview>.vercel.app node scripts/shot.mjs /
 //
 // Output lands in .screenshots/ (git-ignored). Requires a one-time
@@ -47,6 +47,56 @@ mkdirSync(OUT, { recursive: true });
 // image of the wrong thing. The automation bypass secret turns that off for
 // this request. Unset is fine and normal; protection is currently off.
 const bypass = process.env.VERCEL_AUTOMATION_BYPASS_SECRET;
+
+// --full used to be a lie. Every page on this site scrolls INSIDE an `h-dvh`
+// shell — the conversation column, the panel, the document pages all have their
+// own overflow-y container — so the document itself never exceeds the viewport
+// and Playwright's `fullPage` had nothing to extend past. It produced a
+// byte-identical image to a viewport shot, which is the worst kind of broken:
+// the flag reported success and the reviewer believed they had seen the page.
+//
+// So the viewport is GROWN to the content instead. The tallest overflow found
+// on the page is added to the viewport height, the page is given a beat to
+// reflow, and the measurement is repeated a couple of times in case growing the
+// outer scroller revealed more inside an inner one. Capped, because a page with
+// a runaway container should produce a big screenshot, not a hung one.
+const FULL_MAX_PX = 5000;
+
+/**
+ * How much taller this viewport would have to be for nothing to be scrolled
+ * out of sight — the largest overflow across the document and every element
+ * that actually scrolls.
+ */
+async function overflowPx(page) {
+  return page.evaluate(() => {
+    let extra = Math.max(
+      0,
+      document.documentElement.scrollHeight - document.documentElement.clientHeight,
+    );
+    for (const el of document.querySelectorAll("body *")) {
+      if (el.clientHeight <= 0) continue;
+      const overflowY = getComputedStyle(el).overflowY;
+      if (overflowY !== "auto" && overflowY !== "scroll") continue;
+      extra = Math.max(extra, el.scrollHeight - el.clientHeight);
+    }
+    return Math.round(extra);
+  });
+}
+
+/** Grows the viewport until nothing overflows, or until the cap says stop. */
+async function growToContent(page) {
+  let height = viewport.height;
+  for (let i = 0; i < 3; i += 1) {
+    const extra = await overflowPx(page);
+    if (extra < 2) break;
+    const next = Math.min(FULL_MAX_PX, height + extra);
+    if (next <= height) break;
+    height = next;
+    await page.setViewportSize({ width: viewport.width, height });
+    await page.waitForTimeout(250);
+  }
+  return height;
+}
 
 const browser = await chromium.launch();
 const page = await browser.newPage({
@@ -92,8 +142,17 @@ for (const route of routes) {
     // motion mid-flight and every review turns into a debate about whether the
     // layout is broken or simply still arriving.
     await page.waitForTimeout(600);
+    let shotHeight = viewport.height;
+    if (fullPage) shotHeight = await growToContent(page);
     await page.screenshot({ path: file, fullPage });
-    console.log(`${file}  ←  ${url}`);
+    // The viewport goes back before the next route, so one tall page can't
+    // silently change the frame every route after it is shot in.
+    if (fullPage && shotHeight !== viewport.height) {
+      await page.setViewportSize(viewport);
+    }
+    console.log(
+      `${file}  ←  ${url}${fullPage ? `  (${viewport.width}×${shotHeight})` : ""}`,
+    );
   } catch (err) {
     failed = true;
     console.error(`FAILED ${url}: ${err.message}`);
