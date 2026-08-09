@@ -289,8 +289,19 @@ export default function ModelComparisonPage() {
       {/* --- the table -------------------------------------------------- */}
       <Section heading={COPY.tableHeading} intro={COPY.tableIntro}>
         <div className="@container">
-        <div className="mt-4 overflow-x-auto [mask-image:linear-gradient(to_right,black_92%,transparent)] @[820px]:[mask-image:none]">
+        {/* Focusable because it scrolls — Chrome makes it a tab stop so the
+            arrow keys work — and therefore named, or it is an anonymous stop
+            that announces nothing. */}
+        <div
+          role="region"
+          aria-label={COPY.tableHeading}
+          tabIndex={0}
+          className="mt-4 overflow-x-auto [mask-image:linear-gradient(to_right,black_92%,transparent)] @[820px]:[mask-image:none]"
+        >
           <table className="t-meta w-full min-w-[820px] text-left">
+            {/* Twelve columns of numbers deserve a sentence saying what the
+                rows are, the way the scorecard's table already has one. */}
+            <caption className="sr-only">{COPY.tableIntro}</caption>
             <thead className="t-label text-text-faint">
               <tr className="border-b border-line">
                 {[
@@ -307,7 +318,7 @@ export default function ModelComparisonPage() {
                   "claims verified",
                   "price",
                 ].map((h) => (
-                  <th key={h} className="py-1.5 pr-3 font-normal">
+                  <th key={h} scope="col" className="py-1.5 pr-3 font-normal">
                     {h}
                   </th>
                 ))}
@@ -316,7 +327,12 @@ export default function ModelComparisonPage() {
             <tbody className="tabular-nums text-text-soft">
               {rows.map((r) => (
                 <tr key={r.model} className="border-b border-line last:border-b-0">
-                  <td className="py-1.5 pr-3 text-text">{r.model}</td>
+                  {/* The model names the row, so it is a header rather than a
+                      cell — that is what lets a screen reader say which model a
+                      number belongs to instead of reading twelve bare figures. */}
+                  <th scope="row" className="py-1.5 pr-3 font-normal text-text">
+                    {r.model}
+                  </th>
                   <td className="py-1.5 pr-3">
                     {r.passed}/{r.answered}
                   </td>

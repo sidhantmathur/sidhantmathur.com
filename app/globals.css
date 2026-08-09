@@ -220,9 +220,12 @@ body {
    hairlines already on screen; square because everything here is; offset by 2px
    so it reads as a ring around the control rather than a second border on it.
 
-   --accent measures 5.25:1 against --bg, 5.05:1 on --panel and 4.9:1 on
+   --accent measures 5.22:1 against --bg, 5.01:1 on --panel and 4.77:1 on
    --raised, so the indicator clears the 3:1 that WCAG 1.4.11 asks of it on
-   every surface the shell puts a control on.
+   every surface the shell puts a control on. (Those three numbers were 5.25,
+   5.05 and 4.9 here until an independent pass recomputed them. The margin is
+   the same either way and the conclusion does not move — but a comment that
+   rounds in its own favour is the beginning of a comment that is wrong.)
 
    :focus-visible, not :focus — a mouse click on a button should not leave a
    ring behind, and the browser's own heuristic already knows the difference. A

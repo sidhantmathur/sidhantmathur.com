@@ -722,8 +722,14 @@ export function AppShell() {
           <RailContent onOpenPanel={openPanel} hydrated={hydrated} />
         </nav>
 
-        {/* Conversation */}
-        <div className="relative flex min-w-0 flex-1 flex-col">
+        {/* Conversation.
+            A <main> rather than a <div>: the shell had a banner and a nav and
+            no main landmark at all, so the one region a screen reader user
+            jumps to first did not exist. The skip link already covered getting
+            past the rail; this is the same idea expressed as structure, and it
+            is what the header and the nav were implicitly claiming to be
+            beside. */}
+        <main className="relative flex min-w-0 flex-1 flex-col">
           {/* Ambient backdrop (extends #14): under the empty state, back
               during idle, gone while a conversation is on screen. It sits
               behind the scroll area rather than inside it so it doesn't
@@ -1205,7 +1211,7 @@ export function AppShell() {
               )}
             </div>
           </div>
-        </div>
+        </main>
 
         {/* Context panel — desktop, resizable */}
         {panelOpen && (

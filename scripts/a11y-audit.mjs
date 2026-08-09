@@ -211,14 +211,28 @@ for (const route of routes) {
             .trim()
         : "";
       const wrappingLabel = el.closest("label")?.textContent?.trim() ?? "";
+      const tag = el.tagName.toLowerCase();
+
+      // NAME FROM CONTENT IS NOT UNIVERSAL, and treating it as though it were
+      // was this script's last blind spot. Only some roles take their name
+      // from their own text — a button, a link, a summary. A generic container
+      // does not, so falling back to textContent meant a focusable scroll
+      // region could never be reported as unnamed: it would borrow the name of
+      // everything inside it and pass. That is exactly how two <pre> blocks and
+      // a twelve-column table wrapper sat as anonymous tab stops through a
+      // clean audit run. Form controls are the same story from the other end —
+      // a <select> "named" by its concatenated option text is not a name, it is
+      // the browser reading the menu out.
+      const namesFromContent = ["a", "button", "summary", "th", "td"].includes(tag);
+      const isFormControl = ["input", "select", "textarea"].includes(tag);
       const name =
         el.getAttribute("aria-label")?.trim() ||
         fromLabelledby ||
-        (el.textContent ?? "").replace(/\s+/g, " ").trim() ||
+        wrappingLabel ||
+        (namesFromContent ? (el.textContent ?? "").replace(/\s+/g, " ").trim() : "") ||
+        (isFormControl ? el.getAttribute("placeholder")?.trim() || "" : "") ||
         el.getAttribute("title")?.trim() ||
         el.getAttribute("alt")?.trim() ||
-        el.getAttribute("placeholder")?.trim() ||
-        wrappingLabel ||
         "";
 
       return {
