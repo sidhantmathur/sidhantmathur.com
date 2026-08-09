@@ -916,9 +916,12 @@ export function AppShell() {
                 maskImage: "linear-gradient(to right, black 85%, transparent)",
                 WebkitMaskImage: "linear-gradient(to right, black 85%, transparent)",
               }}
-              className={`flex h-11 items-center gap-4 overflow-x-auto whitespace-nowrap border-t px-4 text-[13px] transition-colors md:px-10 ${
-                emphasis ? "border-accent" : "border-line"
-              }`}
+              // Before the first turn the strip holds only the job-description
+              // entry, which is desktop-only — an empty 44px band under the
+              // composer on a phone earns nothing, so it goes entirely.
+              className={`h-11 items-center gap-4 overflow-x-auto whitespace-nowrap border-t px-4 text-[13px] transition-colors md:px-10 ${
+                hasMessages ? "flex" : "hidden md:flex"
+              } ${emphasis ? "border-accent" : "border-line"}`}
             >
               {hasMessages && (
                 <>
@@ -954,6 +957,10 @@ export function AppShell() {
                 label="paste a job description"
                 emphasis={emphasis}
                 onClick={() => openPanel({ kind: "jd" })}
+                // Strip-worthy on desktop, where the strip is idle real estate;
+                // on a phone it was the only thing under the composer and not
+                // worth that space. The rail item is the mobile way in.
+                className="hidden md:flex"
               />
               {hasMessages && (
                 <StripButton label="reset" emphasis={emphasis} onClick={reset} />
@@ -1197,10 +1204,12 @@ function StripButton({
   label,
   emphasis,
   onClick,
+  className = "flex",
 }: {
   label: string;
   emphasis: boolean;
   onClick: () => void;
+  className?: string;
 }) {
   return (
     <button
@@ -1209,7 +1218,7 @@ function StripButton({
       // Full-height rather than text-height. The label is a single line, so
       // the hit area used to be a 17px band inside a 32px strip — fine with a
       // cursor, a coin toss with a thumb. The strip is 44px now.
-      className={`flex h-full shrink-0 touch-manipulation items-center transition-colors hover:text-accent ${
+      className={`${className} h-full shrink-0 touch-manipulation items-center transition-colors hover:text-accent ${
         emphasis ? "text-text-soft" : "text-text-faint"
       }`}
     >
