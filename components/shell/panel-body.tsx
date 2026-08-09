@@ -39,47 +39,6 @@ const PROMPT_NOTE = {
 const REFUSALS_NOTE =
   "What it won't do, and what it does instead. The label on the right says whether the rule is enforced by code or asked of the model, because those are not the same promise.";
 
-export function panelTitle(panel: PanelView): string {
-  switch (panel.kind) {
-    case "resume":
-      return "Resume";
-    case "projects":
-      return "Projects";
-    case "contact":
-      return "Contact";
-    case "why":
-      return "Why this site is a chatbot";
-    case "colophon":
-      return "How this site was built";
-    case "jd":
-      return JD_COPY.heading;
-    // Rendered by app-shell, not PanelBody — the deck is instrument state, not
-    // content. The title still belongs here so both panel chromes agree.
-    case "instruments":
-      return "Instruments";
-    // Rendered by app-shell for the same reason as the deck: the export
-    // surface is conversation state, not content.
-    case "export":
-      return "Export";
-    case "corpus":
-      return "Sources";
-    case "prompt":
-      return "The instructions";
-    case "refusals":
-      return "What it won't do";
-    case "project":
-      return PROJECTS[panel.slug].title;
-    case "source": {
-      const chunk = ALL_CHUNKS_BY_ID[panel.id];
-      return chunk ? `${chunk.sourceLabel} — ${chunk.heading}` : panel.id;
-    }
-    case "roleFit":
-      return `Role fit — ${panel.data.role}`;
-    default:
-      return "";
-  }
-}
-
 export function PanelBody({
   panel,
   onSubmitJd,
