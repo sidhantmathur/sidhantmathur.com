@@ -28,6 +28,7 @@ import { useTeletype } from "./use-teletype";
 import { useIdle } from "./use-idle";
 import { useElapsed } from "./use-elapsed";
 import { PhaseLine } from "./phase-line";
+import { TurnError } from "./turn-error";
 import { AmbientBackdrop } from "./ambient-backdrop";
 import { conversationToMarkdown, messageToMarkdown } from "@/lib/transcript";
 import { permalinkFor } from "@/lib/permalink";
@@ -54,8 +55,10 @@ const HERO = "I learn what the problem needs, then I build the thing.";
 const HERO_SUB = "Ask what you'd ask on a call.";
 const DISCLAIMER =
   "AI-generated answers about my professional background. It can make mistakes — the resume is the authoritative version.";
-const ERROR_STATE =
-  "Something went wrong on my end. Give it another try in a moment.";
+// The error state used to be one string, here. It is now one string per error
+// class, in `lib/chat-telemetry.ts` beside the classes themselves, rendered by
+// TurnError — a dropped connection on a phone and a misconfigured server are
+// not the same news, and the site already knew which one it was.
 const RATE_LIMIT_STATE =
   "You've hit the message limit for now — the resume has everything in the meantime.";
 // Drafted for Sprint 5 (#18) and logged in docs/copy-ledger.md. Says three
@@ -84,6 +87,11 @@ const MODELS = [
   "openai/gpt-5.6-luna",
 ];
 
+// How long a turn runs before the shell offers to abandon it. Roughly double a
+// normal answer's wait — early enough to be a rescue, late enough not to be a
+// suggestion that something is wrong.
+const STALL_HINT_SECONDS = 8;
+
 const PANEL_WIDTH_KEY = "panel.width.v1";
 const PANEL_MIN = 300;
 const PANEL_MAX = 640;
@@ -95,10 +103,13 @@ export function AppShell() {
   const {
     messages,
     submit,
+    retry,
+    stop,
     reset,
     isBusy,
     phase,
     errorKind,
+    errorClass,
     ttft,
     panel,
     setPanel,
@@ -125,6 +136,9 @@ export function AppShell() {
   // The fourth reading of the same event. Unlike the three above it survives
   // the turn ending, because the finished duration is the interesting number.
   const elapsed = useElapsed(isBusy);
+  // Past this, the wait has become a question and the reader gets a way out of
+  // it. See the button beside the phase line.
+  const stallable = isBusy && elapsed != null && elapsed >= STALL_HINT_SECONDS;
   const sessionCost = useMemo(
     () => sumCosts(turnLog.map((t) => (t.error ? null : costOfTurn(t.model, t.usage)))),
     [turnLog],
@@ -390,7 +404,7 @@ export function AppShell() {
         rate={rate}
         teletype={teletype}
         onToggleTeletype={toggleTeletype}
-        errorCopy={{ error: ERROR_STATE, rateLimited: RATE_LIMIT_STATE }}
+        errorCopy={{ rateLimited: RATE_LIMIT_STATE }}
       />
     ) : (
       <PanelBody panel={panel} onSubmitJd={submitJd} onOpenSource={openPanel} />
@@ -690,10 +704,31 @@ export function AppShell() {
                     glitch. The elapsed count is NOT keyed, so it measures the
                     whole turn rather than restarting at each step. */}
                 {phase && (
-                  <PhaseLine key={phase} phase={phase} elapsed={elapsed} />
+                  <div className="flex items-center gap-3">
+                    <PhaseLine key={phase} phase={phase} elapsed={elapsed} />
+                    {/* A way out of a turn that is taking too long, and only
+                        then: offering "stop" against a two-second answer is
+                        noise, and the reader has nothing to decide yet. Eight
+                        seconds is roughly double a normal turn's wait, so it
+                        appears when the wait has become a question. Quiet by
+                        construction — same faint-until-hover vocabulary as the
+                        actions strip, no border, no box. */}
+                    {stallable && (
+                      <button
+                        type="button"
+                        onClick={stop}
+                        className="shrink-0 text-[11px] text-text-faint transition-colors hover:text-accent"
+                      >
+                        stop
+                      </button>
+                    )}
+                  </div>
                 )}
+                {/* Was one grey sentence for every way a turn can fail. The
+                    class has always been measured; this is the first thing to
+                    render it, and to offer the turn back. */}
                 {errorKind === "error" && (
-                  <p className="text-[13px] leading-relaxed text-text-faint">{ERROR_STATE}</p>
+                  <TurnError errorClass={errorClass} onRetry={retry} />
                 )}
                 {/* Out of turns is the one state where the thing this page is
                     for stops working, and it used to be one grey sentence.

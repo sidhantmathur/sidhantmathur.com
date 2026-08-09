@@ -9,7 +9,7 @@ import {
   formatUsd,
   sumCosts,
 } from "@/lib/pricing";
-import type { TurnErrorClass } from "@/lib/chat-telemetry";
+import { turnErrorCopy, type TurnErrorClass } from "@/lib/chat-telemetry";
 import type { Budget, TurnRecord } from "./use-conversation";
 import type { TokenRate } from "./use-token-rate";
 
@@ -109,7 +109,10 @@ export function Seismograph({
 // The deck
 // ---------------------------------------------------------------------------
 
-export type ErrorCopy = { error: string; rateLimited: string };
+// Only the rate-limit headline travels in from the shell now. Every other class
+// has a sentence of its own in `lib/chat-telemetry.ts`, which the deck reads
+// directly — there is nothing left for a generic `error` string to be.
+export type ErrorCopy = { rateLimited: string };
 
 export function InstrumentDeck({
   turnLog,
@@ -519,14 +522,20 @@ function FailureTheatre({ errorCopy }: { errorCopy: ErrorCopy }) {
       setResult({
         cls,
         status: res.status,
-        shown: cls === "rate_limited" ? errorCopy.rateLimited : errorCopy.error,
+        // Each class has its own sentence now, so the deck reads the same map
+        // the conversation does rather than showing one string for eight
+        // outcomes. Rate limiting is still the exception: it doesn't render a
+        // sentence at all, it renders ManualMode, and this is the headline.
+        shown: cls === "rate_limited" ? errorCopy.rateLimited : turnErrorCopy(cls),
         raw: elide(text),
       });
     } catch (err) {
       setResult({
         cls,
         status: 0,
-        shown: errorCopy.error,
+        // The button itself couldn't reach the server, which is the one class
+        // the route can never simulate because it happens before the route.
+        shown: turnErrorCopy("network"),
         raw: err instanceof Error ? err.message : "network error",
       });
     } finally {
