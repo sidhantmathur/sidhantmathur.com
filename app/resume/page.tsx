@@ -18,15 +18,20 @@ export const metadata: Metadata = {
 export default function ResumePage() {
   return (
     <DocPage>
-        <h1 className="text-[24px] font-medium tracking-[-0.02em] text-text">
+        <h1 className="t-title font-medium text-text">
           Resume
         </h1>
-        <p className="mt-3 max-w-[72ch] text-[13px] leading-[1.7] text-text-soft">
+        <p className="t-body mt-3 max-w-[72ch] text-text-soft">
           The current version, last updated July 2026. A
           plain-text version lives at{" "}
           <Link
             href="/resume.md"
-            className="text-text underline decoration-line-strong underline-offset-2 transition-colors hover:text-accent hover:decoration-accent"
+            // Padding, not min-height. A link inside a sentence has to stay
+            // inline: an inline-flex box 44px tall is an atomic item on the
+            // line, and it dragged the whole paragraph's leading up with it.
+            // Vertical padding on an inline element grows the hit area without
+            // touching the line box, which is the whole trick.
+            className="-my-2 py-2 text-text underline decoration-line-strong underline-offset-2 transition-colors hover:text-accent hover:decoration-accent"
           >
             /resume.md
           </Link>{" "}
@@ -37,10 +42,10 @@ export default function ResumePage() {
 
         <nav
           aria-label="Resume sections"
-          // These wrap to two rows on a phone. At 11px each link was a 17px
-          // band with 8px between rows, which is one target's worth of slop
-          // for five destinations — the padding is what separates them.
-          className="mt-10 flex flex-wrap gap-x-3 border-y border-line py-1.5 text-[11px]"
+          // These wrap to two rows on a phone. As bare text each link was a
+          // 17px band with 8px between rows, which is one target's worth of
+          // slop for five destinations — the height is what separates them.
+          className="mt-10 flex flex-wrap gap-x-3 border-y border-line py-1.5 text-[13px]"
         >
           {[
             ["Summary", "#summary"],
@@ -52,7 +57,7 @@ export default function ResumePage() {
             <a
               key={href}
               href={href}
-              className="-mx-1 flex h-9 touch-manipulation items-center px-1 text-text-faint no-underline transition-colors hover:text-accent"
+              className="-mx-1 flex min-h-[44px] touch-manipulation items-center px-1 text-text-faint no-underline transition-colors hover:text-accent"
             >
               {label}
             </a>
@@ -61,15 +66,15 @@ export default function ResumePage() {
 
         {/* Resume body matches docs/Sidhant_Mathur_Resume.pdf (July 2026). */}
         <div className="mt-8">
-          <h2 className="font-mono text-xs text-text-faint">Toronto, ON</h2>
-          <p className="mt-1 font-mono text-xs text-text-faint">
+          <h2 className="font-mono text-[14px] text-text-soft">Toronto, ON</h2>
+          <p className="mt-1 font-mono text-[14px] text-text-soft">
             613-795-9684 · hello@sidhantmathur.com · linkedin.com/in/sidhantmathur ·
             github.com/sidhantmathur · sidhantmathur.com
           </p>
 
           <div id="summary" className="mt-10 scroll-mt-14">
             <MonoLabel>Summary</MonoLabel>
-            <p className="mt-3 max-w-[72ch] text-[13px] leading-[1.7] text-text-soft">
+            <p className="t-body mt-3 max-w-[72ch] text-text-soft">
               AI-native revenue operations builder who turns ambiguous business problems
               into shipped software. 3+ years owning sales reporting, forecasting, and
               quarter-end close infrastructure for global sales and finance teams at Nokia
@@ -84,16 +89,16 @@ export default function ResumePage() {
             <MonoLabel>Experience</MonoLabel>
 
             <div className="mt-4">
-              <h3 className="text-[15px] font-medium text-text">
+              <h3 className="t-head font-medium text-text">
                 Nokia — Toronto, ON{" "}
-                <Link href="/projects/nokia" className="ml-1 text-[11px] font-normal text-text-faint no-underline hover:text-accent">
+                <Link href="/projects/nokia" className="-my-2 ml-1 py-2 text-[14px] font-normal text-text-faint no-underline hover:text-accent">
                   case study →
                 </Link>
               </h3>
-              <p className="mt-3 font-mono text-xs text-text-faint">
+              <p className="mt-3 font-mono text-[14px] text-text-soft">
                 Sales operations specialist (internal tools &amp; automation) · Jun 2024 – Present
               </p>
-              <ul className="mt-3 max-w-[72ch] list-disc space-y-2 pl-5 text-[13px] leading-[1.7] text-text-soft marker:text-text-faint">
+              <ul className="t-body mt-3 max-w-[72ch] list-disc space-y-2 pl-5 text-text-soft marker:text-text-faint">
                 <li>
                   Built a self-serve Power App used by 80+ stakeholders across 7 regions for
                   quarterly executive reporting — eliminating a manual collection process
@@ -113,10 +118,10 @@ export default function ResumePage() {
                 </li>
               </ul>
 
-              <p className="mt-6 font-mono text-xs text-text-faint">
+              <p className="mt-6 font-mono text-[14px] text-text-soft">
                 Workforce management specialist · Oct 2022 – Jun 2024
               </p>
-              <ul className="mt-3 max-w-[72ch] list-disc space-y-2 pl-5 text-[13px] leading-[1.7] text-text-soft marker:text-text-faint">
+              <ul className="t-body mt-3 max-w-[72ch] list-disc space-y-2 pl-5 text-text-soft marker:text-text-faint">
                 <li>
                   Owned headcount reporting and forecasting for a 3,000–4,000-person
                   organization.
@@ -129,17 +134,17 @@ export default function ResumePage() {
             </div>
 
             <div className="mt-10">
-              <h3 className="text-[15px] font-medium text-text">
+              <h3 className="t-head font-medium text-text">
                 A Darle 20 (&quot;Let&apos;s Go 20&quot;) — adarle20.com{" "}
-                <Link href="/projects/adarle20" className="ml-1 text-[11px] font-normal text-text-faint no-underline hover:text-accent">
+                <Link href="/projects/adarle20" className="-my-2 ml-1 py-2 text-[14px] font-normal text-text-faint no-underline hover:text-accent">
                   case study →
                 </Link>
               </h3>
-              <p className="mt-3 font-mono text-xs text-text-faint">
+              <p className="mt-3 font-mono text-[14px] text-text-soft">
                 Co-Founder &amp; CTO (solo developer) · Aug 2025 – Present · launched Mar
                 2026
               </p>
-              <ul className="mt-3 max-w-[72ch] list-disc space-y-2 pl-5 text-[13px] leading-[1.7] text-text-soft marker:text-text-faint">
+              <ul className="t-body mt-3 max-w-[72ch] list-disc space-y-2 pl-5 text-text-soft marker:text-text-faint">
                 <li>
                   Architected and shipped the entire marketplace as solo developer —
                   TypeScript, Next.js, Supabase/PostgreSQL, Stripe Connect, Vercel —
@@ -180,7 +185,7 @@ export default function ResumePage() {
                     className="object-cover object-top"
                   />
                 </div>
-                <figcaption className="mt-2 text-[11px] text-text-faint">
+                <figcaption className="t-meta mt-2 max-w-[72ch] text-text-faint">
                   A Darle 20 — session listings. The Nokia work is internal tooling behind a
                   corporate login, so there is nothing to show from it here.
                 </figcaption>
@@ -188,13 +193,13 @@ export default function ResumePage() {
             </div>
 
             <div className="mt-10">
-              <h3 className="text-[15px] font-medium text-text">
+              <h3 className="t-head font-medium text-text">
                 Freelance web development &amp; consulting — remote
               </h3>
-              <p className="mt-3 font-mono text-xs text-text-faint">
+              <p className="mt-3 font-mono text-[14px] text-text-soft">
                 Self-employed · May 2019 – Oct 2022
               </p>
-              <ul className="mt-3 max-w-[72ch] list-disc space-y-2 pl-5 text-[13px] leading-[1.7] text-text-soft marker:text-text-faint">
+              <ul className="t-body mt-3 max-w-[72ch] list-disc space-y-2 pl-5 text-text-soft marker:text-text-faint">
                 <li>
                   Advised a startup client on web-development strategy, saving $100k+ in
                   agency fees.
@@ -211,13 +216,13 @@ export default function ResumePage() {
             </div>
 
             <div className="mt-10">
-              <h3 className="text-[15px] font-medium text-text">
+              <h3 className="t-head font-medium text-text">
                 Dell Technologies — Austin, TX
               </h3>
-              <p className="mt-3 font-mono text-xs text-text-faint">
+              <p className="mt-3 font-mono text-[14px] text-text-soft">
                 Marketing intern · May 2018 – Aug 2018
               </p>
-              <ul className="mt-3 max-w-[72ch] list-disc space-y-2 pl-5 text-[13px] leading-[1.7] text-text-soft marker:text-text-faint">
+              <ul className="t-body mt-3 max-w-[72ch] list-disc space-y-2 pl-5 text-text-soft marker:text-text-faint">
                 <li>
                   Built a propensity model (Azure ML) on Dell&apos;s historical customer
                   database to identify cross-sell targets for a high-margin software
@@ -246,16 +251,19 @@ export default function ResumePage() {
             <MonoLabel>Technical skills</MonoLabel>
             <ul className="mt-3 max-w-[58ch] list-disc space-y-2 pl-5 text-[15px] leading-relaxed text-text-soft">
               <li>
-                <strong className="text-text">GTM systems &amp; analytics:</strong> Salesforce,
+                <strong className="text-text">GTM systems &amp; analytics:</strong>{" "}
+                Salesforce,
                 Power BI, DAX, Power Apps / Power Automate, SharePoint, Excel/VBA, forecasting
               </li>
               <li>
-                <strong className="text-text">AI &amp; automation:</strong> LLM integration &amp;
+                <strong className="text-text">AI &amp; automation:</strong>{" "}
+                LLM integration &amp;
                 agentic workflows (Claude Code, Anthropic API), prompt engineering, Python
                 automation
               </li>
               <li>
-                <strong className="text-text">Engineering:</strong> TypeScript, React, Next.js,
+                <strong className="text-text">Engineering:</strong>{" "}
+                TypeScript, React, Next.js,
                 Node.js, Python, SQL, PostgreSQL, Supabase, Stripe, REST APIs, ETL &amp;
                 data workflows
               </li>
@@ -264,7 +272,7 @@ export default function ResumePage() {
 
           <div id="other" className="mt-10 scroll-mt-14">
             <MonoLabel>Other</MonoLabel>
-            <p className="mt-3 max-w-[72ch] text-[13px] leading-[1.7] text-text-soft">
+            <p className="t-body mt-3 max-w-[72ch] text-text-soft">
               Canadian citizen
             </p>
           </div>

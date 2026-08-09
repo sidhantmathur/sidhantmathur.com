@@ -67,7 +67,7 @@ export function CopyButton({
       type="button"
       onClick={copy}
       aria-label={label}
-      className={`text-[11px] transition-colors ${
+      className={`text-[13px] transition-colors ${
         copied ? "text-accent" : "text-text-faint hover:text-accent"
       } ${className}`}
     >

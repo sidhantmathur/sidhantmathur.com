@@ -209,6 +209,48 @@ a label pattern:
 | draft | `components/shell/use-conversation.ts` → `TOOL_PHASE`, `OPENING_PHASE`, `WRITING_PHASE` | The one-line status under a turn in flight, now naming the step instead of the wait. "reading the resume…" (unchanged, the default) · "reading the job description…" · "checking it against the record…" · "pulling up the project…" · "pulling up the resume…" · "finding the contact details…" · "writing the answer…" | none | Each string is read off a live stream part — the tool actually running when it shows. Nothing here asserts anything about Sidhant, and nothing claims work that isn't happening. |
 | draft | `lib/system-prompt.ts` → Formatting | Rewritten paragraph now permitting fenced code blocks and pipe tables, with the guidance on when each earns its place ("A table with one column is a list, and a table with one row is a sentence." · "Never reformat a plain answer into a table to look thorough."). Published verbatim at `/prompt`. | none | Describes the renderer's capabilities, which `components/shell/markdown.tsx` now has |
 
+**Chat resilience pass, 2026-08-09** (branch `ux/resilience-readability`). The chat
+had no timeout anywhere on the client path: a stream that stalled — an iPhone
+suspending the tab mid-answer is the case this was reported from — left the shell
+believing a turn was still in flight, and every later send silently did nothing.
+The fix adds two clocks and a way out, and a way out needs words. One sentence per
+failure class replaces the single grey line that used to answer all of them:
+
+| Status | Where | What it says | Claims | Grounding |
+| --- | --- | --- | --- | --- |
+| draft | `lib/chat-telemetry.ts` → `TURN_ERROR_COPY.network` | "The connection dropped before the answer made it through. Check your signal and try again." | none | Names a state the client actually detects — a fetch that threw before the response existed. Nothing about Sidhant. |
+| draft | `lib/chat-telemetry.ts` → `TURN_ERROR_COPY.upstream_timeout` | "The server stopped responding partway through. Give it another try." | none | The class raised by the 15s connect timeout and the 20s stream-inactivity watchdog in `use-conversation.ts`, and by the route's own mid-stream classification |
+| draft | `lib/chat-telemetry.ts` → `TURN_ERROR_COPY.upstream_unavailable`, `.unknown` | "Something went wrong on my end. Give it another try in a moment." | none | Unchanged wording — this was the site's only error string before this pass, and it is now the fallback rather than the whole vocabulary |
+| draft | `lib/chat-telemetry.ts` → `TURN_ERROR_COPY.upstream_unconfigured`, `.upstream_auth` | "The chat backend is misconfigured — this one is on me, not you." | none | Both classes are deploy problems (a missing or rejected `AI_GATEWAY_API_KEY`), so the sentence takes the blame rather than leaving the reader to wonder what they typed |
+| draft | `lib/chat-telemetry.ts` → `TURN_ERROR_COPY.invalid_request` | "That message couldn't be sent as written. Try shortening it." | none | The route's 400 exit is a schema failure, and length is the only limit a visitor can realistically have hit (4000 chars on a user turn, `route.ts`) |
+| draft | `lib/chat-telemetry.ts` → `turnErrorLabel` | The mono label above each sentence: "turn failed · connection" · "· server timeout" · "· upstream" · "· misconfigured" · "· bad request" · "· unknown" | none | Each is the site's own register for a class in the telemetry vocabulary, matching the existing `NN · you` label pattern |
+| draft | `components/shell/turn-error.tsx` | "try again" — the button that resends the failed turn. | none | UI chrome; it calls `regenerate` |
+| draft | `components/shell/app-shell.tsx` → stall hint | "stop" — appears beside the status line once a turn passes eight seconds, and aborts it. | none | UI chrome; it calls the SDK's `stop`, and an aborted turn deliberately renders nothing at all |
+
+**A note on what is NOT here.** Two classes have no sentence. `rate_limited` keeps
+routing to ManualMode, which answers with the corpus instead of an apology, and
+`aborted` renders nothing, because the reader pressed stop and telling someone what
+they just did is not information. `aborted` now renders nothing even when the class
+arrives over a live stream rather than from the reader's own stop — it used to reach
+the error block and print the literal class over the generic "something went wrong on
+my end" sentence (`isSilentClass`, `lib/chat-telemetry.ts`).
+
+**A note on the button.** "try again" is no longer rendered for `invalid_request`.
+No string changed — the sentence is still "That message couldn't be sent as written.
+Try shortening it." — but the button under it resent the identical message into the
+identical rejection, so the one affordance on screen contradicted the only advice on
+screen. The turn stays in the transcript and the composer is where it gets shortened
+(`isRetryableClass`, `lib/chat-telemetry.ts`).
+
+**Typography and ergonomics pass, 2026-08-09** (branch `ux/resilience-readability`).
+A type scale replaced eleven ad-hoc sizes, and two composer strings changed with it.
+Both are UI chrome; neither says anything about Sidhant.
+
+| Status | Where | What it says | Claims | Grounding |
+| --- | --- | --- | --- | --- |
+| draft | `components/shell/app-shell.tsx` → composer placeholder | "Ask a question" — shortened from "Ask a question, or type / for commands", which was clipped mid-word at every phone width. Logged in `docs/site-copy.md`. | none | UI chrome. The dropped half taught the slash menu, which still announces itself the moment a "/" is typed. |
+| draft | `components/shell/app-shell.tsx` → send button | "send ↵" — replaces a bare "↵" glyph below sm and an "enter ↵" hint above it. One labelled button at every width. Logged in `docs/site-copy.md`. | none | UI chrome; it submits the form, and ↵ is still the key that does it |
+
 ## Pending `[VERIFY]` markers
 
 Sentences drafted with a fact-shaped hole in them, waiting on Sidhant. Listing them

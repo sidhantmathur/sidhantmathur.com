@@ -78,7 +78,7 @@ export function AmbientBackdrop({ visible }: { visible: boolean }) {
     return () => clearTimeout(t);
   }, [visible]);
 
-  // Below md the column is the full width, so the scrim sits at 55% over the
+  // Below md the column is the full width, so the scrim sits at 78% over the
   // whole thing and the motion is barely perceptible — not worth a canvas
   // redrawing at 1.5× DPR on a phone battery. The static img is the honest
   // mobile version.
@@ -193,7 +193,7 @@ export function AmbientBackdrop({ visible }: { visible: boolean }) {
         {/* Two encodings, not one. Downscaling this texture wrecks it — the
             glyphs are the point and they turn to noise below ~1400px — so
             desktop keeps the full 242 KB file the shader samples. Phones
-            never run the shader and sit under a 55% scrim, where a 900px
+            never run the shader and sit under a 78% scrim, where a 900px
             crop at 68 KB is indistinguishable and a quarter of the bytes. */}
         {/* eslint-disable-next-line @next/next/no-img-element -- a fixed
             decorative backdrop; next/image adds nothing here */}
@@ -217,7 +217,7 @@ export function AmbientBackdrop({ visible }: { visible: boolean }) {
       {/* Legibility scrim: the texture keeps the margins, the words keep the
           middle. On small screens the column is the whole width, so the flat
           mobile scrim is heavier and the shaped one takes over from md up. */}
-      <div className="absolute inset-0 bg-bg/55 md:hidden" />
+      <div className="absolute inset-0 bg-bg/78 md:hidden" />
       {/* The stops derive from --bg rather than repeating its hex, so the
           scrim can't drift away from the page behind it. */}
       <div

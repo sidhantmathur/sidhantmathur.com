@@ -8,7 +8,7 @@ export const size = {
 export const contentType = "image/png";
 
 // Instrument palette, matching app/globals.css: --bg #0B0A09, --text #EFEBE4,
-// --text-soft #A9A29A, --accent #E4522B. This is what renders when the link is
+// --text-soft #C4BCB4, --accent #E4522B. This is what renders when the link is
 // pasted into Slack or LinkedIn, so it has to read as the same object as the
 // site.
 export default function Image() {
@@ -53,7 +53,7 @@ export default function Image() {
             fontFamily: "monospace",
             fontSize: 32,
             lineHeight: 1.4,
-            color: "#A9A29A",
+            color: "#C4BCB4",
           }}
         >
           I learn what the problem needs, then I build the thing.

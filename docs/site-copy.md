@@ -125,7 +125,8 @@ recruiter/engineer toggle, per decisions #26.]
 The `/fit` slash command sends the third one verbatim, so the two can't drift
 into different questions.
 
-Input placeholder: Ask a question about my work
+Input placeholder: Ask a question
+Send button: send ↵
 Disclaimer (small, mono): AI-generated answers about my professional background.
 It can make mistakes — the resume is the authoritative version.
 
@@ -385,8 +386,26 @@ on GitHub. [TODO: confirm repo is public before linking]
 Footer: © 2026 Sidhant Mathur · Toronto, ON · GitHub · LinkedIn · Email
 Chat empty state: Ask me about my work at Nokia, A Darle 20, or anything on my
 resume.
-Chat error state: Something went wrong on my end. Give it another try in a
-moment.
+Chat error states — one line per failure class, since a dropped connection on a
+phone and a misconfigured server are not the same news. Each is shown under a
+mono label reading "turn failed · <class>", above a "try again" button.
+
+- connection: The connection dropped before the answer made it through. Check
+  your signal and try again.
+- server timeout: The server stopped responding partway through. Give it another
+  try.
+- upstream / unknown: Something went wrong on my end. Give it another try in a
+  moment.
+- misconfigured: The chat backend is misconfigured — this one is on me, not you.
+- bad request: That message couldn't be sent as written. Try shortening it.
+
+Two classes render no sentence at all: the rate limit gets the state below
+instead, and a turn the reader stopped themselves gets nothing, because telling
+someone what they just did is not information.
+
+Chat stop affordance, beside the status line once a turn passes eight seconds:
+stop
+
 Chat rate-limit state: You've hit the message limit for now — the resume has
 everything in the meantime.
 

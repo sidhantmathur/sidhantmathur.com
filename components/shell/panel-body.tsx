@@ -141,23 +141,23 @@ export function PanelBody({
       <div className="space-y-5">
         {[...bySource.entries()].map(([label, chunks]) => (
           <div key={label}>
-            <div className="text-[11px] text-text-faint">{label}</div>
+            <div className="t-label text-text-faint">{label}</div>
             <div className="mt-1 flex flex-col">
               {chunks.map((chunk) => (
                 <button
                   key={chunk.id}
                   type="button"
                   onClick={() => onOpenSource?.({ kind: "source", id: chunk.id })}
-                  className="border-b border-line py-1.5 text-left text-[12px] text-text-soft transition-colors last:border-b-0 hover:text-accent"
+                  className="t-meta flex min-h-[44px] w-full items-center border-b border-line py-2.5 text-left text-text-soft transition-colors last:border-b-0 hover:text-accent"
                 >
                   {chunk.heading}
-                  <span className="ml-2 text-[10px] text-text-faint">{chunk.id}</span>
+                  <span className="ml-2 text-[12px] text-text-faint">{chunk.id}</span>
                 </button>
               ))}
             </div>
           </div>
         ))}
-        <p className="text-[11px] leading-relaxed text-text-faint">{CORPUS_NOTE}</p>
+        <p className="t-meta text-text-faint">{CORPUS_NOTE}</p>
       </div>
     );
   }
@@ -169,7 +169,7 @@ export function PanelBody({
           <Link
             key={l.label}
             href={l.href}
-            className="block border border-line-strong p-3 text-[12px] text-text-soft no-underline transition-colors hover:border-accent hover:text-accent"
+            className="t-meta block border border-line-strong p-3 text-text-soft no-underline transition-colors hover:border-accent hover:text-accent"
           >
             {l.label} →
           </Link>
@@ -187,7 +187,7 @@ export function PanelBody({
             href={s.href}
             target="_blank"
             rel="noreferrer"
-            className="block border border-line-strong p-3 text-[12px] text-text-soft no-underline transition-colors hover:border-accent hover:text-accent"
+            className="t-meta block border border-line-strong p-3 text-text-soft no-underline transition-colors hover:border-accent hover:text-accent"
           >
             {s.label} ↗
           </a>
@@ -203,8 +203,8 @@ export function PanelBody({
     const Body = CASE_STUDIES[panel.slug];
     return (
       <div className="space-y-4">
-        <p className="text-[12px] leading-relaxed text-text-faint">{project.description}</p>
-        <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 border-y border-line py-3 text-[11px]">
+        <p className="t-meta text-text-faint">{project.description}</p>
+        <dl className="t-meta grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 border-y border-line py-3">
           <dt className="text-text-faint">Role</dt>
           <dd className="text-text-soft">{project.role}</dd>
           <dt className="text-text-faint">Stack</dt>
@@ -221,7 +221,7 @@ export function PanelBody({
   if (panel.kind === "colophon") {
     return (
       <div className="space-y-3">
-        <p className="text-[13px] leading-[1.7] text-text-soft">
+        <p className="t-body text-text-soft">
           Next.js, TypeScript, and Tailwind, deployed on Vercel. Type is Geist Sans and
           Geist Mono. The chat assistant runs on Claude through Vercel&apos;s AI Gateway,
           with the knowledge base injected directly into the prompt — at this scale, a
@@ -248,15 +248,15 @@ export function PanelBody({
       .map((l) => l.slice(3));
     return (
       <div className="space-y-3">
-        <p className="text-[12px] leading-relaxed text-text-soft">{PROMPT_NOTE.intro}</p>
+        <p className="t-meta text-text-soft">{PROMPT_NOTE.intro}</p>
         <ul className="space-y-1">
           {sections.map((s) => (
-            <li key={s} className="border-b border-line py-1.5 text-[12px] text-text-soft">
+            <li key={s} className="t-meta border-b border-line py-2 text-text-soft">
               {s}
             </li>
           ))}
         </ul>
-        <p className="text-[11px] leading-relaxed text-text-faint">{PROMPT_NOTE.decline}</p>
+        <p className="t-meta text-text-faint">{PROMPT_NOTE.decline}</p>
         <PanelLink href="/prompt">Read the whole thing</PanelLink>
       </div>
     );
@@ -267,17 +267,17 @@ export function PanelBody({
   if (panel.kind === "refusals") {
     return (
       <div className="space-y-4">
-        <p className="text-[12px] leading-relaxed text-text-soft">{REFUSALS_NOTE}</p>
+        <p className="t-meta text-text-soft">{REFUSALS_NOTE}</p>
         <div>
           {REFUSALS.map((r) => (
             <div key={r.id} className="border-b border-line py-2.5 last:border-b-0">
               <div className="flex items-baseline justify-between gap-2">
-                <span className="text-[12px] leading-snug text-text">{r.title}</span>
-                <span className="shrink-0 text-[10px] text-text-faint">
+                <span className="t-meta text-text">{r.title}</span>
+                <span className="t-label shrink-0 text-text-faint">
                   {ENFORCEMENT_LABEL[r.enforcedBy]}
                 </span>
               </div>
-              <p className="mt-1 text-[11px] leading-relaxed text-text-soft">{r.instead}</p>
+              <p className="t-meta mt-1 text-text-soft">{r.instead}</p>
             </div>
           ))}
         </div>
@@ -290,7 +290,7 @@ export function PanelBody({
     return (
       <div className="space-y-4">
         {WHY_CHATBOT.map((para, i) => (
-          <p key={i} className="text-[12px] leading-relaxed text-text-soft">
+          <p key={i} className="t-meta text-text-soft">
             {para}
           </p>
         ))}
@@ -356,14 +356,14 @@ function RequirementTable({
   // more than an empty panel — a reader who knows something was lost can go
   // back and paste the posting again.
   if (!Array.isArray(partial.rows) || !partial.counts || !Array.isArray(partial.gaps)) {
-    return <p className="text-[12px] leading-relaxed text-text-faint">{ROLE_FIT_UNREADABLE}</p>;
+    return <p className="t-meta text-text-faint">{ROLE_FIT_UNREADABLE}</p>;
   }
 
   const { rows, counts, gaps, noGapsRationale, verdict } = partial as RoleFit;
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap gap-x-3 gap-y-1 border-b border-line pb-3 text-[11px] text-text-faint">
+      <div className="t-meta flex flex-wrap gap-x-3 gap-y-1 border-b border-line pb-3 text-text-faint">
         {COUNT_ORDER.filter((v) => counts[v] > 0).map((v) => (
           <span key={v}>
             <span className="tabular-nums text-text-soft">{counts[v]}</span> {v}
@@ -375,22 +375,22 @@ function RequirementTable({
         {rows.map((row, i) => (
           <div
             key={i}
-            className="grid grid-cols-[58px_1fr] gap-3 border-b border-line py-3 last:border-b-0"
+            className="grid grid-cols-[72px_1fr] gap-3 border-b border-line py-3 last:border-b-0"
           >
             <span
-              className={`mt-0.5 self-start border px-1 py-0.5 text-center text-[9.5px] uppercase tracking-[0.07em] ${VERDICT_STYLE[row.verdict]}`}
+              className={`mt-0.5 self-start border px-1 py-0.5 text-center text-[12px] tracking-[0.07em] ${VERDICT_STYLE[row.verdict]}`}
             >
               {row.verdict}
             </span>
             <div>
               {/* The posting's words, not the site's — the input, not a claim. */}
-              <p className="text-[12px] leading-snug text-text">{row.requirement}</p>
+              <p className="t-meta text-text">{row.requirement}</p>
               {row.evidence && (
-                <p className="mt-1 text-[12px] leading-relaxed text-text-soft">
+                <p className="t-meta mt-1 text-text-soft">
                   {stripCitations(row.evidence)}
                 </p>
               )}
-              <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px] text-text-faint">
+              <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[12px] text-text-faint">
                 {row.sources.map((id) => (
                   <button
                     key={id}
@@ -431,10 +431,10 @@ function RequirementTable({
 
       {gaps.length > 0 && (
         <div className="border-t border-line pt-3">
-          <div className="text-[11px] text-text-faint">{FIT_LABELS.gaps}</div>
+          <div className="t-label text-text-faint">{FIT_LABELS.gaps}</div>
           <ul className="mt-1 space-y-1">
             {gaps.map((gap, i) => (
-              <li key={i} className="text-[12px] leading-relaxed text-text-soft">
+              <li key={i} className="t-meta text-text-soft">
                 {stripCitations(gap)}
               </li>
             ))}
@@ -444,20 +444,20 @@ function RequirementTable({
 
       {!gaps.length && noGapsRationale && (
         <div className="border-t border-line pt-3">
-          <div className="text-[11px] text-text-faint">{FIT_LABELS.noGaps}</div>
-          <p className="mt-1 text-[12px] leading-relaxed text-text-soft">
+          <div className="t-label text-text-faint">{FIT_LABELS.noGaps}</div>
+          <p className="t-meta mt-1 text-text-soft">
             {stripCitations(noGapsRationale)}
           </p>
         </div>
       )}
 
       {verdict && (
-        <p className="border-t border-line pt-3 text-[12px] leading-relaxed text-text">
+        <p className="t-meta border-t border-line pt-3 text-text">
           {stripCitations(verdict)}
         </p>
       )}
 
-      <p className="text-[11px] leading-relaxed text-text-faint">{FIT_LABELS.notAScore}</p>
+      <p className="t-meta text-text-faint">{FIT_LABELS.notAScore}</p>
     </div>
   );
 }
@@ -486,7 +486,7 @@ function JobDescriptionForm({ onSubmit }: { onSubmit?: (text: string) => void })
         setValue("");
       }}
     >
-      <p className="text-[12px] leading-relaxed text-text-soft">{JD_COPY.body}</p>
+      <p className="t-meta text-text-soft">{JD_COPY.body}</p>
       <textarea
         value={value}
         onChange={(e) => setValue(e.target.value.slice(0, JD_MAX))}
@@ -496,16 +496,16 @@ function JobDescriptionForm({ onSubmit }: { onSubmit?: (text: string) => void })
         // zooms into any field under 16px on focus and does not zoom back out.
         // Pasting a job posting is the longest interaction on the site — it is
         // the worst place to strand someone at 1.4x.
-        className="w-full resize-y border border-line-strong bg-raised p-2 text-[16px] leading-relaxed text-text outline-none placeholder:text-text-faint focus:border-accent md:text-[12px]"
+        className="w-full resize-y border border-line-strong bg-raised p-2 text-[16px] leading-relaxed text-text outline-none placeholder:text-text-faint focus:border-accent md:text-[14px]"
       />
       <div className="flex items-center justify-between">
-        <span className="text-[11px] text-text-faint">
+        <span className="t-label tabular-nums text-text-faint">
           {value.length}/{JD_MAX}
         </span>
         <button
           type="submit"
           disabled={!trimmed}
-          className="border border-line-strong px-2.5 py-2 text-[11px] text-text-soft transition-colors hover:border-accent hover:text-accent disabled:opacity-40"
+          className="flex min-h-[44px] items-center border border-line-strong px-3 py-2.5 text-[13px] text-text-soft transition-colors hover:border-accent hover:text-accent disabled:border-line disabled:text-text-dim"
         >
           {JD_COPY.submit} →
         </button>
@@ -526,7 +526,7 @@ function PanelLink({
   // py-2 rather than py-1: below lg every panel is a sheet, so these are
   // thumb targets, and 11px text with 4px of padding made a 26px button.
   const cls =
-    "inline-flex items-center border border-line-strong px-2.5 py-2 text-[11px] text-text-soft no-underline transition-colors hover:border-accent hover:text-accent";
+    "inline-flex min-h-[44px] items-center border border-line-strong px-3 py-2.5 text-[13px] text-text-soft no-underline transition-colors hover:border-accent hover:text-accent";
   if (external) {
     return (
       <a href={href} target="_blank" rel="noreferrer" className={cls}>
@@ -561,14 +561,14 @@ function ChunkBlock({
       ref={ref}
       className={`border-l-2 pl-3 transition-colors ${focused ? "border-accent" : "border-line"}`}
     >
-      <div className={`text-[12px] ${focused ? "text-accent" : "text-text"}`}>
+      <div className={`t-meta ${focused ? "text-accent" : "text-text"}`}>
         {chunk.heading}
       </div>
-      {showId && <div className="mt-0.5 text-[10px] text-text-faint">{chunk.id}</div>}
-      {chunk.meta && <div className="mt-0.5 text-[11px] text-text-faint">{chunk.meta}</div>}
+      {showId && <div className="mt-0.5 text-[12px] text-text-faint">{chunk.id}</div>}
+      {chunk.meta && <div className="t-meta mt-0.5 text-text-faint">{chunk.meta}</div>}
       <ul className="mt-2 space-y-2">
         {chunk.lines.map((b, i) => (
-          <li key={i} className="text-[12px] leading-relaxed text-text-soft">
+          <li key={i} className="t-meta text-text-soft">
             {b}
           </li>
         ))}

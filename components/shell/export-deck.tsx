@@ -115,18 +115,18 @@ export function ExportDeck({
   }
 
   if (!messages.length) {
-    return <p className="text-[12px] leading-relaxed text-text-faint">{EXPORT_COPY.empty}</p>;
+    return <p className="t-meta text-text-faint">{EXPORT_COPY.empty}</p>;
   }
 
   return (
-    <div className="space-y-5 text-[12px]">
+    <div className="t-meta space-y-5">
       <Section label="Markdown" note={EXPORT_COPY.markdown}>
         <CopyButton
           getText={markdown}
           label="copy the conversation"
           copiedLabel="copied"
           event="chat_copy_conversation"
-          className="border border-line-strong px-2.5 py-2 hover:border-accent"
+          className="inline-flex min-h-[44px] items-center border border-line-strong px-3 py-2.5 hover:border-accent"
           onCopied={onAction}
         />
         <button type="button" onClick={download} className={BUTTON}>
@@ -160,7 +160,7 @@ export function ExportDeck({
                 label="copy the link"
                 copiedLabel="copied"
                 event="chat_export"
-                className="border border-line-strong px-2.5 py-2 hover:border-accent"
+                className="inline-flex min-h-[44px] items-center border border-line-strong px-3 py-2.5 hover:border-accent"
                 onCopied={onAction}
               />
             )}
@@ -170,16 +170,16 @@ export function ExportDeck({
         )}
         {permalink && (
           <div className="w-full space-y-1">
-            <p className="break-all text-[11px] text-text-soft">{permalink}</p>
+            <p className="t-meta break-all text-text-soft">{permalink}</p>
             {/* Fable #14's byte count, kept because it is also the honest
                 reading of whether this link will survive an email. */}
-            <p className="text-[11px] text-text-faint">
+            <p className="t-meta text-text-faint">
               <span className="tabular-nums text-text-soft">{permalink.length}</span> characters
               {permalink.length > PERMALINK_SAFE_CHARS && (
                 <span className="text-accent"> — {EXPORT_COPY.linkTooLong}</span>
               )}
             </p>
-            <p className="text-[11px] leading-relaxed text-text-faint">{EXPORT_COPY.linkCaveat}</p>
+            <p className="t-meta text-text-faint">{EXPORT_COPY.linkCaveat}</p>
           </div>
         )}
       </Section>
@@ -199,7 +199,7 @@ export function ExportDeck({
             label="copy the scorecard"
             copiedLabel="copied"
             event="chat_export"
-            className="border border-line-strong px-2.5 py-2 hover:border-accent"
+            className="inline-flex min-h-[44px] items-center border border-line-strong px-3 py-2.5 hover:border-accent"
             onCopied={onAction}
           />
           <a
@@ -219,8 +219,8 @@ export function ExportDeck({
           >
             open a mail draft
           </a>
-          <p className="w-full text-[11px] leading-relaxed text-text-faint">{EXPORT_COPY.mail}</p>
-          <p className="w-full text-[11px] text-text-faint">{verdictCounts(fit)}</p>
+          <p className="t-meta w-full text-text-faint">{EXPORT_COPY.mail}</p>
+          <p className="t-meta w-full text-text-faint">{verdictCounts(fit)}</p>
         </Section>
       )}
     </div>
@@ -228,7 +228,7 @@ export function ExportDeck({
 }
 
 const BUTTON =
-  "border border-line-strong px-2.5 py-2 text-[11px] text-text-soft transition-colors hover:border-accent hover:text-accent disabled:opacity-40";
+  "inline-flex min-h-[44px] items-center border border-line-strong px-3 py-2.5 text-[13px] text-text-soft transition-colors hover:border-accent hover:text-accent disabled:border-line disabled:text-text-dim";
 
 function Section({
   label,
@@ -241,8 +241,8 @@ function Section({
 }) {
   return (
     <div className="space-y-2 border-b border-line pb-4 last:border-b-0">
-      <div className="text-[11px] text-text-faint">{label}</div>
-      <p className="text-[12px] leading-relaxed text-text-soft">{note}</p>
+      <div className="t-label text-text-faint">{label}</div>
+      <p className="t-meta text-text-soft">{note}</p>
       <div className="flex flex-wrap items-center gap-2">{children}</div>
     </div>
   );

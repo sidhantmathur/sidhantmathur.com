@@ -28,6 +28,14 @@ import { PROJECTS } from "@/content/projects";
 // Node, and there's no edge-specific requirement here.
 export const runtime = "nodejs";
 
+// The platform's own ceiling on a turn. A job-posting turn spends three model
+// steps and can legitimately run well past the default, and a function killed
+// mid-stream is indistinguishable, from the browser, from the stall this
+// sprint's client-side watchdog exists to catch. Ninety seconds is above
+// anything measured here and still bounded — an unbounded turn bills for a
+// reader who closed the tab.
+export const maxDuration = 90;
+
 // --- Request validation --------------------------------------------------
 //
 // useChat (@ai-sdk/react v4 / ai v7, v5-era wire format) POSTs UIMessages:
@@ -563,10 +571,19 @@ function simulateStreamFailure(cls: TurnErrorClass, model: ModelId): Response {
     onError: () => cls,
     execute: async ({ writer }) => {
       writer.write({ type: "start" });
-      writer.write({ type: "data-turn", id: TURN_PART_ID, data: telemetry });
+      // A COPY PER FRAME, not the live object. Both writes used to hand over
+      // the same reference, and here — unlike the real path below, which awaits
+      // a model between its two writes — nothing yields in between, so the
+      // opening frame was still unserialised when the next line set `error` on
+      // it. The client saw an opening frame that already carried an error,
+      // decided it was a CLOSING write, and replaced the previous turn's record
+      // in the instrument log instead of appending this one: a two-turn
+      // conversation lost a turn. `usage == null && error == null` is the whole
+      // test for "opening", so the opening frame has to be true when it is read.
+      writer.write({ type: "data-turn", id: TURN_PART_ID, data: { ...telemetry } });
       telemetry.error = { class: cls, detail: "simulated" };
       telemetry.timing = { ttftMs: null, durationMs: Date.now() - startedAt, tokensPerSecond: null };
-      writer.write({ type: "data-turn", id: TURN_PART_ID, data: telemetry });
+      writer.write({ type: "data-turn", id: TURN_PART_ID, data: { ...telemetry } });
       writer.write({ type: "finish" });
       // Thrown last so the record above has already reached the client, which
       // is the ordering a real mid-stream failure produces too.
@@ -693,10 +710,19 @@ export async function POST(req: Request): Promise<Response> {
       // (hence sendStart/sendFinish below), so the final telemetry write lands
       // inside the message rather than after it has already been closed.
       writer.write({ type: "start" });
-      writer.write({ type: "data-turn", id: TURN_PART_ID, data: telemetry });
+      // Copied, for the reason spelled out in simulateStreamFailure: the frame
+      // must carry what was true when it was written, and `telemetry` is
+      // mutated in place for the rest of this function.
+      writer.write({ type: "data-turn", id: TURN_PART_ID, data: { ...telemetry } });
 
       const result = streamText({
         model, // allowlisted above — never the raw client string
+        // When the reader hits stop, or their phone drops the connection, the
+        // request aborts here — and without this the model kept generating (and
+        // billing) into a socket nobody was reading. The client now aborts
+        // deliberately in two cases besides stop: a connect timeout and a
+        // stalled stream. Each of those used to leave a turn running.
+        abortSignal: req.signal,
         maxOutputTokens: jobPosting ? MAX_OUTPUT_TOKENS_JD : MAX_OUTPUT_TOKENS,
         tools: chatTools,
         // The SDK's default stop condition is stepCountIs(1), which ends the
@@ -796,7 +822,7 @@ export async function POST(req: Request): Promise<Response> {
         };
       }
 
-      writer.write({ type: "data-turn", id: TURN_PART_ID, data: telemetry });
+      writer.write({ type: "data-turn", id: TURN_PART_ID, data: { ...telemetry } });
       writer.write({ type: "finish" });
     },
   });

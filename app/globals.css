@@ -12,11 +12,24 @@
   --bg: #0B0A09;          /* page */
   --panel: #111010;       /* rail, status strip, input, context panel */
   --raised: #171614;      /* user turns, inputs, inset blocks */
-  --line: #231F1C;        /* hairline divider */
-  --line-strong: #332E29; /* interactive / focusable border */
+  --line: #2C2825;        /* hairline divider — 1.35:1 */
+  --line-strong: #6B6259; /* interactive / focusable border — 3.31:1 on --bg,
+                             3.18:1 on --panel, 3.03:1 on --raised. The old
+                             #645C53 was measured against --bg alone, where it
+                             cleared at 3.01:1, and every control that carries
+                             it sits on --panel or --raised instead: the send
+                             button, the model select, the suggested chips, the
+                             composer. On those it was 2.89 and 2.75 — under
+                             the non-text floor on the surfaces it actually
+                             lives on. The floor has to be cleared against the
+                             surface behind the border, not against the page. */
   --text: #EFEBE4;        /* primary */
-  --text-soft: #A9A29A;   /* body */
-  --text-faint: #6B655E;  /* metadata, labels */
+  --text-soft: #C4BCB4;   /* body — 10.55:1 */
+  --text-faint: #97918A;  /* metadata, labels — 6.34:1 */
+  --text-dim: #6B655E;    /* disabled/decorative ONLY — 3.44:1, never carries
+                             content. Deliberately dimmer than --text-faint so
+                             a disabled control reads as unavailable rather
+                             than merely quiet. */
   --accent: #E4522B;      /* sole accent — see §2 */
   --signal: #6FA85C;      /* status dot only — never text, never borders */
 
@@ -67,11 +80,14 @@
   --color-text: var(--text);
   --color-text-soft: var(--text-soft);
   --color-text-faint: var(--text-faint);
+  --color-text-dim: var(--text-dim);
   --color-accent: var(--accent);
   --color-signal: var(--signal);
 
-  /* shadcn roles used by the three generated components still in the tree
-     (button, input, sheet). */
+  /* shadcn roles used by the one generated component still in the tree
+     (sheet). button.tsx and input.tsx are gone — nothing rendered input at all,
+     and button survived only as sheet's default close control, which every
+     call site turned off. */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-muted: var(--muted);
@@ -104,6 +120,89 @@ body {
   /* reference the next/font var directly — @theme inline does not emit
      --font-sans as a runtime custom property */
   font-family: var(--font-geist-sans);
+}
+
+/* ---------------------------------------------------------------------------
+   The type scale
+   ---------------------------------------------------------------------------
+   Six tiers, and everything on screen picks one of them. This exists because
+   the site had drifted into eleven ad-hoc sizes between 9.5px and 24px, most of
+   them set inline, and the two most-read surfaces on the page — the answer
+   prose and the composer — had both ended up at 13px, which is a caption size
+   being asked to carry a conversation.
+
+   THE FLOOR IS 12px, AND 12px IS ONLY FOR FIELD NAMES. If a string states a
+   fact — a test name, a date, a measurement, a caption, anything a reader is
+   meant to read rather than scan past — it is 14px or larger. The one exemption
+   is components/shell/print-sheet.tsx, which is laid out for paper and sized in
+   the print stylesheet's terms rather than the screen's.
+
+   Desktop steps the body tiers DOWN rather than up: a phone is held further
+   from nothing and read in worse light, so the mobile size is the honest one
+   and the desktop size is the concession. Headings step up, because a wider
+   column can carry them.
+
+   Declared outside @layer on purpose, so a `t-*` class beats a Tailwind text
+   utility rather than losing to one at random. The corollary: never put both on
+   the same element. */
+
+.t-hero {
+  font-size: clamp(26px, 5.2vw, 38px);
+  line-height: 1.18;
+  letter-spacing: -0.02em;
+}
+
+.t-title {
+  font-size: 24px;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+}
+
+.t-head {
+  font-size: 17px;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+}
+
+.t-body {
+  font-size: 16px;
+  line-height: 1.65;
+}
+
+.t-meta {
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.t-label {
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+@media (min-width: 768px) {
+  .t-title {
+    font-size: 28px;
+  }
+
+  .t-head {
+    font-size: 18px;
+  }
+
+  .t-body {
+    font-size: 15px;
+  }
+
+  .t-meta {
+    font-size: 13px;
+  }
+}
+
+/* The minimum a finger can reliably hit. Applied to controls whose own padding
+   doesn't already get them there — a bare glyph, a borderless text button in a
+   row of chips. It is a floor, not a size: nothing here sets a height. */
+.tap {
+  min-height: 44px;
+  min-width: 44px;
 }
 
 /* ---------------------------------------------------------------------------
