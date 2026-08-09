@@ -158,6 +158,37 @@ export function isRateLimitClass(cls: TurnErrorClass): boolean {
   return cls === "rate_limited";
 }
 
+/**
+ * True for a class the site renders NOTHING for.
+ *
+ * `aborted` is the reader pressing stop, and the rule for that has always been
+ * that the turn simply ends — no block, no apology, no button. A client-side
+ * abort never reaches the error path at all (the SDK swallows it), but the
+ * route can also CLASSIFY a turn as aborted and deliver that class over a live
+ * stream, and that route used to land in the error block with the literal
+ * label "aborted" over the generic "something went wrong on my end" copy: the
+ * site telling a visitor it had failed at the thing they had just asked it to
+ * stop doing. The rule is about the class, so the check is too.
+ */
+export function isSilentClass(cls: TurnErrorClass): boolean {
+  return cls === "aborted";
+}
+
+/**
+ * Whether "try again" belongs under the sentence for this class.
+ *
+ * Every class here is worth another attempt except one. `invalid_request` is
+ * the route rejecting the body — a message too long for the schema is the only
+ * way a visitor reaches it — and the retry affordance resends the SAME message,
+ * so the button was an invitation to fail again identically. The copy already
+ * says what to do instead ("try shortening it"), and the composer is right
+ * there; a button that contradicts the sentence above it is worse than no
+ * button.
+ */
+export function isRetryableClass(cls: TurnErrorClass): boolean {
+  return cls !== "invalid_request";
+}
+
 /** Narrows an arbitrary string (an error message, a JSON error body) to a class. */
 export function toTurnErrorClass(value: unknown): TurnErrorClass {
   const known: TurnErrorClass[] = [

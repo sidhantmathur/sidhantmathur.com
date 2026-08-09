@@ -8,6 +8,7 @@ import { decodeSnapshot, payloadFromHash } from "@/lib/permalink";
 import type { RoleFitResult } from "@/lib/role-fit";
 import {
   isRateLimitClass,
+  isSilentClass,
   toTurnErrorClass,
   type ChatUIMessage,
   type TurnErrorClass,
@@ -238,13 +239,70 @@ function isNetworkError(err: unknown): boolean {
 }
 
 /**
+ * True for the shape the SDK reads as "this turn was aborted".
+ *
+ * Matches `isAbortError` in @ai-sdk/provider-utils: browsers raise a
+ * DOMException here, which is not an Error in every engine, so the name alone
+ * is not enough to test on.
+ */
+function isAbortError(err: unknown): boolean {
+  const named = err as { name?: unknown } | null;
+  if (!named || typeof named.name !== "string") return false;
+  return (
+    (err instanceof Error ||
+      (typeof DOMException !== "undefined" && err instanceof DOMException)) &&
+    named.name === "AbortError"
+  );
+}
+
+/**
+ * What a failure DURING the stream actually was, in the vocabulary the rest of
+ * the site speaks. Called with whatever `reader.read()` threw.
+ *
+ * Passing the raw error through — which is what this used to do — got two
+ * things wrong, both of them visible:
+ *
+ *   a wifi drop mid-answer  arrived as a TypeError, fell through to "unknown",
+ *                           and the unknown copy says "something went wrong on
+ *                           my end" — the site apologising for the visitor's
+ *                           train going into a tunnel. It is a `network`
+ *                           failure and the network copy is the true one.
+ *   the stop button         rendered an error block roughly one run in five.
+ *                           An abort races the reader: depending on the browser
+ *                           and on where in the pipeline the tear-down lands,
+ *                           what surfaces here is sometimes a clean AbortError
+ *                           and sometimes a TypeError from the socket dying
+ *                           underneath it. The design rule is that an aborted
+ *                           turn renders NOTHING, so the shape of the error is
+ *                           the wrong thing to read.
+ *
+ * So the outer signal is the authority on the second one: if the caller's
+ * signal is aborted, the reader pressed stop, whatever the error looks like.
+ * That signal is aborted by `stop()` and by navigation only — the idle
+ * watchdog below aborts our own controller, never this one.
+ */
+function classifyStreamError(err: unknown, outer: AbortSignal | null | undefined): unknown {
+  // A genuine abort passes through untouched, so the SDK takes its abort path
+  // (status back to "ready", no error rendered) rather than its failure path.
+  if (isAbortError(err)) return err;
+  if (outer?.aborted) return new DOMException("The turn was aborted.", "AbortError");
+  if (isNetworkError(err)) return new Error("network");
+  return err;
+}
+
+/**
  * Wraps a response body so a stream that goes quiet fails instead of hanging.
  *
  * The wrapped stream is errored with a real class, which is the whole point:
  * the SDK surfaces it, `onError` fires, `status` becomes "error", `isBusy`
  * goes false, and the NEXT SEND WORKS. A silent stall does none of that.
  */
-function watchStream(body: ReadableStream<Uint8Array>, abort: () => void): ReadableStream<Uint8Array> {
+function watchStream(
+  body: ReadableStream<Uint8Array>,
+  abort: () => void,
+  /** The caller's signal. Aborted exactly when the reader pressed stop. */
+  outer: AbortSignal | null | undefined,
+): ReadableStream<Uint8Array> {
   const reader = body.getReader();
   let timer: ReturnType<typeof setTimeout> | null = null;
   let firedTimeout = false;
@@ -282,10 +340,9 @@ function watchStream(body: ReadableStream<Uint8Array>, abort: () => void): Reada
         } catch (err) {
           clear();
           // Already errored above — a second `controller.error` would throw.
-          // An AbortError here is the reader pressing stop, and it is passed
-          // through untouched so the SDK takes its abort path (status back to
-          // "ready", no error rendered) rather than its failure path.
-          if (!firedTimeout) controller.error(err);
+          // Everything else is classified rather than passed through raw: see
+          // classifyStreamError for the two failures that made this necessary.
+          if (!firedTimeout) controller.error(classifyStreamError(err, outer));
         }
       })();
     },
@@ -348,7 +405,7 @@ function makeChatFetch(onBudget: (b: Budget) => void): typeof fetch {
     // Rebuilt from the original response so status, statusText and every header
     // survive — the budget read above is not the only thing that reads them.
     return new Response(
-      watchStream(res.body, () => ctrl.abort()),
+      watchStream(res.body, () => ctrl.abort(), outer),
       res,
     );
   };
@@ -482,6 +539,13 @@ export function useConversation(model: string) {
     },
     onError: (error) => {
       const cls = toTurnErrorClass(error.message);
+      // An aborted turn renders nothing — and that has to hold for the class
+      // arriving over a live stream as well as for the SDK's own abort path,
+      // which never gets here. Reported as analytics; shown as silence.
+      if (isSilentClass(cls)) {
+        track("chat_error", { error_class: cls, model: modelRef.current });
+        return;
+      }
       const kind = isRateLimitClass(cls) ? "rate_limited" : "error";
       setErrorKind(kind);
       setErrorClass(cls);

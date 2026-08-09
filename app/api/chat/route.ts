@@ -571,10 +571,19 @@ function simulateStreamFailure(cls: TurnErrorClass, model: ModelId): Response {
     onError: () => cls,
     execute: async ({ writer }) => {
       writer.write({ type: "start" });
-      writer.write({ type: "data-turn", id: TURN_PART_ID, data: telemetry });
+      // A COPY PER FRAME, not the live object. Both writes used to hand over
+      // the same reference, and here — unlike the real path below, which awaits
+      // a model between its two writes — nothing yields in between, so the
+      // opening frame was still unserialised when the next line set `error` on
+      // it. The client saw an opening frame that already carried an error,
+      // decided it was a CLOSING write, and replaced the previous turn's record
+      // in the instrument log instead of appending this one: a two-turn
+      // conversation lost a turn. `usage == null && error == null` is the whole
+      // test for "opening", so the opening frame has to be true when it is read.
+      writer.write({ type: "data-turn", id: TURN_PART_ID, data: { ...telemetry } });
       telemetry.error = { class: cls, detail: "simulated" };
       telemetry.timing = { ttftMs: null, durationMs: Date.now() - startedAt, tokensPerSecond: null };
-      writer.write({ type: "data-turn", id: TURN_PART_ID, data: telemetry });
+      writer.write({ type: "data-turn", id: TURN_PART_ID, data: { ...telemetry } });
       writer.write({ type: "finish" });
       // Thrown last so the record above has already reached the client, which
       // is the ordering a real mid-stream failure produces too.
@@ -701,7 +710,10 @@ export async function POST(req: Request): Promise<Response> {
       // (hence sendStart/sendFinish below), so the final telemetry write lands
       // inside the message rather than after it has already been closed.
       writer.write({ type: "start" });
-      writer.write({ type: "data-turn", id: TURN_PART_ID, data: telemetry });
+      // Copied, for the reason spelled out in simulateStreamFailure: the frame
+      // must carry what was true when it was written, and `telemetry` is
+      // mutated in place for the rest of this function.
+      writer.write({ type: "data-turn", id: TURN_PART_ID, data: { ...telemetry } });
 
       const result = streamText({
         model, // allowlisted above — never the raw client string
@@ -810,7 +822,7 @@ export async function POST(req: Request): Promise<Response> {
         };
       }
 
-      writer.write({ type: "data-turn", id: TURN_PART_ID, data: telemetry });
+      writer.write({ type: "data-turn", id: TURN_PART_ID, data: { ...telemetry } });
       writer.write({ type: "finish" });
     },
   });

@@ -230,7 +230,17 @@ failure class replaces the single grey line that used to answer all of them:
 **A note on what is NOT here.** Two classes have no sentence. `rate_limited` keeps
 routing to ManualMode, which answers with the corpus instead of an apology, and
 `aborted` renders nothing, because the reader pressed stop and telling someone what
-they just did is not information.
+they just did is not information. `aborted` now renders nothing even when the class
+arrives over a live stream rather than from the reader's own stop — it used to reach
+the error block and print the literal class over the generic "something went wrong on
+my end" sentence (`isSilentClass`, `lib/chat-telemetry.ts`).
+
+**A note on the button.** "try again" is no longer rendered for `invalid_request`.
+No string changed — the sentence is still "That message couldn't be sent as written.
+Try shortening it." — but the button under it resent the identical message into the
+identical rejection, so the one affordance on screen contradicted the only advice on
+screen. The turn stays in the transcript and the composer is where it gets shortened
+(`isRetryableClass`, `lib/chat-telemetry.ts`).
 
 **Typography and ergonomics pass, 2026-08-09** (branch `ux/resilience-readability`).
 A type scale replaced eleven ad-hoc sizes, and two composer strings changed with it.
