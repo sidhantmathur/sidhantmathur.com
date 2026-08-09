@@ -262,6 +262,28 @@ neither is on screen once the page is live.
 | draft | `components/shell/app-shell.tsx` → composer placeholder, pre-hydration | "Loading the conversation…" — replaces "Ask a question" until the page is interactive, on a field that is `disabled` for the same window. | none | UI chrome, and the honest state: the composer genuinely cannot take a question yet. Asserted by `npm run check:load`. |
 | draft | `components/shell/app-shell.tsx` → status strip, pre-hydration | "loading" — replaces "ready" until the page is interactive, with the status dot stepped down to `--text-dim`. Shown at every width during load; below `sm` it collapses back to the dot alone once hydrated, which is the settled design. | none | UI chrome. The strip previously read "ready" from the first paint, which was the most confident false statement on the page — it is the readout a stuck visitor would check. |
 
+**A `/projects` index, 2026-08-09** (same branch). The three case studies have
+always had pages; `/projects` itself returned a 404. The index reuses
+`content/projects.ts` verbatim for everything it says about the work — the same
+strings the cards, the chat tool and the context panel read — so the only
+drafted copy is the page's own furniture.
+
+| Status | Where | What it says | Claims | Grounding |
+| --- | --- | --- | --- | --- |
+| draft | `app/projects/page.tsx` → h1 and metadata title | "Projects" | none | The section name already used by the context panel's `projects` view. |
+| draft | `app/projects/page.tsx` → intro | "Three case studies. The conversation will summarise any of them — these are the long versions." | none | A statement about this site, checkable in this repo: three entries in `PROJECT_LIST`, and the `showProject` tool reads the same file. |
+| draft | `app/projects/page.tsx` → metadata description | "Three case studies, and what each one was." | none | Same. |
+| draft | `app/projects/page.tsx` → link label | "Read the case study →" | none | UI chrome; it navigates to `project.caseStudyHref`. |
+
+**A client error boundary, 2026-08-09** (same branch). Added because the
+pre-hydration gate has a failure mode: if hydration never completes, the
+composer stays honestly disabled forever. Same register as `app/not-found.tsx`.
+
+| Status | Where | What it says | Claims | Grounding |
+| --- | --- | --- | --- | --- |
+| draft | `app/error.tsx` | "Something broke in the browser and the conversation didn't start. That one is on me, not you." | none | Takes the blame the way `lib/chat-telemetry.ts` already does for the two deploy-side error classes. Says where it broke (the browser) without guessing why. |
+| draft | `app/error.tsx` → buttons | "Try again" · "Read the resume instead →" | none | UI chrome. The first calls Next's `reset()`; the second is a plain link to a server-rendered document, so the fallback does not need the thing that just failed. |
+
 ## Pending `[VERIFY]` markers
 
 Sentences drafted with a fact-shaped hole in them, waiting on Sidhant. Listing them

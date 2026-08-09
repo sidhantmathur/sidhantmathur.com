@@ -133,6 +133,11 @@ export function PanelBody({
             {l.label} →
           </Link>
         ))}
+        {/* Every other panel offers the standalone version of itself. This one
+            could not, because /projects was a 404 until the index was built. */}
+        <div className="pt-1">
+          <PanelLink href="/projects">Open as a page</PanelLink>
+        </div>
       </div>
     );
   }
