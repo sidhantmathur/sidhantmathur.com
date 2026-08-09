@@ -1,14 +1,8 @@
 "use client";
 
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
-import {
-  Sheet,
-  SheetClose,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
 import {
   IDLE_LINES,
   JD_COPY,
@@ -20,22 +14,21 @@ import {
 } from "./shell-data";
 import { Answer } from "./answer";
 import { usePanelUrl } from "./use-panel-url";
-import { PanelBody, panelTitle } from "./panel-body";
+import { panelTitle } from "./panel-title";
 import { CopyButton } from "./copy-button";
-import { InstrumentDeck, Seismograph, lastSettledRate } from "./instruments";
+import { Seismograph, lastSettledRate } from "./instruments";
 import { useTokenRate } from "./use-token-rate";
 import { useTeletype } from "./use-teletype";
+import { useHydrated } from "./use-hydrated";
+import { useIdleReady } from "./use-idle-ready";
 import { useIdle } from "./use-idle";
 import { useElapsed } from "./use-elapsed";
 import { PhaseLine } from "./phase-line";
-import { TurnError } from "./turn-error";
 import { AmbientBackdrop } from "./ambient-backdrop";
+import { TurnError } from "./turn-error";
 import { conversationToMarkdown, messageToMarkdown } from "@/lib/transcript";
 import { permalinkFor } from "@/lib/permalink";
 import { track } from "@/lib/analytics";
-import { ExportDeck } from "./export-deck";
-import { PrintSheet } from "./print-sheet";
-import { ManualMode } from "./manual-mode";
 import { RecruiterTldr } from "./recruiter-tldr";
 import { SUGGESTED_QUESTIONS as SUGGESTED } from "@/content/recruiter";
 import { costOfTurn, formatUsd, sumCosts } from "@/lib/pricing";
@@ -47,6 +40,69 @@ import {
   type RoleFit,
   type ToolOut,
 } from "./use-conversation";
+
+// ---------------------------------------------------------------------------
+// What does NOT ship in the entry chunk
+// ---------------------------------------------------------------------------
+// Measured on the throttled mobile profile, the homepage's first load was
+// bandwidth-bound rather than CPU-bound: three quarters of a megabyte on the
+// wire, and 3.8 seconds between the page painting and the page working. Most of
+// what was arriving in that window could not be used in it.
+//
+// So everything below loads on demand. The test each one passes is the same:
+// can a visitor reach it without first doing something? If the answer is no —
+// a panel has to be opened, a turn has to fail, a sheet has to be raised — it
+// has no business being in the bytes that stand between the visitor and a
+// working composer.
+//
+// `ssr: false` throughout, and not as an afterthought. These render nothing on
+// the server today (every one of them is behind client state), so pre-rendering
+// them would add markup for something the visitor cannot yet see, which is the
+// whole problem this pass exists to fix.
+//
+// The two DELIBERATE exceptions, so nobody re-splits them by reflex:
+//   answer.tsx    on the streaming path. A lazy chunk fetched at the moment the
+//                 first token lands is a stall in the one place the site is
+//                 asking to be judged.
+//   recruiter-tldr / the empty state generally — it IS the first screen.
+
+// The panel's content. The heaviest module in the shell by a wide margin:
+// three MDX case studies, the knowledge base, the repo corpus and the
+// system-prompt builder. Nothing here is reachable without opening a panel.
+const PanelBody = dynamic(() => import("./panel-body").then((m) => m.PanelBody), {
+  ssr: false,
+});
+
+// Conversation state rather than content, and both need a conversation first.
+const ExportDeck = dynamic(() => import("./export-deck").then((m) => m.ExportDeck), {
+  ssr: false,
+});
+const InstrumentDeck = dynamic(
+  () => import("./instruments").then((m) => m.InstrumentDeck),
+  { ssr: false },
+);
+
+// The out-of-turns state. Carries the whole knowledge base, and most visitors
+// will never see it.
+const ManualMode = dynamic(() => import("./manual-mode").then((m) => m.ManualMode), {
+  ssr: false,
+});
+
+// Radix's dialog, and below lg only. Mounted on the first sheet-opening tap,
+// or at idle, whichever comes first — so the chunk is warm long before anyone
+// reaches for it, and a desktop never fetches it at all. See mobile-sheets.tsx.
+const MobileSheets = dynamic(
+  () => import("./mobile-sheets").then((m) => m.MobileSheets),
+  { ssr: false },
+);
+
+// The print document. Mounted once the page has gone idle rather than on an
+// interaction: nothing can reliably intercept Cmd-P, so it has to already be in
+// the DOM when the dialog opens — it just doesn't have to be there before the
+// composer works. See use-idle-ready.ts.
+const PrintSheet = dynamic(() => import("./print-sheet").then((m) => m.PrintSheet), {
+  ssr: false,
+});
 
 // ---------------------------------------------------------------------------
 // Copy — verbatim from docs/site-copy.md.
@@ -98,6 +154,12 @@ const PANEL_MAX = 640;
 const PANEL_DEFAULT = 380;
 
 export function AppShell() {
+  // Everything on this page that needs JavaScript is gated on this. See
+  // use-hydrated.ts for what the ungated version looked like on slow wifi.
+  const hydrated = useHydrated();
+  // The two things that must exist before they are asked for, but must not be
+  // part of what the visitor waits for. See use-idle-ready.ts.
+  const idleReady = useIdleReady();
   const [model, setModel] = useState<string>(MODELS[0]);
 
   const {
@@ -429,13 +491,15 @@ export function AppShell() {
           app/globals.css), so Cmd-P — which nothing can reliably intercept —
           prints the document rather than the app, and the dialog never opens
           over a layout that hasn't happened yet. */}
-      <PrintSheet
-        messages={messages}
-        title={SITE_NAME}
-        sourceUrl={SITE_URL}
-        permalink={permalink}
-        footer={DISCLAIMER}
-      />
+      {idleReady && (
+        <PrintSheet
+          messages={messages}
+          title={SITE_NAME}
+          sourceUrl={SITE_URL}
+          permalink={permalink}
+          footer={DISCLAIMER}
+        />
+      )}
       <div className="screen-only flex h-dvh flex-col bg-bg text-text [font-family:var(--font-geist-mono)]">
       {/* Skip link. The rail is ~10 links deep and sits before the input in
           tab order, so a keyboard user otherwise tabs through the entire nav
@@ -459,6 +523,7 @@ export function AppShell() {
           type="button"
           onClick={() => setRailOpen(true)}
           aria-label="Open navigation"
+          data-js-control
           className="-ml-1.5 flex h-11 w-11 shrink-0 touch-manipulation items-center justify-center text-text-soft hover:text-accent lg:hidden"
         >
           <svg
@@ -494,6 +559,7 @@ export function AppShell() {
             onClick={() => openPanel({ kind: "instruments" })}
             title="Open the instruments"
             aria-label="Open the instruments"
+            data-js-control
             className="hidden items-center gap-4 transition-colors hover:text-accent md:flex"
           >
             <Stat label="turns" value={`${turns}/10`} />
@@ -511,7 +577,11 @@ export function AppShell() {
             <select
               value={model}
               onChange={(e) => setModel(e.target.value)}
-              className="min-h-[36px] cursor-pointer border border-line-strong bg-raised px-1.5 py-0.5 text-[13px] text-text-soft outline-none focus:border-accent"
+              // A native select is the one control that "works" before
+              // hydration in the worst way: it opens, it takes a choice, and
+              // the choice reaches nothing.
+              disabled={!hydrated}
+              className="min-h-[36px] disabled:cursor-progress disabled:border-line disabled:text-text-dim cursor-pointer border border-line-strong bg-raised px-1.5 py-0.5 text-[13px] text-text-soft outline-none focus:border-accent"
             >
               {MODELS.map((m) => (
                 <option key={m} value={m}>
@@ -521,12 +591,25 @@ export function AppShell() {
             </select>
           </label>
           <span className="flex items-center gap-1.5">
+            {/* The strip said "ready" from the first paint, which on a slow
+                connection was the single most confident lie on the page — the
+                one readout a visitor would check to find out why nothing was
+                happening, agreeing that everything was fine. It now says what
+                is true. */}
             <span
               className={`inline-block h-1.5 w-1.5 rounded-full ${
-                isBusy ? "bg-accent" : "bg-signal"
+                !hydrated ? "bg-text-dim" : isBusy ? "bg-accent" : "bg-signal"
               }`}
             />
-            <span className="hidden sm:inline">{isBusy ? "streaming" : "ready"}</span>
+            {/* The word is normally sm-and-up, because on a phone the dot
+                carries it and the header is tight. Not while the page is still
+                arriving: a grey dot alone is not an explanation, and the phone
+                is the device this whole pass is about. So it shows at every
+                width until hydration and then collapses back to the settled
+                design. */}
+            <span className={!hydrated ? "inline" : "hidden sm:inline"}>
+              {!hydrated ? "loading" : isBusy ? "streaming" : "ready"}
+            </span>
           </span>
         </div>
       </header>
@@ -585,6 +668,7 @@ export function AppShell() {
                   <button
                     type="button"
                     onClick={reset}
+                    data-js-control
                     className="t-label flex min-h-[44px] touch-manipulation items-center text-text-faint hover:text-accent"
                   >
                     start a fresh one
@@ -634,7 +718,7 @@ export function AppShell() {
                           stick.current = true;
                           submit(q);
                         }}
-                        disabled={isBusy}
+                        disabled={isBusy || !hydrated}
                         // py-2.5 keeps a chip over 44px on a phone, where it is
                         // a finger target. md:py-2 takes it to 39px, which is
                         // the height the model select in the header already
@@ -777,6 +861,7 @@ export function AppShell() {
                       <button
                         type="button"
                         onClick={stop}
+                        data-js-control
                         className="shrink-0 text-[13px] text-text-faint transition-colors hover:text-accent"
                       >
                         stop
@@ -817,6 +902,7 @@ export function AppShell() {
                       e.preventDefault();
                       runSlash(c.name);
                     }}
+                    data-js-control
                     className="flex min-h-[44px] w-full items-center gap-3 px-4 py-2.5 text-left text-[14px] hover:bg-raised md:px-10"
                   >
                     <span className="text-accent">{c.name}</span>
@@ -855,12 +941,19 @@ export function AppShell() {
                   if (e.key === "Escape") setInput("");
                 }}
                 id="ask"
+                // Disabled rather than dimmed, and the attribute is doing two
+                // jobs. It is the honest state — an unfocusable field cannot
+                // take a question the page has no way to send — and it is half
+                // of what makes the native submit below impossible, since a
+                // disabled field cannot be typed into and so Enter cannot fire
+                // an implicit submit.
+                disabled={!hydrated}
                 // Short enough to survive a 320px phone intact. The long
                 // version — "Ask a question, or type / for commands" — was
                 // clipped mid-word at every width a phone actually has, and the
                 // half of it that got cut was the half doing the teaching. The
                 // slash menu advertises itself the moment a "/" is typed.
-                placeholder="Ask a question"
+                placeholder={hydrated ? "Ask a question" : "Loading the conversation…"}
                 aria-label="Ask a question"
                 enterKeyHint="send"
                 // 16px below md is not a style choice: iOS Safari zooms the
@@ -880,7 +973,7 @@ export function AppShell() {
                 // A pasted job description is the case this exists for, and one
                 // of those can be sixty lines long; without a cap it eats the
                 // conversation it was supposed to be asking about.
-                className="ml-2 max-h-[216px] min-h-[48px] min-w-0 flex-1 resize-none bg-transparent py-3 text-[16px] leading-[1.6] text-text outline-none placeholder:text-text-faint md:text-[15px]"
+                className="ml-2 max-h-[216px] min-h-[48px] min-w-0 flex-1 resize-none bg-transparent py-3 text-[16px] leading-[1.6] text-text outline-none placeholder:text-text-faint disabled:cursor-progress disabled:placeholder:text-text-dim md:text-[15px]"
               />
               {/* One send control at every width.
                   It used to be two half-controls: an "enter ↵" hint on desktop
@@ -893,8 +986,16 @@ export function AppShell() {
                   rather than against the whole composer. */}
               <button
                 type="submit"
-                disabled={!input.trim() || isBusy}
-                className="-mr-1.5 my-1.5 ml-2 flex h-11 min-w-[44px] shrink-0 touch-manipulation items-center justify-center border border-line-strong bg-raised px-3 text-[14px] text-text-soft transition-colors hover:border-accent hover:text-accent disabled:border-line disabled:text-text-dim"
+                // `!hydrated` first, and it is the whole point of this pass.
+                // A submit button inside a <form> with no action is a live
+                // control the moment the HTML lands: pressed before the
+                // JavaScript arrives it fired a native GET submit, which
+                // navigated the page to itself with the question in the query
+                // string and threw away the load that was nearly finished. A
+                // disabled submit cannot do that, and it cannot silently do
+                // nothing either — it says so.
+                disabled={!hydrated || !input.trim() || isBusy}
+                className="-mr-1.5 my-1.5 ml-2 disabled:cursor-progress flex h-11 min-w-[44px] shrink-0 touch-manipulation items-center justify-center border border-line-strong bg-raised px-3 text-[14px] text-text-soft transition-colors hover:border-accent hover:text-accent disabled:border-line disabled:text-text-dim"
               >
                 send ↵
               </button>
@@ -1005,104 +1106,32 @@ export function AppShell() {
         )}
       </div>
 
-      {/* ---- Mobile sheets ------------------------------------------------ */}
-      {isMobile && (
-        <>
-          <Sheet open={railOpen} onOpenChange={setRailOpen}>
-            <SheetContent
-              side="left"
-              // Scrolls because the rail now carries the readouts and the
-              // transcript controls the header and input row drop at this
-              // width — on a short phone that is more than one screen, and
-              // the overflow was landing on the controls at the bottom.
-              // The bottom pad clears the home indicator: the readouts are the
-              // last thing in this column and they used to end flush with the
-              // sheet's edge, under the bar on a notched phone.
-              showCloseButton={false}
-              className="w-72 overflow-y-auto overscroll-contain border-line bg-panel p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] text-[13px] text-text [font-family:var(--font-geist-mono)]"
-            >
-              {/* Title and close on one row, sized and worded like the bottom
-                  sheet's — the default floating ✕ was a different glyph at a
-                  different size sitting off the title's baseline. */}
-              <SheetHeader className="-mr-2 -my-2 flex-row items-center gap-2 space-y-0 p-0">
-                <SheetTitle className="min-w-0 flex-1 truncate text-[13px] font-normal text-text-faint">
-                  Index
-                </SheetTitle>
-                <SheetClose
-                  aria-label="Close"
-                  className="flex h-11 w-11 shrink-0 touch-manipulation items-center justify-center text-[13px] text-text-faint transition-colors hover:text-accent"
-                >
-                  ✕
-                </SheetClose>
-              </SheetHeader>
-              <RailContent onOpenPanel={openPanel} showHeading={false} />
-              {/* The header readouts are hidden at this width, so the rail
-                  carries the same four numbers. Tapping Instruments above
-                  opens the full deck as a sheet. */}
-              <div className="mt-4 border-t border-line pt-3 text-text-faint">
-                <div>turns {turns}/10</div>
-                <div>ttft {ttft == null ? "—" : `${ttft}ms`}</div>
-                <div>est. {formatUsd(sessionCost.total)}</div>
-                <div className="truncate">model {model}</div>
-              </div>
-
-              {/* The transcript controls used to be duplicated here, because
-                  the input row dropped them below sm. The actions strip is
-                  present at every width now, so this is one place fewer for
-                  the same two buttons to drift apart. */}
-            </SheetContent>
-          </Sheet>
-
-          {/* Dismissing the sheet closes the panel outright rather than only
-              hiding it. They used to disagree: tapping away left `panel` set,
-              so the address bar still read /resume with nothing open, and that
-              was the URL you'd copy. */}
-          <Sheet
-            open={sheetOpen && panelOpen}
-            onOpenChange={(open) => (open ? setSheetOpen(true) : closePanel())}
-          >
-            <SheetContent
-              side="bottom"
-              style={{ height: sheetFull ? "88dvh" : "52dvh" }}
-              // The sheet supplies its own close control in the header row, so
-              // the default floating one is off: it is positioned top-right,
-              // which is exactly where the size toggle sits, and the two
-              // overlapped by 24px — the close button won, and expand was
-              // unhittable.
-              showCloseButton={false}
-              className="border-line bg-panel p-0 text-text transition-[height] duration-200 [font-family:var(--font-geist-mono)]"
-            >
-              <SheetHeader className="flex-row items-center gap-2 space-y-0 border-b border-line py-0 pl-4 pr-1">
-                <SheetTitle className="min-w-0 flex-1 truncate text-[13px] font-normal text-text-faint">
-                  {panelTitle(panel)}
-                </SheetTitle>
-                {/* Both controls fill the header's height. As bare labels they
-                    were ~16px tall targets on the surface that is only ever
-                    touched. */}
-                <button
-                  type="button"
-                  onClick={() => setSheetFull((v) => !v)}
-                  aria-expanded={sheetFull}
-                  className="flex h-11 shrink-0 touch-manipulation items-center px-2 text-[13px] text-text-faint transition-colors hover:text-accent"
-                >
-                  {sheetFull ? "collapse ↓" : "expand ↑"}
-                </button>
-                <SheetClose
-                  aria-label="Close"
-                  className="flex h-11 w-11 shrink-0 touch-manipulation items-center justify-center text-[13px] text-text-faint transition-colors hover:text-accent"
-                >
-                  ✕
-                </SheetClose>
-              </SheetHeader>
-              {/* The pad clears the home indicator on a notched phone, where
-                  the last row of a panel otherwise sits under the bar. It
-                  resolves to 0 everywhere else. */}
-              <div className="min-h-0 flex-1 overflow-y-auto p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
-                {panelContent}
-              </div>
-            </SheetContent>
-          </Sheet>
-        </>
+      {/* ---- Mobile sheets ------------------------------------------------
+          Loaded on demand. Radix's dialog — portal, overlay, focus trap,
+          scroll lock — is a real chunk of JavaScript, and below lg it is the
+          only thing that uses it. `isMobile` is false until an effect measures
+          the viewport, so on a desktop the module is never fetched at all, and
+          on a phone it is fetched after hydration rather than before it. */}
+      {isMobile && (idleReady || railOpen || panelOpen) && (
+        <MobileSheets
+          railOpen={railOpen}
+          onRailOpenChange={setRailOpen}
+          rail={<RailContent onOpenPanel={openPanel} showHeading={false} />}
+          readouts={{
+            turns: `${turns}/10`,
+            ttft: ttft == null ? "—" : `${ttft}ms`,
+            cost: formatUsd(sessionCost.total),
+            model,
+          }}
+          panelOpen={panelOpen}
+          panelTitle={panelTitle(panel)}
+          panelContent={panelContent}
+          sheetOpen={sheetOpen}
+          onSheetOpen={() => setSheetOpen(true)}
+          onClosePanel={closePanel}
+          sheetFull={sheetFull}
+          onToggleFull={() => setSheetFull((v) => !v)}
+        />
       )}
       </div>
     </>
@@ -1184,7 +1213,12 @@ function RailLink({
 
   if (item.view) {
     return (
-      <button type="button" onClick={() => onOpenPanel(item.view as PanelView)} className={cls}>
+      <button
+        type="button"
+        onClick={() => onOpenPanel(item.view as PanelView)}
+        data-js-control
+        className={cls}
+      >
         {item.label}
       </button>
     );
@@ -1215,6 +1249,7 @@ function StripButton({
     <button
       type="button"
       onClick={onClick}
+      data-js-control
       // Full-height rather than text-height. The label is a single line, so
       // the hit area used to be a 17px band inside a 32px strip — fine with a
       // cursor, a coin toss with a thumb. The strip is 44px now.

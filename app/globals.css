@@ -206,6 +206,33 @@ body {
 }
 
 /* ---------------------------------------------------------------------------
+   Before hydration
+   ---------------------------------------------------------------------------
+   The seconds between the page painting and its JavaScript arriving. On a
+   restaurant's wifi that was 3.8 measured seconds (scripts/perf.mjs) during
+   which the shell was a photograph of an application — every control drawn at
+   full strength, every tap silently discarded.
+
+   The composer, the chips and the model select are gated with a real `disabled`
+   attribute instead, because those have to be unfocusable and unsubmittable
+   rather than merely dimmed — see components/shell/use-hydrated.ts. This rule
+   is for the rest: the chrome buttons whose only job is to open something, where
+   a prop threaded through four components buys nothing a selector doesn't.
+
+   --text-dim is the token that already means "unavailable" everywhere else on
+   this site, so a visitor who arrives mid-load sees the same vocabulary a
+   disabled control uses once the page is live. Nothing moves when it clears;
+   the colour steps up and the controls start working. */
+html:not([data-hydrated]) [data-js-control] {
+  color: var(--text-dim);
+  border-color: var(--line);
+  cursor: progress;
+  /* The honest half. A dimmed control that still swallows taps is the same bug
+     wearing a costume. */
+  pointer-events: none;
+}
+
+/* ---------------------------------------------------------------------------
    Print (roadmap Sprint 5, #17 — the typeset document)
    ---------------------------------------------------------------------------
    NO DEPENDENCY WAS ADDED FOR PDF. The browser's own print pipeline produces a

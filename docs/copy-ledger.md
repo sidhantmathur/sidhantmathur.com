@@ -251,6 +251,17 @@ Both are UI chrome; neither says anything about Sidhant.
 | draft | `components/shell/app-shell.tsx` → composer placeholder | "Ask a question" — shortened from "Ask a question, or type / for commands", which was clipped mid-word at every phone width. Logged in `docs/site-copy.md`. | none | UI chrome. The dropped half taught the slash menu, which still announces itself the moment a "/" is typed. |
 | draft | `components/shell/app-shell.tsx` → send button | "send ↵" — replaces a bare "↵" glyph below sm and an "enter ↵" hint above it. One labelled button at every width. Logged in `docs/site-copy.md`. | none | UI chrome; it submits the form, and ↵ is still the key that does it |
 
+**Slow-network first load, 2026-08-09** (branch `claude/resilience-overhaul-three-workstreams-d3p1sg`).
+Two strings exist only during the seconds between the page painting and its
+JavaScript arriving — measured at 3.5s on a throttled mobile profile
+(`npm run perf`). Both are UI chrome; neither says anything about Sidhant, and
+neither is on screen once the page is live.
+
+| Status | Where | What it says | Claims | Grounding |
+| --- | --- | --- | --- | --- |
+| draft | `components/shell/app-shell.tsx` → composer placeholder, pre-hydration | "Loading the conversation…" — replaces "Ask a question" until the page is interactive, on a field that is `disabled` for the same window. | none | UI chrome, and the honest state: the composer genuinely cannot take a question yet. Asserted by `npm run check:load`. |
+| draft | `components/shell/app-shell.tsx` → status strip, pre-hydration | "loading" — replaces "ready" until the page is interactive, with the status dot stepped down to `--text-dim`. Shown at every width during load; below `sm` it collapses back to the dot alone once hydrated, which is the settled design. | none | UI chrome. The strip previously read "ready" from the first paint, which was the most confident false statement on the page — it is the readout a stuck visitor would check. |
+
 ## Pending `[VERIFY]` markers
 
 Sentences drafted with a fact-shaped hole in them, waiting on Sidhant. Listing them
