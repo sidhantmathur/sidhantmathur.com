@@ -35,6 +35,24 @@ Chat: Vercel AI SDK via Vercel AI Gateway · Rate limiting: Upstash · Analytics
 - Never commit secrets; env vars via Vercel only.
 - `npm run build` must pass with zero errors before any task is "done".
 
+## Cloud dev
+Most work happens in a cloud sandbox now. `npm ci` is the whole setup — no services, no
+Docker, and `npm run build` needs no network (fonts come from the `geist` package, not
+Google, and `scripts/build-measurements.mjs` treats missing credentials as a normal path).
+
+Keys are optional. Add `AI_GATEWAY_API_KEY` only when touching chat or live evals; without
+it `/api/chat` returns its error state and everything else is unaffected. Upstash and
+PostHog vars have working fallbacks.
+
+**Seeing the site** — do not claim a visual change works without looking at it:
+- `npm run shot` for local headless screenshots; read the PNGs, and send them to Sidhant
+  for approval when the change is visual.
+- Or push the branch and screenshot the Vercel preview with `BASE=https://…`. Preview
+  deployment protection has to be off or bypassed for that to work headless.
+
+Not available in a cloud sandbox: authenticated MCP connectors (PostHog, Vercel) and
+`npm run eval:live`. Push from the sandbox; let Vercel's GitHub integration deploy.
+
 ## Copy
 Draft placeholder copy freely so pages can be seen whole — empty `[TODO]` markers
 hide what the site actually looks like. Two hard conditions:
@@ -57,5 +75,7 @@ Native Ubuntu — run directly from the repo root (the old WSL wrapper is gone).
 - `npm run build` — production build (`prebuild` regenerates the knowledge base); must pass with zero errors
 - `npm run start` — serve the production build
 - `npm run lint` — ESLint
+- `npm run shot -- / /resume` — headless screenshots to `.screenshots/` (add `--mobile`, `--full`;
+  point at a deploy with `BASE=https://…`). Needs `npx playwright install chromium` once per machine.
 
 The chat knowledge base is built from `content/knowledge/*.md` by `scripts/build-knowledge.mjs`, wired as `predev`/`prebuild`. It writes two git-ignored files: `lib/knowledge.generated.ts` (the prompt text) and `lib/chunks.generated.ts` (the same content as addressable chunks — the ids the model cites and `lib/verify.ts` checks against).

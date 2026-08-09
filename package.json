@@ -9,6 +9,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "shot": "node scripts/shot.mjs",
     "eval": "node scripts/build-knowledge.mjs && node scripts/build-repo-corpus.mjs && node --test --experimental-strip-types --test-reporter=tap --test-reporter-destination=stdout --test-reporter=./evals/reporters/json.mjs --test-reporter-destination=evals/static-results.json \"evals/*.test.mjs\"",
     "eval:live": "node --experimental-strip-types evals/run-live.mjs",
     "eval:publish": "node --experimental-strip-types --disable-warning=ExperimentalWarning scripts/publish-evals.mjs"
@@ -25,6 +26,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
+    "geist": "^1.7.2",
     "lucide-react": "^1.23.0",
     "next": "16.2.10",
     "posthog-js": "^1.396.5",
@@ -43,6 +45,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.2.10",
+    "playwright": "^1.62.1",
     "tailwindcss": "^4",
     "typescript": "^5"
   }
