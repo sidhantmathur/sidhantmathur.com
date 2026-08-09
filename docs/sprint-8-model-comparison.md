@@ -90,11 +90,19 @@ and by the table; colour does one job only — emphasis and magnitude:
 | The measured value / the emphasised model | `--accent` `#E4522B` | 5.22:1 |
 | Context — the models that aren't the point | `--text-faint` `#97918A` | 6.34:1 |
 | Grid, axes | `--line` `#2C2825` | recessive, hairline, solid |
-| Heatmap magnitude ramp (5 ordinal steps, accent hue) | `#782e1a` → `#9a3a1f` → `#bf4625` → `#e4522b` → `#fba57f` | 2.08 → 10.16 |
+| Heatmap magnitude ramp (5 ordinal steps, accent hue) | `#782e1a` → `#95381e` → `#b34223` → `#e4522b` → `#fba57f` | 2.08 → 10.16 |
 
 Both the mark colours and the ramp were checked with the data-viz validator, not
 eyeballed: the marks clear the 3:1 floor, and the ramp passes monotone
 lightness, adjacent ΔL ≥ 0.06, light-end contrast ≥ 2:1, and single-hue.
+
+The middle two steps were `#9a3a1f` and `#bf4625` until the contrast pass. The
+old third step was a dead zone for the value printed inside the cell — light ink
+reached 4.29:1 on it and dark ink 3.88, so neither cleared 4.5 — and fixing it
+cost lightness headroom the second step had to give back, so both were re-solved
+together in OKLCH at the ramp's hue with steps 1, 4 and 5 held. Every step now
+clears 4.5:1 with the ink `inkOn` picks for it (8.02, 6.17, 4.75, 5.22, 10.16)
+and the smallest adjacent ΔL is 0.064.
 
 Mark specs follow the house data-viz rules: bars ≤ 24px with a 4px rounded
 data-end and a square baseline, ≥ 8px dots with a 2px surface ring, hairline

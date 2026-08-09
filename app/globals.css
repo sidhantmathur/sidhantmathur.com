@@ -13,7 +13,16 @@
   --panel: #111010;       /* rail, status strip, input, context panel */
   --raised: #171614;      /* user turns, inputs, inset blocks */
   --line: #2C2825;        /* hairline divider — 1.35:1 */
-  --line-strong: #645C53; /* interactive / focusable border — 3.01:1 on --bg */
+  --line-strong: #6B6259; /* interactive / focusable border — 3.31:1 on --bg,
+                             3.18:1 on --panel, 3.03:1 on --raised. The old
+                             #645C53 was measured against --bg alone, where it
+                             cleared at 3.01:1, and every control that carries
+                             it sits on --panel or --raised instead: the send
+                             button, the model select, the suggested chips, the
+                             composer. On those it was 2.89 and 2.75 — under
+                             the non-text floor on the surfaces it actually
+                             lives on. The floor has to be cleared against the
+                             surface behind the border, not against the page. */
   --text: #EFEBE4;        /* primary */
   --text-soft: #C4BCB4;   /* body — 10.55:1 */
   --text-faint: #97918A;  /* metadata, labels — 6.34:1 */

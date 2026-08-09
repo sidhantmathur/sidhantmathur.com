@@ -36,7 +36,7 @@ Radius stays 0 everywhere (`--radius: 0rem`).
 | `--panel` | `#111010` | — | Rail, status strip, input bar, context panel |
 | `--raised` | `#171614` | — | User turns, inputs, inset blocks |
 | `--line` | `#2C2825` | 1.35:1 | Hairline dividers, chart gridlines |
-| `--line-strong` | `#645C53` | 3.01:1 | Interactive / focusable borders |
+| `--line-strong` | `#6B6259` | 3.31:1 | Interactive / focusable borders |
 | `--text` | `#EFEBE4` | 16.65:1 | Primary text |
 | `--text-soft` | `#C4BCB4` | 10.55:1 | Body text |
 | `--text-faint` | `#97918A` | 6.34:1 | Metadata, labels, placeholders |
@@ -52,6 +52,14 @@ the link underlines (`decoration-line-strong`) visible at all; `--line` moved up
 to roughly where `--line-strong` used to sit, so dividers and gridlines keep
 their old weight. `--text-dim` is the one token deliberately left dark: it now
 reads as unavailable rather than merely quiet next to `--text-faint`.
+
+The `Contrast on --bg` column is the page background, and for `--line-strong`
+that column was hiding a failure: every control carrying that border — the send
+button, the model select, the suggested chips, the composer — sits on `--panel`
+or `--raised`, not on the page, and the old `#645C53` measured 2.89:1 and
+2.75:1 there against a 3:1 floor. `#6B6259` clears it on all three (3.31 on
+`--bg`, 3.18 on `--panel`, 3.03 on `--raised`). A non-text floor is a claim
+about the border against the surface behind it; measure it there.
 
 `--accent` is the original rubric red (`#C7391B`) lifted for legibility on a
 near-black ground; `#C7391B` fails contrast there. It stays a *single* accent —

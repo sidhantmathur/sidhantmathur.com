@@ -51,8 +51,11 @@ forwarding exists, mail to it bounces.
       chroma held), so the palette got brighter rather than grayer:
       `--text-soft` #A9A29A → #C4BCB4 (7.84 → 10.55:1), `--text-faint`
       #6B655E → #97918A (3.44 → 6.34:1), `--line-strong` #332E29 → #645C53
-      (1.47 → 3.01:1, which clears the 3:1 non-text floor and is what makes
-      the link underlines visible), `--line` #231F1C → #2C2825. The mobile
+      → #6B6259 (1.47 → 3.01 → 3.31:1 on `--bg`, and 3.18 on `--panel` /
+      3.03 on `--raised` — the second lift came from measuring it against
+      the surfaces the bordered controls actually sit on, where #645C53 was
+      2.89 and 2.75 and under the 3:1 non-text floor; this is also what
+      makes the link underlines visible), `--line` #231F1C → #2C2825. The mobile
       backdrop scrim went 55% → 78% so faint text over the brightest patch
       of texture still clears 4.5:1. Every reading colour is now AA or
       better; the one sub-AA token left is `--text-dim` (#6B655E, 3.44:1),
