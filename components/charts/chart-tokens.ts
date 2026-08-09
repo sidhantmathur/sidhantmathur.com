@@ -18,8 +18,8 @@
 //
 // Contrast against --bg, measured:
 //   MARK      #E4522B  5.22:1
-//   CONTEXT   #6B655E  3.44:1
-//   GRID      #332E29  1.47:1  — recessive by intent, never carries a value
+//   CONTEXT   #97918A  6.34:1
+//   GRID      #2C2825  1.35:1  — recessive by intent, never carries a value
 
 /** The measured value; the emphasised model; the best bar in a panel. */
 export const MARK = "var(--accent)";
@@ -27,8 +27,14 @@ export const MARK = "var(--accent)";
 /** The models that aren't the point. Still legible, deliberately quiet. */
 export const CONTEXT = "var(--text-faint)";
 
-/** Hairline, solid, one step off the surface. Never dashed — dashing reads as a threshold. */
-export const GRID = "var(--line-strong)";
+/**
+ * Hairline, solid, one step off the surface. Never dashed — dashing reads as a
+ * threshold. Sits on `--line`, not `--line-strong`: the contrast pass lifted
+ * `--line-strong` to 3.01:1 so control borders clear the non-text floor, and a
+ * gridline at that weight competes with the marks it is supposed to sit behind.
+ * The new `--line` is roughly where `--line-strong` used to be.
+ */
+export const GRID = "var(--line)";
 
 /** The chart surface, for the 2px gaps and rings that do the separating. */
 export const SURFACE = "var(--bg)";
