@@ -420,10 +420,59 @@ if (mobile && routes.includes("/")) {
 // element ENTERS the accessibility tree or its text changes, so an alert that
 // was always in the DOM and merely revealed would say nothing at all.
 //
-// This sends a question and reads the result. Without AI_GATEWAY_API_KEY the
-// route fails by design, which is exactly the state under test — so this check
-// runs the same way with a key and without one, it just exercises a different
-// error class.
+// THE FAILURE IS STUBBED, NOT HOPED FOR. This check used to just send a
+// question and rely on the route falling over — true only where
+// AI_GATEWAY_API_KEY is absent. Against production, or any preview with a key,
+// the turn succeeded, no alert was ever raised, and the audit reported two
+// failures against a site that was behaving perfectly. Line 27 advertises
+// `BASE=https://<preview>` as a supported mode, so that was reachable through
+// the script's own documented usage.
+//
+// So the response is intercepted, the same way the completed-turn section
+// below intercepts it. Three shapes rather than one, because they are not the
+// same test:
+//
+//   upstream_unconfigured  an HTTP error with a class in the body — the
+//                          keyless deploy, the state the old version happened
+//                          to exercise, kept so nothing is lost
+//   network                the request never completes at all. A different
+//                          branch of makeChatFetch entirely (the fetch throws,
+//                          rather than returning a !ok response), and the most
+//                          likely real failure: a phone on a train
+//   invalid_request        the one class that renders NO retry button, by
+//                          policy. Its alert has to announce and then leave
+//                          the reader with the composer, and the assertion is
+//                          inverted to say so — otherwise "every alert has a
+//                          way out" is a claim this audit never actually made
+//                          about the one case where it isn't true
+const FAILURE_CASES = [
+  {
+    label: "upstream_unconfigured",
+    handle: (route) =>
+      route.fulfill({
+        status: 500,
+        contentType: "application/json",
+        body: JSON.stringify({ error: "upstream_unconfigured" }),
+      }),
+    wayOut: true,
+  },
+  {
+    label: "network",
+    handle: (route) => route.abort(),
+    wayOut: true,
+  },
+  {
+    label: "invalid_request",
+    handle: (route) =>
+      route.fulfill({
+        status: 400,
+        contentType: "application/json",
+        body: JSON.stringify({ error: "invalid_request" }),
+      }),
+    wayOut: false,
+  },
+];
+
 if (routes.includes("/")) {
   console.log("\n── what a failed turn announces\n");
   const note = (name, pass, detail = "") => {
@@ -431,43 +480,64 @@ if (routes.includes("/")) {
     console.log(`  ${pass ? "ok  " : "FAIL"}  ${name}${detail ? `  — ${detail}` : ""}`);
   };
 
-  await page.goto(`${base}/`, { waitUntil: "networkidle", timeout: 60_000 });
-  await page.waitForTimeout(900);
+  for (const failure of FAILURE_CASES) {
+    await page.route("**/api/chat", failure.handle);
 
-  const alertBefore = await page.evaluate(() => document.querySelectorAll("[role=alert]").length);
-  note("no alert is in the DOM before anything fails", alertBefore === 0, `${alertBefore} found`);
+    await page.goto(`${base}/`, { waitUntil: "domcontentloaded", timeout: 60_000 });
+    // The composer is disabled until hydration, and typing into it before then
+    // sends nothing. Same gate the completed-turn section waits on.
+    await page.waitForSelector("#ask:not([disabled])", { timeout: 60_000 });
 
-  await page.fill("#ask", "What has he shipped?");
-  await page.keyboard.press("Enter");
-  await page
-    .waitForSelector("[role=alert]", { timeout: 45_000 })
-    .catch(() => {});
-  await page.waitForTimeout(500);
+    const alertBefore = await page.evaluate(
+      () => document.querySelectorAll("[role=alert]").length,
+    );
+    note(
+      `${failure.label} · no alert is in the DOM before anything fails`,
+      alertBefore === 0,
+      `${alertBefore} found`,
+    );
 
-  const after = await page.evaluate(() => {
-    const alert = document.querySelector("[role=alert]");
-    const status = document.querySelector("[role=status][aria-live=polite]");
-    return {
-      alert: Boolean(alert),
-      alertText: (alert?.textContent ?? "").replace(/\s+/g, " ").trim().slice(0, 90),
-      retryNamed: Boolean(
-        [...(alert?.querySelectorAll("button") ?? [])].some((b) => (b.textContent ?? "").trim()),
-      ),
-      statusExists: Boolean(status),
-      // The polite region must stay EMPTY on a failure: the alert is the
-      // announcement, and saying both is saying it twice.
-      statusText: (status?.textContent ?? "").trim(),
-    };
-  });
+    await page.fill("#ask", "What has he shipped?");
+    await page.keyboard.press("Enter");
+    // Deterministic now, so this no longer needs the 45s the live route did.
+    await page.waitForSelector("[role=alert]", { timeout: 20_000 }).catch(() => {});
+    await page.waitForTimeout(500);
 
-  note("a failed turn puts an alert into the tree", after.alert, after.alertText);
-  note("the alert offers a named way out", after.retryNamed);
-  note("the polite status region exists", after.statusExists);
-  note(
-    "the polite region stays quiet on a failure, so it is announced once",
-    after.statusText === "",
-    after.statusText ? `said "${after.statusText}"` : "",
-  );
+    const after = await page.evaluate(() => {
+      const alert = document.querySelector("[role=alert]");
+      const status = document.querySelector("[role=status][aria-live=polite]");
+      return {
+        alert: Boolean(alert),
+        alertText: (alert?.textContent ?? "").replace(/\s+/g, " ").trim().slice(0, 90),
+        retryNamed: Boolean(
+          [...(alert?.querySelectorAll("button") ?? [])].some((b) => (b.textContent ?? "").trim()),
+        ),
+        statusExists: Boolean(status),
+        // The polite region must stay EMPTY on a failure: the alert is the
+        // announcement, and saying both is saying it twice.
+        statusText: (status?.textContent ?? "").trim(),
+      };
+    });
+
+    note(`${failure.label} · a failed turn puts an alert into the tree`, after.alert, after.alertText);
+    if (failure.wayOut) {
+      note(`${failure.label} · the alert offers a named way out`, after.retryNamed);
+    } else {
+      note(
+        `${failure.label} · the alert deliberately offers no retry`,
+        !after.retryNamed,
+        after.retryNamed ? "a button appeared under copy that says not to resend" : "",
+      );
+    }
+    note(`${failure.label} · the polite status region exists`, after.statusExists);
+    note(
+      `${failure.label} · the polite region stays quiet, so it is announced once`,
+      after.statusText === "",
+      after.statusText ? `said "${after.statusText}"` : "",
+    );
+
+    await page.unroute("**/api/chat", failure.handle);
+  }
 }
 
 // ---------------------------------------------------------------------------
