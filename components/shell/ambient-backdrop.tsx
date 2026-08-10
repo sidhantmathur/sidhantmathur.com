@@ -182,11 +182,31 @@ export function AmbientBackdrop({ visible }: { visible: boolean }) {
     };
   }, [running, wide]);
 
+  // The texture is decoded a beat after the markup lands, so the wrapper fades
+  // in rather than snapping on: mount at zero, flip on the next commit, let the
+  // 1000ms transition it already uses for every other state change carry it.
+  //
+  // This also keeps a decorative backdrop from being reported as the page's
+  // LARGEST CONTENTFUL PAINT, which is what it was — an aria-hidden texture
+  // behind a 78% scrim, credited as the main content of the page at 3.9
+  // seconds, while the headline it sits behind had painted at 0.8. Reduced
+  // motion collapses the fade to a single frame via the global rule in
+  // globals.css, which is the correct behaviour: the backdrop simply is there.
+  const [entered, setEntered] = useState(false);
+  useEffect(() => {
+    // A frame, not a microtask. The transition only runs if the browser has
+    // painted the opacity-0 state first, and a microtask lands before that
+    // paint — which would set the class in the same frame and produce no fade
+    // at all.
+    const raf = requestAnimationFrame(() => setEntered(true));
+    return () => cancelAnimationFrame(raf);
+  }, []);
+
   return (
     <div
       aria-hidden="true"
       className={`pointer-events-none absolute inset-0 overflow-hidden transition-opacity duration-1000 ${
-        visible ? "opacity-100" : "opacity-0"
+        visible && entered ? "opacity-100" : "opacity-0"
       }`}
     >
       <div className="absolute inset-0">
@@ -194,15 +214,32 @@ export function AmbientBackdrop({ visible }: { visible: boolean }) {
             glyphs are the point and they turn to noise below ~1400px — so
             desktop keeps the full 242 KB file the shader samples. Phones
             never run the shader and sit under a 78% scrim, where a 900px
-            crop at 68 KB is indistinguishable and a quarter of the bytes. */}
+            crop at 68 KB is indistinguishable and a quarter of the bytes.
+
+            THAT WAS THE INTENT AND IT WAS NOT WHAT HAPPENED. `sizes` told the
+            browser the slot was 900 CSS px wide below 768px; on a 390px phone
+            at DPR 2 that asks for 1800 device pixels, so the picker skipped
+            the 900w crop and fetched the 1792w original every time. Phones
+            were downloading 242 KB to display it at 390px — the exact
+            opposite of what the comment above claimed, and 170 KB of a
+            bandwidth-bound first load spent on a texture behind a scrim.
+
+            The slot is the viewport at every width, because that is what this
+            element actually is: `100vw`, and the browser picks the crop on a
+            390px phone and the original on a desktop. */}
         {/* eslint-disable-next-line @next/next/no-img-element -- a fixed
             decorative backdrop; next/image adds nothing here */}
         <img
           src="/ambient-wave.avif"
           srcSet="/ambient-wave-sm.avif 900w, /ambient-wave.avif 1792w"
-          sizes="(min-width: 768px) 100vw, 900px"
+          sizes="100vw"
           alt=""
           decoding="async"
+          // Nothing on this page should queue behind the backdrop, and the
+          // browser has no way to know that from markup alone — it is a large
+          // image near the top of the viewport, which is its heuristic for the
+          // most important thing on the page.
+          fetchPriority="low"
           className={`ambient-drift h-full w-full object-cover opacity-35 md:opacity-50 ${
             live ? "hidden" : ""
           }`}

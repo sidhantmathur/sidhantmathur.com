@@ -48,9 +48,18 @@ export function ScorecardHeatmap({ rows, groups }: ScorecardHeatmapProps) {
         <tbody>
           {rows.map((row) => (
             <tr key={row.model}>
+              {/* Wraps rather than truncates. Measured on a 390px phone, this
+                  header clipped "gemini-3.5-flash-lite" by 15px — and the only
+                  way to read the rest was the `title` below, which is a hover
+                  affordance and hover does not exist on the device that was
+                  clipping it. The row's own identity was the one thing a touch
+                  reader could not recover. Two lines on a narrow column costs
+                  nothing; a name is not a place to save 15px. The title stays as
+                  what it always should have been, an enhancement carrying the
+                  vendor prefix, rather than the only way in. */}
               <th
                 scope="row"
-                className="max-w-[150px] truncate px-1 text-left font-normal text-text-soft"
+                className="max-w-[150px] px-1 text-left font-normal break-words text-text-soft"
                 title={row.model}
               >
                 {row.short}

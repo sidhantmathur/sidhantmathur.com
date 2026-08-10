@@ -1,14 +1,8 @@
 "use client";
 
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
-import {
-  Sheet,
-  SheetClose,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
 import {
   IDLE_LINES,
   JD_COPY,
@@ -20,22 +14,21 @@ import {
 } from "./shell-data";
 import { Answer } from "./answer";
 import { usePanelUrl } from "./use-panel-url";
-import { PanelBody, panelTitle } from "./panel-body";
+import { panelTitle } from "./panel-title";
 import { CopyButton } from "./copy-button";
-import { InstrumentDeck, Seismograph, lastSettledRate } from "./instruments";
+import { Seismograph, lastSettledRate } from "./instruments";
 import { useTokenRate } from "./use-token-rate";
 import { useTeletype } from "./use-teletype";
+import { useHydrated } from "./use-hydrated";
+import { useIdleReady } from "./use-idle-ready";
 import { useIdle } from "./use-idle";
 import { useElapsed } from "./use-elapsed";
 import { PhaseLine } from "./phase-line";
-import { TurnError } from "./turn-error";
 import { AmbientBackdrop } from "./ambient-backdrop";
+import { TurnError } from "./turn-error";
 import { conversationToMarkdown, messageToMarkdown } from "@/lib/transcript";
 import { permalinkFor } from "@/lib/permalink";
 import { track } from "@/lib/analytics";
-import { ExportDeck } from "./export-deck";
-import { PrintSheet } from "./print-sheet";
-import { ManualMode } from "./manual-mode";
 import { RecruiterTldr } from "./recruiter-tldr";
 import { SUGGESTED_QUESTIONS as SUGGESTED } from "@/content/recruiter";
 import { costOfTurn, formatUsd, sumCosts } from "@/lib/pricing";
@@ -47,6 +40,69 @@ import {
   type RoleFit,
   type ToolOut,
 } from "./use-conversation";
+
+// ---------------------------------------------------------------------------
+// What does NOT ship in the entry chunk
+// ---------------------------------------------------------------------------
+// Measured on the throttled mobile profile, the homepage's first load was
+// bandwidth-bound rather than CPU-bound: three quarters of a megabyte on the
+// wire, and 3.8 seconds between the page painting and the page working. Most of
+// what was arriving in that window could not be used in it.
+//
+// So everything below loads on demand. The test each one passes is the same:
+// can a visitor reach it without first doing something? If the answer is no —
+// a panel has to be opened, a turn has to fail, a sheet has to be raised — it
+// has no business being in the bytes that stand between the visitor and a
+// working composer.
+//
+// `ssr: false` throughout, and not as an afterthought. These render nothing on
+// the server today (every one of them is behind client state), so pre-rendering
+// them would add markup for something the visitor cannot yet see, which is the
+// whole problem this pass exists to fix.
+//
+// The two DELIBERATE exceptions, so nobody re-splits them by reflex:
+//   answer.tsx    on the streaming path. A lazy chunk fetched at the moment the
+//                 first token lands is a stall in the one place the site is
+//                 asking to be judged.
+//   recruiter-tldr / the empty state generally — it IS the first screen.
+
+// The panel's content. The heaviest module in the shell by a wide margin:
+// three MDX case studies, the knowledge base, the repo corpus and the
+// system-prompt builder. Nothing here is reachable without opening a panel.
+const PanelBody = dynamic(() => import("./panel-body").then((m) => m.PanelBody), {
+  ssr: false,
+});
+
+// Conversation state rather than content, and both need a conversation first.
+const ExportDeck = dynamic(() => import("./export-deck").then((m) => m.ExportDeck), {
+  ssr: false,
+});
+const InstrumentDeck = dynamic(
+  () => import("./instruments").then((m) => m.InstrumentDeck),
+  { ssr: false },
+);
+
+// The out-of-turns state. Carries the whole knowledge base, and most visitors
+// will never see it.
+const ManualMode = dynamic(() => import("./manual-mode").then((m) => m.ManualMode), {
+  ssr: false,
+});
+
+// Radix's dialog, and below lg only. Mounted on the first sheet-opening tap,
+// or at idle, whichever comes first — so the chunk is warm long before anyone
+// reaches for it, and a desktop never fetches it at all. See mobile-sheets.tsx.
+const MobileSheets = dynamic(
+  () => import("./mobile-sheets").then((m) => m.MobileSheets),
+  { ssr: false },
+);
+
+// The print document. Mounted once the page has gone idle rather than on an
+// interaction: nothing can reliably intercept Cmd-P, so it has to already be in
+// the DOM when the dialog opens — it just doesn't have to be there before the
+// composer works. See use-idle-ready.ts.
+const PrintSheet = dynamic(() => import("./print-sheet").then((m) => m.PrintSheet), {
+  ssr: false,
+});
 
 // ---------------------------------------------------------------------------
 // Copy — verbatim from docs/site-copy.md.
@@ -98,6 +154,12 @@ const PANEL_MAX = 640;
 const PANEL_DEFAULT = 380;
 
 export function AppShell() {
+  // Everything on this page that needs JavaScript is gated on this. See
+  // use-hydrated.ts for what the ungated version looked like on slow wifi.
+  const hydrated = useHydrated();
+  // The two things that must exist before they are asked for, but must not be
+  // part of what the visitor waits for. See use-idle-ready.ts.
+  const idleReady = useIdleReady();
   const [model, setModel] = useState<string>(MODELS[0]);
 
   const {
@@ -158,8 +220,67 @@ export function AppShell() {
     return () => window.clearInterval(id);
   }, [idle]);
 
+  // ---- What assistive tech is told ----------------------------------------
+  //
+  // A streamed answer arrives silently. The prose appears in the transcript a
+  // token at a time, which is exactly the wrong thing to put in a live region —
+  // a screen reader would read the answer over itself for the length of the
+  // turn — so nothing was in one, and the result was that a turn finished with
+  // no announcement of any kind. A blind visitor had to guess when to go and
+  // read, or tab away and back to find out.
+  //
+  // So: one polite announcement per completed turn, and the answer itself stays
+  // out of the region so it is read once, on purpose, when the reader navigates
+  // to it. The turn number rides along because it makes each announcement a
+  // distinct string — a live region does not re-announce text identical to what
+  // it already holds, so "Answer complete." twice in a row would be said once.
+  //
+  // Failures do NOT come through here. TurnError carries role="alert", which is
+  // the assertive counterpart and interrupts rather than waits, which is right
+  // for a turn that did not happen.
+  const [announcement, setAnnouncement] = useState("");
+  // Counted, not edge-triggered. The first version watched `isBusy` for a
+  // true→false transition and missed the announcement entirely on a fast turn,
+  // where the whole answer arrives inside one render batch and there is no
+  // intermediate commit to observe — caught by the mocked-stream check in
+  // scripts/a11y-audit.mjs, which is exactly the case a live model on a good
+  // connection produces and a developer on localhost never notices. Counting
+  // settled answers has no such window: whenever the shell is idle and there is
+  // one more finished answer than was last announced, that is the event.
+  const announcedCount = useRef(0);
+  useEffect(() => {
+    if (isBusy) return;
+    const answered = messages.filter((m) => m.role === "assistant" && textOf(m)).length;
+    // Fewer than before means the conversation was reset, which is not an
+    // answer and must not leave the counter high enough to swallow the next one.
+    if (answered <= announcedCount.current) {
+      announcedCount.current = answered;
+      return;
+    }
+    announcedCount.current = answered;
+    // The error block and the rate-limit block announce themselves; an aborted
+    // turn was the reader's own doing and renders nothing on purpose.
+    //
+    // `!== "none"`, and the string is the whole point: errorKind is a union of
+    // three STRINGS, so a truthiness test on it is true even when nothing has
+    // gone wrong. The first version of this guard read `if (errorKind) return`
+    // and silently suppressed every announcement the feature exists to make.
+    if (errorKind !== "none") return;
+    queueMicrotask(() => setAnnouncement(`Answer ${answered} complete.`));
+  }, [isBusy, errorKind, messages]);
+
   const [input, setInput] = useState("");
   const [railOpen, setRailOpen] = useState(false);
+  // ---- Where focus goes when a sheet closes --------------------------------
+  //
+  // Measured, not assumed: closing the rail sheet dropped focus on <body>, which
+  // strands a keyboard user at the top of the document with no idea the sheet
+  // ever existed. The dialog primitive is supposed to hand focus back to
+  // whatever opened it and did not, so the shell does it itself — it is two
+  // refs, and it is the difference between a modal a keyboard can use and one
+  // it can only fall out of.
+  const railTriggerRef = useRef<HTMLButtonElement>(null);
+  const panelOpenerRef = useRef<HTMLElement | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [sheetFull, setSheetFull] = useState(false);
   const [panelWidth, setPanelWidth] = useState(PANEL_DEFAULT);
@@ -227,6 +348,14 @@ export function AppShell() {
   // use-conversation.ts about why they must not open the sheet.
   const openPanel = useCallback(
     (view: PanelView) => {
+      // Whatever was focused when the panel was asked for. Read before any
+      // state changes, because the element may be inside a sheet that is about
+      // to close — in which case it will fail the isConnected test on the way
+      // back and focus lands on the composer instead, which is the honest
+      // fallback rather than a guess.
+      const opener = document.activeElement;
+      panelOpenerRef.current =
+        opener instanceof HTMLElement && opener !== document.body ? opener : null;
       // Opening a citation is the other post-action moment the decisions doc
       // names — someone checking a source is someone taking this seriously.
       if (view.kind === "source") bumpStrip();
@@ -429,13 +558,34 @@ export function AppShell() {
           app/globals.css), so Cmd-P — which nothing can reliably intercept —
           prints the document rather than the app, and the dialog never opens
           over a layout that hasn't happened yet. */}
-      <PrintSheet
-        messages={messages}
-        title={SITE_NAME}
-        sourceUrl={SITE_URL}
-        permalink={permalink}
-        footer={DISCLAIMER}
-      />
+      {idleReady && (
+        <PrintSheet
+          messages={messages}
+          title={SITE_NAME}
+          sourceUrl={SITE_URL}
+          permalink={permalink}
+          footer={DISCLAIMER}
+        />
+      )}
+      {/* Announcements only. Visually nothing, and in three ways deliberately
+          placed:
+
+          outside the transcript, so the answer text is never itself inside a
+          live region and never read twice;
+
+          outside `.screen-only`, and this one was learned by measurement. When
+          a sheet opens, Radix hides everything behind it from assistive tech by
+          marking the dialog's siblings aria-hidden — except that the library
+          doing the marking deliberately spares any subtree containing an
+          [aria-live] element, so parking this paragraph inside the shell left
+          THE ENTIRE PAGE reachable behind an open modal. `npm run a11y` caught
+          it as "the sheet is a modal dialog: FAIL";
+
+          and outside the print document, which is where it would otherwise have
+          landed by symmetry — a status line is not part of the paper. */}
+      <p role="status" aria-live="polite" className="sr-only">
+        {announcement}
+      </p>
       <div className="screen-only flex h-dvh flex-col bg-bg text-text [font-family:var(--font-geist-mono)]">
       {/* Skip link. The rail is ~10 links deep and sits before the input in
           tab order, so a keyboard user otherwise tabs through the entire nav
@@ -456,9 +606,18 @@ export function AppShell() {
             SVG because the Unicode trigram renders inconsistently across
             platforms, hairline-thin on iOS in particular. */}
         <button
+          ref={railTriggerRef}
           type="button"
           onClick={() => setRailOpen(true)}
           aria-label="Open navigation"
+          // `disabled` as well as the CSS gate, and the difference is the
+          // keyboard. `pointer-events: none` stops a tap and nothing else: the
+          // button stayed in the tab order before hydration, so Enter on it was
+          // still a keystroke that silently did nothing — the exact bug this
+          // pass exists to remove, surviving for the people least able to guess
+          // what happened. A disabled button leaves the tab order entirely.
+          disabled={!hydrated}
+          data-js-control
           className="-ml-1.5 flex h-11 w-11 shrink-0 touch-manipulation items-center justify-center text-text-soft hover:text-accent lg:hidden"
         >
           <svg
@@ -494,6 +653,8 @@ export function AppShell() {
             onClick={() => openPanel({ kind: "instruments" })}
             title="Open the instruments"
             aria-label="Open the instruments"
+            disabled={!hydrated}
+            data-js-control
             className="hidden items-center gap-4 transition-colors hover:text-accent md:flex"
           >
             <Stat label="turns" value={`${turns}/10`} />
@@ -511,7 +672,11 @@ export function AppShell() {
             <select
               value={model}
               onChange={(e) => setModel(e.target.value)}
-              className="min-h-[36px] cursor-pointer border border-line-strong bg-raised px-1.5 py-0.5 text-[13px] text-text-soft outline-none focus:border-accent"
+              // A native select is the one control that "works" before
+              // hydration in the worst way: it opens, it takes a choice, and
+              // the choice reaches nothing.
+              disabled={!hydrated}
+              className="min-h-[36px] disabled:cursor-progress disabled:border-line disabled:text-text-dim cursor-pointer border border-line-strong bg-raised px-1.5 py-0.5 text-[13px] text-text-soft outline-none focus:border-accent"
             >
               {MODELS.map((m) => (
                 <option key={m} value={m}>
@@ -521,12 +686,31 @@ export function AppShell() {
             </select>
           </label>
           <span className="flex items-center gap-1.5">
+            {/* The strip said "ready" from the first paint, which on a slow
+                connection was the single most confident lie on the page — the
+                one readout a visitor would check to find out why nothing was
+                happening, agreeing that everything was fine. It now says what
+                is true. */}
             <span
+              aria-hidden="true"
               className={`inline-block h-1.5 w-1.5 rounded-full ${
-                isBusy ? "bg-accent" : "bg-signal"
+                !hydrated ? "bg-text-dim" : isBusy ? "bg-accent" : "bg-signal"
               }`}
             />
-            <span className="hidden sm:inline">{isBusy ? "streaming" : "ready"}</span>
+            {/* The word is normally sm-and-up, because on a phone the dot
+                carries it and the header is tight. Not while the page is still
+                arriving: a grey dot alone is not an explanation, and the phone
+                is the device this whole pass is about. So it shows at every
+                width until hydration and then collapses back to the settled
+                design. */}
+            {/* sr-only rather than hidden below sm: the dot beside it is
+                decorative, so a screen reader at phone width was being told
+                nothing at all about whether the page was working. The word is
+                in the accessibility tree at every width; only its visibility
+                changes. */}
+            <span className={!hydrated ? "inline" : "sr-only sm:not-sr-only sm:inline"}>
+              {!hydrated ? "loading" : isBusy ? "streaming" : "ready"}
+            </span>
           </span>
         </div>
       </header>
@@ -535,11 +719,17 @@ export function AppShell() {
       <div className="flex min-h-0 flex-1">
         {/* Rail — desktop */}
         <nav className="hidden w-56 shrink-0 flex-col border-r border-line bg-panel p-4 text-[13px] lg:flex">
-          <RailContent onOpenPanel={openPanel} />
+          <RailContent onOpenPanel={openPanel} hydrated={hydrated} />
         </nav>
 
-        {/* Conversation */}
-        <div className="relative flex min-w-0 flex-1 flex-col">
+        {/* Conversation.
+            A <main> rather than a <div>: the shell had a banner and a nav and
+            no main landmark at all, so the one region a screen reader user
+            jumps to first did not exist. The skip link already covered getting
+            past the rail; this is the same idea expressed as structure, and it
+            is what the header and the nav were implicitly claiming to be
+            beside. */}
+        <main className="relative flex min-w-0 flex-1 flex-col">
           {/* Ambient backdrop (extends #14): under the empty state, back
               during idle, gone while a conversation is on screen. It sits
               behind the scroll area rather than inside it so it doesn't
@@ -565,6 +755,17 @@ export function AppShell() {
             // spacing. 744 → 660 against a 655px fold, so the whole disclaimer
             // now sits 11px clear of it and the only thing still below the
             // line is 5px of this element's own bottom padding.
+            //
+            // RE-MEASURED, AND THE CAVEAT IS PART OF THE RESULT. That 11px
+            // holds at 1280×800 and grows to 111px at 1440×900. It does not
+            // survive a shorter window: at 1280×720 the disclaimer ends 69px
+            // below the fold and at 1024×768 it ends 21px below, because the
+            // empty state is 660px tall and a 720px-high window leaves a 575px
+            // fold. Closing an 85px gap needs either smaller type or a
+            // different reading order on a phone, and neither is worth paying
+            // for a line that is still one short scroll away. Recorded here so
+            // the next person measures at 800 knowing what happens at 720
+            // rather than discovering it as a bug.
             className="relative min-h-0 flex-1 overflow-y-auto px-4 py-6 md:px-10 md:py-4"
           >
             {/* Idle dims the column rather than covering it. The conversation
@@ -585,6 +786,7 @@ export function AppShell() {
                   <button
                     type="button"
                     onClick={reset}
+                    data-js-control
                     className="t-label flex min-h-[44px] touch-manipulation items-center text-text-faint hover:text-accent"
                   >
                     start a fresh one
@@ -634,7 +836,7 @@ export function AppShell() {
                           stick.current = true;
                           submit(q);
                         }}
-                        disabled={isBusy}
+                        disabled={isBusy || !hydrated}
                         // py-2.5 keeps a chip over 44px on a phone, where it is
                         // a finger target. md:py-2 takes it to 39px, which is
                         // the height the model select in the header already
@@ -777,6 +979,7 @@ export function AppShell() {
                       <button
                         type="button"
                         onClick={stop}
+                        data-js-control
                         className="shrink-0 text-[13px] text-text-faint transition-colors hover:text-accent"
                       >
                         stop
@@ -817,6 +1020,7 @@ export function AppShell() {
                       e.preventDefault();
                       runSlash(c.name);
                     }}
+                    data-js-control
                     className="flex min-h-[44px] w-full items-center gap-3 px-4 py-2.5 text-left text-[14px] hover:bg-raised md:px-10"
                   >
                     <span className="text-accent">{c.name}</span>
@@ -826,6 +1030,27 @@ export function AppShell() {
               </div>
             )}
             <form
+              // NO NATIVE SUBMIT, EVER — not "not while disabled".
+              //
+              // A <form> with no action is a live navigation waiting for a
+              // submit event: the browser GETs the current URL with the fields
+              // in the query string and throws away the page. Disabling the
+              // submit button closes every path a person has to that, which was
+              // the fix, and then the pre-hydration check reached the form
+              // through `requestSubmit()` and navigated anyway. Nothing on this
+              // page calls that — but "no user can reach it" is a weaker claim
+              // than the one worth making, and it stops being true the moment
+              // an extension, a bookmarklet or a future line of our own code
+              // touches this form.
+              //
+              // method="dialog" is the whole fix. Per the HTML submit
+              // algorithm, a dialog-method form that is not inside a <dialog>
+              // does nothing at all on submit — no request, no navigation —
+              // while still firing the submit event that the handler below
+              // listens for. So Enter still sends a question, and the browser
+              // has no way to navigate off this page whether the JavaScript
+              // arrived, hasn't yet, or threw.
+              method="dialog"
               // Was a fixed h-12 row around a single-line input. The composer
               // grows now, so the height is a floor rather than a size, and the
               // prompt and the hints align to the FIRST line instead of the
@@ -855,12 +1080,19 @@ export function AppShell() {
                   if (e.key === "Escape") setInput("");
                 }}
                 id="ask"
+                // Disabled rather than dimmed, and the attribute is doing two
+                // jobs. It is the honest state — an unfocusable field cannot
+                // take a question the page has no way to send — and it is half
+                // of what makes the native submit below impossible, since a
+                // disabled field cannot be typed into and so Enter cannot fire
+                // an implicit submit.
+                disabled={!hydrated}
                 // Short enough to survive a 320px phone intact. The long
                 // version — "Ask a question, or type / for commands" — was
                 // clipped mid-word at every width a phone actually has, and the
                 // half of it that got cut was the half doing the teaching. The
                 // slash menu advertises itself the moment a "/" is typed.
-                placeholder="Ask a question"
+                placeholder={hydrated ? "Ask a question" : "Loading the conversation…"}
                 aria-label="Ask a question"
                 enterKeyHint="send"
                 // 16px below md is not a style choice: iOS Safari zooms the
@@ -880,7 +1112,7 @@ export function AppShell() {
                 // A pasted job description is the case this exists for, and one
                 // of those can be sixty lines long; without a cap it eats the
                 // conversation it was supposed to be asking about.
-                className="ml-2 max-h-[216px] min-h-[48px] min-w-0 flex-1 resize-none bg-transparent py-3 text-[16px] leading-[1.6] text-text outline-none placeholder:text-text-faint md:text-[15px]"
+                className="ml-2 max-h-[216px] min-h-[48px] min-w-0 flex-1 resize-none bg-transparent py-3 text-[16px] leading-[1.6] text-text outline-none placeholder:text-text-faint disabled:cursor-progress disabled:placeholder:text-text-dim md:text-[15px]"
               />
               {/* One send control at every width.
                   It used to be two half-controls: an "enter ↵" hint on desktop
@@ -893,8 +1125,16 @@ export function AppShell() {
                   rather than against the whole composer. */}
               <button
                 type="submit"
-                disabled={!input.trim() || isBusy}
-                className="-mr-1.5 my-1.5 ml-2 flex h-11 min-w-[44px] shrink-0 touch-manipulation items-center justify-center border border-line-strong bg-raised px-3 text-[14px] text-text-soft transition-colors hover:border-accent hover:text-accent disabled:border-line disabled:text-text-dim"
+                // `!hydrated` first, and it is the whole point of this pass.
+                // A submit button inside a <form> with no action is a live
+                // control the moment the HTML lands: pressed before the
+                // JavaScript arrives it fired a native GET submit, which
+                // navigated the page to itself with the question in the query
+                // string and threw away the load that was nearly finished. A
+                // disabled submit cannot do that, and it cannot silently do
+                // nothing either — it says so.
+                disabled={!hydrated || !input.trim() || isBusy}
+                className="-mr-1.5 my-1.5 ml-2 disabled:cursor-progress flex h-11 min-w-[44px] shrink-0 touch-manipulation items-center justify-center border border-line-strong bg-raised px-3 text-[14px] text-text-soft transition-colors hover:border-accent hover:text-accent disabled:border-line disabled:text-text-dim"
               >
                 send ↵
               </button>
@@ -930,7 +1170,10 @@ export function AppShell() {
                     label="copy"
                     copiedLabel="copied"
                     event="chat_copy_conversation"
-                    className={`flex h-full shrink-0 touch-manipulation items-center ${
+                    // focus-inset for the same reason the strip's other
+                    // buttons carry it: this row scrolls horizontally, and a
+                    // ring drawn outside the control is clipped at either end.
+                    className={`focus-inset flex h-full shrink-0 touch-manipulation items-center ${
                       emphasis ? "text-text-soft" : ""
                     }`}
                     onCopied={bumpStrip}
@@ -957,6 +1200,7 @@ export function AppShell() {
                 label="paste a job description"
                 emphasis={emphasis}
                 onClick={() => openPanel({ kind: "jd" })}
+                disabled={!hydrated}
                 // Strip-worthy on desktop, where the strip is idle real estate;
                 // on a phone it was the only thing under the composer and not
                 // worth that space. The rail item is the mobile way in.
@@ -967,23 +1211,55 @@ export function AppShell() {
               )}
             </div>
           </div>
-        </div>
+        </main>
 
         {/* Context panel — desktop, resizable */}
         {panelOpen && (
           <>
+            {/* A splitter, and until now a pointer-only one: it announced
+                itself as a separator and then offered a keyboard no way to
+                move it. Arrows nudge, shift-arrows jump, Home and End go to the
+                stops, Enter restores the default — the same set the double
+                click already had. aria-valuenow makes the width audible rather
+                than something to discover by listening to the layout. */}
             <div
               role="separator"
               aria-orientation="vertical"
               aria-label="Resize panel"
+              aria-valuenow={Math.round(panelWidth)}
+              aria-valuemin={PANEL_MIN}
+              aria-valuemax={PANEL_MAX}
+              tabIndex={0}
               onPointerDown={() => {
                 dragging.current = true;
                 document.body.style.userSelect = "none";
               }}
               onDoubleClick={() => setPanelWidth(PANEL_DEFAULT)}
-              className="hidden w-1 shrink-0 cursor-col-resize bg-line transition-colors hover:bg-accent lg:block"
+              onKeyDown={(e) => {
+                const step = e.shiftKey ? 64 : 16;
+                let next: number | null = null;
+                if (e.key === "ArrowLeft") next = panelWidth + step;
+                else if (e.key === "ArrowRight") next = panelWidth - step;
+                else if (e.key === "Home") next = PANEL_MAX;
+                else if (e.key === "End") next = PANEL_MIN;
+                else if (e.key === "Enter") next = PANEL_DEFAULT;
+                if (next == null) return;
+                e.preventDefault();
+                const clamped = Math.min(PANEL_MAX, Math.max(PANEL_MIN, next));
+                setPanelWidth(clamped);
+                try {
+                  window.localStorage.setItem(PANEL_WIDTH_KEY, String(clamped));
+                } catch {
+                  /* persistence is a nicety */
+                }
+              }}
+              className="hidden w-1 shrink-0 cursor-col-resize bg-line transition-colors hover:bg-accent focus-visible:bg-accent lg:block"
             />
+            {/* Named, so it is a landmark a screen reader can jump to and
+                identify rather than an unlabelled complementary region — and
+                named with the same string its own header shows. */}
             <aside
+              aria-label={panelTitle(panel)}
               style={{ width: panelWidth }}
               className="hidden shrink-0 flex-col border-l border-line bg-panel lg:flex"
             >
@@ -1005,104 +1281,38 @@ export function AppShell() {
         )}
       </div>
 
-      {/* ---- Mobile sheets ------------------------------------------------ */}
-      {isMobile && (
-        <>
-          <Sheet open={railOpen} onOpenChange={setRailOpen}>
-            <SheetContent
-              side="left"
-              // Scrolls because the rail now carries the readouts and the
-              // transcript controls the header and input row drop at this
-              // width — on a short phone that is more than one screen, and
-              // the overflow was landing on the controls at the bottom.
-              // The bottom pad clears the home indicator: the readouts are the
-              // last thing in this column and they used to end flush with the
-              // sheet's edge, under the bar on a notched phone.
-              showCloseButton={false}
-              className="w-72 overflow-y-auto overscroll-contain border-line bg-panel p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] text-[13px] text-text [font-family:var(--font-geist-mono)]"
-            >
-              {/* Title and close on one row, sized and worded like the bottom
-                  sheet's — the default floating ✕ was a different glyph at a
-                  different size sitting off the title's baseline. */}
-              <SheetHeader className="-mr-2 -my-2 flex-row items-center gap-2 space-y-0 p-0">
-                <SheetTitle className="min-w-0 flex-1 truncate text-[13px] font-normal text-text-faint">
-                  Index
-                </SheetTitle>
-                <SheetClose
-                  aria-label="Close"
-                  className="flex h-11 w-11 shrink-0 touch-manipulation items-center justify-center text-[13px] text-text-faint transition-colors hover:text-accent"
-                >
-                  ✕
-                </SheetClose>
-              </SheetHeader>
-              <RailContent onOpenPanel={openPanel} showHeading={false} />
-              {/* The header readouts are hidden at this width, so the rail
-                  carries the same four numbers. Tapping Instruments above
-                  opens the full deck as a sheet. */}
-              <div className="mt-4 border-t border-line pt-3 text-text-faint">
-                <div>turns {turns}/10</div>
-                <div>ttft {ttft == null ? "—" : `${ttft}ms`}</div>
-                <div>est. {formatUsd(sessionCost.total)}</div>
-                <div className="truncate">model {model}</div>
-              </div>
-
-              {/* The transcript controls used to be duplicated here, because
-                  the input row dropped them below sm. The actions strip is
-                  present at every width now, so this is one place fewer for
-                  the same two buttons to drift apart. */}
-            </SheetContent>
-          </Sheet>
-
-          {/* Dismissing the sheet closes the panel outright rather than only
-              hiding it. They used to disagree: tapping away left `panel` set,
-              so the address bar still read /resume with nothing open, and that
-              was the URL you'd copy. */}
-          <Sheet
-            open={sheetOpen && panelOpen}
-            onOpenChange={(open) => (open ? setSheetOpen(true) : closePanel())}
-          >
-            <SheetContent
-              side="bottom"
-              style={{ height: sheetFull ? "88dvh" : "52dvh" }}
-              // The sheet supplies its own close control in the header row, so
-              // the default floating one is off: it is positioned top-right,
-              // which is exactly where the size toggle sits, and the two
-              // overlapped by 24px — the close button won, and expand was
-              // unhittable.
-              showCloseButton={false}
-              className="border-line bg-panel p-0 text-text transition-[height] duration-200 [font-family:var(--font-geist-mono)]"
-            >
-              <SheetHeader className="flex-row items-center gap-2 space-y-0 border-b border-line py-0 pl-4 pr-1">
-                <SheetTitle className="min-w-0 flex-1 truncate text-[13px] font-normal text-text-faint">
-                  {panelTitle(panel)}
-                </SheetTitle>
-                {/* Both controls fill the header's height. As bare labels they
-                    were ~16px tall targets on the surface that is only ever
-                    touched. */}
-                <button
-                  type="button"
-                  onClick={() => setSheetFull((v) => !v)}
-                  aria-expanded={sheetFull}
-                  className="flex h-11 shrink-0 touch-manipulation items-center px-2 text-[13px] text-text-faint transition-colors hover:text-accent"
-                >
-                  {sheetFull ? "collapse ↓" : "expand ↑"}
-                </button>
-                <SheetClose
-                  aria-label="Close"
-                  className="flex h-11 w-11 shrink-0 touch-manipulation items-center justify-center text-[13px] text-text-faint transition-colors hover:text-accent"
-                >
-                  ✕
-                </SheetClose>
-              </SheetHeader>
-              {/* The pad clears the home indicator on a notched phone, where
-                  the last row of a panel otherwise sits under the bar. It
-                  resolves to 0 everywhere else. */}
-              <div className="min-h-0 flex-1 overflow-y-auto p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
-                {panelContent}
-              </div>
-            </SheetContent>
-          </Sheet>
-        </>
+      {/* ---- Mobile sheets ------------------------------------------------
+          Loaded on demand. Radix's dialog — portal, overlay, focus trap,
+          scroll lock — is a real chunk of JavaScript, and below lg it is the
+          only thing that uses it. `isMobile` is false until an effect measures
+          the viewport, so on a desktop the module is never fetched at all, and
+          on a phone it is fetched after hydration rather than before it. */}
+      {isMobile && (idleReady || railOpen || panelOpen) && (
+        <MobileSheets
+          onRailClosed={() => railTriggerRef.current?.focus()}
+          onPanelClosed={() => {
+            const opener = panelOpenerRef.current;
+            if (opener?.isConnected && opener.offsetParent !== null) opener.focus();
+            else inputRef.current?.focus();
+          }}
+          railOpen={railOpen}
+          onRailOpenChange={setRailOpen}
+          rail={<RailContent onOpenPanel={openPanel} hydrated={hydrated} showHeading={false} />}
+          readouts={{
+            turns: `${turns}/10`,
+            ttft: ttft == null ? "—" : `${ttft}ms`,
+            cost: formatUsd(sessionCost.total),
+            model,
+          }}
+          panelOpen={panelOpen}
+          panelTitle={panelTitle(panel)}
+          panelContent={panelContent}
+          sheetOpen={sheetOpen}
+          onSheetOpen={() => setSheetOpen(true)}
+          onClosePanel={closePanel}
+          sheetFull={sheetFull}
+          onToggleFull={() => setSheetFull((v) => !v)}
+        />
       )}
       </div>
     </>
@@ -1111,9 +1321,12 @@ export function AppShell() {
 
 function RailContent({
   onOpenPanel,
+  hydrated,
   showHeading = true,
 }: {
   onOpenPanel: (v: PanelView) => void;
+  /** Rail entries with no href need JavaScript; see RailLink. */
+  hydrated: boolean;
   showHeading?: boolean;
 }) {
   return (
@@ -1121,7 +1334,12 @@ function RailContent({
       {showHeading && <div className="text-text-faint">Index</div>}
       <div className={`flex flex-col ${showHeading ? "mt-3" : "mt-2"}`}>
         {RAIL_ITEMS.map((item) => (
-          <RailLink key={item.label} item={item} onOpenPanel={onOpenPanel} />
+          <RailLink
+            key={item.label}
+            item={item}
+            onOpenPanel={onOpenPanel}
+            hydrated={hydrated}
+          />
         ))}
       </div>
       <div className="mt-auto flex flex-wrap gap-x-3 gap-y-1 pt-6">
@@ -1144,9 +1362,11 @@ function RailContent({
 function RailLink({
   item,
   onOpenPanel,
+  hydrated,
 }: {
   item: RailItem;
   onOpenPanel: (v: PanelView) => void;
+  hydrated: boolean;
 }) {
   // A rail item is a row of text, and a row of text is not a target. min-h
   // plus items-center makes each one a full 44px band without changing what it
@@ -1184,7 +1404,17 @@ function RailLink({
 
   if (item.view) {
     return (
-      <button type="button" onClick={() => onOpenPanel(item.view as PanelView)} className={cls}>
+      // The rail entries with no page of their own. The anchors above are
+      // untouched — a click on those before hydration navigates, which is a
+      // working outcome rather than a no-op — but these four can only open a
+      // panel, and that needs JavaScript.
+      <button
+        type="button"
+        onClick={() => onOpenPanel(item.view as PanelView)}
+        disabled={!hydrated}
+        data-js-control
+        className={cls}
+      >
         {item.label}
       </button>
     );
@@ -1204,21 +1434,26 @@ function StripButton({
   label,
   emphasis,
   onClick,
+  disabled,
   className = "flex",
 }: {
   label: string;
   emphasis: boolean;
   onClick: () => void;
+  /** Only the job-description entry is on screen before hydration. */
+  disabled?: boolean;
   className?: string;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
+      disabled={disabled}
+      data-js-control
       // Full-height rather than text-height. The label is a single line, so
       // the hit area used to be a 17px band inside a 32px strip — fine with a
       // cursor, a coin toss with a thumb. The strip is 44px now.
-      className={`${className} h-full shrink-0 touch-manipulation items-center transition-colors hover:text-accent ${
+      className={`${className} focus-inset h-full shrink-0 touch-manipulation items-center transition-colors hover:text-accent ${
         emphasis ? "text-text-soft" : "text-text-faint"
       }`}
     >

@@ -12,6 +12,7 @@ const BASE = "https://sidhantmathur.com";
 const ROUTES = [
   { path: "/", priority: 1 },
   { path: "/resume", priority: 0.9 },
+  { path: "/projects", priority: 0.8 },
   { path: "/projects/adarle20", priority: 0.8 },
   { path: "/projects/nokia", priority: 0.8 },
   { path: "/projects/dell-ml", priority: 0.7 },

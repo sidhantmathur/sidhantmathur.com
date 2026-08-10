@@ -60,7 +60,7 @@ export default function PromptPage() {
       <h2 className="t-head mt-10 font-medium text-text">
         Sent on every turn · {BASE.length.toLocaleString()} characters
       </h2>
-      <PromptBlock text={BASE} />
+      <PromptBlock text={BASE} label="The prompt sent on every turn" />
 
       <h2 className="t-head mt-10 font-medium text-text">
         Appended only when you ask about the site · {SITE_APPENDIX.length.toLocaleString()}{" "}
@@ -74,14 +74,26 @@ export default function PromptPage() {
         the block above on turns that asked about this site, and it is absent
         otherwise — a question about Nokia does not pay for it.
       </p>
-      <PromptBlock text={SITE_APPENDIX} />
+      <PromptBlock text={SITE_APPENDIX} label="The appendix added when you ask about the site" />
     </DocPage>
   );
 }
 
-function PromptBlock({ text }: { text: string }) {
+function PromptBlock({ text, label }: { text: string; label: string }) {
   return (
-    <pre className="mt-4 overflow-x-auto border border-line bg-panel p-4 text-[13px] leading-relaxed text-text-soft">
+    // Named, and focusable on purpose. Chrome makes any scrollable box a tab
+    // stop so the arrow keys can scroll it, which meant these two blocks were
+    // anonymous stops — a screen reader announced nothing at all on landing in
+    // the largest document on the site. `role="region"` plus a label makes the
+    // stop say what it is; tabIndex is explicit rather than left to the
+    // browser's inference, so the behaviour does not depend on whether the
+    // block happens to overflow at a given width.
+    <pre
+      role="region"
+      aria-label={label}
+      tabIndex={0}
+      className="mt-4 overflow-x-auto border border-line bg-panel p-4 text-[13px] leading-relaxed text-text-soft"
+    >
       {text}
     </pre>
   );
