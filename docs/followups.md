@@ -56,11 +56,13 @@ What shipped, on the resolution of each point:
   gpt-5-mini, gemini-3.5-flash-lite, and deepseek-v4-flash. Gateway list
   prices are noted inline in `MODELS` as checked 2026-07-27.
 
-Still true, and still the thing to be careful about: the client list is
-`MODELS` in `components/shell/app-shell.tsx` and must stay a subset of the
-server allowlist. An id that isn't on the server list silently falls back to
-the default rather than erroring, so a mismatch is invisible — check both.
-`evals/static.test.mjs` now asserts this, but it only catches what it runs on.
+**The drift risk this note left open is closed too.** There is no client list
+to keep in step any more: `lib/models.ts` is the one catalogue, and the route,
+the dropdown, `lib/pricing.ts` and `scripts/run-bakeoff.mjs` all read it. The
+regex in `evals/lib/artifacts.mjs` that scraped `MODELS` out of two files to
+compare them is gone with the copies it existed to police; the static suite
+now asserts things about the catalogue's content instead. Adding or removing a
+model is one edit in one file.
 
 ## 3. Copy — Sidhant is doing this, do not write it
 

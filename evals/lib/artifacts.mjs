@@ -3,11 +3,8 @@
 //
 // The generated modules are JSON.stringify output wrapped in an export, so
 // parsing them back out is exact rather than approximate. The hand-written
-// sources (route.ts, app-shell.tsx) are read as text and pattern-matched —
-// coarser, but it means a check can cover a plain array literal that no runtime
-// boundary exposes. The client/server model-allowlist check below is exactly
-// that case, and it's a documented footgun (docs/followups.md §2): a mismatch
-// silently falls back to the default model rather than erroring.
+// sources (route.ts) are read as text and pattern-matched — coarser, but it
+// means a check can cover a literal that no runtime boundary exposes.
 
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -113,33 +110,14 @@ export function buildSiteAppendixApproximation() {
   return unescape(src.slice(from, end)).replace("${REPO_CORPUS}", readRepoCorpus());
 }
 
-/** Model ids on the server allowlist, with their tiers. */
-export function readServerModels() {
-  const src = read("app/api/chat/route.ts");
-  const block = src.match(/const MODELS = \{([\s\S]*?)\} as const;/);
-  if (!block) throw new Error("Could not locate MODELS in app/api/chat/route.ts");
-  const models = {};
-  for (const m of block[1].matchAll(/"([^"]+)":\s*\{\s*tier:\s*"(\w+)"/g)) {
-    models[m[1]] = m[2];
-  }
-  return models;
-}
-
-/** Model ids the client offers in the picker. */
-export function readClientModels() {
-  const src = read("components/shell/app-shell.tsx");
-  const block = src.match(/const MODELS = \[([\s\S]*?)\];/);
-  if (!block) throw new Error("Could not locate MODELS in components/shell/app-shell.tsx");
-  return [...block[1].matchAll(/"([^"]+)"/g)].map((m) => m[1]);
-}
-
-/** The model the route falls back to for an unknown id. */
-export function readDefaultModel() {
-  const src = read("app/api/chat/route.ts");
-  const match = src.match(/const DEFAULT_MODEL: ModelId = "([^"]+)";/);
-  if (!match) throw new Error("Could not locate DEFAULT_MODEL in app/api/chat/route.ts");
-  return match[1];
-}
+// The server allowlist, the client's picker list and the fallback model used to
+// be scraped out of route.ts and app-shell.tsx here, so that a test could check
+// the two lists against each other — a documented footgun (docs/followups.md
+// §2), because a client id the server had dropped fell back to the default
+// rather than erroring, silently. There is one catalogue now (`lib/models.ts`),
+// both files read it, and the tests import it directly under
+// --experimental-strip-types. Comparing the lists would be comparing a constant
+// to itself, so the scrapers have no caller and are gone.
 
 /** Tier names that have a rate-limit bucket. */
 export function readTierLimits() {

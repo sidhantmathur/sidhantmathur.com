@@ -16,7 +16,14 @@
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
 
-import { MODEL_PRICES, costOfTurn, formatUsd, sumCosts } from "../lib/pricing.ts";
+import {
+  MODEL_PRICES,
+  PRICE_CONFIDENCE,
+  costOfTurn,
+  formatUsd,
+  sumCosts,
+} from "../lib/pricing.ts";
+import { MODEL_IDS } from "../lib/models.ts";
 import {
   SIMULATABLE_CLASSES,
   TURN_ERROR_CLASSES,
@@ -27,7 +34,6 @@ import {
   turnErrorCopy,
   turnErrorLabel,
 } from "../lib/chat-telemetry.ts";
-import { readServerModels } from "./lib/artifacts.mjs";
 
 describe("cost arithmetic", () => {
   const usage = {
@@ -93,10 +99,24 @@ describe("cost arithmetic", () => {
 
 describe("the price table covers what the site can actually run", () => {
   test("every allowlisted model has a list price", () => {
-    for (const id of Object.keys(readServerModels())) {
+    // The allowlist and the price table are two views of one catalogue now, so
+    // this can only fail if a row loses its price fields — but that is exactly
+    // the failure that would make the cost meter silently drop a model's turns.
+    for (const id of MODEL_IDS) {
       assert.ok(
         MODEL_PRICES[id],
-        `"${id}" is on the server allowlist but has no entry in lib/pricing.ts — the cost meter would silently drop its turns`,
+        `"${id}" is in the catalogue but has no price — the cost meter would silently drop its turns`,
+      );
+    }
+  });
+
+  test("every model says how far its prices are to be trusted", () => {
+    // /measurements/models prints these figures and labels each one with its
+    // confidence. A row with no confidence would render an unqualified number.
+    for (const id of MODEL_IDS) {
+      assert.ok(
+        ["confirmed", "derived", "unconfirmed"].includes(PRICE_CONFIDENCE[id]),
+        `"${id}" has no price confidence — the page would print a dollar figure with no caveat`,
       );
     }
   });

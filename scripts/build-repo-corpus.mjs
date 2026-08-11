@@ -69,7 +69,9 @@ const FILES = [
   { slug: "job-posting", path: "lib/job-posting.ts", heading: "Job postings as untrusted input", anchor: "Treating the posting as hostile input" },
   { slug: "site-question", path: "lib/site-question.ts", heading: "Recognising a question about the site" },
   { slug: "telemetry", path: "lib/chat-telemetry.ts", heading: "Per-turn telemetry" },
-  { slug: "pricing", path: "lib/pricing.ts", heading: "The price table" },
+  // The prices, the allowlist and the reasoning behind both are one table now;
+  // pricing.ts is the arithmetic over it and carries little prose of its own.
+  { slug: "pricing", path: "lib/models.ts", heading: "The model catalogue and its prices" },
   { slug: "permalink", path: "lib/permalink.ts", heading: "Permalinks" },
   { slug: "transcript", path: "lib/transcript.ts", heading: "Transcript serialization" },
   { slug: "measurements", path: "lib/measurements.ts", heading: "What the measurements page may publish" },

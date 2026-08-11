@@ -3,7 +3,7 @@
 // These run on every `npm run eval` and are safe in CI. They assert the
 // invariants the chat depends on: that the knowledge base built, that the
 // citation index is addressable, that the system prompt still contains its
-// guard rails, that the client and server model allowlists agree, and that
+// guard rails, that the model catalogue is coherent, and that
 // every fact the live evals assert on actually exists in the corpus.
 //
 // That last group is the one that keeps the suite honest. A live case checking
@@ -20,15 +20,13 @@ import {
   buildPromptApproximation,
   estimateTokens,
   read,
-  readClientModels,
-  readDefaultModel,
   readKnowledgeBase,
-  readServerModels,
   readSystemPromptSource,
   readTierLimits,
   readToolNames,
 } from "./lib/artifacts.mjs";
 import { GROUNDED, ROLE_FIT } from "./cases.mjs";
+import { DEFAULT_MODEL, MODELS, MODEL_IDS } from "../lib/models.ts";
 import { JD_PREFIX, looksLikeJobPosting } from "../lib/job-posting.ts";
 
 describe("knowledge base", () => {
@@ -118,45 +116,45 @@ describe("system prompt", () => {
   });
 });
 
-describe("model allowlist", () => {
-  test("every client model exists on the server allowlist", () => {
-    // docs/followups.md §2: an id that isn't on the server list silently falls
-    // back to the default rather than erroring, so a mismatch is invisible in
-    // the UI. This is the check that makes it visible.
-    const server = readServerModels();
-    for (const id of readClientModels()) {
-      assert.ok(
-        id in server,
-        `client offers "${id}" but the server allowlist doesn't have it — it would silently fall back to the default`,
-      );
-    }
-  });
+describe("model catalogue", () => {
+  // The client's picker and the server's allowlist used to be two arrays kept in
+  // step by a regex that read both files' source text. They are one table now,
+  // so what is worth asserting is no longer that the copies agree — it is that
+  // the single table says everything its four readers need.
 
-  test("every tier in use has a rate-limit bucket", () => {
+  test("every model has a tier with a rate-limit bucket", () => {
     const limits = readTierLimits();
-    for (const tier of new Set(Object.values(readServerModels()))) {
+    for (const [id, spec] of Object.entries(MODELS)) {
       assert.ok(
-        tier in limits,
-        `model tier "${tier}" has no entry in TIER_LIMITS — consumeBudget would read undefined`,
+        spec.tier in limits,
+        `"${id}" has tier "${spec.tier}", which has no entry in TIER_LIMITS — consumeBudget would read undefined`,
       );
     }
   });
 
-  test("the default model is on the allowlist", () => {
-    const server = readServerModels();
-    const fallback = readDefaultModel();
-    assert.ok(fallback in server, `DEFAULT_MODEL "${fallback}" is not on the server allowlist`);
+  test("the default model is in the catalogue", () => {
+    assert.ok(DEFAULT_MODEL in MODELS, `DEFAULT_MODEL "${DEFAULT_MODEL}" is not in the catalogue`);
   });
 
-  test("the client's default selection is on the allowlist", () => {
-    // The shell selects MODELS[0] on load, so a stale first entry means every
-    // visitor silently gets the fallback model instead of the one displayed.
-    const client = readClientModels();
-    assert.ok(client.length > 0, "client model list is empty");
-    assert.ok(
-      client[0] in readServerModels(),
-      `the client's first (default-selected) model "${client[0]}" is not on the server allowlist`,
+  test("the default model is the one the dropdown selects on load", () => {
+    // The shell selects MODEL_IDS[0], and the route resolves anything it does
+    // not recognise to DEFAULT_MODEL. If those two disagree the strip would
+    // name one model while the turn ran on another.
+    assert.ok(MODEL_IDS.length > 0, "the catalogue is empty");
+    assert.equal(
+      MODEL_IDS[0],
+      DEFAULT_MODEL,
+      "the dropdown's first (default-selected) entry is not DEFAULT_MODEL",
     );
+  });
+
+  test("exactly one model is premium", () => {
+    // The budget strip's whole point is that picking the last entry switches it
+    // from "standard n/20" to "premium n/5". Two premium models would make the
+    // dropdown's ordering comment wrong; none would make the tier vestigial.
+    const premium = MODEL_IDS.filter((id) => MODELS[id].tier === "premium");
+    assert.equal(premium.length, 1, `expected one premium model, found ${premium.length}`);
+    assert.equal(premium[0], MODEL_IDS.at(-1), "the premium model is not the last dropdown entry");
   });
 });
 

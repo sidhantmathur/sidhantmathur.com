@@ -32,6 +32,7 @@ import { track } from "@/lib/analytics";
 import { RecruiterTldr } from "./recruiter-tldr";
 import { SUGGESTED_QUESTIONS as SUGGESTED } from "@/content/recruiter";
 import { costOfTurn, formatUsd, sumCosts } from "@/lib/pricing";
+import { MODEL_IDS } from "@/lib/models";
 import {
   textOf,
   toolOutputs,
@@ -128,21 +129,6 @@ const REPLAY_BANNER =
 const SITE_NAME = "Sidhant Mathur";
 const SITE_URL = "https://sidhantmathur.com";
 
-// Must stay a subset of the `MODELS` allowlist in app/api/chat/route.ts — an id
-// that isn't on the server list silently falls back to the default rather than
-// erroring, so a mismatch here is invisible. Order is the dropdown order; the
-// first entry is what the shell selects on load.
-//
-// The last entry is the `premium` tier. Selecting it switches the header budget
-// strip from "standard n/20" to "premium n/5", which is the point of showing it.
-const MODELS = [
-  "anthropic/claude-haiku-4.5",
-  "openai/gpt-5-mini",
-  "google/gemini-3.5-flash-lite",
-  "deepseek/deepseek-v4-flash",
-  "openai/gpt-5.6-luna",
-];
-
 // How long a turn runs before the shell offers to abandon it. Roughly double a
 // normal answer's wait — early enough to be a rescue, late enough not to be a
 // suggestion that something is wrong.
@@ -160,7 +146,7 @@ export function AppShell() {
   // The two things that must exist before they are asked for, but must not be
   // part of what the visitor waits for. See use-idle-ready.ts.
   const idleReady = useIdleReady();
-  const [model, setModel] = useState<string>(MODELS[0]);
+  const [model, setModel] = useState<string>(MODEL_IDS[0]);
 
   const {
     messages,
@@ -678,7 +664,11 @@ export function AppShell() {
               disabled={!hydrated}
               className="min-h-[36px] disabled:cursor-progress disabled:border-line disabled:text-text-dim cursor-pointer border border-line-strong bg-raised px-1.5 py-0.5 text-[13px] text-text-soft outline-none focus:border-accent"
             >
-              {MODELS.map((m) => (
+              {/* Catalogue order, and the ids as written — the last entry is
+                  the `premium` tier, and selecting it switches the header
+                  budget strip from "standard n/20" to "premium n/5", which is
+                  the point of showing it. */}
+              {MODEL_IDS.map((m) => (
                 <option key={m} value={m}>
                   {m}
                 </option>
