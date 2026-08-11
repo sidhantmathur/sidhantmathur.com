@@ -10,7 +10,7 @@
 
 // By its real filename, the same convention lib/role-fit.ts uses, so
 // `node --test` can load this module directly for evals/bakeoff.test.mjs.
-import { MIN_TURNS_FOR_P50, type Maybe } from "./measurements.ts";
+import { MIN_TURNS_FOR_P50, formatDate, type Maybe } from "./measurements.ts";
 import type { PublishedRun, PublishedSample } from "./measurement-types";
 
 /**
@@ -158,6 +158,8 @@ export function allGroups(rows: ModelRow[]): string[] {
 
 // --- The frontier -----------------------------------------------------------
 
+export type FrontierResult = { points: FrontierPoint[]; unplotted: ModelRow[] };
+
 export type FrontierPoint = {
   row: ModelRow;
   /** Cost or latency — lower is better. */
@@ -184,7 +186,7 @@ export function frontier(
   rows: ModelRow[],
   x: (row: ModelRow) => number | null,
   y: (row: ModelRow) => number | null,
-): { points: FrontierPoint[]; unplotted: ModelRow[] } {
+): FrontierResult {
   const points: FrontierPoint[] = [];
   const unplotted: ModelRow[] = [];
 
@@ -208,6 +210,8 @@ export function frontier(
 }
 
 // --- Ranked bars ------------------------------------------------------------
+
+export type RankResult = { bars: Ranked[]; missing: ModelRow[] };
 
 export type Ranked = {
   row: ModelRow;
@@ -241,7 +245,7 @@ export function rank(
   rows: ModelRow[],
   value: (row: ModelRow) => number | null,
   direction: Direction,
-): { bars: Ranked[]; missing: ModelRow[] } {
+): RankResult {
   const bars: { row: ModelRow; value: number }[] = [];
   const missing: ModelRow[] = [];
   for (const row of rows) {
@@ -290,12 +294,101 @@ export function supportsMedian(sample: PublishedSample): boolean {
   return !!sample && sample.n >= MIN_TURNS_FOR_P50;
 }
 
+/**
+ * The median a sample is allowed to report, or null.
+ *
+ * The gate and the read belong together. Written apart they were four inline
+ * copies of `supportsMedian(s) ? s!.p50 : null` plus a local helper, and the
+ * failure mode of dropping the gate in a fifth copy is a median over three
+ * turns printed in the same type as a median over twenty.
+ */
+export function median(sample: PublishedSample): number | null {
+  return supportsMedian(sample) ? sample!.p50 : null;
+}
+
+// --- What the whole bake-off adds up to -------------------------------------
+
+export type BakeoffSummary = {
+  /** Turns attempted across every compared run. */
+  turnsGraded: number;
+  /** Turns that never produced an answer. */
+  turnsBroke: number;
+  /** Cases in the first run — only meaningful when `uniformCorpus`. */
+  casesEach: number;
+  /** Every model answered the same number of cases, so they are comparable. */
+  uniformCorpus: boolean;
+  /**
+   * What the whole comparison cost at list price, or NULL if any one row's
+   * cost is unknown.
+   *
+   * A partial sum is the failure this file exists to prevent: it has the
+   * typography of a total and the content of "some of it", and it would read as
+   * an unusually cheap afternoon rather than as a missing price. The unpriced
+   * model is named in the table's price column instead.
+   */
+  totalCost: number | null;
+  /** Run dates, earliest first. Undated runs are not in here. */
+  measuredOn: string[];
+  /** "27 Jul 2026", "27 Jul 2026 to 29 Jul 2026", or "on an unknown date". */
+  measuredRange: string;
+};
+
+/** The figures above the charts: the sample everything below rests on. */
+export function bakeoffSummary(rows: ModelRow[]): BakeoffSummary {
+  const casesEach = rows[0]?.cases ?? 0;
+  const measuredOn = rows
+    .map((r) => r.ranAt)
+    .filter((d): d is string => !!d)
+    .sort();
+
+  return {
+    turnsGraded: rows.reduce((n, r) => n + r.cases, 0),
+    turnsBroke: rows.reduce((n, r) => n + r.broke, 0),
+    casesEach,
+    uniformCorpus: rows.every((r) => r.cases === casesEach),
+    totalCost: rows.reduce<number | null>(
+      (n, r) => (n == null || r.costTotalUsd == null ? null : n + r.costTotalUsd),
+      0,
+    ),
+    measuredOn,
+    measuredRange: measuredRange(measuredOn),
+  };
+}
+
+/**
+ * How the page says when this was measured.
+ *
+ * One afternoon reads as a date; runs published on different days read as a
+ * span, because a bake-off spread over a week is a weaker claim than one run
+ * back to back and the sentence should not flatten the two together.
+ */
+export function measuredRange(dates: string[]): string {
+  if (!dates.length) return "on an unknown date";
+  const first = formatDate(dates[0]);
+  const last = formatDate(dates.at(-1));
+  return first === last ? first : `${first} to ${last}`;
+}
+
 // --- Formatting -------------------------------------------------------------
 
 /** Dollars at the scale a single turn costs. `$0.00` would read as "unmeasured". */
 export function formatCost(usd: number | null, decimals = 4): string {
   if (usd == null || !Number.isFinite(usd)) return "—";
   return `$${usd.toFixed(decimals)}`;
+}
+
+/**
+ * What one turn cost, at the precision that turn needs.
+ *
+ * Four decimals is the scale of a turn on most of these models, and it is a row
+ * of zeroes on the cheapest — which reads as free rather than as a tenth of a
+ * cent. Under $0.001 the fifth decimal is the whole number. This was the same
+ * ternary written in three places, one of them with a `?? 1` standing in for a
+ * cost nobody measured; there is no stand-in here, an unpriced turn is an em
+ * dash and the precision it would have had is moot.
+ */
+export function formatTurnCost(usd: number | null): string {
+  return formatCost(usd, usd != null && usd < 0.001 ? 5 : 4);
 }
 
 /** 6013 → "6.0k". Axis ticks and table cells. */

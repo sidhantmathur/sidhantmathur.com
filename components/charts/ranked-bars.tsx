@@ -1,6 +1,6 @@
+import { ChartFrame, shortNames } from "./chart-frame";
 import { BAR_PX, CONTEXT, MARK } from "./chart-tokens";
-import type { Ranked } from "@/lib/model-comparison";
-import type { ModelRow } from "@/lib/model-comparison";
+import type { RankResult } from "@/lib/model-comparison";
 
 // A single-series ranked bar panel (Sprint 8).
 //
@@ -17,8 +17,8 @@ export type RankedBarsProps = {
   heading: string;
   /** What the number is and which direction is good. Sits under the heading. */
   note: string;
-  bars: Ranked[];
-  missing: ModelRow[];
+  /** A whole `rank()`, bars and the models it had no number for. */
+  ranked: RankResult;
   format: (value: number) => string;
   /**
    * Names the winner in the panel's own terms — "fastest", "cheapest". Omitted
@@ -30,18 +30,16 @@ export type RankedBarsProps = {
 export function RankedBars({
   heading,
   note,
-  bars,
-  missing,
+  ranked: { bars, missing },
   format,
   bestLabel,
 }: RankedBarsProps) {
   return (
-    <figure className="m-0">
-      <figcaption>
-        <div className="t-meta font-medium text-text">{heading}</div>
-        <div className="t-meta mt-0.5 text-text-faint">{note}</div>
-      </figcaption>
-
+    <ChartFrame
+      heading={heading}
+      note={note}
+      trailer={missing.length > 0 ? `Not measured for ${shortNames(missing)}.` : undefined}
+    >
       {bars.length === 0 ? (
         <p className="t-meta mt-3 text-text-faint">Not measured in any published run.</p>
       ) : (
@@ -92,12 +90,6 @@ export function RankedBars({
           ))}
         </div>
       )}
-
-      {missing.length > 0 && (
-        <p className="t-meta mt-2 text-text-faint">
-          Not measured for {missing.map((m) => m.short).join(", ")}.
-        </p>
-      )}
-    </figure>
+    </ChartFrame>
   );
 }

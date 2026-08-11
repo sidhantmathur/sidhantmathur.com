@@ -1,6 +1,7 @@
+import { ChartFrame, ScrollFade, floorWidth, shortNames } from "./chart-frame";
 import { CONTEXT, GRID, MARK, SURFACE } from "./chart-tokens";
-import type { FrontierPoint } from "@/lib/model-comparison";
-import type { ModelRow } from "@/lib/model-comparison";
+import { formatPercent } from "@/lib/measurements";
+import type { FrontierResult } from "@/lib/model-comparison";
 
 // Quality against cost, and quality against latency (Sprint 8).
 //
@@ -34,17 +35,24 @@ const PLOT = {
 export type FrontierScatterProps = {
   heading: string;
   note: string;
-  points: FrontierPoint[];
-  unplotted: ModelRow[];
+  /** A whole `frontier()`, points and the models missing an axis. */
+  plot: FrontierResult;
   xLabel: string;
-  yLabel: string;
   /** Log for money (it spans an order of magnitude); linear for milliseconds. */
   xScale: "log" | "linear";
   formatX: (value: number) => string;
-  formatY: (value: number) => string;
-  /** Axis ticks want round numbers; the dots and tooltip carry the precision. */
-  formatYTick?: (value: number) => string;
 };
+
+// The y axis is not a parameter. `frontier()` is called with the pass rate at
+// both of this chart's call sites, and it is the axis the chart exists to hold
+// fixed: quality against cost and quality against latency are two views of one
+// trade, and they are only comparable because the vertical is the same measure
+// in both. It was three props — a label, a formatter for the dots and the
+// tooltip, and a rounder for the ticks — passed identical values twice.
+const Y_LABEL = "pass rate (answered)";
+const formatY = formatPercent;
+/** Axis ticks want round numbers; the dots and tooltip carry the precision. */
+const formatYTick = (value: number) => `${Math.round(value * 100)}%`;
 
 /** Ticks that land on readable numbers rather than on the data's extremes. */
 function linearTicks(min: number, max: number, count = 4): number[] {
@@ -74,23 +82,18 @@ function logTicks(min: number, max: number): number[] {
 export function FrontierScatter({
   heading,
   note,
-  points,
-  unplotted,
+  plot: { points, unplotted },
   xLabel,
-  yLabel,
   xScale,
   formatX,
-  formatY,
-  formatYTick = formatY,
 }: FrontierScatterProps) {
   if (!points.length) {
     return (
-      <figure className="m-0">
-        <figcaption className="t-meta font-medium text-text">{heading}</figcaption>
+      <ChartFrame heading={heading}>
         <p className="t-meta mt-2 text-text-faint">
           Nothing published carries both axes, so there is no chart to draw.
         </p>
-      </figure>
+      </ChartFrame>
     );
   }
 
@@ -128,29 +131,23 @@ export function FrontierScatter({
   const yTicks = linearTicks(yMin, yMax, 3).filter(inDomain(yMin, yMax));
 
   return (
-    // A query container, so the fade below can ask how wide the chart actually
-    // is instead of how wide the window is.
-    <figure className="@container m-0">
-      <figcaption>
-        <div className="t-meta font-medium text-text">{heading}</div>
-        <div className="t-meta mt-0.5 max-w-[62ch] text-text-faint">
-          {note} The vertical axis is zoomed to the measured range, not to zero.
-        </div>
-      </figcaption>
-
-      {/* The same right-edge fade the actions strip uses, for the same reason:
-          there is no scrollbar on a phone, and a plot whose rightmost model
-          label sat exactly at the edge looked like a plot that ended there —
-          the label clipped mid-word and nothing on screen saying so.
-
-          A container query rather than a breakpoint, because the fade is a lie
-          when there is nothing to scroll and the thing that decides that is
-          this box's width, not the window's. Below 560px — the SVG's floor
-          width, and now its viewBox width — the box scrolls and the fade earns
-          its place; at or above it the drawing fits and the fade would only be
-          dimming real data. A media query would get this right on a phone and
-          wrong in any narrow column on a wide screen. */}
-      <div className="mt-3 overflow-x-auto [mask-image:linear-gradient(to_right,black_92%,transparent)] @[560px]:[mask-image:none]">
+    <ChartFrame
+      heading={heading}
+      note={`${note} The vertical axis is zoomed to the measured range, not to zero.`}
+      measure
+      trailer={
+        <>
+          <span className="text-accent">Highlighted</span> models sit on the frontier — nothing
+          measured here is both better and {xScale === "log" ? "cheaper" : "faster"}.
+          {unplotted.length > 0 &&
+            ` ${shortNames(unplotted)} could not be plotted: one of the two axes was not measured.`}
+        </>
+      }
+    >
+      {/* The fade earns its place below 560px — the SVG's floor width, and now
+          its viewBox width — where the box scrolls; at or above it the drawing
+          fits and a fade would only be dimming real data. */}
+      <ScrollFade width={560} className="mt-3">
         <svg
           viewBox={`0 0 ${W} ${H}`}
           // The floor width IS the viewBox width. It was 480 against a 560
@@ -160,7 +157,7 @@ export function FrontierScatter({
           // width is not a type size; pinning the two together makes 10px
           // 10px, and the box scrolls the extra 80px like it was already
           // scrolling the rest.
-          className="h-auto w-full min-w-[560px]"
+          className={`h-auto w-full ${floorWidth(560)}`}
           role="img"
           aria-label={`${heading}. ${points
             .map((p) => `${p.row.short}: ${formatX(p.x)}, ${formatY(p.y)}`)
@@ -217,7 +214,7 @@ export function FrontierScatter({
             transform={`rotate(-90 ${PLOT.x0 - 56} ${(PLOT.y0 + PLOT.y1) / 2})`}
             className="fill-[var(--text-faint)] text-[10px]"
           >
-            {yLabel} →
+            {Y_LABEL} →
           </text>
 
           {points.map((p) => {
@@ -257,14 +254,7 @@ export function FrontierScatter({
             );
           })}
         </svg>
-      </div>
-
-      <p className="t-meta mt-2 max-w-[62ch] text-text-faint">
-        <span className="text-accent">Highlighted</span> models sit on the frontier — nothing
-        measured here is both better and {xScale === "log" ? "cheaper" : "faster"}.
-        {unplotted.length > 0 &&
-          ` ${unplotted.map((m) => m.short).join(", ")} could not be plotted: one of the two axes was not measured.`}
-      </p>
-    </figure>
+      </ScrollFade>
+    </ChartFrame>
   );
 }
