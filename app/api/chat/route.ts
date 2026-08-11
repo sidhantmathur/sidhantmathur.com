@@ -16,6 +16,8 @@ import { looksLikeSiteQuestion } from "@/lib/site-question";
 import { reconcileRoleFit } from "@/lib/role-fit";
 import { CHUNK_BY_ID } from "@/lib/chunks.generated";
 import {
+  SIMULATABLE_CLASSES,
+  TURN_FAILURES,
   TURN_PART_ID,
   classifyTurnError,
   type ChatUIMessage,
@@ -515,27 +517,13 @@ function buildChatTools(extraction: { requirements: string[] }) {
 //      `createUIMessageStream`, so the response is genuinely an HTTP 200 whose
 //      stream carries an error chunk. Faking the shape would defeat the point.
 
-/** The early exits: a status code and a JSON body, before a stream exists. */
-const SIMULATED_STATUS: Partial<Record<TurnErrorClass, number>> = {
-  invalid_request: 400,
-  rate_limited: 429,
-  upstream_unconfigured: 502,
-};
-
-const SIMULATABLE: TurnErrorClass[] = [
-  "invalid_request",
-  "rate_limited",
-  "upstream_unconfigured",
-  "upstream_auth",
-  "upstream_timeout",
-  "upstream_unavailable",
-  "aborted",
-  "unknown",
-];
-
+// Both lists are derived from the one table in lib/chat-telemetry.ts rather
+// than restated here. `SIMULATABLE_CLASSES` is every class the table marks
+// simulatable, which excludes `network`: that one is raised in the browser
+// before the request reaches this file, so there is no exit here to take.
 function simulatedClass(req: Request): TurnErrorClass | null {
   const value = new URL(req.url).searchParams.get("simulate");
-  const match = SIMULATABLE.find((c) => c === value);
+  const match = SIMULATABLE_CLASSES.find((c) => c === value);
   return match ?? null;
 }
 
@@ -602,7 +590,9 @@ export async function POST(req: Request): Promise<Response> {
   // model. See the block comment above.
   const simulate = simulatedClass(req);
   if (simulate) {
-    const status = SIMULATED_STATUS[simulate];
+    // A status means an early exit — a JSON body before a stream exists. Null
+    // means the failure belongs mid-stream, on an HTTP 200.
+    const status = TURN_FAILURES[simulate].simulateStatus;
     if (status) return jsonError(simulate, status);
     return simulateStreamFailure(simulate, DEFAULT_MODEL);
   }

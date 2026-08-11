@@ -9,7 +9,12 @@ import {
   formatUsd,
   sumCosts,
 } from "@/lib/pricing";
-import { turnErrorCopy, type TurnErrorClass } from "@/lib/chat-telemetry";
+import {
+  SIMULATABLE_CLASSES,
+  TURN_FAILURES,
+  turnErrorCopy,
+  type TurnErrorClass,
+} from "@/lib/chat-telemetry";
 import type { Budget, TurnRecord } from "./use-conversation";
 import type { TokenRate } from "./use-token-rate";
 
@@ -441,60 +446,18 @@ function TraceInspector({ turnLog }: { turnLog: TurnRecord[] }) {
 // Failure theatre (#6)
 // ---------------------------------------------------------------------------
 
-type FailureSpec = {
-  cls: TurnErrorClass;
-  /** What actually causes it in production. */
-  cause: string;
-  /** How it reaches the client. */
-  wire: string;
-};
-
-// One entry per exit in app/api/chat/route.ts. The split between the first
-// three and the rest is the interesting part: an early failure is a status
-// code, a late one is an HTTP 200 whose stream ends in an error chunk, and a
-// client that only checked `res.ok` would call the second kind a success.
-const FAILURES: FailureSpec[] = [
-  {
-    cls: "invalid_request",
-    cause: "The request body failed schema validation — a bad client, not a bad model.",
-    wire: "400, JSON body",
-  },
-  {
-    cls: "rate_limited",
-    cause: "The hourly per-tier budget is spent, or the conversation passed ten turns.",
-    wire: "429, JSON body",
-  },
-  {
-    cls: "upstream_unconfigured",
-    cause: "No gateway key on the server. A deploy problem, checked before the model is called.",
-    wire: "502, JSON body",
-  },
-  {
-    cls: "upstream_auth",
-    cause: "The gateway rejected our credentials. It surfaces mid-stream, which is why the key is checked up front.",
-    wire: "200, error chunk",
-  },
-  {
-    cls: "upstream_timeout",
-    cause: "The model took too long, or the connection dropped part-way through an answer.",
-    wire: "200, error chunk",
-  },
-  {
-    cls: "upstream_unavailable",
-    cause: "The gateway or the model itself failed.",
-    wire: "200, error chunk",
-  },
-  {
-    cls: "aborted",
-    cause: "The reader navigated away or hit stop. Not a failure to report as one.",
-    wire: "200, error chunk",
-  },
-  {
-    cls: "unknown",
-    cause: "Classification fell through. Always worth reading the server log for.",
-    wire: "200, error chunk",
-  },
-];
+// One button per exit in app/api/chat/route.ts, read straight off the shared
+// table in lib/chat-telemetry.ts rather than mirrored here — the deck used to
+// keep its own prose copy of the route's exits, and the two drifted. The split
+// between the first three and the rest is the interesting part: an early
+// failure is a status code, a late one is an HTTP 200 whose stream ends in an
+// error chunk, and a client that only checked `res.ok` would call the second
+// kind a success.
+//
+// The filter is on `simulatable`, which is how `network` stays out: it is
+// raised in the browser before a request exists, so there is no server exit for
+// a button to take. The catch block in `run` below is where it does appear.
+const FAILURES = SIMULATABLE_CLASSES.map((cls) => ({ cls, ...TURN_FAILURES[cls] }));
 
 type FailureResult = {
   cls: TurnErrorClass;

@@ -32,31 +32,186 @@ export const TURN_PART_ID = "turn";
 // one of these, and the client's error state is derived from the class rather
 // than from message text.
 
-export type TurnErrorClass =
-  /** Body failed schema validation. Bad client, not a bad model. */
-  | "invalid_request"
-  /** Per-tier hourly budget spent, or the 10-turn conversation cap. */
-  | "rate_limited"
-  /** No AI_GATEWAY_API_KEY on the server — a deploy problem, not a runtime one. */
-  | "upstream_unconfigured"
-  /** The Gateway rejected our credentials. */
-  | "upstream_auth"
-  /** The model took too long or the connection dropped mid-stream. */
-  | "upstream_timeout"
-  /** The Gateway or the model itself failed. */
-  | "upstream_unavailable"
+// EVERYTHING about a class lives in the one table below, and the type is
+// derived FROM it. That direction is the point. This set used to be a fact
+// restated in five hand-kept places — the union, a runtime array that
+// duplicated the union, two `Partial<Record<>>` copy maps that fell back
+// silently when an entry was missing, the route's simulate list, and a prose
+// mirror in the instrument deck — and the copies had already drifted apart.
+// With one table, every downstream map is exhaustive by construction: a class
+// added here without a sentence is a type error, not a silent fallback.
+
+export type FailureSpec = {
+  /**
+   * Where the class is raised. `server` classes come out of app/api/chat/route.ts
+   * and can be reproduced there on demand; a `client` class never reaches the
+   * route at all, which is why the route's simulate list and the instrument
+   * deck's button list both filter on this field rather than restating a list.
+   */
+  origin: "client" | "server";
+  /** Whether `?simulate=<class>` on the chat route will reproduce it. */
+  simulatable: boolean;
+  /** The status of the early JSON exit, or null for a mid-stream failure. */
+  simulateStatus: number | null;
+  /** Whether "try again" belongs under the sentence. See `isRetryableClass`. */
+  retryable: boolean;
+  /** Whether the site renders nothing at all. See `isSilentClass`. */
+  silent: boolean;
+  /** Whether this is "you've hit the cap" rather than "broken". */
+  rateLimit: boolean;
+  /** Short label above the sentence, or null to fall back to the class id. */
+  label: string | null;
+  /** The sentence the reader is shown, or null to fall back to `unknown`'s. */
+  copy: string | null;
+  /** What actually causes it in production. Instrument deck prose. */
+  cause: string | null;
+  /** How it reaches the client. Instrument deck prose. */
+  wire: string | null;
+};
+
+/**
+ * The whole vocabulary. Order is meaningful: the route's simulate list and the
+ * failure-theatre deck are this table filtered, in this order, so the early
+ * exits (a status code) come before the mid-stream ones (an HTTP 200 whose
+ * stream ends in an error chunk) — a client that only checked `res.ok` would
+ * call the second kind a success, and the deck reads top to bottom.
+ *
+ * On the two null `copy` entries. `rate_limited` is not an error state, it is
+ * the budget running out, and it routes to ManualMode instead. `aborted` is the
+ * reader pressing stop — telling someone what they just did is not information.
+ * Both are written as an explicit null rather than an absent key so that adding
+ * a class still forces the question.
+ */
+export const TURN_FAILURES = {
+  invalid_request: {
+    origin: "server",
+    simulatable: true,
+    simulateStatus: 400,
+    retryable: false,
+    silent: false,
+    rateLimit: false,
+    label: "bad request",
+    copy: "That message couldn't be sent as written. Try shortening it.",
+    cause: "The request body failed schema validation — a bad client, not a bad model.",
+    wire: "400, JSON body",
+  },
+  rate_limited: {
+    origin: "server",
+    simulatable: true,
+    simulateStatus: 429,
+    retryable: true,
+    silent: false,
+    rateLimit: true,
+    label: null,
+    copy: null,
+    cause: "The hourly per-tier budget is spent, or the conversation passed ten turns.",
+    wire: "429, JSON body",
+  },
+  upstream_unconfigured: {
+    origin: "server",
+    simulatable: true,
+    simulateStatus: 502,
+    retryable: true,
+    silent: false,
+    rateLimit: false,
+    label: "misconfigured",
+    copy: "The chat backend is misconfigured — this one is on me, not you.",
+    cause: "No gateway key on the server. A deploy problem, checked before the model is called.",
+    wire: "502, JSON body",
+  },
+  upstream_auth: {
+    origin: "server",
+    simulatable: true,
+    simulateStatus: null,
+    retryable: true,
+    silent: false,
+    rateLimit: false,
+    label: "misconfigured",
+    copy: "The chat backend is misconfigured — this one is on me, not you.",
+    cause:
+      "The gateway rejected our credentials. It surfaces mid-stream, which is why the key is checked up front.",
+    wire: "200, error chunk",
+  },
+  upstream_timeout: {
+    origin: "server",
+    simulatable: true,
+    simulateStatus: null,
+    retryable: true,
+    silent: false,
+    rateLimit: false,
+    label: "server timeout",
+    copy: "The server stopped responding partway through. Give it another try.",
+    cause: "The model took too long, or the connection dropped part-way through an answer.",
+    wire: "200, error chunk",
+  },
+  upstream_unavailable: {
+    origin: "server",
+    simulatable: true,
+    simulateStatus: null,
+    retryable: true,
+    silent: false,
+    rateLimit: false,
+    label: "upstream",
+    copy: "Something went wrong on my end. Give it another try in a moment.",
+    cause: "The gateway or the model itself failed.",
+    wire: "200, error chunk",
+  },
   /**
    * Client-detected connection failure — the request never reached the server,
    * or the socket died on the way back. THE SERVER NEVER EMITS THIS ONE: it is
-   * raised in the browser's fetch wrapper (see `makeChatFetch` in
-   * use-conversation.ts), because a turn that dies on the network never gets far
-   * enough for the route to have an opinion about it.
+   * raised in the browser's fetch wrapper (see `chatFetch` in chat-transport.ts),
+   * because a turn that dies on the network never gets far enough for the route
+   * to have an opinion about it. That is what `origin: "client"` records, and it
+   * is why this entry has no wire description: there is no server exit to
+   * describe, and no button in the deck that could take one.
    */
-  | "network"
-  /** The reader navigated away or hit stop. Not a failure to report as one. */
-  | "aborted"
-  /** Classification fell through. Always worth reading the server log for. */
-  | "unknown";
+  network: {
+    origin: "client",
+    simulatable: false,
+    simulateStatus: null,
+    retryable: true,
+    silent: false,
+    rateLimit: false,
+    label: "connection",
+    copy: "The connection dropped before the answer made it through. Check your signal and try again.",
+    cause: null,
+    wire: null,
+  },
+  aborted: {
+    origin: "server",
+    simulatable: true,
+    simulateStatus: null,
+    retryable: true,
+    silent: true,
+    rateLimit: false,
+    label: null,
+    copy: null,
+    cause: "The reader navigated away or hit stop. Not a failure to report as one.",
+    wire: "200, error chunk",
+  },
+  unknown: {
+    origin: "server",
+    simulatable: true,
+    simulateStatus: null,
+    retryable: true,
+    silent: false,
+    rateLimit: false,
+    label: "unknown",
+    copy: "Something went wrong on my end. Give it another try in a moment.",
+    cause: "Classification fell through. Always worth reading the server log for.",
+    wire: "200, error chunk",
+  },
+} as const satisfies Record<string, FailureSpec>;
+
+export type TurnErrorClass = keyof typeof TURN_FAILURES;
+
+/** Every class, in table order. */
+export const TURN_ERROR_CLASSES = Object.keys(TURN_FAILURES) as TurnErrorClass[];
+
+/** The classes `?simulate=` will reproduce, in table order. */
+export const SIMULATABLE_CLASSES: TurnErrorClass[] = TURN_ERROR_CLASSES.filter(
+  (cls) => TURN_FAILURES[cls].simulatable,
+);
 
 export type TurnError = {
   class: TurnErrorClass;
@@ -155,7 +310,7 @@ export function classifyTurnError(err: unknown): TurnErrorClass {
 
 /** True for a class the site should show as "you've hit the cap", not "broken". */
 export function isRateLimitClass(cls: TurnErrorClass): boolean {
-  return cls === "rate_limited";
+  return TURN_FAILURES[cls].rateLimit;
 }
 
 /**
@@ -171,7 +326,7 @@ export function isRateLimitClass(cls: TurnErrorClass): boolean {
  * stop doing. The rule is about the class, so the check is too.
  */
 export function isSilentClass(cls: TurnErrorClass): boolean {
-  return cls === "aborted";
+  return TURN_FAILURES[cls].silent;
 }
 
 /**
@@ -186,23 +341,14 @@ export function isSilentClass(cls: TurnErrorClass): boolean {
  * button.
  */
 export function isRetryableClass(cls: TurnErrorClass): boolean {
-  return cls !== "invalid_request";
+  return TURN_FAILURES[cls].retryable;
 }
 
 /** Narrows an arbitrary string (an error message, a JSON error body) to a class. */
 export function toTurnErrorClass(value: unknown): TurnErrorClass {
-  const known: TurnErrorClass[] = [
-    "invalid_request",
-    "rate_limited",
-    "upstream_unconfigured",
-    "upstream_auth",
-    "upstream_timeout",
-    "upstream_unavailable",
-    "network",
-    "aborted",
-    "unknown",
-  ];
-  return known.includes(value as TurnErrorClass) ? (value as TurnErrorClass) : "unknown";
+  return typeof value === "string" && Object.hasOwn(TURN_FAILURES, value)
+    ? (value as TurnErrorClass)
+    : "unknown";
 }
 
 // --- What the reader is told -----------------------------------------------
@@ -211,46 +357,20 @@ export function toTurnErrorClass(value: unknown): TurnErrorClass {
 // a single grey line for every failure, which is how a dropped connection on a
 // phone read as "the model is broken" — the one reading that makes a visitor
 // stop rather than try again. Each of these says what happened and what to do
-// about it, and the two that are the site's own fault say so.
-//
-// `rate_limited` is deliberately absent: it is not an error state, it is the
-// budget running out, and it routes to ManualMode instead. `aborted` is absent
-// because the reader pressed stop — telling someone what they just did is not
-// information.
-export const TURN_ERROR_COPY: Partial<Record<TurnErrorClass, string>> = {
-  network:
-    "The connection dropped before the answer made it through. Check your signal and try again.",
-  upstream_timeout:
-    "The server stopped responding partway through. Give it another try.",
-  upstream_unavailable:
-    "Something went wrong on my end. Give it another try in a moment.",
-  unknown: "Something went wrong on my end. Give it another try in a moment.",
-  upstream_unconfigured:
-    "The chat backend is misconfigured — this one is on me, not you.",
-  upstream_auth: "The chat backend is misconfigured — this one is on me, not you.",
-  invalid_request: "That message couldn't be sent as written. Try shortening it.",
-};
+// about it, and the two that are the site's own fault say so. The sentences
+// live in the table above; these two functions are only the lookup.
 
 /** The sentence for a class, falling back to the generic one. */
 export function turnErrorCopy(cls: TurnErrorClass): string {
-  return TURN_ERROR_COPY[cls] ?? TURN_ERROR_COPY.unknown!;
+  return TURN_FAILURES[cls].copy ?? TURN_FAILURES.unknown.copy;
 }
 
 /**
  * The short label above the sentence — the site's own register for the class,
  * not the class id. Rendered as `turn failed · <label>`.
+ *
+ * `network` → "connection". Falls back to the class id, which is never wrong.
  */
-const TURN_ERROR_LABEL: Partial<Record<TurnErrorClass, string>> = {
-  network: "connection",
-  upstream_timeout: "server timeout",
-  upstream_unavailable: "upstream",
-  upstream_unconfigured: "misconfigured",
-  upstream_auth: "misconfigured",
-  invalid_request: "bad request",
-  unknown: "unknown",
-};
-
-/** `network` → "connection". Falls back to the class id, which is never wrong. */
 export function turnErrorLabel(cls: TurnErrorClass): string {
-  return TURN_ERROR_LABEL[cls] ?? cls;
+  return TURN_FAILURES[cls].label ?? cls;
 }

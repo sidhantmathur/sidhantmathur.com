@@ -165,33 +165,12 @@ export function readToolNames() {
   return [...block[0].matchAll(/^ {4}(\w+):\s*tool\(/gm)].map((m) => m[1]);
 }
 
-/**
- * The closed error vocabulary in lib/chat-telemetry.ts, read from the runtime
- * narrowing list rather than the type — a TS union has nothing to import at
- * runtime, and the two are asserted equal by the type checker anyway.
- */
-export function readErrorClasses() {
-  const src = read("lib/chat-telemetry.ts");
-  const block = src.match(/const known: TurnErrorClass\[\] = \[([\s\S]*?)\];/);
-  if (!block) throw new Error("Could not locate the error-class list in lib/chat-telemetry.ts");
-  return [...block[1].matchAll(/"([^"]+)"/g)].map((m) => m[1]);
-}
-
-/** Classes the route's failure theatre will reproduce on demand. */
-export function readSimulatableClasses() {
-  const src = read("app/api/chat/route.ts");
-  const block = src.match(/const SIMULATABLE: TurnErrorClass\[\] = \[([\s\S]*?)\];/);
-  if (!block) throw new Error("Could not locate SIMULATABLE in app/api/chat/route.ts");
-  return [...block[1].matchAll(/"([^"]+)"/g)].map((m) => m[1]);
-}
-
-/** Classes the failure-theatre UI offers a button for. */
-export function readFailureTheatreClasses() {
-  const src = read("components/shell/instruments.tsx");
-  const block = src.match(/const FAILURES: FailureSpec\[\] = \[([\s\S]*?)\n\];/);
-  if (!block) throw new Error("Could not locate FAILURES in components/shell/instruments.tsx");
-  return [...block[1].matchAll(/cls:\s*"([^"]+)"/g)].map((m) => m[1]);
-}
+// The error vocabulary used to be scraped out of three files here — the runtime
+// narrowing list in lib/chat-telemetry.ts, the route's SIMULATABLE array, and
+// the instrument deck's FAILURES array — because a TS union has nothing to
+// import at runtime and the three copies could drift. There is one table now
+// (`TURN_FAILURES`), and the tests import it directly under
+// --experimental-strip-types, so the scrapers have no caller and are gone.
 
 /**
  * Rough token estimate. Deliberately crude — this backstops the ~8k budget the
