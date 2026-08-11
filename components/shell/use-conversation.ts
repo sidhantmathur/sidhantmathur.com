@@ -5,7 +5,13 @@ import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { track } from "@/lib/analytics";
 import { decodeSnapshot, payloadFromHash } from "@/lib/permalink";
-import type { RoleFitResult } from "@/lib/role-fit";
+import {
+  isPlainPanelKind,
+  PANEL_BY_TOOL,
+  PANELS,
+  type PanelView,
+  type RoleFit,
+} from "./panels";
 import {
   isRateLimitClass,
   isSilentClass,
@@ -51,33 +57,11 @@ const RETIRED_STORAGE_KEYS = ["conversation.v1"];
 // react-hooks/purity even from an event handler.
 const nowMs = () => performance.now();
 
-// The reconciled assessment, exactly as lib/role-fit.ts returns it — the client
-// re-derives none of it. Every verdict on screen was decided server-side, and
-// re-computing one here would be a second opinion nobody asked for.
-export type RoleFit = RoleFitResult;
-
-export type PanelView =
-  | { kind: "none" }
-  | { kind: "resume"; focus?: string }
-  | { kind: "projects" }
-  | { kind: "project"; slug: "adarle20" | "nokia" | "dell-ml" }
-  | { kind: "colophon" }
-  | { kind: "contact" }
-  | { kind: "why" }
-  | { kind: "jd" }
-  | { kind: "instruments" }
-  // The export surface and the corpus index (Sprint 5, #17 and #13's
-  // `/sources`). Both are opened deliberately and never by a tool call.
-  | { kind: "export" }
-  | { kind: "corpus" }
-  // The two documents Sprint 7 publishes (#7, #10). Both are real pages as
-  // well; the panel view is the version that opens beside the conversation.
-  | { kind: "prompt" }
-  | { kind: "refusals" }
-  // One chunk of the corpus, opened from a citation (Sprint 3, F2/#4). The
-  // whole file renders; `id` is what gets highlighted and scrolled to.
-  | { kind: "source"; id: string }
-  | { kind: "roleFit"; data: RoleFit };
+// What a panel is now lives in ./panels — one record per kind, carrying the
+// title, the path, the slash command, the tool and who renders it. Both types
+// are re-exported here because most of the shell reaches for them through the
+// hook that owns the panel state.
+export type { PanelView, RoleFit };
 
 export type ToolOut = { type: string; state?: string; output?: unknown };
 
@@ -167,20 +151,27 @@ export function phaseOf(status: string, messages: UIMessage[]): string | null {
     : OPENING_PHASE;
 }
 
-/** First tool output in a turn wins the panel. */
+/**
+ * First tool output in a turn wins the panel.
+ *
+ * Which tool opens which panel is the registry's `fromTool`; what stays here is
+ * only the part a table can't hold — building the payload for the two kinds
+ * that carry one. Everything else is fully described by its name.
+ */
 export function panelForTool(outs: ToolOut[]): PanelView | null {
   for (const out of outs) {
-    if (out.type === "tool-showProject") {
+    const kind = PANEL_BY_TOOL[out.type];
+    if (!kind) continue;
+    if (kind === "project") {
       const slug = (out.output as { slug?: string })?.slug ?? "";
+      // An unrecognised slug falls back to the list rather than a blank panel.
       if (slug === "adarle20" || slug === "nokia" || slug === "dell-ml") {
         return { kind: "project", slug };
       }
       return { kind: "projects" };
     }
-    if (out.type === "tool-showResume") return { kind: "resume" };
-    if (out.type === "tool-contactCard") return { kind: "contact" };
-    if (out.type === "tool-roleFit")
-      return { kind: "roleFit", data: out.output as RoleFit };
+    if (kind === "roleFit") return { kind: "roleFit", data: out.output as RoleFit };
+    if (isPlainPanelKind(kind)) return { kind };
   }
   return null;
 }
@@ -452,6 +443,8 @@ export function useConversation(model: string) {
   // deliberately, and having a tool call yank it away mid-reading would make
   // the instruments feel like they belong to the model rather than the reader.
   // The citation chip under the answer is still there to open the evidence.
+  // That exception is `stealable` in the registry rather than a name checked
+  // here, so a second panel that needs it doesn't have to find this line.
   const lastToolKey = useRef<string>("");
   const panelRef = useRef(panel);
   useEffect(() => {
@@ -465,7 +458,7 @@ export function useConversation(model: string) {
     const key = `${last.id}:${outs.length}`;
     if (key === lastToolKey.current) return;
     lastToolKey.current = key;
-    if (panelRef.current.kind === "instruments") return;
+    if (!PANELS[panelRef.current.kind].stealable) return;
 
     const next = panelForTool(outs);
     // Deferred so the effect body doesn't setState synchronously.

@@ -1,6 +1,7 @@
 import { FIT_QUESTION } from "@/content/recruiter";
 import { JD_PREFIX } from "@/lib/job-posting";
 import { ROAST_REQUEST, SITE_REQUEST } from "@/lib/site-question";
+import { PANELS, SLASH_PANELS, type PanelView, type PlainPanelKind } from "./panels";
 
 // Navigation and copy for the app shell.
 //
@@ -40,21 +41,8 @@ export type RailItem = {
   label: string;
   href?: string;
   external?: boolean;
-  view?: PanelViewSpec;
+  view?: PanelView;
 };
-
-// Structural mirror of PanelView's opening cases, kept here so the data module
-// doesn't import from the conversation hook.
-export type PanelViewSpec =
-  | { kind: "resume" }
-  | { kind: "why" }
-  | { kind: "contact" }
-  | { kind: "colophon" }
-  | { kind: "jd" }
-  | { kind: "instruments" }
-  | { kind: "prompt" }
-  | { kind: "refusals" }
-  | { kind: "project"; slug: "adarle20" | "nokia" | "dell-ml" };
 
 export const RAIL_ITEMS: RailItem[] = [
   { label: "Resume", href: "/resume", view: { kind: "resume" } },
@@ -99,7 +87,9 @@ export const IDLE_LINES = [
 
 // docs/site-copy.md → "Job-description fit". Marked DRAFT there.
 export const JD_COPY = {
-  heading: "Paste a job description",
+  // The panel's title bar shows the same words, so the heading is read out of
+  // the registry rather than kept twice.
+  heading: PANELS.jd.title,
   body: "Paste the posting and I'll map my experience onto it — including the parts I don't match.",
   placeholder: "Paste the job description here",
   submit: "Check the fit",
@@ -145,20 +135,11 @@ export type SlashCommand = {
   /** 'panel' opens the context panel locally; 'send' dispatches a chat message. */
   kind: "panel" | "send";
   /**
-   * For kind==='panel': which panel view to open. Every name here has to be a
-   * `PanelView` kind in use-conversation.ts — a typo would open nothing, and
-   * silently. evals/export.test.mjs asserts the two lists agree.
+   * For kind==='panel': which panel view to open. Not typed as a string any
+   * more — it is a kind from the registry, so the typo that used to open
+   * nothing and say nothing is now a compile error.
    */
-  panel?:
-    | "resume"
-    | "projects"
-    | "contact"
-    | "jd"
-    | "instruments"
-    | "export"
-    | "corpus"
-    | "prompt"
-    | "refusals";
+  panel?: PlainPanelKind;
   /** For kind==='send': the message text (verbatim from docs/site-copy.md). */
   message?: string;
 };
@@ -166,21 +147,19 @@ export type SlashCommand = {
 // Slash-command labels are UI affordances, not site copy. The one command that
 // sends a message reuses a suggested question verbatim from site-copy.md.
 //
+// The nine panel commands are no longer typed out here. Each one is the `slash`
+// field of the panel it opens, so a command and its destination are the same
+// fact — see panels.ts. The three that send a message have no panel and stay.
+//
 // Extended in Sprint 5 (#13). The decisions doc lists `/jd`, `/model`,
 // `/budget`, `/sources` and `/pdf`; four of the five are here, because four of
 // the five now have somewhere to point. `/model` is not: it needs an argument
 // ("/model gpt-5-mini") and this registry has no parser, so it would either be
 // a fifth panel or a lie. The header select still does that job.
 export const SLASH_COMMANDS: SlashCommand[] = [
-  { name: "/resume", hint: "Open the resume in the panel", kind: "panel", panel: "resume" },
-  { name: "/projects", hint: "List the three projects", kind: "panel", panel: "projects" },
-  { name: "/contact", hint: "Show contact links", kind: "panel", panel: "contact" },
-  { name: "/jd", hint: "Paste a job description", kind: "panel", panel: "jd" },
-  { name: "/budget", hint: "Turns, tokens and what they cost", kind: "panel", panel: "instruments" },
-  { name: "/sources", hint: "Every source the answers are built from", kind: "panel", panel: "corpus" },
-  { name: "/pdf", hint: "Export — markdown, print, link", kind: "panel", panel: "export" },
-  { name: "/prompt", hint: "Read the instructions it was given", kind: "panel", panel: "prompt" },
-  { name: "/refusals", hint: "What it won't do, and why", kind: "panel", panel: "refusals" },
+  ...SLASH_PANELS.map(
+    ({ name, hint, panel }): SlashCommand => ({ name, hint, kind: "panel", panel }),
+  ),
   {
     name: "/site",
     hint: "How this site is built",

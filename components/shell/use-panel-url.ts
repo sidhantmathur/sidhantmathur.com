@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect } from "react";
-import type { PanelView } from "./use-conversation";
+import type { ProjectSlug } from "@/content/projects";
+import { PANEL_BY_PATH, PANELS, type PanelView } from "./panels";
 
 // Keeps the context panel and the address bar in sync.
 //
@@ -20,23 +21,22 @@ import type { PanelView } from "./use-conversation";
 // a crawler still gets the real server-rendered page at that URL, because
 // those routes are untouched.
 
-const PANEL_PATHS: Partial<Record<PanelView["kind"], string>> = {
-  resume: "/resume",
-  colophon: "/colophon",
-};
+// Both directions read the registry's `path`. The one panel it can't describe
+// is `project`, whose address depends on which project — so the slug's own
+// route is built here, and the registry says `path: null` for that kind.
+const PROJECT_PATH = /^\/projects\/(adarle20|nokia|dell-ml)$/;
 
 /** The panel view a given path represents, if any. */
 export function panelForPath(path: string): PanelView | null {
-  if (path === "/resume") return { kind: "resume" };
-  if (path === "/colophon") return { kind: "colophon" };
-  const project = path.match(/^\/projects\/(adarle20|nokia|dell-ml)$/);
-  if (project) return { kind: "project", slug: project[1] as never };
-  return null;
+  const project = path.match(PROJECT_PATH);
+  if (project) return { kind: "project", slug: project[1] as ProjectSlug };
+  const kind = PANEL_BY_PATH[path];
+  return kind ? { kind } : null;
 }
 
 function pathForPanel(panel: PanelView): string | null {
   if (panel.kind === "project") return `/projects/${panel.slug}`;
-  return PANEL_PATHS[panel.kind] ?? null;
+  return PANELS[panel.kind].path;
 }
 
 /**

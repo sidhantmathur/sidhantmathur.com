@@ -33,6 +33,7 @@ import { RecruiterTldr } from "./recruiter-tldr";
 import { SUGGESTED_QUESTIONS as SUGGESTED } from "@/content/recruiter";
 import { costOfTurn, formatUsd, sumCosts } from "@/lib/pricing";
 import { MODEL_IDS } from "@/lib/models";
+import { isShellPanel, type ShellPanelKind } from "./panels";
 import {
   textOf,
   toolOutputs,
@@ -422,7 +423,7 @@ export function AppShell() {
     const cmd = SLASH_COMMANDS.find((c) => c.name === name);
     if (!cmd) return;
     setInput("");
-    if (cmd.kind === "panel" && cmd.panel) return openPanel({ kind: cmd.panel } as PanelView);
+    if (cmd.kind === "panel" && cmd.panel) return openPanel({ kind: cmd.panel });
     if (cmd.message) {
       stick.current = true;
       submit(cmd.message);
@@ -505,11 +506,15 @@ export function AppShell() {
   const panelOpen = panel.kind !== "none";
   const lastId = messages[messages.length - 1]?.id;
 
-  // The deck is the one panel view that isn't built from content, so it's
-  // rendered here rather than inside PanelBody — which would otherwise need
-  // every instrument's state threaded through it.
-  const panelContent =
-    panel.kind === "export" ? (
+  // Two panel views aren't built from content — the export surface is
+  // conversation state and the deck is instrument state — so they're rendered
+  // here rather than inside PanelBody, which would otherwise need every
+  // instrument threaded through it. The registry says which ones (`surface`);
+  // this record says how, and being keyed by ShellPanelKind it can't be missing
+  // one. The bodies are thunks so only the selected element is ever built, and
+  // both components stay behind the lazy imports at the top of this file.
+  const shellPanel: Record<ShellPanelKind, () => React.ReactNode> = {
+    export: () => (
       <ExportDeck
         messages={messages}
         title={SITE_NAME}
@@ -520,7 +525,8 @@ export function AppShell() {
         onPrint={() => window.print()}
         onAction={bumpStrip}
       />
-    ) : panel.kind === "instruments" ? (
+    ),
+    instruments: () => (
       <InstrumentDeck
         turnLog={turnLog}
         budget={budget}
@@ -530,9 +536,14 @@ export function AppShell() {
         onToggleTeletype={toggleTeletype}
         errorCopy={{ rateLimited: RATE_LIMIT_STATE }}
       />
-    ) : (
-      <PanelBody panel={panel} onSubmitJd={submitJd} onOpenSource={openPanel} />
-    );
+    ),
+  };
+
+  const panelContent = isShellPanel(panel.kind) ? (
+    shellPanel[panel.kind]()
+  ) : (
+    <PanelBody panel={panel} onSubmitJd={submitJd} onOpenSource={openPanel} />
+  );
 
   return (
     <>
@@ -1364,6 +1375,10 @@ function RailLink({
   const cls =
     "flex min-h-[44px] items-center border-b border-line py-2 text-left text-text-soft no-underline transition-colors hover:text-accent";
 
+  // Hoisted so the click handlers close over a narrowed value — TypeScript
+  // drops narrowing on a property once it crosses into a callback.
+  const view = item.view;
+
   if (item.external && item.href) {
     return (
       <a href={item.href} target="_blank" rel="noreferrer" className={cls}>
@@ -1376,14 +1391,14 @@ function RailLink({
   // reach the standalone page, and so crawlers see a link. A plain left-click
   // is intercepted and opens the panel instead; usePanelUrl pushes the same
   // href into the address bar.
-  if (item.view && item.href) {
+  if (view && item.href) {
     return (
       <a
         href={item.href}
         onClick={(e) => {
           if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
           e.preventDefault();
-          onOpenPanel(item.view as PanelView);
+          onOpenPanel(view);
         }}
         className={cls}
       >
@@ -1392,7 +1407,7 @@ function RailLink({
     );
   }
 
-  if (item.view) {
+  if (view) {
     return (
       // The rail entries with no page of their own. The anchors above are
       // untouched — a click on those before hydration navigates, which is a
@@ -1400,7 +1415,7 @@ function RailLink({
       // panel, and that needs JavaScript.
       <button
         type="button"
-        onClick={() => onOpenPanel(item.view as PanelView)}
+        onClick={() => onOpenPanel(view)}
         disabled={!hydrated}
         data-js-control
         className={cls}
