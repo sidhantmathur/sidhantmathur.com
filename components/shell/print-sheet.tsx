@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { textOf, toolOutputs, type ChatMessage, type RoleFit } from "./use-conversation";
 import { stripCitations, citationIds } from "@/lib/verify";
+import { DISCLAIMER, SITE_NAME, SITE_URL } from "@/lib/site";
 import { Markdown } from "./markdown";
 import { FIT_LABELS } from "./shell-data";
 
@@ -23,17 +24,11 @@ import { FIT_LABELS } from "./shell-data";
 
 export function PrintSheet({
   messages,
-  title,
-  sourceUrl,
   permalink,
-  footer,
 }: {
   messages: ChatMessage[];
-  title: string;
-  sourceUrl: string;
   /** Present only once the reader has generated one. */
   permalink?: string | null;
-  footer: string;
 }) {
   // Set after mount: the server has no reader's locale and no "today", and
   // rendering either during SSR is a hydration mismatch waiting to happen.
@@ -50,9 +45,9 @@ export function PrintSheet({
   return (
     <div className="print-only doc [font-family:var(--font-geist-sans)]" aria-hidden="true">
       <div className="doc-block pb-4">
-        <h1 className="text-[19px] font-medium tracking-[-0.01em]">{title}</h1>
+        <h1 className="text-[19px] font-medium tracking-[-0.01em]">{SITE_NAME}</h1>
         <p className="mt-1 text-[11px]">
-          {[sourceUrl, printedOn].filter(Boolean).join(" · ")}
+          {[SITE_URL, printedOn].filter(Boolean).join(" · ")}
         </p>
         {permalink && <p className="mt-0.5 break-all text-[10px]">{permalink}</p>}
       </div>
@@ -91,7 +86,7 @@ export function PrintSheet({
         })}
       </div>
 
-      <p className="doc-rule mt-6 pt-3 text-[10px] leading-relaxed">{footer}</p>
+      <p className="doc-rule mt-6 pt-3 text-[10px] leading-relaxed">{DISCLAIMER}</p>
     </div>
   );
 }

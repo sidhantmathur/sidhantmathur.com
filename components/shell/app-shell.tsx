@@ -28,6 +28,7 @@ import { AmbientBackdrop } from "./ambient-backdrop";
 import { TurnError } from "./turn-error";
 import { conversationToMarkdown, messageToMarkdown } from "@/lib/transcript";
 import { permalinkFor } from "@/lib/permalink";
+import { DISCLAIMER, SITE_NAME, SITE_URL } from "@/lib/site";
 import { track } from "@/lib/analytics";
 import { RecruiterTldr } from "./recruiter-tldr";
 import { SUGGESTED_QUESTIONS as SUGGESTED } from "@/content/recruiter";
@@ -111,8 +112,11 @@ const PrintSheet = dynamic(() => import("./print-sheet").then((m) => m.PrintShee
 // ---------------------------------------------------------------------------
 const HERO = "I learn what the problem needs, then I build the thing.";
 const HERO_SUB = "Ask what you'd ask on a call.";
-const DISCLAIMER =
-  "AI-generated answers about my professional background. It can make mistakes — the resume is the authoritative version.";
+// DISCLAIMER, SITE_NAME and SITE_URL used to sit here and be threaded into the
+// export deck, the print document and the transcript serializer as props. They
+// are in `lib/site.ts` now: the deck and the document import them, and the two
+// surfaces that used to be handed a name and a URL no longer take one. See the
+// note there on why the serializer still takes its arguments.
 // The error state used to be one string, here. It is now one string per error
 // class, in `lib/chat-telemetry.ts` beside the classes themselves, rendered by
 // TurnError — a dropped connection on a phone and a misconfigured server are
@@ -125,10 +129,6 @@ const RATE_LIMIT_STATE =
 // made.
 const REPLAY_BANNER =
   "Replayed conversation. It was rebuilt from the link you opened — the site stored nothing, and this is a snapshot of what the model said then, not a live session.";
-// Identity strings, hoisted so the status strip and the copied transcript's
-// header can't drift apart. Not prose — a name and a URL.
-const SITE_NAME = "Sidhant Mathur";
-const SITE_URL = "https://sidhantmathur.com";
 
 // How long a turn runs before the shell offers to abandon it. Roughly double a
 // normal answer's wait — early enough to be a rescue, late enough not to be a
@@ -517,9 +517,6 @@ export function AppShell() {
     export: () => (
       <ExportDeck
         messages={messages}
-        title={SITE_NAME}
-        sourceUrl={SITE_URL}
-        footer={DISCLAIMER}
         permalink={permalink}
         onPermalink={setPermalink}
         onPrint={() => window.print()}
@@ -556,13 +553,7 @@ export function AppShell() {
           prints the document rather than the app, and the dialog never opens
           over a layout that hasn't happened yet. */}
       {idleReady && (
-        <PrintSheet
-          messages={messages}
-          title={SITE_NAME}
-          sourceUrl={SITE_URL}
-          permalink={permalink}
-          footer={DISCLAIMER}
-        />
+        <PrintSheet messages={messages} permalink={permalink} />
       )}
       {/* Announcements only. Visually nothing, and in three ways deliberately
           placed:

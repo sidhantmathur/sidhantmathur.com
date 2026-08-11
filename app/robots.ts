@@ -1,4 +1,5 @@
 import type { MetadataRoute } from "next";
+import { SITE_URL } from "@/lib/site";
 
 // Everything here is meant to be found — this is a portfolio during a job
 // hunt, so the only disallow is the chat endpoint, which is a POST-only route
@@ -10,7 +11,7 @@ export default function robots(): MetadataRoute.Robots {
       allow: "/",
       disallow: "/api/",
     },
-    sitemap: "https://sidhantmathur.com/sitemap.xml",
-    host: "https://sidhantmathur.com",
+    sitemap: `${SITE_URL}/sitemap.xml`,
+    host: SITE_URL,
   };
 }

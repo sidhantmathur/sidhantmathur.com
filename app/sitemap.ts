@@ -1,6 +1,5 @@
 import type { MetadataRoute } from "next";
-
-const BASE = "https://sidhantmathur.com";
+import { SITE_URL } from "@/lib/site";
 
 // Hand-listed rather than derived from the filesystem: there are a handful of
 // routes,
@@ -25,7 +24,7 @@ const ROUTES = [
 
 export default function sitemap(): MetadataRoute.Sitemap {
   return ROUTES.map(({ path, priority }) => ({
-    url: `${BASE}${path}`,
+    url: `${SITE_URL}${path}`,
     priority,
   }));
 }
