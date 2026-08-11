@@ -1,5 +1,7 @@
 import { Fragment, type ReactNode } from "react";
 
+import { splitBlocks, type AnswerBlock } from "@/lib/answer-blocks";
+
 // A deliberately small markdown renderer for assistant turns.
 //
 // The model emits markdown; rendering it as plain text left literal `**bold**`
@@ -128,16 +130,17 @@ const ORDERED = /^\s*\d+[.)]\s+/;
 // ---------------------------------------------------------------------------
 //
 // The hard part isn't the rendering, it's the block indices. Blocks are split
-// on blank lines and `lib/verify.ts` splits the SAME answer the SAME way to
-// decide which margin note belongs to which paragraph. A fence containing a
-// blank line spans two of those blocks, so the renderer has to join them for
-// display while still reporting the original index to the gutter. Anything
+// on blank lines and `lib/verify.ts` indexes the citation gutter by the same
+// split, so the split itself is neither file's — it is `lib/answer-blocks.ts`,
+// which also classifies each line as prose, fence delimiter or code. A fence
+// containing a blank line spans two of those blocks, so the renderer joins them
+// for display while still reporting the original index to the gutter. Anything
 // that renumbers blocks here silently slides every citation one paragraph up.
 //
 // Streaming is the other constraint: half a fence arrives on its own, and an
 // unterminated fence renders as a code block rather than as three literal
-// backticks that turn into a code block a keystroke later.
-const FENCE = /^ {0,3}(`{3,}|~{3,})\s*([\w+#.-]*)\s*$/;
+// backticks that turn into a code block a keystroke later. `splitBlocks` leaves
+// it open; the flush after the loop is what draws it.
 
 type Group =
   | { kind: "prose"; index: number; block: string }
@@ -148,11 +151,11 @@ type Group =
  * from. Two groups can share an index (prose and a fence in one block); the
  * caller renders the gutter for the first of them only.
  */
-function group(blocks: string[]): Group[] {
+function group(blocks: AnswerBlock[]): Group[] {
   const groups: Group[] = [];
   let open: { index: number; lang: string; lines: string[] } | null = null;
 
-  blocks.forEach((block, index) => {
+  blocks.forEach(({ index, lines }) => {
     let prose: string[] = [];
     const flush = () => {
       if (prose.some((l) => l.trim())) {
@@ -161,18 +164,17 @@ function group(blocks: string[]): Group[] {
       prose = [];
     };
 
-    for (const line of block.split("\n")) {
-      const fence = FENCE.exec(line);
-      if (fence && !open) {
+    for (const line of lines) {
+      if (line.kind === "open") {
         flush();
-        open = { index, lang: fence[2] ?? "", lines: [] };
-      } else if (fence && open) {
+        open = { index, lang: line.lang, lines: [] };
+      } else if (open && line.kind === "close") {
         groups.push({ kind: "code", index: open.index, lang: open.lang, code: open.lines.join("\n") });
         open = null;
       } else if (open) {
-        open.lines.push(line);
+        open.lines.push(line.text);
       } else {
-        prose.push(line);
+        prose.push(line.text);
       }
     }
     flush();
@@ -312,10 +314,10 @@ export function Markdown({
    */
   trailing?: ReactNode;
 }) {
-  // Blank lines separate blocks — the same split lib/verify.ts uses, so the two
-  // agree on what "block 2" means. Streaming means this runs on partial text,
-  // so every branch has to tolerate an unterminated block.
-  const groups = group(text.split(/\n{2,}/));
+  // Blank lines separate blocks — literally the same function lib/verify.ts
+  // calls, so the two agree on what "block 2" means. Streaming means this runs
+  // on partial text, so every branch has to tolerate an unterminated block.
+  const groups = group(splitBlocks(text));
 
   // A block that produced both prose and a fence gets its margin note once,
   // against the first thing rendered from it.

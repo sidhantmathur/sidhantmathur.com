@@ -28,7 +28,10 @@
 // passes the chunks in. That's what lets `node --test` exercise this against a
 // hand-written fixture — the checker's behaviour is asserted on cases chosen to
 // break it, not on whatever resume.md happens to say this week. Same reasoning
-// as lib/transcript.ts.
+// as lib/transcript.ts. lib/answer-blocks.ts is dependency-free for the same
+// reason and is the one exception to the no-imports rule.
+
+import { isFenceLine, maskedText, splitBlocks } from "./answer-blocks.ts";
 
 /** The shape this module needs from a chunk. lib/chunks.generated satisfies it. */
 export type VerifiableChunk = { id: string; text: string };
@@ -43,9 +46,6 @@ const MARKER = /\[([a-z0-9]+(?:-[a-z0-9]+)*:[a-z0-9]+(?:-[a-z0-9]+)*)\](?!\()/g;
 
 /** The last, half-arrived marker of a streaming answer: `[resume:nok`. */
 const PARTIAL_MARKER = /\[[a-z0-9:-]*$/;
-
-/** An opening or closing code fence, alone on its line. */
-const FENCE_LINE = /^ {0,3}(`{3,}|~{3,})\s*[\w+#.-]*\s*$/;
 
 /**
  * Removes citation markers, leaving the prose a reader should see.
@@ -62,7 +62,7 @@ export function stripCitations(text: string): string {
   return text
     .split("\n")
     .map((line) => {
-      if (FENCE_LINE.test(line)) {
+      if (isFenceLine(line)) {
         inFence = !inFence;
         return line;
       }
@@ -364,35 +364,6 @@ function sentencesOf(block: string): string[] {
     .filter(Boolean);
 }
 
-/**
- * Blanks the inside of fenced code blocks before the check reads them.
- *
- * Code is not prose and a line of it is not a claim. Without this, an answer
- * that shows a snippet gets one "uncited" verdict per line of it — the check
- * asking which chunk of the resume supports `const rate = 0;`, which is both
- * wrong and the fastest way to teach a reader to stop reading the margin.
- *
- * Each masked line becomes a single space rather than an empty string, which
- * matters more than it looks: blocks are split on `\n{2,}` and the renderer
- * splits the same way to line up the margin. An emptied line would read as a
- * blank one, split a block in two, and shift every later block's index by one —
- * silently moving citations onto the wrong paragraph. A space is non-blank, so
- * the block structure comes out identical, and `sentencesOf` drops it.
- */
-function maskFences(answer: string): string {
-  let open = false;
-  return answer
-    .split("\n")
-    .map((line) => {
-      if (FENCE_LINE.test(line)) {
-        open = !open;
-        return " ";
-      }
-      return open && line.trim() ? " " : line;
-    })
-    .join("\n");
-}
-
 // --- The check ------------------------------------------------------------
 
 /**
@@ -407,9 +378,10 @@ export function verifyAnswer(
   answer: string,
   lookup: Record<string, VerifiableChunk>,
 ): AnswerCheck {
-  // Masked, not stripped — see maskFences. The indices this produces have to
-  // match the ones components/shell/markdown.tsx renders against.
-  const rawBlocks = maskFences(answer).split(/\n{2,}/);
+  // The index a block gets here is the index the margin note is drawn against,
+  // so the split is lib/answer-blocks.ts and the renderer calls the same
+  // function. Masked, not stripped — see maskedText.
+  const rawBlocks = splitBlocks(answer).map(maskedText);
   const blocks: BlockCheck[] = [];
   const claims: Claim[] = [];
   const citedIds: string[] = [];
