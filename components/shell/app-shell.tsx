@@ -32,9 +32,10 @@ import { DISCLAIMER, SITE_NAME, SITE_URL } from "@/lib/site";
 import { track } from "@/lib/analytics";
 import { RecruiterTldr } from "./recruiter-tldr";
 import { SUGGESTED_QUESTIONS as SUGGESTED } from "@/content/recruiter";
-import { costOfTurn, formatUsd, sumCosts } from "@/lib/pricing";
+import { costOfTurn, sumCosts } from "@/lib/pricing";
 import { MODEL_IDS } from "@/lib/models";
 import { isShellPanel, type ShellPanelKind } from "./panels";
+import { readoutValues, type ReadoutState } from "./readouts";
 import {
   textOf,
   toolOutputs,
@@ -192,6 +193,11 @@ export function AppShell() {
     () => sumCosts(turnLog.map((t) => (t.error ? null : costOfTurn(t.model, t.usage)))),
     [turnLog],
   );
+  // The four session numbers, as numbers. The status strip below and the rail
+  // sheet on a phone both show them, and both format them the same way because
+  // neither one does — see readouts.ts.
+  const readouts: ReadoutState = { turns, ttft, cost: sessionCost.total, model };
+  const reading = readoutValues(readouts);
 
   // Idle mode. Suspended while a turn is in flight — an answer arriving is not
   // an idle screen — and it never blocks anything: the input keeps focus and
@@ -645,12 +651,12 @@ export function AppShell() {
             data-js-control
             className="hidden items-center gap-4 transition-colors hover:text-accent md:flex"
           >
-            <Stat label="turns" value={`${turns}/10`} />
-            <Stat label="ttft" value={ttft == null ? "—" : `${ttft}ms`} />
+            <Stat label="turns" value={reading.turns} />
+            <Stat label="ttft" value={reading.ttft} />
             <span className="hidden lg:flex">
               <Seismograph rate={rate} settled={settledRate} />
             </span>
-            <Stat label="est." value={formatUsd(sessionCost.total)} />
+            <Stat label="est." value={reading.cost} />
             {budget && (
               <Stat label={budget.tier} value={`${budget.remaining}/${budget.limit}`} />
             )}
@@ -1281,29 +1287,30 @@ export function AppShell() {
           on a phone it is fetched after hydration rather than before it. */}
       {isMobile && (idleReady || railOpen || panelOpen) && (
         <MobileSheets
-          onRailClosed={() => railTriggerRef.current?.focus()}
-          onPanelClosed={() => {
-            const opener = panelOpenerRef.current;
-            if (opener?.isConnected && opener.offsetParent !== null) opener.focus();
-            else inputRef.current?.focus();
+          rail={{
+            open: railOpen,
+            onOpenChange: setRailOpen,
+            onClosed: () => railTriggerRef.current?.focus(),
+            content: (
+              <RailContent onOpenPanel={openPanel} hydrated={hydrated} showHeading={false} />
+            ),
           }}
-          railOpen={railOpen}
-          onRailOpenChange={setRailOpen}
-          rail={<RailContent onOpenPanel={openPanel} hydrated={hydrated} showHeading={false} />}
-          readouts={{
-            turns: `${turns}/10`,
-            ttft: ttft == null ? "—" : `${ttft}ms`,
-            cost: formatUsd(sessionCost.total),
-            model,
+          panel={{
+            open: panelOpen,
+            sheetOpen,
+            onOpen: () => setSheetOpen(true),
+            onClose: closePanel,
+            onClosed: () => {
+              const opener = panelOpenerRef.current;
+              if (opener?.isConnected && opener.offsetParent !== null) opener.focus();
+              else inputRef.current?.focus();
+            },
+            title: panelTitle(panel),
+            content: panelContent,
+            full: sheetFull,
+            onToggleFull: () => setSheetFull((v) => !v),
           }}
-          panelOpen={panelOpen}
-          panelTitle={panelTitle(panel)}
-          panelContent={panelContent}
-          sheetOpen={sheetOpen}
-          onSheetOpen={() => setSheetOpen(true)}
-          onClosePanel={closePanel}
-          sheetFull={sheetFull}
-          onToggleFull={() => setSheetFull((v) => !v)}
+          readouts={readouts}
         />
       )}
       </div>

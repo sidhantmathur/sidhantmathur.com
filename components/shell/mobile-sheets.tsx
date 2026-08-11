@@ -8,6 +8,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import { readoutValues, type ReadoutState } from "./readouts";
 
 // The two sheets the shell becomes below lg: the rail on the left, the context
 // panel along the bottom.
@@ -18,47 +19,46 @@ import {
 // them before. It used to be part of the entry chunk on every device, including
 // the desktops that can never open a sheet at all.
 //
-// Deliberately dumb: it holds no state and computes nothing. Open/closed,
-// titles and the readouts all arrive as props, so the split is a load-order
-// change and nothing else. The one piece of behaviour it keeps is the
-// dismiss-closes-the-panel rule, because that is a property of the sheet rather
-// than of the shell — see the note on the bottom sheet.
+// It holds no state. What it does own is how a sheet behaves and how a readout
+// reads: the dismiss-closes-the-panel rule below is a property of the sheet
+// rather than of the shell, and the four numbers arrive as numbers and are
+// formatted here (see readouts.ts) instead of arriving pre-rendered.
+//
+// The props are grouped by the thing they describe — the rail, the panel, the
+// readouts — because they were fourteen flat ones and reading the call site
+// meant matching `sheetFull` against `panelOpen` against `railOpen` by eye.
 export function MobileSheets({
-  onRailClosed,
-  onPanelClosed,
-  railOpen,
-  onRailOpenChange,
   rail,
+  panel,
   readouts,
-  panelOpen,
-  panelTitle,
-  panelContent,
-  sheetOpen,
-  onSheetOpen,
-  onClosePanel,
-  sheetFull,
-  onToggleFull,
 }: {
-  /** Hands focus back to the control that opened the rail. See app-shell.tsx. */
-  onRailClosed: () => void;
-  /** The same for the context panel, which can be opened from several places. */
-  onPanelClosed: () => void;
-  railOpen: boolean;
-  onRailOpenChange: (open: boolean) => void;
-  rail: ReactNode;
-  readouts: { turns: string; ttft: string; cost: string; model: string };
-  panelOpen: boolean;
-  panelTitle: string;
-  panelContent: ReactNode;
-  sheetOpen: boolean;
-  onSheetOpen: () => void;
-  onClosePanel: () => void;
-  sheetFull: boolean;
-  onToggleFull: () => void;
+  rail: {
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+    /** Hands focus back to the control that opened it. See app-shell.tsx. */
+    onClosed: () => void;
+    content: ReactNode;
+  };
+  panel: {
+    /** Whether a panel is selected at all — the URL's `panel` param. */
+    open: boolean;
+    /** Whether the sheet showing it has been dismissed. Both must hold. */
+    sheetOpen: boolean;
+    onOpen: () => void;
+    onClose: () => void;
+    /** The same focus return as the rail's, from several possible openers. */
+    onClosed: () => void;
+    title: string;
+    content: ReactNode;
+    full: boolean;
+    onToggleFull: () => void;
+  };
+  readouts: ReadoutState;
 }) {
+  const reading = readoutValues(readouts);
   return (
     <>
-      <Sheet open={railOpen} onOpenChange={onRailOpenChange}>
+      <Sheet open={rail.open} onOpenChange={rail.onOpenChange}>
         <SheetContent
           side="left"
           // The primitive is meant to return focus to whatever opened the
@@ -67,7 +67,7 @@ export function MobileSheets({
           // the shell puts it where it belongs.
           onCloseAutoFocus={(e) => {
             e.preventDefault();
-            onRailClosed();
+            rail.onClosed();
           }}
           // Scrolls because the rail now carries the readouts and the
           // transcript controls the header and input row drop at this
@@ -93,15 +93,15 @@ export function MobileSheets({
               ✕
             </SheetClose>
           </SheetHeader>
-          {rail}
+          {rail.content}
           {/* The header readouts are hidden at this width, so the rail
               carries the same four numbers. Tapping Instruments above
               opens the full deck as a sheet. */}
           <div className="mt-4 border-t border-line pt-3 text-text-faint">
-            <div>turns {readouts.turns}</div>
-            <div>ttft {readouts.ttft}</div>
-            <div>est. {readouts.cost}</div>
-            <div className="truncate">model {readouts.model}</div>
+            <div>turns {reading.turns}</div>
+            <div>ttft {reading.ttft}</div>
+            <div>est. {reading.cost}</div>
+            <div className="truncate">model {reading.model}</div>
           </div>
 
           {/* The transcript controls used to be duplicated here, because
@@ -116,16 +116,16 @@ export function MobileSheets({
           so the address bar still read /resume with nothing open, and that
           was the URL you'd copy. */}
       <Sheet
-        open={sheetOpen && panelOpen}
-        onOpenChange={(open) => (open ? onSheetOpen() : onClosePanel())}
+        open={panel.sheetOpen && panel.open}
+        onOpenChange={(open) => (open ? panel.onOpen() : panel.onClose())}
       >
         <SheetContent
           side="bottom"
           onCloseAutoFocus={(e) => {
             e.preventDefault();
-            onPanelClosed();
+            panel.onClosed();
           }}
-          style={{ height: sheetFull ? "88dvh" : "52dvh" }}
+          style={{ height: panel.full ? "88dvh" : "52dvh" }}
           // The sheet supplies its own close control in the header row, so
           // the default floating one is off: it is positioned top-right,
           // which is exactly where the size toggle sits, and the two
@@ -136,18 +136,18 @@ export function MobileSheets({
         >
           <SheetHeader className="flex-row items-center gap-2 space-y-0 border-b border-line py-0 pl-4 pr-1">
             <SheetTitle className="min-w-0 flex-1 truncate text-[13px] font-normal text-text-faint">
-              {panelTitle}
+              {panel.title}
             </SheetTitle>
             {/* Both controls fill the header's height. As bare labels they
                 were ~16px tall targets on the surface that is only ever
                 touched. */}
             <button
               type="button"
-              onClick={onToggleFull}
-              aria-expanded={sheetFull}
+              onClick={panel.onToggleFull}
+              aria-expanded={panel.full}
               className="flex h-11 shrink-0 touch-manipulation items-center px-2 text-[13px] text-text-faint transition-colors hover:text-accent"
             >
-              {sheetFull ? "collapse ↓" : "expand ↑"}
+              {panel.full ? "collapse ↓" : "expand ↑"}
             </button>
             <SheetClose
               aria-label="Close"
@@ -160,7 +160,7 @@ export function MobileSheets({
               the last row of a panel otherwise sits under the bar. It
               resolves to 0 everywhere else. */}
           <div className="min-h-0 flex-1 overflow-y-auto p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
-            {panelContent}
+            {panel.content}
           </div>
         </SheetContent>
       </Sheet>
