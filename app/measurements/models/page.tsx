@@ -227,19 +227,14 @@ export default function ModelComparisonPage() {
             heading="Output tokens per turn"
             note="Median. Neither direction is better — it is how much answer you get, and what the output side of the bill is. Counted by each provider's own tokenizer, so compare within a row rather than across them."
             format={(v) => formatCount(v)}
-            // A token count is NOT gated on MIN_TURNS_FOR_P50, unlike the two
-            // timing panels above — the same rule the table's `in` and `out`
-            // columns use. The difference is live: the newest haiku run is six
-            // turns, so it has no median latency on this page and does have a
-            // median token count.
-            ranked={rank(rows, (r) => (r.outputTokens ? r.outputTokens.p50 : null), "none")}
+            ranked={rank(rows, (r) => median(r.outputTokens), "none")}
           />
           <RankedBars
             heading="Input tokens per turn"
             note="Median. The corpus is identical for every model, so most of the spread here is the tokenizers disagreeing about how to count the same text, not one model being sent more — these counts are not comparable across providers the way seconds and dollars are."
             bestLabel="fewest"
             format={(v) => formatCount(v)}
-            ranked={rank(rows, (r) => (r.inputTokens ? r.inputTokens.p50 : null), "lower")}
+            ranked={rank(rows, (r) => median(r.inputTokens), "lower")}
           />
           <RankedBars
             heading="Turns that broke"
@@ -315,11 +310,9 @@ export default function ModelComparisonPage() {
                     )}
                   </td>
                   <td className="py-1.5 pr-3">{formatSeconds(median(r.ttftMs))}</td>
-                  <td className="py-1.5 pr-3">
-                    {r.tokensPerSecond ? r.tokensPerSecond.p50.toFixed(1) : "—"}
-                  </td>
-                  <td className="py-1.5 pr-3">{formatCount(r.inputTokens?.p50 ?? null)}</td>
-                  <td className="py-1.5 pr-3">{formatCount(r.outputTokens?.p50 ?? null)}</td>
+                  <td className="py-1.5 pr-3">{median(r.tokensPerSecond)?.toFixed(1) ?? "—"}</td>
+                  <td className="py-1.5 pr-3">{formatCount(median(r.inputTokens))}</td>
+                  <td className="py-1.5 pr-3">{formatCount(median(r.outputTokens))}</td>
                   <td className="py-1.5 pr-3">
                     {r.cacheHitRate == null ? "—" : formatPercent(r.cacheHitRate)}
                   </td>

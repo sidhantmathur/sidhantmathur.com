@@ -22,6 +22,7 @@ import { describe, it } from "node:test";
 
 import { runPerformance, sample, turnPerformance } from "./lib/performance.mjs";
 import { ROOT } from "./lib/artifacts.mjs";
+import { MIN_TURNS_FOR_P50 } from "../lib/measurements.ts";
 import { MODEL_PRICES, PRICE_CONFIDENCE } from "../lib/pricing.ts";
 import {
   allGroups,
@@ -367,6 +368,28 @@ describe("what the comparison page derives", () => {
     assert.equal(median({ n: 3, p50: 900, min: 900, max: 900 }), null, "and nor does a thin one");
     assert.equal(median({ n: 22, p50: 900, min: 800, max: 1000 }), 900);
   });
+
+  it("holds a token median to the same floor as a timing median", () => {
+    // The token panels and the table's `in`/`out` columns used to read `.p50`
+    // straight off the sample while the timing panels went through the gate.
+    // A six-turn run therefore printed an em dash for its median TTFT and a
+    // real median token count in the same row, from the same six turns.
+    const thin = toRow(run({ model: "a/thin", performance: perfWithTurns(MIN_TURNS_FOR_P50 - 1) }));
+    assert.equal(median(thin.ttftMs), null);
+    assert.equal(median(thin.tokensPerSecond), null);
+    assert.equal(median(thin.inputTokens), null, "a token count is not exempt from the floor");
+    assert.equal(median(thin.outputTokens), null);
+
+    const { bars, missing } = rank([thin], (r) => median(r.outputTokens), "none");
+    assert.equal(bars.length, 0, "and a withheld median is not plotted");
+    assert.deepEqual(missing.map((r) => r.model), ["a/thin"], "it is reported as missing instead");
+
+    const atFloor = toRow(run({ model: "a/floor", performance: perfWithTurns(MIN_TURNS_FOR_P50) }));
+    assert.equal(median(atFloor.ttftMs), 1200);
+    assert.equal(median(atFloor.tokensPerSecond), 80);
+    assert.equal(median(atFloor.inputTokens), 6000, "exactly at the floor is enough");
+    assert.equal(median(atFloor.outputTokens), 300);
+  });
 });
 
 // --- the figures above the charts -------------------------------------------
@@ -503,5 +526,19 @@ function perfWithTtft(p50) {
   return {
     ...perfWithCost(0.001),
     ttftMs: { n: 22, p50, min: p50, max: p50 },
+  };
+}
+
+/** A run measured over `n` turns, with every sample the page reads populated. */
+function perfWithTurns(n) {
+  const s = (p50) => ({ n, p50, min: p50, max: p50 });
+  return {
+    ...perfWithCost(0.001),
+    turns: { measured: n, missing: 0 },
+    ttftMs: s(1200),
+    durationMs: s(3000),
+    tokensPerSecond: s(80),
+    inputTokens: s(6000),
+    outputTokens: s(300),
   };
 }
