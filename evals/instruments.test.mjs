@@ -1,27 +1,39 @@
 // Unit tests for the Sprint 2 instruments — the cost arithmetic behind the
-// meter (#1) and the two lists that the failure theatre (#6) depends on staying
-// in step with the route.
+// meter (#1) and the failure vocabulary the theatre (#6) renders.
 //
 // The drift these catch is the quiet kind. A model added to the allowlist with
 // no price entry doesn't break anything: the meter just renders "—" and the
 // session total silently stops counting that model's turns, which is worse than
-// an error because it still looks like a working instrument. Same shape of
-// problem for an error class that exists in the vocabulary but has no button
-// and no server case — failure theatre would claim to show "every way this site
-// can fail" while quietly omitting one.
+// an error because it still looks like a working instrument.
+//
+// The failure half used to catch the same shape of problem by comparing three
+// hand-kept lists. They are one table now, so the checks here are about what is
+// IN it — a class with no sentence of its own borrows the generic one silently,
+// which is the same kind of instrument that looks like it works.
 //
 // Run: npm run eval
 
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
 
-import { MODEL_PRICES, costOfTurn, formatUsd, sumCosts } from "../lib/pricing.ts";
 import {
-  readErrorClasses,
-  readFailureTheatreClasses,
-  readServerModels,
-  readSimulatableClasses,
-} from "./lib/artifacts.mjs";
+  MODEL_PRICES,
+  PRICE_CONFIDENCE,
+  costOfTurn,
+  formatUsd,
+  sumCosts,
+} from "../lib/pricing.ts";
+import { MODEL_IDS } from "../lib/models.ts";
+import {
+  SIMULATABLE_CLASSES,
+  TURN_ERROR_CLASSES,
+  TURN_FAILURES,
+  isRateLimitClass,
+  isSilentClass,
+  toTurnErrorClass,
+  turnErrorCopy,
+  turnErrorLabel,
+} from "../lib/chat-telemetry.ts";
 
 describe("cost arithmetic", () => {
   const usage = {
@@ -87,10 +99,24 @@ describe("cost arithmetic", () => {
 
 describe("the price table covers what the site can actually run", () => {
   test("every allowlisted model has a list price", () => {
-    for (const id of Object.keys(readServerModels())) {
+    // The allowlist and the price table are two views of one catalogue now, so
+    // this can only fail if a row loses its price fields — but that is exactly
+    // the failure that would make the cost meter silently drop a model's turns.
+    for (const id of MODEL_IDS) {
       assert.ok(
         MODEL_PRICES[id],
-        `"${id}" is on the server allowlist but has no entry in lib/pricing.ts — the cost meter would silently drop its turns`,
+        `"${id}" is in the catalogue but has no price — the cost meter would silently drop its turns`,
+      );
+    }
+  });
+
+  test("every model says how far its prices are to be trusted", () => {
+    // /measurements/models prints these figures and labels each one with its
+    // confidence. A row with no confidence would render an unqualified number.
+    for (const id of MODEL_IDS) {
+      assert.ok(
+        ["confirmed", "derived", "unconfirmed"].includes(PRICE_CONFIDENCE[id]),
+        `"${id}" has no price confidence — the page would print a dollar figure with no caveat`,
       );
     }
   });
@@ -113,31 +139,73 @@ describe("the price table covers what the site can actually run", () => {
   });
 });
 
-describe("failure theatre covers the whole error vocabulary", () => {
-  test("every error class can be simulated by the route", () => {
-    const simulatable = readSimulatableClasses();
-    for (const cls of readErrorClasses()) {
+// The route's simulate list and the failure-theatre deck are both derived from
+// TURN_FAILURES now, so asserting that they agree with it would be asserting a
+// tautology. What is still worth checking is the table's CONTENT: that every
+// class carries the things the UI reads off it, and that the one client-only
+// class is described as one everywhere it matters.
+describe("the failure table describes every class it declares", () => {
+  test("every class resolves to a sentence and a label", () => {
+    for (const cls of TURN_ERROR_CLASSES) {
+      assert.ok(turnErrorCopy(cls).length > 0, `"${cls}" resolves to an empty sentence`);
+      assert.ok(turnErrorLabel(cls).length > 0, `"${cls}" resolves to an empty label`);
+    }
+  });
+
+  test("the two classes with no sentence of their own are the two that render none", () => {
+    // `rate_limited` routes to ManualMode and `aborted` renders nothing at all.
+    // Any OTHER class falling through to the generic sentence is a class that
+    // was added without anyone writing copy for it.
+    for (const cls of TURN_ERROR_CLASSES) {
+      if (TURN_FAILURES[cls].copy != null) continue;
       assert.ok(
-        simulatable.includes(cls),
-        `"${cls}" is a telemetry error class with no case in the route's SIMULATABLE list`,
+        isRateLimitClass(cls) || isSilentClass(cls),
+        `"${cls}" has no sentence of its own and would silently borrow the generic one`,
       );
     }
   });
 
-  test("every error class has a button in the panel", () => {
-    const offered = readFailureTheatreClasses();
-    for (const cls of readErrorClasses()) {
+  test("every class the route can simulate says how it reaches the client", () => {
+    for (const cls of SIMULATABLE_CLASSES) {
+      const spec = TURN_FAILURES[cls];
+      assert.equal(spec.origin, "server", `"${cls}" is simulatable but is not a server failure`);
+      assert.ok(spec.wire, `"${cls}" has a button in the deck but no wire description`);
+      assert.ok(spec.cause, `"${cls}" has a button in the deck but no cause description`);
+    }
+  });
+
+  test("a client-only class is never offered as something the route can produce", () => {
+    // `network` is raised in the browser's fetch wrapper — the request never
+    // reaches the route, so the route has no exit to take and the deck has no
+    // button to offer. This is the assertion the old scraper got backwards: it
+    // demanded EVERY class appear in the route's list, which a class the server
+    // never emits cannot.
+    for (const cls of TURN_ERROR_CLASSES) {
+      if (TURN_FAILURES[cls].origin !== "client") continue;
       assert.ok(
-        offered.includes(cls),
-        `"${cls}" is a telemetry error class with no entry in the failure-theatre list`,
+        !SIMULATABLE_CLASSES.includes(cls),
+        `"${cls}" is client-only but the route offers to simulate it`,
+      );
+      assert.equal(TURN_FAILURES[cls].wire, null, `client-only "${cls}" describes a server exit`);
+    }
+  });
+
+  test("an early exit's simulated status is a real error status", () => {
+    for (const cls of TURN_ERROR_CLASSES) {
+      const status = TURN_FAILURES[cls].simulateStatus;
+      if (status == null) continue;
+      assert.ok(status >= 400 && status < 600, `"${cls}" simulates a non-error status ${status}`);
+      assert.ok(
+        TURN_FAILURES[cls].simulatable,
+        `"${cls}" has a simulated status but is not simulatable`,
       );
     }
   });
 
-  test("the panel offers nothing the route won't produce", () => {
-    const simulatable = readSimulatableClasses();
-    for (const cls of readFailureTheatreClasses()) {
-      assert.ok(simulatable.includes(cls), `the panel offers "${cls}" but the route ignores it`);
-    }
+  test("an unrecognised value narrows to unknown, and every real one to itself", () => {
+    for (const cls of TURN_ERROR_CLASSES) assert.equal(toTurnErrorClass(cls), cls);
+    assert.equal(toTurnErrorClass("teapot"), "unknown");
+    assert.equal(toTurnErrorClass(undefined), "unknown");
+    assert.equal(toTurnErrorClass("toString"), "unknown");
   });
 });

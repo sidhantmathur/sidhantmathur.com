@@ -1,3 +1,4 @@
+import { ScrollFade, floorWidth } from "./chart-frame";
 import { RAMP, inkOn, rampStep } from "./chart-tokens";
 import type { ModelRow } from "@/lib/model-comparison";
 
@@ -22,15 +23,13 @@ export function ScorecardHeatmap({ rows, groups }: ScorecardHeatmapProps) {
   if (!rows.length || !groups.length) return null;
 
   return (
-    // A query container for the fade below, and the same reasoning as the
-    // scatter's: on a phone this grid is 358px wide and 520px of table, and it
-    // clipped the last column dead flat with nothing saying there was one.
-    // Gated on the table's own floor width rather than on a breakpoint, so the
-    // fade is present exactly when there is something behind it.
-    <div className="@container">
+    // Gated on the table's own floor width: on a phone this grid is 358px wide
+    // and 520px of table, and it clipped the last column dead flat with nothing
+    // saying there was one.
+    <>
       <ScaleKey />
-      <div className="mt-3 overflow-x-auto [mask-image:linear-gradient(to_right,black_92%,transparent)] @[520px]:[mask-image:none]">
-      <table className="t-meta w-full min-w-[520px] border-separate border-spacing-[2px]">
+      <ScrollFade width={520} className="mt-3">
+      <table className={`t-meta w-full ${floorWidth(520)} border-separate border-spacing-[2px]`}>
         <caption className="sr-only">
           Pass rate by model and eval group. Each cell prints its own value.
         </caption>
@@ -76,8 +75,8 @@ export function ScorecardHeatmap({ rows, groups }: ScorecardHeatmapProps) {
           ))}
         </tbody>
       </table>
-      </div>
-    </div>
+      </ScrollFade>
+    </>
   );
 }
 

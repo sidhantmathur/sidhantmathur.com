@@ -21,21 +21,14 @@
 import { spawnSync } from "node:child_process";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+// The allowlist itself, not a copy of it. This used to be a fourth hand-kept
+// list with a comment telling the next person to remember it. Node strips the
+// types on the way in (22.18+), so a plain `node scripts/run-bakeoff.mjs` reads
+// the same table the route and the dropdown do, and a model can no longer be
+// missing from the comparison because someone edited one file.
+import { MODEL_IDS } from "../lib/models.ts";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
-
-// Must stay in step with the `MODELS` allowlist in app/api/chat/route.ts. The
-// static suite asserts the client's list matches the server's; this list is the
-// third one, and the bake-off page says which models it covers, so a model
-// missing here shows up as a model missing from the comparison rather than as a
-// silent gap.
-const ALL_MODELS = [
-  "anthropic/claude-haiku-4.5",
-  "openai/gpt-5-mini",
-  "google/gemini-3.5-flash-lite",
-  "deepseek/deepseek-v4-flash",
-  "openai/gpt-5.6-luna",
-];
 
 const args = process.argv.slice(2);
 const flag = (name, fallback) => {
@@ -47,7 +40,7 @@ const BASE = flag("base", "http://localhost:3000");
 const IP = flag("ip", null);
 const DELAY = flag("delay", "600");
 const DRY = args.includes("--dry-run");
-const models = flag("models", null)?.split(",").map((m) => m.trim()) ?? ALL_MODELS;
+const models = flag("models", null)?.split(",").map((m) => m.trim()) ?? MODEL_IDS;
 
 if (!IP) {
   console.error(

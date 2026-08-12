@@ -41,6 +41,13 @@ import {
   payloadFromHash,
   permalinkFor,
 } from "../lib/permalink.ts";
+import {
+  PANELS,
+  PANEL_BY_PATH,
+  PANEL_KINDS,
+  SLASH_PANELS,
+  isPlainPanelKind,
+} from "../components/shell/panels.ts";
 
 // --- fixtures -------------------------------------------------------------
 
@@ -397,23 +404,80 @@ describe("markdown export", () => {
 // failure that is silent in the browser.
 
 describe("shell wiring", () => {
-  test("every slash command opens a panel view that exists", () => {
-    const shellData = read("components/shell/shell-data.ts");
-    const conversation = read("components/shell/use-conversation.ts");
-    const kinds = new Set(
-      [...conversation.matchAll(/\{ kind: "(\w+)"/g)].map((m) => m[1]),
-    );
-    const commands = [...shellData.matchAll(/panel: "(\w+)"/g)].map((m) => m[1]);
-    assert.ok(commands.length >= 7, "the slash registry lost commands");
-    for (const target of commands) {
-      assert.ok(kinds.has(target), `/${target} points at a panel view that doesn't exist`);
+  // These used to scrape `panel: "(\w+)"` out of shell-data.ts and check it
+  // against `{ kind: "(\w+)"` scraped out of use-conversation.ts — two regexes
+  // asserting that two hand-kept copies of the panel list still agreed. There
+  // is one list now (components/shell/panels.ts), so agreement is a tautology
+  // and what's left to check is the table's own content.
+
+  test("every slash command names a panel in the registry", () => {
+    assert.ok(SLASH_PANELS.length >= 7, "the slash registry lost commands");
+    for (const cmd of SLASH_PANELS) {
+      assert.ok(cmd.name.startsWith("/"), `${cmd.name} is not a slash command`);
+      assert.ok(cmd.hint.trim(), `${cmd.name} has no hint`);
+      assert.ok(PANELS[cmd.panel], `${cmd.name} points at a panel that doesn't exist`);
+      assert.ok(
+        isPlainPanelKind(cmd.panel),
+        `${cmd.name} opens "${cmd.panel}", which needs a payload a slash command can't supply`,
+      );
     }
+    const names = SLASH_PANELS.map((c) => c.name);
+    assert.equal(new Set(names).size, names.length, "two commands share a name");
   });
 
   test("the three commands Sprint 5 owes are registered", () => {
-    const shellData = read("components/shell/shell-data.ts");
+    const names = new Set(SLASH_PANELS.map((c) => c.name));
     for (const name of ["/budget", "/sources", "/pdf"]) {
-      assert.ok(shellData.includes(`"${name}"`), `${name} is not in the slash registry`);
+      assert.ok(names.has(name), `${name} is not in the slash registry`);
+    }
+  });
+
+  test("every panel that has a path has a unique, absolute one", () => {
+    const paths = PANEL_KINDS.map((k) => PANELS[k].path).filter(Boolean);
+    assert.ok(paths.length > 0, "no panel has an address any more");
+    for (const path of paths) {
+      assert.ok(path.startsWith("/"), `"${path}" is not an absolute path`);
+    }
+    assert.equal(new Set(paths).size, paths.length, "two panels claim the same path");
+    // The inverse lookup usePanelUrl reads on popstate has to round-trip.
+    for (const kind of PANEL_KINDS) {
+      const path = PANELS[kind].path;
+      if (path) assert.equal(PANEL_BY_PATH[path], kind, `${path} doesn't map back to ${kind}`);
+    }
+  });
+
+  test("every panel opened by a tool names a tool the route defines", () => {
+    const route = read("app/api/chat/route.ts");
+    const defined = new Set(
+      [...route.matchAll(/^\s{4}(\w+): tool\(\{/gm)].map((m) => `tool-${m[1]}`),
+    );
+    assert.ok(defined.size >= 4, "the tool scrape found nothing — the route moved");
+    const wired = PANEL_KINDS.map((k) => PANELS[k].fromTool).filter(Boolean);
+    assert.ok(wired.length > 0, "no panel opens from a tool any more");
+    for (const tool of wired) {
+      assert.ok(defined.has(tool), `a panel opens from ${tool}, which the route doesn't define`);
+    }
+    assert.equal(new Set(wired).size, wired.length, "two panels claim the same tool");
+  });
+
+  test("only the two panels that build a payload open from a tool", () => {
+    // panelForTool constructs `{ kind }` for anything else, so a payload-
+    // carrying kind wired to a tool without a branch there would open a panel
+    // missing the data it renders.
+    for (const kind of PANEL_KINDS) {
+      if (!PANELS[kind].fromTool || isPlainPanelKind(kind)) continue;
+      assert.ok(
+        kind === "project" || kind === "roleFit",
+        `"${kind}" needs a payload and opens from a tool, but panelForTool can't build one`,
+      );
+    }
+  });
+
+  test("every panel that renders has a title", () => {
+    for (const kind of PANEL_KINDS) {
+      // `none` is the closed panel — there is no title bar to fill.
+      if (kind === "none") continue;
+      assert.ok(PANELS[kind].title.trim(), `panel "${kind}" has no title`);
     }
   });
 

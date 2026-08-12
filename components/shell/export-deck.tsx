@@ -9,6 +9,7 @@ import {
   verdictCounts,
 } from "@/lib/transcript";
 import { PERMALINK_SAFE_CHARS, permalinkFor, permalinkSupported } from "@/lib/permalink";
+import { DISCLAIMER, SITE_NAME, SITE_URL } from "@/lib/site";
 import { track } from "@/lib/analytics";
 import { CopyButton } from "./copy-button";
 import { FIT_LABELS } from "./shell-data";
@@ -52,18 +53,12 @@ const EXPORT_COPY = {
 
 export function ExportDeck({
   messages,
-  title,
-  sourceUrl,
-  footer,
   permalink,
   onPermalink,
   onPrint,
   onAction,
 }: {
   messages: ChatMessage[];
-  title: string;
-  sourceUrl: string;
-  footer: string;
   /** The link once generated, hoisted so the print document can carry it too. */
   permalink: string | null;
   onPermalink: (link: string | null) => void;
@@ -78,8 +73,14 @@ export function ExportDeck({
   useEffect(() => queueMicrotask(() => setSupported(permalinkSupported())), []);
 
   const markdown = useCallback(
-    () => conversationToMarkdown(messages, { title, sourceUrl, footer, permalink: permalink ?? undefined }),
-    [messages, title, sourceUrl, footer, permalink],
+    () =>
+      conversationToMarkdown(messages, {
+        title: SITE_NAME,
+        sourceUrl: SITE_URL,
+        footer: DISCLAIMER,
+        permalink: permalink ?? undefined,
+      }),
+    [messages, permalink],
   );
 
   const fit = latestRoleFit(messages);
@@ -189,10 +190,10 @@ export function ExportDeck({
           <CopyButton
             getText={() =>
               scorecardMarkdown(fit, {
-                title,
-                sourceUrl,
+                title: SITE_NAME,
+                sourceUrl: SITE_URL,
                 permalink: permalink ?? undefined,
-                footer,
+                footer: DISCLAIMER,
                 labels: FIT_LABELS,
               })
             }
@@ -204,9 +205,9 @@ export function ExportDeck({
           />
           <a
             href={mailtoHref({
-              subject: `${title} — ${fit.role ?? ""}`.trim().replace(/[—-]\s*$/, "").trim(),
+              subject: `${SITE_NAME} — ${fit.role ?? ""}`.trim().replace(/[—-]\s*$/, "").trim(),
               body: scorecardMarkdown(fit, {
-                sourceUrl,
+                sourceUrl: SITE_URL,
                 permalink: permalink ?? undefined,
                 labels: FIT_LABELS,
               }),

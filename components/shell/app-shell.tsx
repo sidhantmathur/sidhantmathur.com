@@ -28,10 +28,14 @@ import { AmbientBackdrop } from "./ambient-backdrop";
 import { TurnError } from "./turn-error";
 import { conversationToMarkdown, messageToMarkdown } from "@/lib/transcript";
 import { permalinkFor } from "@/lib/permalink";
+import { DISCLAIMER, SITE_NAME, SITE_URL } from "@/lib/site";
 import { track } from "@/lib/analytics";
 import { RecruiterTldr } from "./recruiter-tldr";
 import { SUGGESTED_QUESTIONS as SUGGESTED } from "@/content/recruiter";
-import { costOfTurn, formatUsd, sumCosts } from "@/lib/pricing";
+import { costOfTurn, sumCosts } from "@/lib/pricing";
+import { MODEL_IDS } from "@/lib/models";
+import { isShellPanel, type ShellPanelKind } from "./panels";
+import { readoutValues, type ReadoutState } from "./readouts";
 import {
   textOf,
   toolOutputs,
@@ -109,8 +113,11 @@ const PrintSheet = dynamic(() => import("./print-sheet").then((m) => m.PrintShee
 // ---------------------------------------------------------------------------
 const HERO = "I learn what the problem needs, then I build the thing.";
 const HERO_SUB = "Ask what you'd ask on a call.";
-const DISCLAIMER =
-  "AI-generated answers about my professional background. It can make mistakes — the resume is the authoritative version.";
+// DISCLAIMER, SITE_NAME and SITE_URL used to sit here and be threaded into the
+// export deck, the print document and the transcript serializer as props. They
+// are in `lib/site.ts` now: the deck and the document import them, and the two
+// surfaces that used to be handed a name and a URL no longer take one. See the
+// note there on why the serializer still takes its arguments.
 // The error state used to be one string, here. It is now one string per error
 // class, in `lib/chat-telemetry.ts` beside the classes themselves, rendered by
 // TurnError — a dropped connection on a phone and a misconfigured server are
@@ -123,25 +130,6 @@ const RATE_LIMIT_STATE =
 // made.
 const REPLAY_BANNER =
   "Replayed conversation. It was rebuilt from the link you opened — the site stored nothing, and this is a snapshot of what the model said then, not a live session.";
-// Identity strings, hoisted so the status strip and the copied transcript's
-// header can't drift apart. Not prose — a name and a URL.
-const SITE_NAME = "Sidhant Mathur";
-const SITE_URL = "https://sidhantmathur.com";
-
-// Must stay a subset of the `MODELS` allowlist in app/api/chat/route.ts — an id
-// that isn't on the server list silently falls back to the default rather than
-// erroring, so a mismatch here is invisible. Order is the dropdown order; the
-// first entry is what the shell selects on load.
-//
-// The last entry is the `premium` tier. Selecting it switches the header budget
-// strip from "standard n/20" to "premium n/5", which is the point of showing it.
-const MODELS = [
-  "anthropic/claude-haiku-4.5",
-  "openai/gpt-5-mini",
-  "google/gemini-3.5-flash-lite",
-  "deepseek/deepseek-v4-flash",
-  "openai/gpt-5.6-luna",
-];
 
 // How long a turn runs before the shell offers to abandon it. Roughly double a
 // normal answer's wait — early enough to be a rescue, late enough not to be a
@@ -160,7 +148,7 @@ export function AppShell() {
   // The two things that must exist before they are asked for, but must not be
   // part of what the visitor waits for. See use-idle-ready.ts.
   const idleReady = useIdleReady();
-  const [model, setModel] = useState<string>(MODELS[0]);
+  const [model, setModel] = useState<string>(MODEL_IDS[0]);
 
   const {
     messages,
@@ -205,6 +193,11 @@ export function AppShell() {
     () => sumCosts(turnLog.map((t) => (t.error ? null : costOfTurn(t.model, t.usage)))),
     [turnLog],
   );
+  // The four session numbers, as numbers. The status strip below and the rail
+  // sheet on a phone both show them, and both format them the same way because
+  // neither one does — see readouts.ts.
+  const readouts: ReadoutState = { turns, ttft, cost: sessionCost.total, model };
+  const reading = readoutValues(readouts);
 
   // Idle mode. Suspended while a turn is in flight — an answer arriving is not
   // an idle screen — and it never blocks anything: the input keeps focus and
@@ -436,7 +429,7 @@ export function AppShell() {
     const cmd = SLASH_COMMANDS.find((c) => c.name === name);
     if (!cmd) return;
     setInput("");
-    if (cmd.kind === "panel" && cmd.panel) return openPanel({ kind: cmd.panel } as PanelView);
+    if (cmd.kind === "panel" && cmd.panel) return openPanel({ kind: cmd.panel });
     if (cmd.message) {
       stick.current = true;
       submit(cmd.message);
@@ -519,22 +512,24 @@ export function AppShell() {
   const panelOpen = panel.kind !== "none";
   const lastId = messages[messages.length - 1]?.id;
 
-  // The deck is the one panel view that isn't built from content, so it's
-  // rendered here rather than inside PanelBody — which would otherwise need
-  // every instrument's state threaded through it.
-  const panelContent =
-    panel.kind === "export" ? (
+  // Two panel views aren't built from content — the export surface is
+  // conversation state and the deck is instrument state — so they're rendered
+  // here rather than inside PanelBody, which would otherwise need every
+  // instrument threaded through it. The registry says which ones (`surface`);
+  // this record says how, and being keyed by ShellPanelKind it can't be missing
+  // one. The bodies are thunks so only the selected element is ever built, and
+  // both components stay behind the lazy imports at the top of this file.
+  const shellPanel: Record<ShellPanelKind, () => React.ReactNode> = {
+    export: () => (
       <ExportDeck
         messages={messages}
-        title={SITE_NAME}
-        sourceUrl={SITE_URL}
-        footer={DISCLAIMER}
         permalink={permalink}
         onPermalink={setPermalink}
         onPrint={() => window.print()}
         onAction={bumpStrip}
       />
-    ) : panel.kind === "instruments" ? (
+    ),
+    instruments: () => (
       <InstrumentDeck
         turnLog={turnLog}
         budget={budget}
@@ -544,9 +539,14 @@ export function AppShell() {
         onToggleTeletype={toggleTeletype}
         errorCopy={{ rateLimited: RATE_LIMIT_STATE }}
       />
-    ) : (
-      <PanelBody panel={panel} onSubmitJd={submitJd} onOpenSource={openPanel} />
-    );
+    ),
+  };
+
+  const panelContent = isShellPanel(panel.kind) ? (
+    shellPanel[panel.kind]()
+  ) : (
+    <PanelBody panel={panel} onSubmitJd={submitJd} onOpenSource={openPanel} />
+  );
 
   return (
     <>
@@ -559,13 +559,7 @@ export function AppShell() {
           prints the document rather than the app, and the dialog never opens
           over a layout that hasn't happened yet. */}
       {idleReady && (
-        <PrintSheet
-          messages={messages}
-          title={SITE_NAME}
-          sourceUrl={SITE_URL}
-          permalink={permalink}
-          footer={DISCLAIMER}
-        />
+        <PrintSheet messages={messages} permalink={permalink} />
       )}
       {/* Announcements only. Visually nothing, and in three ways deliberately
           placed:
@@ -657,12 +651,12 @@ export function AppShell() {
             data-js-control
             className="hidden items-center gap-4 transition-colors hover:text-accent md:flex"
           >
-            <Stat label="turns" value={`${turns}/10`} />
-            <Stat label="ttft" value={ttft == null ? "—" : `${ttft}ms`} />
+            <Stat label="turns" value={reading.turns} />
+            <Stat label="ttft" value={reading.ttft} />
             <span className="hidden lg:flex">
               <Seismograph rate={rate} settled={settledRate} />
             </span>
-            <Stat label="est." value={formatUsd(sessionCost.total)} />
+            <Stat label="est." value={reading.cost} />
             {budget && (
               <Stat label={budget.tier} value={`${budget.remaining}/${budget.limit}`} />
             )}
@@ -678,7 +672,11 @@ export function AppShell() {
               disabled={!hydrated}
               className="min-h-[36px] disabled:cursor-progress disabled:border-line disabled:text-text-dim cursor-pointer border border-line-strong bg-raised px-1.5 py-0.5 text-[13px] text-text-soft outline-none focus:border-accent"
             >
-              {MODELS.map((m) => (
+              {/* Catalogue order, and the ids as written — the last entry is
+                  the `premium` tier, and selecting it switches the header
+                  budget strip from "standard n/20" to "premium n/5", which is
+                  the point of showing it. */}
+              {MODEL_IDS.map((m) => (
                 <option key={m} value={m}>
                   {m}
                 </option>
@@ -1289,29 +1287,30 @@ export function AppShell() {
           on a phone it is fetched after hydration rather than before it. */}
       {isMobile && (idleReady || railOpen || panelOpen) && (
         <MobileSheets
-          onRailClosed={() => railTriggerRef.current?.focus()}
-          onPanelClosed={() => {
-            const opener = panelOpenerRef.current;
-            if (opener?.isConnected && opener.offsetParent !== null) opener.focus();
-            else inputRef.current?.focus();
+          rail={{
+            open: railOpen,
+            onOpenChange: setRailOpen,
+            onClosed: () => railTriggerRef.current?.focus(),
+            content: (
+              <RailContent onOpenPanel={openPanel} hydrated={hydrated} showHeading={false} />
+            ),
           }}
-          railOpen={railOpen}
-          onRailOpenChange={setRailOpen}
-          rail={<RailContent onOpenPanel={openPanel} hydrated={hydrated} showHeading={false} />}
-          readouts={{
-            turns: `${turns}/10`,
-            ttft: ttft == null ? "—" : `${ttft}ms`,
-            cost: formatUsd(sessionCost.total),
-            model,
+          panel={{
+            open: panelOpen,
+            sheetOpen,
+            onOpen: () => setSheetOpen(true),
+            onClose: closePanel,
+            onClosed: () => {
+              const opener = panelOpenerRef.current;
+              if (opener?.isConnected && opener.offsetParent !== null) opener.focus();
+              else inputRef.current?.focus();
+            },
+            title: panelTitle(panel),
+            content: panelContent,
+            full: sheetFull,
+            onToggleFull: () => setSheetFull((v) => !v),
           }}
-          panelOpen={panelOpen}
-          panelTitle={panelTitle(panel)}
-          panelContent={panelContent}
-          sheetOpen={sheetOpen}
-          onSheetOpen={() => setSheetOpen(true)}
-          onClosePanel={closePanel}
-          sheetFull={sheetFull}
-          onToggleFull={() => setSheetFull((v) => !v)}
+          readouts={readouts}
         />
       )}
       </div>
@@ -1374,6 +1373,10 @@ function RailLink({
   const cls =
     "flex min-h-[44px] items-center border-b border-line py-2 text-left text-text-soft no-underline transition-colors hover:text-accent";
 
+  // Hoisted so the click handlers close over a narrowed value — TypeScript
+  // drops narrowing on a property once it crosses into a callback.
+  const view = item.view;
+
   if (item.external && item.href) {
     return (
       <a href={item.href} target="_blank" rel="noreferrer" className={cls}>
@@ -1386,14 +1389,14 @@ function RailLink({
   // reach the standalone page, and so crawlers see a link. A plain left-click
   // is intercepted and opens the panel instead; usePanelUrl pushes the same
   // href into the address bar.
-  if (item.view && item.href) {
+  if (view && item.href) {
     return (
       <a
         href={item.href}
         onClick={(e) => {
           if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
           e.preventDefault();
-          onOpenPanel(item.view as PanelView);
+          onOpenPanel(view);
         }}
         className={cls}
       >
@@ -1402,7 +1405,7 @@ function RailLink({
     );
   }
 
-  if (item.view) {
+  if (view) {
     return (
       // The rail entries with no page of their own. The anchors above are
       // untouched — a click on those before hydration navigates, which is a
@@ -1410,7 +1413,7 @@ function RailLink({
       // panel, and that needs JavaScript.
       <button
         type="button"
-        onClick={() => onOpenPanel(item.view as PanelView)}
+        onClick={() => onOpenPanel(view)}
         disabled={!hydrated}
         data-js-control
         className={cls}

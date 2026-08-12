@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { ScrollFade, floorWidth } from "@/components/charts/chart-frame";
 import { FrontierScatter } from "@/components/charts/frontier-scatter";
 import { RankedBars } from "@/components/charts/ranked-bars";
 import { ScorecardHeatmap } from "@/components/charts/scorecard-heatmap";
@@ -9,16 +10,17 @@ import { BUILT_AT, PUBLISHED_EVALS } from "@/lib/measurements.generated";
 import { MIN_TURNS_FOR_P50, formatDate, formatPercent } from "@/lib/measurements";
 import {
   allGroups,
+  bakeoffSummary,
   formatCost,
   formatCount,
   formatSeconds,
+  formatTurnCost,
   frontier,
   latestRunPerModel,
+  median,
   rank,
   runHistory,
-  supportsMedian,
   toRow,
-  type ModelRow,
 } from "@/lib/model-comparison";
 import { PRICES_CHECKED, PRICE_CONFIDENCE } from "@/lib/pricing";
 
@@ -130,27 +132,9 @@ export default function ModelComparisonPage() {
     );
   }
 
-  const turnsGraded = rows.reduce((n, r) => n + r.cases, 0);
-  const turnsBroke = rows.reduce((n, r) => n + r.broke, 0);
-  const casesEach = rows[0]?.cases ?? 0;
-  const uniformCorpus = rows.every((r) => r.cases === casesEach);
-  const totalCost = rows.reduce<number | null>(
-    (n, r) => (n == null || r.costTotalUsd == null ? null : n + r.costTotalUsd),
-    0,
-  );
-  const measuredOn = rows
-    .map((r) => r.ranAt)
-    .filter((d): d is string => !!d)
-    .sort();
-
+  const summary = bakeoffSummary(rows);
   const cost = frontier(rows, (r) => r.costPerTaskUsd, (r) => r.passRate);
-  const latency = frontier(
-    rows,
-    (r) => (supportsMedian(r.ttftMs) ? r.ttftMs!.p50 : null),
-    (r) => r.passRate,
-  );
-
-  const p50 = (s: ModelRow["ttftMs"]) => (supportsMedian(s) ? s!.p50 : null);
+  const latency = frontier(rows, (r) => median(r.ttftMs), (r) => r.passRate);
 
   return (
     <DocPage>
@@ -161,11 +145,8 @@ export default function ModelComparisonPage() {
       </p>
       <p className="t-body mt-4 max-w-[62ch] text-text-soft">{COPY.why}</p>
       <p className="t-body mt-4 max-w-[62ch] text-text-faint">
-        Measured {measuredOn.length ? formatDate(measuredOn[0]) : "on an unknown date"}
-        {measuredOn.length > 1 && formatDate(measuredOn[0]) !== formatDate(measuredOn.at(-1))
-          ? ` to ${formatDate(measuredOn.at(-1))}`
-          : ""}
-        . Published {formatDate(snapshot?.publishedAt)}, built into this page{" "}
+        Measured {summary.measuredRange}. Published {formatDate(snapshot?.publishedAt)}, built into
+        this page{" "}
         {formatDate(BUILT_AT)}. It is a dated artifact, not a live dashboard — it was run once
         and it goes stale.
       </p>
@@ -173,23 +154,23 @@ export default function ModelComparisonPage() {
       {/* --- the sample everything below rests on ----------------------- */}
       <div className="mt-8 border-t border-line pt-6">
         <div className="t-label text-text-faint">turns graded</div>
-        <div className="text-[44px] leading-none text-text">{turnsGraded}</div>
+        <div className="text-[44px] leading-none text-text">{summary.turnsGraded}</div>
         <div className="mt-4 flex flex-wrap gap-x-8 gap-y-4">
           <Figure label="models" value={String(rows.length)} />
           <Figure
             label="cases each"
-            value={uniformCorpus ? String(casesEach) : "varies"}
-            note={uniformCorpus ? "the same corpus" : "runs cover different case counts"}
+            value={summary.uniformCorpus ? String(summary.casesEach) : "varies"}
+            note={summary.uniformCorpus ? "the same corpus" : "runs cover different case counts"}
           />
           <Figure label="eval groups" value={String(groups.length)} />
           <Figure
             label="broke mid-stream"
-            value={String(turnsBroke)}
+            value={String(summary.turnsBroke)}
             note="never produced an answer"
           />
           <Figure
             label="cost of the whole comparison"
-            value={formatCost(totalCost, 2)}
+            value={formatCost(summary.totalCost, 2)}
             note="list price, every turn"
           />
         </div>
@@ -200,14 +181,10 @@ export default function ModelComparisonPage() {
         <FrontierScatter
           heading="Pass rate against median cost per turn"
           note={COPY.frontierNote}
-          points={cost.points}
-          unplotted={cost.unplotted}
+          plot={cost}
           xLabel="median cost per turn (log)"
-          yLabel="pass rate (answered)"
           xScale="log"
-          formatX={(v) => formatCost(v, v < 0.001 ? 5 : 4)}
-          formatY={(v) => formatPercent(v)}
-          formatYTick={(v) => `${Math.round(v * 100)}%`}
+          formatX={formatTurnCost}
         />
       </Section>
 
@@ -215,14 +192,10 @@ export default function ModelComparisonPage() {
         <FrontierScatter
           heading="Pass rate against median time to first token"
           note={COPY.latencyNote}
-          points={latency.points}
-          unplotted={latency.unplotted}
+          plot={latency}
           xLabel="median time to first token"
-          yLabel="pass rate (answered)"
           xScale="linear"
           formatX={(v) => formatSeconds(v)}
-          formatY={(v) => formatPercent(v)}
-          formatYTick={(v) => `${Math.round(v * 100)}%`}
         />
       </Section>
 
@@ -234,48 +207,48 @@ export default function ModelComparisonPage() {
             note="Median, server-measured. Lower is better."
             bestLabel="fastest"
             format={formatSeconds}
-            {...rank(rows, (r) => p50(r.ttftMs), "lower")}
+            ranked={rank(rows, (r) => median(r.ttftMs), "lower")}
           />
           <RankedBars
             heading="Output speed"
             note="Median output tokens per second across the turn. Higher is better."
             bestLabel="fastest"
             format={(v) => `${v.toFixed(1)} tok/s`}
-            {...rank(rows, (r) => (supportsMedian(r.tokensPerSecond) ? r.tokensPerSecond!.p50 : null), "higher")}
+            ranked={rank(rows, (r) => median(r.tokensPerSecond), "higher")}
           />
           <RankedBars
             heading="Cost per turn"
             note="Median, at list price on the date checked. Lower is better."
             bestLabel="cheapest"
-            format={(v) => formatCost(v, v < 0.001 ? 5 : 4)}
-            {...rank(rows, (r) => r.costPerTaskUsd, "lower")}
+            format={formatTurnCost}
+            ranked={rank(rows, (r) => r.costPerTaskUsd, "lower")}
           />
           <RankedBars
             heading="Output tokens per turn"
             note="Median. Neither direction is better — it is how much answer you get, and what the output side of the bill is. Counted by each provider's own tokenizer, so compare within a row rather than across them."
             format={(v) => formatCount(v)}
-            {...rank(rows, (r) => (r.outputTokens ? r.outputTokens.p50 : null), "none")}
+            ranked={rank(rows, (r) => median(r.outputTokens), "none")}
           />
           <RankedBars
             heading="Input tokens per turn"
             note="Median. The corpus is identical for every model, so most of the spread here is the tokenizers disagreeing about how to count the same text, not one model being sent more — these counts are not comparable across providers the way seconds and dollars are."
             bestLabel="fewest"
             format={(v) => formatCount(v)}
-            {...rank(rows, (r) => (r.inputTokens ? r.inputTokens.p50 : null), "lower")}
+            ranked={rank(rows, (r) => median(r.inputTokens), "lower")}
           />
           <RankedBars
             heading="Turns that broke"
             note="Share of attempted turns that failed in transport or died mid-stream, so the model never produced an answer. Lower is better, and it is deliberately kept out of the pass rate above."
             bestLabel="most reliable"
             format={(v) => formatPercent(v)}
-            {...rank(rows, (r) => r.breakRate, "lower")}
+            ranked={rank(rows, (r) => r.breakRate, "lower")}
           />
           <RankedBars
             heading="Prompt cache hit rate"
             note="Share of input TOKENS served from the provider's cache — not share of turns. Higher is cheaper."
             bestLabel="best"
             format={(v) => formatPercent(v)}
-            {...rank(rows, (r) => r.cacheHitRate, "higher")}
+            ranked={rank(rows, (r) => r.cacheHitRate, "higher")}
           />
         </div>
       </Section>
@@ -288,17 +261,8 @@ export default function ModelComparisonPage() {
 
       {/* --- the table -------------------------------------------------- */}
       <Section heading={COPY.tableHeading} intro={COPY.tableIntro}>
-        <div className="@container">
-        {/* Focusable because it scrolls — Chrome makes it a tab stop so the
-            arrow keys work — and therefore named, or it is an anonymous stop
-            that announces nothing. */}
-        <div
-          role="region"
-          aria-label={COPY.tableHeading}
-          tabIndex={0}
-          className="mt-4 overflow-x-auto [mask-image:linear-gradient(to_right,black_92%,transparent)] @[820px]:[mask-image:none]"
-        >
-          <table className="t-meta w-full min-w-[820px] text-left">
+        <ScrollFade width={820} className="mt-4" label={COPY.tableHeading}>
+          <table className={`t-meta w-full ${floorWidth(820)} text-left`}>
             {/* Twelve columns of numbers deserve a sentence saying what the
                 rows are, the way the scorecard's table already has one. */}
             <caption className="sr-only">{COPY.tableIntro}</caption>
@@ -345,17 +309,15 @@ export default function ModelComparisonPage() {
                       </span>
                     )}
                   </td>
-                  <td className="py-1.5 pr-3">{formatSeconds(p50(r.ttftMs))}</td>
-                  <td className="py-1.5 pr-3">
-                    {r.tokensPerSecond ? r.tokensPerSecond.p50.toFixed(1) : "—"}
-                  </td>
-                  <td className="py-1.5 pr-3">{formatCount(r.inputTokens?.p50 ?? null)}</td>
-                  <td className="py-1.5 pr-3">{formatCount(r.outputTokens?.p50 ?? null)}</td>
+                  <td className="py-1.5 pr-3">{formatSeconds(median(r.ttftMs))}</td>
+                  <td className="py-1.5 pr-3">{median(r.tokensPerSecond)?.toFixed(1) ?? "—"}</td>
+                  <td className="py-1.5 pr-3">{formatCount(median(r.inputTokens))}</td>
+                  <td className="py-1.5 pr-3">{formatCount(median(r.outputTokens))}</td>
                   <td className="py-1.5 pr-3">
                     {r.cacheHitRate == null ? "—" : formatPercent(r.cacheHitRate)}
                   </td>
                   <td className="py-1.5 pr-3">
-                    {formatCost(r.costPerTaskUsd, (r.costPerTaskUsd ?? 1) < 0.001 ? 5 : 4)}
+                    {formatTurnCost(r.costPerTaskUsd)}
                   </td>
                   <td className="py-1.5 pr-3">{formatCost(r.costTotalUsd, 4)}</td>
                   <td className="py-1.5 pr-3">
@@ -368,8 +330,7 @@ export default function ModelComparisonPage() {
               ))}
             </tbody>
           </table>
-        </div>
-        </div>
+        </ScrollFade>
         <Note>
           Prices checked {PRICES_CHECKED}. A median is withheld and shown as an em dash under{" "}
           {MIN_TURNS_FOR_P50}{" "}

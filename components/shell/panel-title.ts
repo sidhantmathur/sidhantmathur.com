@@ -14,37 +14,18 @@
 
 import { PROJECTS } from "@/content/projects";
 import { ALL_CHUNKS_BY_ID } from "@/lib/corpus";
-import { JD_COPY } from "./shell-data";
-import type { PanelView } from "./use-conversation";
+import { PANELS, type PanelView } from "./panels";
 
+/**
+ * The panel's title, for both chromes.
+ *
+ * Twelve of the fifteen kinds have a title that is a constant, and those live
+ * in the registry with everything else about them. What survives here is only
+ * the three whose title is computed from a payload — a project's name, the
+ * chunk a citation opened, the role an assessment was made against.
+ */
 export function panelTitle(panel: PanelView): string {
   switch (panel.kind) {
-    case "resume":
-      return "Resume";
-    case "projects":
-      return "Projects";
-    case "contact":
-      return "Contact";
-    case "why":
-      return "Why this site is a chatbot";
-    case "colophon":
-      return "How this site was built";
-    case "jd":
-      return JD_COPY.heading;
-    // Rendered by app-shell, not PanelBody — the deck is instrument state, not
-    // content. The title still belongs here so both panel chromes agree.
-    case "instruments":
-      return "Instruments";
-    // Rendered by app-shell for the same reason as the deck: the export
-    // surface is conversation state, not content.
-    case "export":
-      return "Export";
-    case "corpus":
-      return "Sources";
-    case "prompt":
-      return "The instructions";
-    case "refusals":
-      return "What it won't do";
     case "project":
       return PROJECTS[panel.slug].title;
     case "source": {
@@ -52,8 +33,8 @@ export function panelTitle(panel: PanelView): string {
       return chunk ? `${chunk.sourceLabel} — ${chunk.heading}` : panel.id;
     }
     case "roleFit":
-      return `Role fit — ${panel.data.role}`;
+      return `${PANELS.roleFit.title} — ${panel.data.role}`;
     default:
-      return "";
+      return PANELS[panel.kind].title;
   }
 }

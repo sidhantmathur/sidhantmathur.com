@@ -16,6 +16,8 @@ import { looksLikeSiteQuestion } from "@/lib/site-question";
 import { reconcileRoleFit } from "@/lib/role-fit";
 import { CHUNK_BY_ID } from "@/lib/chunks.generated";
 import {
+  SIMULATABLE_CLASSES,
+  TURN_FAILURES,
   TURN_PART_ID,
   classifyTurnError,
   type ChatUIMessage,
@@ -23,6 +25,7 @@ import {
   type TurnTelemetry,
 } from "@/lib/chat-telemetry";
 import { PROJECTS } from "@/content/projects";
+import { MODELS, DEFAULT_MODEL, type ModelId, type Tier } from "@/lib/models";
 
 // Node runtime: both @upstash/ratelimit and the in-memory fallback work fine on
 // Node, and there's no edge-specific requirement here.
@@ -75,38 +78,20 @@ const messageSchema = z
 // (enforced below with the graceful 429) plus their assistant replies — with
 // headroom, so the >10-user-messages case reaches the rate-limit copy instead
 // of dying on a schema 400.
-// --- Model allowlist ------------------------------------------------------
+// --- Model policy ---------------------------------------------------------
 //
-// The client picks a model, so this is a security AND a cost boundary: the id
-// from the request is never passed through to the Gateway, only used to look up
-// an entry here. An unknown id falls back to the default rather than erroring,
-// so a stale client can't break the chat.
+// WHICH models exist, what they cost, and why the allowlist is what it is: all
+// of that is `lib/models.ts`, imported above, and this route is one of its four
+// readers. What lives here is policy about THIS endpoint — how much of each
+// tier's budget an hour buys, and what to do with an id that isn't on the list.
+//
+// The client picks a model, so the allowlist is a security AND a cost boundary:
+// the id from the request is never passed through to the Gateway, only used to
+// look up an entry in the catalogue. An unknown id falls back to the default
+// rather than erroring, so a stale client can't break the chat.
 //
 // Each tier has its own rate-limit bucket. The point is that the budget is
 // visible in the UI — showing the cost engineering rather than hiding it.
-//
-// COST NOTE: `standard` is cheap-tier models only. `premium` is one
-// substantially more expensive model on a small bucket. Delete the premium
-// entry to turn the whole tier off; nothing else needs to change.
-//
-// Gateway list prices per 1M tokens (in / out), checked 2026-07-27. This
-// workload is input-dominated — the system prompt plus knowledge base is ~4k
-// tokens on every turn against ~300 tokens of answer — so input price is what
-// actually bills. Sonnet was the previous premium entry at $3/$15 and was not
-// worth 3x Luna here.
-const MODELS = {
-  "anthropic/claude-haiku-4.5": { tier: "standard" },   // $1.00 / $5.00
-  "openai/gpt-5-mini": { tier: "standard" },            // $0.25 / $2.00
-  "google/gemini-3.5-flash-lite": { tier: "standard" }, // $0.30 / $2.50
-  "deepseek/deepseek-v4-flash": { tier: "standard" },   // $0.09 / $0.18
-  "openai/gpt-5.6-luna": { tier: "premium" },           // $1.00 / $6.00
-} as const;
-
-type ModelId = keyof typeof MODELS;
-type Tier = (typeof MODELS)[ModelId]["tier"];
-
-const DEFAULT_MODEL: ModelId = "anthropic/claude-haiku-4.5";
-
 const TIER_LIMITS: Record<Tier, number> = {
   standard: 20,
   premium: 5,
@@ -515,27 +500,13 @@ function buildChatTools(extraction: { requirements: string[] }) {
 //      `createUIMessageStream`, so the response is genuinely an HTTP 200 whose
 //      stream carries an error chunk. Faking the shape would defeat the point.
 
-/** The early exits: a status code and a JSON body, before a stream exists. */
-const SIMULATED_STATUS: Partial<Record<TurnErrorClass, number>> = {
-  invalid_request: 400,
-  rate_limited: 429,
-  upstream_unconfigured: 502,
-};
-
-const SIMULATABLE: TurnErrorClass[] = [
-  "invalid_request",
-  "rate_limited",
-  "upstream_unconfigured",
-  "upstream_auth",
-  "upstream_timeout",
-  "upstream_unavailable",
-  "aborted",
-  "unknown",
-];
-
+// Both lists are derived from the one table in lib/chat-telemetry.ts rather
+// than restated here. `SIMULATABLE_CLASSES` is every class the table marks
+// simulatable, which excludes `network`: that one is raised in the browser
+// before the request reaches this file, so there is no exit here to take.
 function simulatedClass(req: Request): TurnErrorClass | null {
   const value = new URL(req.url).searchParams.get("simulate");
-  const match = SIMULATABLE.find((c) => c === value);
+  const match = SIMULATABLE_CLASSES.find((c) => c === value);
   return match ?? null;
 }
 
@@ -602,7 +573,9 @@ export async function POST(req: Request): Promise<Response> {
   // model. See the block comment above.
   const simulate = simulatedClass(req);
   if (simulate) {
-    const status = SIMULATED_STATUS[simulate];
+    // A status means an early exit — a JSON body before a stream exists. Null
+    // means the failure belongs mid-stream, on an HTTP 200.
+    const status = TURN_FAILURES[simulate].simulateStatus;
     if (status) return jsonError(simulate, status);
     return simulateStreamFailure(simulate, DEFAULT_MODEL);
   }

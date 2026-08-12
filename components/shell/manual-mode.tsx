@@ -1,8 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import { CHUNKS } from "@/lib/chunks.generated";
 import type { PanelView } from "./use-conversation";
+import { ActionLink } from "./action-link";
 
 // Manual mode (roadmap Sprint 7, #15 — "meet the cached me on rate limit").
 //
@@ -75,57 +75,23 @@ export function ManualMode({
       <div>
         <div className="t-label text-text-faint">{MANUAL_COPY.corpusHeading}</div>
         <div className="mt-2 flex flex-wrap gap-2">
-          <ManualLink onClick={() => onOpenSource({ kind: "corpus" })}>
+          <ActionLink onClick={() => onOpenSource({ kind: "corpus" })}>
             Every source, listed
-          </ManualLink>
-          <ManualLink href="/resume">Full resume</ManualLink>
-          <ManualLink href="/resume.pdf" external>
+          </ActionLink>
+          <ActionLink href="/resume">Full resume</ActionLink>
+          <ActionLink href="/resume.pdf" external>
             Resume PDF
-          </ManualLink>
-          <ManualLink href="/projects/adarle20">A Darle 20</ManualLink>
-          <ManualLink href="/projects/nokia">Nokia</ManualLink>
-          <ManualLink href="/projects/dell-ml">Dell</ManualLink>
-          <ManualLink href="mailto:hello@sidhantmathur.com" external>
+          </ActionLink>
+          <ActionLink href="/projects/adarle20">A Darle 20</ActionLink>
+          <ActionLink href="/projects/nokia">Nokia</ActionLink>
+          <ActionLink href="/projects/dell-ml">Dell</ActionLink>
+          <ActionLink href="mailto:hello@sidhantmathur.com" external>
             Email
-          </ManualLink>
+          </ActionLink>
         </div>
       </div>
 
       <p className="t-meta text-text-faint">{MANUAL_COPY.footer}</p>
     </div>
-  );
-}
-
-function ManualLink({
-  href,
-  external,
-  onClick,
-  children,
-}: {
-  href?: string;
-  external?: boolean;
-  onClick?: () => void;
-  children: React.ReactNode;
-}) {
-  const cls =
-    "inline-flex min-h-[44px] items-center border border-line-strong px-3 py-2.5 text-[13px] text-text-soft no-underline transition-colors hover:border-accent hover:text-accent";
-  if (onClick) {
-    return (
-      <button type="button" onClick={onClick} className={cls}>
-        {children} →
-      </button>
-    );
-  }
-  if (external) {
-    return (
-      <a href={href} target="_blank" rel="noreferrer" className={cls}>
-        {children} ↗
-      </a>
-    );
-  }
-  return (
-    <Link href={href ?? "/"} className={cls}>
-      {children} →
-    </Link>
   );
 }

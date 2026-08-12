@@ -56,11 +56,13 @@ What shipped, on the resolution of each point:
   gpt-5-mini, gemini-3.5-flash-lite, and deepseek-v4-flash. Gateway list
   prices are noted inline in `MODELS` as checked 2026-07-27.
 
-Still true, and still the thing to be careful about: the client list is
-`MODELS` in `components/shell/app-shell.tsx` and must stay a subset of the
-server allowlist. An id that isn't on the server list silently falls back to
-the default rather than erroring, so a mismatch is invisible — check both.
-`evals/static.test.mjs` now asserts this, but it only catches what it runs on.
+**The drift risk this note left open is closed too.** There is no client list
+to keep in step any more: `lib/models.ts` is the one catalogue, and the route,
+the dropdown, `lib/pricing.ts` and `scripts/run-bakeoff.mjs` all read it. The
+regex in `evals/lib/artifacts.mjs` that scraped `MODELS` out of two files to
+compare them is gone with the copies it existed to police; the static suite
+now asserts things about the catalogue's content instead. Adding or removing a
+model is one edit in one file.
 
 ## 3. Copy — Sidhant is doing this, do not write it
 
@@ -128,6 +130,30 @@ Directions worth exploring — **brainstorm with Sidhant before building**:
   bug to fix, and no amount of UI helps.
 - URL/file input for a posting instead of paste. Weigh against the static-first
   architecture: fetching a URL server-side is a new outbound request surface.
+
+---
+
+## 5. Two defects found during the deepening pass — tracked as issues
+
+Filed 2026-08-11 from branch `deepen-chat-transport`. Both are on GitHub now;
+this section is the index, the detail is in the issues.
+
+- **[#2](https://github.com/sidhantmathur/sidhantmathur.com/issues/2) — the
+  ranked-bar charts say "not measured" for a median that was measured but
+  withheld.** `components/charts/ranked-bars.tsx:41`. Haiku's newest run is 6
+  turns, under `MIN_TURNS_FOR_P50`, so the median is withheld — the chart says
+  the opposite. Already wrong on two panels; `dc1ed0a` spread it to four by
+  applying the same gate to token medians. `lib/measurements.ts:33` already
+  models the distinction (`"too-few" | "not-measured"`); `rank()` collapses it.
+  Needs a copy decision, so it wants Sidhant, not an agent.
+- **[#3](https://github.com/sidhantmathur/sidhantmathur.com/issues/3) — the stop
+  button disappears the moment an answer starts rendering.** `phaseOf` returns
+  null once the assistant message has text (`use-conversation.ts:135`) and the
+  control lives inside `{phase && …}` (`app-shell.tsx:966`), so it only exists
+  between 8s elapsed and the first token — a window that never opens on a
+  healthy turn. Pre-existing (`b820054`, `c930843`), not from this branch. The
+  abort path itself is sound and now covered by `evals/chat-transport.test.mjs`;
+  it is the affordance that is unreachable.
 
 ---
 

@@ -33,6 +33,7 @@ import {
   readSystemPromptSource,
 } from "./lib/artifacts.mjs";
 import { citationIds } from "../lib/verify.ts";
+import { PANELS, PANEL_KINDS } from "../components/shell/panels.ts";
 import { looksLikeSiteQuestion, ROAST_REQUEST, SITE_REQUEST } from "../lib/site-question.ts";
 import { REFUSALS, ENFORCEMENT_LABEL } from "../lib/refusals.ts";
 import { GROUNDED, ROLE_FIT } from "./cases.mjs";
@@ -424,17 +425,29 @@ describe("Sprint 7's surfaces are reachable", () => {
     for (const needle of ["/prompt", "/refusals"]) {
       assert.ok(shellData.includes(needle), `nothing in the shell links to ${needle}`);
     }
-    for (const name of ["/roast", "/site", "/prompt", "/refusals"]) {
+    // The two panel commands come off the registry now; the two that send a
+    // message have no panel and are still written out in shell-data.ts.
+    for (const kind of ["prompt", "refusals"]) {
+      assert.equal(PANELS[kind].slash?.name, `/${kind}`, `slash command /${kind} is missing`);
+    }
+    for (const name of ["/roast", "/site"]) {
       assert.ok(shellData.includes(`name: "${name}"`), `slash command ${name} is missing`);
     }
   });
 
-  test("every slash command still opens a panel view that exists", () => {
-    const kinds = [...read("components/shell/use-conversation.ts").matchAll(/\{ kind: "(\w+)"/g)].map(
-      (m) => m[1],
-    );
-    for (const m of shellData.matchAll(/panel: "(\w+)"/g)) {
-      assert.ok(kinds.includes(m[1]), `slash command opens panel "${m[1]}", which isn't a view`);
+  test("every slash command opens a panel that something renders", () => {
+    // "Points at a kind that exists" is a tautology now that the command IS a
+    // field of the kind. What can still go wrong is a command aimed at a panel
+    // with no body — `none` is the closed panel, and typing /foo to close the
+    // panel would be a command that visibly does nothing.
+    for (const kind of PANEL_KINDS) {
+      const slash = PANELS[kind].slash;
+      if (!slash) continue;
+      assert.notEqual(
+        PANELS[kind].surface,
+        "none",
+        `${slash.name} opens "${kind}", which has no body to render`,
+      );
     }
   });
 

@@ -1,19 +1,20 @@
 import type { Metadata, Viewport } from "next";
 import { geistSans, geistMono } from "./fonts";
 import { AnalyticsProvider } from "@/components/analytics-provider";
+import { SITE_NAME, SITE_URL } from "@/lib/site";
 import "./globals.css";
 
 const DESCRIPTION =
   "Sales operations specialist and builder. I make internal tools and revenue systems at Nokia, and I'm co-founder and CTO of A Darle 20, a marketplace for tabletop game sessions in Latin America — 2,100+ bookings in its first four months.";
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://sidhantmathur.com"),
+  metadataBase: new URL(SITE_URL),
   // `template` applies to every route that exports its own title, so the
   // /resume tab reads "Resume — Sidhant Mathur" instead of a bare "Resume".
   // `default` is the homepage, which has no title of its own.
   title: {
-    default: "Sidhant Mathur",
-    template: "%s — Sidhant Mathur",
+    default: SITE_NAME,
+    template: `%s — ${SITE_NAME}`,
   },
   description: DESCRIPTION,
   // Apex is canonical. Preview deploys serve identical content on
@@ -29,9 +30,9 @@ export const metadata: Metadata = {
   },
   openGraph: {
     type: "profile",
-    siteName: "Sidhant Mathur",
+    siteName: SITE_NAME,
     url: "/",
-    title: "Sidhant Mathur",
+    title: SITE_NAME,
     description: DESCRIPTION,
   },
   // The og:image tags come from app/opengraph-image.tsx — Next generates the
@@ -57,8 +58,8 @@ export const viewport: Viewport = {
 const PERSON_SCHEMA = {
   "@context": "https://schema.org",
   "@type": "Person",
-  name: "Sidhant Mathur",
-  url: "https://sidhantmathur.com",
+  name: SITE_NAME,
+  url: SITE_URL,
   description: DESCRIPTION,
   email: "mailto:hello@sidhantmathur.com",
   address: {

@@ -14,6 +14,7 @@ import { ENFORCEMENT_LABEL, REFUSALS } from "@/lib/refusals";
 import type { RequirementVerdict } from "@/lib/role-fit";
 import { FIT_LABELS, JD_COPY, PROJECT_LINKS, SOCIAL_LINKS, WHY_CHATBOT } from "./shell-data";
 import type { PanelView, RoleFit } from "./use-conversation";
+import { ActionLink } from "./action-link";
 
 const CASE_STUDIES = {
   adarle20: Adarle20,
@@ -60,10 +61,10 @@ export function PanelBody({
           <ChunkBlock key={c.id} chunk={c} focused={panel.focus === c.id} />
         ))}
         <div className="flex flex-wrap gap-2">
-          <PanelLink href="/resume">Full resume</PanelLink>
-          <PanelLink href="/resume.pdf" external>
+          <ActionLink href="/resume">Full resume</ActionLink>
+          <ActionLink href="/resume.pdf" external>
             PDF
-          </PanelLink>
+          </ActionLink>
         </div>
       </div>
     );
@@ -136,7 +137,7 @@ export function PanelBody({
         {/* Every other panel offers the standalone version of itself. This one
             could not, because /projects was a 404 until the index was built. */}
         <div className="pt-1">
-          <PanelLink href="/projects">Open as a page</PanelLink>
+          <ActionLink href="/projects">Open as a page</ActionLink>
         </div>
       </div>
     );
@@ -177,7 +178,7 @@ export function PanelBody({
           <dd className="text-text-soft">{project.status}</dd>
         </dl>
         <Body />
-        <PanelLink href={project.caseStudyHref}>Open as a page</PanelLink>
+        <ActionLink href={project.caseStudyHref}>Open as a page</ActionLink>
       </div>
     );
   }
@@ -192,10 +193,10 @@ export function PanelBody({
           vector database would be complexity for its own sake, so there isn&apos;t one.
         </p>
         <div className="flex flex-wrap gap-2">
-          <PanelLink href="/colophon">Open as a page</PanelLink>
-          <PanelLink href="/measurements">What it scores</PanelLink>
-          <PanelLink href="/prompt">Its instructions</PanelLink>
-          <PanelLink href="/refusals">What it won&apos;t do</PanelLink>
+          <ActionLink href="/colophon">Open as a page</ActionLink>
+          <ActionLink href="/measurements">What it scores</ActionLink>
+          <ActionLink href="/prompt">Its instructions</ActionLink>
+          <ActionLink href="/refusals">What it won&apos;t do</ActionLink>
         </div>
       </div>
     );
@@ -221,7 +222,7 @@ export function PanelBody({
           ))}
         </ul>
         <p className="t-meta text-text-faint">{PROMPT_NOTE.decline}</p>
-        <PanelLink href="/prompt">Read the whole thing</PanelLink>
+        <ActionLink href="/prompt">Read the whole thing</ActionLink>
       </div>
     );
   }
@@ -245,7 +246,7 @@ export function PanelBody({
             </div>
           ))}
         </div>
-        <PanelLink href="/refusals">Why each one exists</PanelLink>
+        <ActionLink href="/refusals">Why each one exists</ActionLink>
       </div>
     );
   }
@@ -258,7 +259,7 @@ export function PanelBody({
             {para}
           </p>
         ))}
-        <PanelLink href="/colophon">How it&apos;s built</PanelLink>
+        <ActionLink href="/colophon">How it&apos;s built</ActionLink>
       </div>
     );
   }
@@ -475,33 +476,6 @@ function JobDescriptionForm({ onSubmit }: { onSubmit?: (text: string) => void })
         </button>
       </div>
     </form>
-  );
-}
-
-function PanelLink({
-  href,
-  external,
-  children,
-}: {
-  href: string;
-  external?: boolean;
-  children: React.ReactNode;
-}) {
-  // py-2 rather than py-1: below lg every panel is a sheet, so these are
-  // thumb targets, and 11px text with 4px of padding made a 26px button.
-  const cls =
-    "inline-flex min-h-[44px] items-center border border-line-strong px-3 py-2.5 text-[13px] text-text-soft no-underline transition-colors hover:border-accent hover:text-accent";
-  if (external) {
-    return (
-      <a href={href} target="_blank" rel="noreferrer" className={cls}>
-        {children} ↗
-      </a>
-    );
-  }
-  return (
-    <Link href={href} className={cls}>
-      {children} →
-    </Link>
   );
 }
 

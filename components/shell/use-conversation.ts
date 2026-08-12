@@ -5,7 +5,13 @@ import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { track } from "@/lib/analytics";
 import { decodeSnapshot, payloadFromHash } from "@/lib/permalink";
-import type { RoleFitResult } from "@/lib/role-fit";
+import {
+  isPlainPanelKind,
+  PANEL_BY_TOOL,
+  PANELS,
+  type PanelView,
+  type RoleFit,
+} from "./panels";
 import {
   isRateLimitClass,
   isSilentClass,
@@ -14,6 +20,10 @@ import {
   type TurnErrorClass,
   type TurnTelemetry,
 } from "@/lib/chat-telemetry";
+import { guardedFetch, TurnFailure, type Budget } from "@/lib/chat-transport";
+
+/** Re-exported from lib/chat-transport, where the fetch that reads it lives. */
+export type { Budget };
 
 // Alias so the rest of this file (and its callers) read as before while every
 // message is the app's typed variant, carrying the F1 telemetry data part.
@@ -47,33 +57,11 @@ const RETIRED_STORAGE_KEYS = ["conversation.v1"];
 // react-hooks/purity even from an event handler.
 const nowMs = () => performance.now();
 
-// The reconciled assessment, exactly as lib/role-fit.ts returns it — the client
-// re-derives none of it. Every verdict on screen was decided server-side, and
-// re-computing one here would be a second opinion nobody asked for.
-export type RoleFit = RoleFitResult;
-
-export type PanelView =
-  | { kind: "none" }
-  | { kind: "resume"; focus?: string }
-  | { kind: "projects" }
-  | { kind: "project"; slug: "adarle20" | "nokia" | "dell-ml" }
-  | { kind: "colophon" }
-  | { kind: "contact" }
-  | { kind: "why" }
-  | { kind: "jd" }
-  | { kind: "instruments" }
-  // The export surface and the corpus index (Sprint 5, #17 and #13's
-  // `/sources`). Both are opened deliberately and never by a tool call.
-  | { kind: "export" }
-  | { kind: "corpus" }
-  // The two documents Sprint 7 publishes (#7, #10). Both are real pages as
-  // well; the panel view is the version that opens beside the conversation.
-  | { kind: "prompt" }
-  | { kind: "refusals" }
-  // One chunk of the corpus, opened from a citation (Sprint 3, F2/#4). The
-  // whole file renders; `id` is what gets highlighted and scrolled to.
-  | { kind: "source"; id: string }
-  | { kind: "roleFit"; data: RoleFit };
+// What a panel is now lives in ./panels — one record per kind, carrying the
+// title, the path, the slash command, the tool and who renders it. Both types
+// are re-exported here because most of the shell reaches for them through the
+// hook that owns the panel state.
+export type { PanelView, RoleFit };
 
 export type ToolOut = { type: string; state?: string; output?: unknown };
 
@@ -163,25 +151,30 @@ export function phaseOf(status: string, messages: UIMessage[]): string | null {
     : OPENING_PHASE;
 }
 
-/** First tool output in a turn wins the panel. */
+/**
+ * First tool output in a turn wins the panel.
+ *
+ * Which tool opens which panel is the registry's `fromTool`; what stays here is
+ * only the part a table can't hold — building the payload for the two kinds
+ * that carry one. Everything else is fully described by its name.
+ */
 export function panelForTool(outs: ToolOut[]): PanelView | null {
   for (const out of outs) {
-    if (out.type === "tool-showProject") {
+    const kind = PANEL_BY_TOOL[out.type];
+    if (!kind) continue;
+    if (kind === "project") {
       const slug = (out.output as { slug?: string })?.slug ?? "";
+      // An unrecognised slug falls back to the list rather than a blank panel.
       if (slug === "adarle20" || slug === "nokia" || slug === "dell-ml") {
         return { kind: "project", slug };
       }
       return { kind: "projects" };
     }
-    if (out.type === "tool-showResume") return { kind: "resume" };
-    if (out.type === "tool-contactCard") return { kind: "contact" };
-    if (out.type === "tool-roleFit")
-      return { kind: "roleFit", data: out.output as RoleFit };
+    if (kind === "roleFit") return { kind: "roleFit", data: out.output as RoleFit };
+    if (isPlainPanelKind(kind)) return { kind };
   }
   return null;
 }
-
-export type Budget = { tier: string; remaining: number; limit: number };
 
 /**
  * One turn's telemetry as the client holds it (F1).
@@ -195,221 +188,6 @@ export type TurnRecord = TurnTelemetry & {
   clientTtftMs: number | null;
   messageId: string | null;
 };
-
-// --- The guarded fetch ------------------------------------------------------
-//
-// Turns any failure into one of the telemetry error classes. useChat's onError
-// receives only an Error, not the HTTP status, so the class is read here — from
-// the JSON body the route sends on an early exit, or from the status — and
-// encoded as the message. Mid-stream failures already arrive as a class string,
-// because the route's stream `onError` returns one.
-//
-// Also lifts the per-tier budget out of the response headers, which is where it
-// lands before a single token has streamed.
-//
-// AND IT PUTS A CLOCK ON THE WHOLE THING, which is the reason this file was
-// reopened. There was no timeout anywhere on the client path: a stream that
-// simply stopped arriving — iOS Safari suspending the tab mid-answer is the
-// case this was reported from, at a restaurant, on a phone — left `status` at
-// "streaming" forever. `isBusy` stays true, `submit()` returns early on every
-// later send, and the site is silently dead until the visitor reloads it. They
-// don't reload. They leave.
-//
-// Two clocks, because one would have to be wrong:
-//
-//   connect   15s to the response HEADERS. A request that hasn't been answered
-//             in fifteen seconds isn't slow, it's gone.
-//   inactive  20s between CHUNKS. This is the one that catches the reported
-//             failure, where the connection is established and then stops.
-//
-// Deliberately NOT `AbortSignal.timeout` over the whole request: a healthy
-// job-posting turn spends three model steps and can legitimately run past a
-// minute, and a total-duration abort would kill it mid-answer.
-
-/** Headers must arrive within this. */
-const CONNECT_TIMEOUT_MS = 15_000;
-/** And once they have, a chunk must arrive at least this often. */
-const STREAM_IDLE_TIMEOUT_MS = 20_000;
-
-/** True for the shape a browser reports when the network itself failed. */
-function isNetworkError(err: unknown): boolean {
-  // Safari says "Load failed", Chrome and Firefox say "Failed to fetch"; all
-  // three raise a TypeError, which no other path here throws.
-  return err instanceof TypeError;
-}
-
-/**
- * True for the shape the SDK reads as "this turn was aborted".
- *
- * Matches `isAbortError` in @ai-sdk/provider-utils: browsers raise a
- * DOMException here, which is not an Error in every engine, so the name alone
- * is not enough to test on.
- */
-function isAbortError(err: unknown): boolean {
-  const named = err as { name?: unknown } | null;
-  if (!named || typeof named.name !== "string") return false;
-  return (
-    (err instanceof Error ||
-      (typeof DOMException !== "undefined" && err instanceof DOMException)) &&
-    named.name === "AbortError"
-  );
-}
-
-/**
- * What a failure DURING the stream actually was, in the vocabulary the rest of
- * the site speaks. Called with whatever `reader.read()` threw.
- *
- * Passing the raw error through — which is what this used to do — got two
- * things wrong, both of them visible:
- *
- *   a wifi drop mid-answer  arrived as a TypeError, fell through to "unknown",
- *                           and the unknown copy says "something went wrong on
- *                           my end" — the site apologising for the visitor's
- *                           train going into a tunnel. It is a `network`
- *                           failure and the network copy is the true one.
- *   the stop button         rendered an error block roughly one run in five.
- *                           An abort races the reader: depending on the browser
- *                           and on where in the pipeline the tear-down lands,
- *                           what surfaces here is sometimes a clean AbortError
- *                           and sometimes a TypeError from the socket dying
- *                           underneath it. The design rule is that an aborted
- *                           turn renders NOTHING, so the shape of the error is
- *                           the wrong thing to read.
- *
- * So the outer signal is the authority on the second one: if the caller's
- * signal is aborted, the reader pressed stop, whatever the error looks like.
- * That signal is aborted by `stop()` and by navigation only — the idle
- * watchdog below aborts our own controller, never this one.
- */
-function classifyStreamError(err: unknown, outer: AbortSignal | null | undefined): unknown {
-  // A genuine abort passes through untouched, so the SDK takes its abort path
-  // (status back to "ready", no error rendered) rather than its failure path.
-  if (isAbortError(err)) return err;
-  if (outer?.aborted) return new DOMException("The turn was aborted.", "AbortError");
-  if (isNetworkError(err)) return new Error("network");
-  return err;
-}
-
-/**
- * Wraps a response body so a stream that goes quiet fails instead of hanging.
- *
- * The wrapped stream is errored with a real class, which is the whole point:
- * the SDK surfaces it, `onError` fires, `status` becomes "error", `isBusy`
- * goes false, and the NEXT SEND WORKS. A silent stall does none of that.
- */
-function watchStream(
-  body: ReadableStream<Uint8Array>,
-  abort: () => void,
-  /** The caller's signal. Aborted exactly when the reader pressed stop. */
-  outer: AbortSignal | null | undefined,
-): ReadableStream<Uint8Array> {
-  const reader = body.getReader();
-  let timer: ReturnType<typeof setTimeout> | null = null;
-  let firedTimeout = false;
-
-  return new ReadableStream<Uint8Array>({
-    start(controller) {
-      const clear = () => {
-        if (timer != null) clearTimeout(timer);
-        timer = null;
-      };
-      const bump = () => {
-        clear();
-        timer = setTimeout(() => {
-          firedTimeout = true;
-          // Release the socket first, then fail the stream. The other order
-          // works too, but this way the abort can't race a reader that is
-          // already unwinding.
-          abort();
-          controller.error(new Error("upstream_timeout"));
-          void reader.cancel().catch(() => {});
-        }, STREAM_IDLE_TIMEOUT_MS);
-      };
-
-      bump();
-      void (async () => {
-        try {
-          for (;;) {
-            const { done, value } = await reader.read();
-            if (done) break;
-            controller.enqueue(value);
-            bump();
-          }
-          clear();
-          controller.close();
-        } catch (err) {
-          clear();
-          // Already errored above — a second `controller.error` would throw.
-          // Everything else is classified rather than passed through raw: see
-          // classifyStreamError for the two failures that made this necessary.
-          if (!firedTimeout) controller.error(classifyStreamError(err, outer));
-        }
-      })();
-    },
-    cancel(reason) {
-      if (timer != null) clearTimeout(timer);
-      return reader.cancel(reason);
-    },
-  });
-}
-
-function makeChatFetch(onBudget: (b: Budget) => void): typeof fetch {
-  return async (input, init) => {
-    // Our own controller rather than the caller's, so the timers below can
-    // abort a request the SDK has no reason to abort. The SDK's signal is
-    // forwarded into it, so `stop()` still works.
-    const ctrl = new AbortController();
-    const outer = init?.signal;
-    if (outer) {
-      if (outer.aborted) ctrl.abort(outer.reason);
-      else outer.addEventListener("abort", () => ctrl.abort(outer.reason), { once: true });
-    }
-
-    let connectTimedOut = false;
-    const connectTimer = setTimeout(() => {
-      connectTimedOut = true;
-      ctrl.abort();
-    }, CONNECT_TIMEOUT_MS);
-
-    let res: Response;
-    try {
-      res = await fetch(input, { ...init, signal: ctrl.signal });
-    } catch (err) {
-      // Rethrown as a class rather than as whatever the platform said. The
-      // distinction that matters to the reader is "your connection" versus
-      // "my server", and it is only knowable here.
-      if (connectTimedOut) throw new Error("upstream_timeout");
-      if (isNetworkError(err)) throw new Error("network");
-      throw err;
-    } finally {
-      clearTimeout(connectTimer);
-    }
-
-    if (!res.ok) {
-      let code: TurnErrorClass = res.status === 429 ? "rate_limited" : "upstream_unavailable";
-      try {
-        const body = (await res.clone().json()) as { error?: string };
-        if (body?.error) code = toTurnErrorClass(body.error);
-      } catch {
-        /* non-JSON body — the status-derived class above stands */
-      }
-      throw new Error(code);
-    }
-    const tier = res.headers.get("x-tier");
-    const remaining = Number(res.headers.get("x-tier-remaining"));
-    const limit = Number(res.headers.get("x-tier-limit"));
-    if (tier && Number.isFinite(remaining) && Number.isFinite(limit)) {
-      onBudget({ tier, remaining, limit });
-    }
-    if (!res.body) return res;
-    // Rebuilt from the original response so status, statusText and every header
-    // survive — the budget read above is not the only thing that reads them.
-    return new Response(
-      watchStream(res.body, () => ctrl.abort(), outer),
-      res,
-    );
-  };
-}
 
 export function useConversation(model: string) {
   const [errorKind, setErrorKind] = useState<"none" | "error" | "rate_limited">("none");
@@ -439,7 +217,7 @@ export function useConversation(model: string) {
         : new URLSearchParams(window.location.search).get("simulate");
     return new DefaultChatTransport({
       api: simulate ? `/api/chat?simulate=${encodeURIComponent(simulate)}` : "/api/chat",
-      fetch: makeChatFetch((b) => setBudget(b)),
+      fetch: guardedFetch({ onBudget: (b) => setBudget(b) }),
     });
   });
 
@@ -538,7 +316,9 @@ export function useConversation(model: string) {
       );
     },
     onError: (error) => {
-      const cls = toTurnErrorClass(error.message);
+      // The transport already knows the class it threw. Anything the SDK
+      // raised itself still has to be read out of the message.
+      const cls = error instanceof TurnFailure ? error.cls : toTurnErrorClass(error.message);
       // An aborted turn renders nothing — and that has to hold for the class
       // arriving over a live stream as well as for the SDK's own abort path,
       // which never gets here. Reported as analytics; shown as silence.
@@ -663,6 +443,8 @@ export function useConversation(model: string) {
   // deliberately, and having a tool call yank it away mid-reading would make
   // the instruments feel like they belong to the model rather than the reader.
   // The citation chip under the answer is still there to open the evidence.
+  // That exception is `stealable` in the registry rather than a name checked
+  // here, so a second panel that needs it doesn't have to find this line.
   const lastToolKey = useRef<string>("");
   const panelRef = useRef(panel);
   useEffect(() => {
@@ -676,7 +458,7 @@ export function useConversation(model: string) {
     const key = `${last.id}:${outs.length}`;
     if (key === lastToolKey.current) return;
     lastToolKey.current = key;
-    if (panelRef.current.kind === "instruments") return;
+    if (!PANELS[panelRef.current.kind].stealable) return;
 
     const next = panelForTool(outs);
     // Deferred so the effect body doesn't setState synchronously.

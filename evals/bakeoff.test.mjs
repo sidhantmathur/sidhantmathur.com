@@ -22,11 +22,16 @@ import { describe, it } from "node:test";
 
 import { runPerformance, sample, turnPerformance } from "./lib/performance.mjs";
 import { ROOT } from "./lib/artifacts.mjs";
+import { MIN_TURNS_FOR_P50 } from "../lib/measurements.ts";
 import { MODEL_PRICES, PRICE_CONFIDENCE } from "../lib/pricing.ts";
 import {
   allGroups,
+  bakeoffSummary,
+  formatTurnCost,
   frontier,
   latestRunPerModel,
+  measuredRange,
+  median,
   rank,
   runHistory,
   supportsMedian,
@@ -354,6 +359,137 @@ describe("what the comparison page derives", () => {
     ];
     assert.deepEqual(allGroups(rows), ["grounded", "injection"]);
   });
+
+  it("reads a median only through the gate", () => {
+    // The accessor is the gate. A p50 read straight off a three-turn sample is
+    // a number with a median's typography and a maximum's information, and it
+    // would render in the same type as one over twenty-two turns.
+    assert.equal(median(null), null, "an unmeasured sample has no median");
+    assert.equal(median({ n: 3, p50: 900, min: 900, max: 900 }), null, "and nor does a thin one");
+    assert.equal(median({ n: 22, p50: 900, min: 800, max: 1000 }), 900);
+  });
+
+  it("holds a token median to the same floor as a timing median", () => {
+    // The token panels and the table's `in`/`out` columns used to read `.p50`
+    // straight off the sample while the timing panels went through the gate.
+    // A six-turn run therefore printed an em dash for its median TTFT and a
+    // real median token count in the same row, from the same six turns.
+    const thin = toRow(run({ model: "a/thin", performance: perfWithTurns(MIN_TURNS_FOR_P50 - 1) }));
+    assert.equal(median(thin.ttftMs), null);
+    assert.equal(median(thin.tokensPerSecond), null);
+    assert.equal(median(thin.inputTokens), null, "a token count is not exempt from the floor");
+    assert.equal(median(thin.outputTokens), null);
+
+    const { bars, missing } = rank([thin], (r) => median(r.outputTokens), "none");
+    assert.equal(bars.length, 0, "and a withheld median is not plotted");
+    assert.deepEqual(missing.map((r) => r.model), ["a/thin"], "it is reported as missing instead");
+
+    const atFloor = toRow(run({ model: "a/floor", performance: perfWithTurns(MIN_TURNS_FOR_P50) }));
+    assert.equal(median(atFloor.ttftMs), 1200);
+    assert.equal(median(atFloor.tokensPerSecond), 80);
+    assert.equal(median(atFloor.inputTokens), 6000, "exactly at the floor is enough");
+    assert.equal(median(atFloor.outputTokens), 300);
+  });
+});
+
+// --- the figures above the charts -------------------------------------------
+
+describe("what the whole bake-off adds up to", () => {
+  const priced = (over) => run({ performance: perfWithCost(0.001), ...over });
+
+  it("counts turns and breaks across every compared run", () => {
+    const rows = [
+      toRow(run({ model: "a/one", total: 22, passed: 20, broke: 2 })),
+      toRow(run({ model: "a/two", total: 22, passed: 22, broke: 0 })),
+    ];
+    const summary = bakeoffSummary(rows);
+    assert.equal(summary.turnsGraded, 44);
+    assert.equal(summary.turnsBroke, 2);
+  });
+
+  it("says the corpus is the same one only when it is", () => {
+    const same = bakeoffSummary([
+      toRow(run({ model: "a/one", total: 22, passed: 22 })),
+      toRow(run({ model: "a/two", total: 22, passed: 22 })),
+    ]);
+    assert.equal(same.uniformCorpus, true);
+    assert.equal(same.casesEach, 22);
+
+    // The page prints "varies" off this. Two models measured on different
+    // numbers of cases are not being compared on the same corpus, and a
+    // headline "22 cases each" over a run of 12 would be a false claim about
+    // the measurement rather than a rounding.
+    const mixed = bakeoffSummary([
+      toRow(run({ model: "a/one", total: 22, passed: 22 })),
+      toRow(run({ model: "a/two", total: 12, passed: 12 })),
+    ]);
+    assert.equal(mixed.uniformCorpus, false);
+  });
+
+  it("totals the cost of the comparison", () => {
+    const summary = bakeoffSummary([
+      toRow(priced({ model: "a/one" })),
+      toRow(priced({ model: "a/two" })),
+    ]);
+    assert.equal(summary.totalCost, 0.001 * 22 * 2);
+  });
+
+  it("has no total at all when one model's cost is unknown", () => {
+    // NOT a partial sum. One unpriced model is exactly the live case — one
+    // model's rates could not be confirmed — and a total over the other four
+    // would print as "the cost of the whole comparison" while being the cost
+    // of most of it. Cheaper than the truth, in the site's own headline figure.
+    const summary = bakeoffSummary([
+      toRow(priced({ model: "a/priced" })),
+      toRow(run({ model: "a/unpriced" })),
+      toRow(priced({ model: "a/also-priced" })),
+    ]);
+    assert.equal(summary.totalCost, null);
+  });
+
+  it("dates the artifact, and says so as a span when it was not one sitting", () => {
+    const oneDay = bakeoffSummary([
+      toRow(run({ model: "a/one", ranAt: "2026-07-27T19:10:00.000Z" })),
+      toRow(run({ model: "a/two", ranAt: "2026-07-27T21:03:00.000Z" })),
+    ]);
+    assert.deepEqual(oneDay.measuredOn, [
+      "2026-07-27T19:10:00.000Z",
+      "2026-07-27T21:03:00.000Z",
+    ]);
+    assert.equal(oneDay.measuredRange, "27 Jul 2026", "one afternoon reads as a date");
+
+    const spread = bakeoffSummary([
+      toRow(run({ model: "a/late", ranAt: "2026-07-31T20:54:00.000Z" })),
+      toRow(run({ model: "a/early", ranAt: "2026-07-27T19:10:00.000Z" })),
+    ]);
+    assert.equal(spread.measuredRange, "27 Jul 2026 to 31 Jul 2026", "earliest first, both ends");
+  });
+
+  it("keeps an undated run out of the span rather than dating it", () => {
+    const summary = bakeoffSummary([
+      toRow(run({ model: "a/dated", ranAt: "2026-07-27T19:10:00.000Z" })),
+      toRow(run({ model: "a/undated", ranAt: null })),
+    ]);
+    assert.deepEqual(summary.measuredOn, ["2026-07-27T19:10:00.000Z"]);
+    assert.equal(summary.measuredRange, "27 Jul 2026");
+    assert.equal(measuredRange([]), "on an unknown date", "and nothing dated says so");
+  });
+});
+
+// --- what a turn costs, printed at the scale it costs -----------------------
+
+describe("cost precision follows the cost", () => {
+  it("spends a fifth decimal only where four would read as free", () => {
+    // The boundary is exact: at a tenth of a cent four decimals still say
+    // something, below it they say $0.0000.
+    assert.equal(formatTurnCost(0.001), "$0.0010");
+    assert.equal(formatTurnCost(0.00099), "$0.00099");
+    assert.equal(formatTurnCost(0.0025391), "$0.0025");
+  });
+
+  it("prints an em dash rather than a cost for an unpriced turn", () => {
+    assert.equal(formatTurnCost(null), "—");
+  });
 });
 
 // --- the price caveat has to travel with the price -------------------------
@@ -390,5 +526,19 @@ function perfWithTtft(p50) {
   return {
     ...perfWithCost(0.001),
     ttftMs: { n: 22, p50, min: p50, max: p50 },
+  };
+}
+
+/** A run measured over `n` turns, with every sample the page reads populated. */
+function perfWithTurns(n) {
+  const s = (p50) => ({ n, p50, min: p50, max: p50 });
+  return {
+    ...perfWithCost(0.001),
+    turns: { measured: n, missing: 0 },
+    ttftMs: s(1200),
+    durationMs: s(3000),
+    tokensPerSecond: s(80),
+    inputTokens: s(6000),
+    outputTokens: s(300),
   };
 }

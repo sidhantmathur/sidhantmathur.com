@@ -3,42 +3,20 @@
 // F1 already puts token counts on the client. This turns them into money, which
 // is the whole point of A8: the "17/20" strip asserts that someone thought about
 // cost; a per-turn dollar figure with the cached-input line broken out PROVES
-// it. The input-dominated analysis that picked the model allowlist lives in a
-// comment in `app/api/chat/route.ts` and is invisible to the audience it would
-// impress most.
+// it.
 //
-// HONESTY, because this is a site about instrumentation being honest:
-//
-//   * These are LIST prices, per 1M tokens, as published on the Vercel AI
-//     Gateway model list and checked on the date below. They are what the meter
-//     estimates with. They are not an invoice.
-//   * `input` and `output` are the two numbers already recorded against each
-//     model in `route.ts`. They are the ones to trust.
-//   * `cacheRead` and `cacheWrite` are mostly DERIVED — each provider's
-//     published discount/surcharge applied to that model's input price, rather
-//     than a separately checked figure. Where a provider publishes the cached
-//     rate directly it is used as published and the comment says so.
+// This file is the ARITHMETIC. The per-model numbers it works on — prices, cache
+// rates, how far each is to be trusted, and the reasoning behind the allowlist
+// they belong to — are one table in `lib/models.ts`, which is also what the
+// route, the dropdown and the bake-off script read. Two views of that table are
+// re-exported here so that everything costing a turn keeps importing one module.
 //
 // Anything rendering these must label the result as an estimate at list price.
-//
-// RE-CHECKED 2026-07-27 (roadmap Sprint 6, following Sprint 2's finding 3).
-// What that check found, per row, is in the comments below. The short version:
-//   * Anthropic's 0.1x read / 1.25x five-minute write are documented, and
-//     haiku 4.5's $1.00/$5.00 confirms — this row is verified end to end.
-//   * gpt-5-mini and gemini-3.5-flash-lite have confirmed input/output prices
-//     and still-derived cache rates.
-//   * deepseek-v4-flash was WRONG in both directions and is corrected here:
-//     input and output were understated, and the derived cache read was more
-//     than three times the published cache-hit rate. Sprint 2 called the
-//     derived figures the soft numbers in this file; the check found the
-//     supposedly-solid ones were the problem on this row.
-//   * gpt-5.6-luna could not be confirmed and is marked as such.
-//
-// Nothing on /measurements is denominated in money, deliberately, so no
-// published aggregate depends on any of these.
 
-/** When the `input`/`output` prices below were last checked against the Gateway. */
-export const PRICES_CHECKED = "2026-07-27";
+import { MODELS, PRICES_CHECKED, type PriceConfidence } from "./models.ts";
+
+export { PRICES_CHECKED };
+export type { PriceConfidence };
 
 /** Dollars per 1M tokens. */
 type ModelPrice = {
@@ -50,54 +28,25 @@ type ModelPrice = {
   cacheWrite: number;
 };
 
-// Keys must stay in step with the `MODELS` allowlist in app/api/chat/route.ts.
-// An unknown model is priced as null rather than guessed — see costOfTurn.
-export const MODEL_PRICES: Record<string, ModelPrice> = {
-  // Anthropic: cache reads bill at 0.1x input, 5-minute cache writes at 1.25x.
-  // Verified 2026-07-27: $1.00/$5.00 per 1M, and both multipliers are published.
-  "anthropic/claude-haiku-4.5": { input: 1.0, output: 5.0, cacheRead: 0.1, cacheWrite: 1.25 },
-  // OpenAI: cached input is discounted to 0.1x; cache writes are not billed.
-  // Input/output confirmed 2026-07-27; the cache rate is still derived.
-  "openai/gpt-5-mini": { input: 0.25, output: 2.0, cacheRead: 0.025, cacheWrite: 0 },
-  // UNCONFIRMED as of 2026-07-27 — neither the input/output pair nor the cache
-  // discount could be checked against a published rate. Treat as the least
-  // trustworthy row here.
-  "openai/gpt-5.6-luna": { input: 1.0, output: 6.0, cacheRead: 0.1, cacheWrite: 0 },
-  // Google: cached input is discounted to 0.25x; storage is billed by time, not
-  // by token, and this workload never holds an explicit cache, so it's zero.
-  // Input/output confirmed 2026-07-27; the cache rate is still derived.
-  "google/gemini-3.5-flash-lite": { input: 0.3, output: 2.5, cacheRead: 0.075, cacheWrite: 0 },
-  // DeepSeek publishes the cache-hit rate directly rather than as a multiplier,
-  // and it is ~50x below a miss, not the ~10x this row previously assumed.
-  // Corrected 2026-07-27: input was 0.09 (published 0.14), output was 0.18
-  // (published 0.28), and cacheRead was a derived 0.009 against a published
-  // 0.0028. This is the one row here whose cache read is NOT derived.
-  "deepseek/deepseek-v4-flash": { input: 0.14, output: 0.28, cacheRead: 0.0028, cacheWrite: 0 },
-};
+// Every allowlisted model, priced. An unknown model is priced as null rather
+// than guessed — see costOfTurn. The catalogue is what makes "allowlisted" and
+// "priced" the same set rather than two sets that agree today.
+export const MODEL_PRICES: Record<string, ModelPrice> = Object.fromEntries(
+  Object.entries(MODELS).map(([id, spec]) => [
+    id,
+    {
+      input: spec.input,
+      output: spec.output,
+      cacheRead: spec.cacheRead,
+      cacheWrite: spec.cacheWrite,
+    },
+  ]),
+);
 
-/**
- * How much to trust each row above, as data rather than as a comment.
- *
- * The comments already say this, and a comment cannot be rendered. Sprint 8
- * publishes cost-per-task on `/measurements/models`, and a page that prints a
- * dollar figure without saying which of its prices could not be confirmed is
- * doing the thing this whole site argues against. So the caveat travels with
- * the number.
- *
- *   confirmed — input and output checked against a published rate on PRICES_CHECKED
- *   derived   — input/output confirmed; the cache rate is a published multiplier
- *               applied to input rather than a separately published figure
- *   unconfirmed — neither could be checked. Least trustworthy row here.
- */
-export type PriceConfidence = "confirmed" | "derived" | "unconfirmed";
-
-export const PRICE_CONFIDENCE: Record<string, PriceConfidence> = {
-  "anthropic/claude-haiku-4.5": "confirmed",
-  "openai/gpt-5-mini": "derived",
-  "openai/gpt-5.6-luna": "unconfirmed",
-  "google/gemini-3.5-flash-lite": "derived",
-  "deepseek/deepseek-v4-flash": "confirmed",
-};
+/** How much to trust each row above. See `lib/models.ts` for what each means. */
+export const PRICE_CONFIDENCE: Record<string, PriceConfidence> = Object.fromEntries(
+  Object.entries(MODELS).map(([id, spec]) => [id, spec.confidence]),
+);
 
 export type TurnCost = {
   /** Input tokens that were neither read from nor written to the cache. */
