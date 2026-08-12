@@ -133,6 +133,30 @@ Directions worth exploring — **brainstorm with Sidhant before building**:
 
 ---
 
+## 5. Two defects found during the deepening pass — tracked as issues
+
+Filed 2026-08-11 from branch `deepen-chat-transport`. Both are on GitHub now;
+this section is the index, the detail is in the issues.
+
+- **[#2](https://github.com/sidhantmathur/sidhantmathur.com/issues/2) — the
+  ranked-bar charts say "not measured" for a median that was measured but
+  withheld.** `components/charts/ranked-bars.tsx:41`. Haiku's newest run is 6
+  turns, under `MIN_TURNS_FOR_P50`, so the median is withheld — the chart says
+  the opposite. Already wrong on two panels; `dc1ed0a` spread it to four by
+  applying the same gate to token medians. `lib/measurements.ts:33` already
+  models the distinction (`"too-few" | "not-measured"`); `rank()` collapses it.
+  Needs a copy decision, so it wants Sidhant, not an agent.
+- **[#3](https://github.com/sidhantmathur/sidhantmathur.com/issues/3) — the stop
+  button disappears the moment an answer starts rendering.** `phaseOf` returns
+  null once the assistant message has text (`use-conversation.ts:135`) and the
+  control lives inside `{phase && …}` (`app-shell.tsx:966`), so it only exists
+  between 8s elapsed and the first token — a window that never opens on a
+  healthy turn. Pre-existing (`b820054`, `c930843`), not from this branch. The
+  abort path itself is sound and now covered by `evals/chat-transport.test.mjs`;
+  it is the affordance that is unreachable.
+
+---
+
 ## Known-open, not on Sidhant's list
 
 - **Resume images.** `/resume` has exactly one screenshot
