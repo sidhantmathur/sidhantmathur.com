@@ -27,8 +27,12 @@
 //
 // This workload is input-dominated — the system prompt plus knowledge base is
 // ~4k tokens on every turn against ~300 tokens of answer — so input price is
-// what actually bills. Sonnet was the previous premium entry at $3/$15 and was
-// not worth 3x Luna here.
+// what actually bills. Sonnet was the first premium entry at $3/$15 and was not
+// worth 3x Luna here; Luna held the slot until its short-context price dropped
+// to $0.20/$1.20, at which point it moved to `standard` as a workhorse and
+// haiku 4.5 — now the most expensive input price in this table at $1/1M —
+// took the small bucket. The premium tier is a cost boundary, not a quality
+// badge: it holds whichever model bills most per turn.
 //
 // --- The prices ------------------------------------------------------------
 //
@@ -50,24 +54,29 @@
 //
 // Anything rendering these must label the result as an estimate at list price.
 //
-// RE-CHECKED 2026-07-27 (roadmap Sprint 6, following Sprint 2's finding 3).
-// What that check found, per row, is in the comments below. The short version:
-//   * Anthropic's 0.1x read / 1.25x five-minute write are documented, and
-//     haiku 4.5's $1.00/$5.00 confirms — this row is verified end to end.
-//   * gpt-5-mini and gemini-3.5-flash-lite have confirmed input/output prices
-//     and still-derived cache rates.
-//   * deepseek-v4-flash was WRONG in both directions and is corrected here:
-//     input and output were understated, and the derived cache read was more
-//     than three times the published cache-hit rate. Sprint 2 called the
-//     derived figures the soft numbers; the check found the supposedly-solid
-//     ones were the problem on this row.
-//   * gpt-5.6-luna could not be confirmed and is marked as such.
+// RE-CHECKED 2026-08-12, when the catalogue was rebuilt around the cheap
+// models. What that check found, per row, is in the comments below. The short
+// version:
+//   * deepseek-v4-flash was superseded upstream by DeepSeek-V4-Flash-0731,
+//     which the Gateway lists as its own id at $0.09/$0.18 — the pair the old
+//     row wrongly carried before the 2026-07-27 correction is now simply true
+//     of the new snapshot. Its cache-hit rate is not published yet, so that
+//     figure went from published back to derived.
+//   * gpt-5.6-luna is finally priced on its Gateway page: $0.20/$1.20 with a
+//     published $0.02 cached-input rate for short-context requests (a long-
+//     context tier exists at $1.00/$6.00; every turn here is ~4k tokens, far
+//     under any breakpoint). Previously the least trustworthy row; now
+//     confirmed, and cheap enough to be a standard-tier workhorse.
+//   * haiku 4.5 ($1.00/$5.00), gpt-5-mini ($0.25/$2.00) and
+//     gemini-3.5-flash-lite ($0.30/$2.50) re-confirmed unchanged; their cache
+//     rates keep the same status as before (haiku's multipliers published,
+//     the other two derived).
 //
 // Nothing on /measurements is denominated in money, deliberately, so no
 // published aggregate depends on any of these.
 
 /** When the `input`/`output` prices below were last checked against the Gateway. */
-export const PRICES_CHECKED = "2026-07-27";
+export const PRICES_CHECKED = "2026-08-12";
 
 /**
  * Which tier's hourly budget a turn spends from. Declared rather than derived
@@ -99,18 +108,37 @@ export type ModelSpec = {
 // Order is the dropdown order, and the first entry is what the shell selects on
 // load — so it must be the same model as DEFAULT_MODEL below.
 export const MODELS = {
-  // Anthropic: cache reads bill at 0.1x input, 5-minute cache writes at 1.25x.
-  // Verified 2026-07-27: $1.00/$5.00 per 1M, and both multipliers are published.
-  "anthropic/claude-haiku-4.5": {
+  // The default and first workhorse. DeepSeek retired deepseek-v4-flash in
+  // favour of this 0731 snapshot, which the Gateway lists as its own id.
+  // Input/output confirmed 2026-08-12 at $0.09/$0.18. The cache-hit rate is
+  // not published for this snapshot, so it is DERIVED: the old snapshot's
+  // published hit/miss ratio (0.0028 / 0.14 = 0.02x) applied to the new input
+  // price. That ratio flips this row's confidence from confirmed to derived —
+  // the honest label until DeepSeek publishes the hit rate.
+  "deepseek/deepseek-v4-flash-0731": {
     tier: "standard",
-    input: 1.0,
-    output: 5.0,
-    cacheRead: 0.1,
-    cacheWrite: 1.25,
+    input: 0.09,
+    output: 0.18,
+    cacheRead: 0.0018,
+    cacheWrite: 0,
+    confidence: "derived",
+  },
+  // The second workhorse, ex-premium. OpenAI prices Luna's short- and long-
+  // context requests separately; these are the short-context rates, confirmed
+  // 2026-08-12 ($0.20/$1.20, cached input a published $0.02). Every turn here
+  // is ~4k tokens of input, far under any long-context breakpoint, so the
+  // long-context tier ($1.00/$6.00) never applies to this workload. Cache
+  // writes are not billed.
+  "openai/gpt-5.6-luna": {
+    tier: "standard",
+    input: 0.2,
+    output: 1.2,
+    cacheRead: 0.02,
+    cacheWrite: 0,
     confidence: "confirmed",
   },
   // OpenAI: cached input is discounted to 0.1x; cache writes are not billed.
-  // Input/output confirmed 2026-07-27; the cache rate is still derived.
+  // Input/output re-confirmed 2026-08-12; the cache rate is still derived.
   "openai/gpt-5-mini": {
     tier: "standard",
     input: 0.25,
@@ -121,7 +149,7 @@ export const MODELS = {
   },
   // Google: cached input is discounted to 0.25x; storage is billed by time, not
   // by token, and this workload never holds an explicit cache, so it's zero.
-  // Input/output confirmed 2026-07-27; the cache rate is still derived.
+  // Input/output re-confirmed 2026-08-12; the cache rate is still derived.
   "google/gemini-3.5-flash-lite": {
     tier: "standard",
     input: 0.3,
@@ -130,34 +158,17 @@ export const MODELS = {
     cacheWrite: 0,
     confidence: "derived",
   },
-  // DeepSeek publishes the cache-hit rate directly rather than as a multiplier,
-  // and it is ~50x below a miss, not the ~10x this row previously assumed.
-  // Corrected 2026-07-27: input was 0.09 (published 0.14), output was 0.18
-  // (published 0.28), and cacheRead was a derived 0.009 against a published
-  // 0.0028. This is the one row here whose cache read is NOT derived.
-  //
-  // The route's allowlist carried $0.09/$0.18 in a comment until this table was
-  // merged — the pre-correction pair, left behind because a comment is not
-  // something a test can check. It is gone rather than reinstated: these are
-  // the numbers the meter has been billing against since the re-check.
-  "deepseek/deepseek-v4-flash": {
-    tier: "standard",
-    input: 0.14,
-    output: 0.28,
-    cacheRead: 0.0028,
-    cacheWrite: 0,
-    confidence: "confirmed",
-  },
-  // UNCONFIRMED as of 2026-07-27 — neither the input/output pair nor the cache
-  // discount could be checked against a published rate. Treat as the least
-  // trustworthy row here.
-  "openai/gpt-5.6-luna": {
+  // Anthropic: cache reads bill at 0.1x input, 5-minute cache writes at 1.25x.
+  // Re-confirmed 2026-08-12: $1.00/$5.00 per 1M, both multipliers published.
+  // Premium because on this input-dominated workload $1/1M input bills 5-11x
+  // the standard rows per turn — the tier is a cost boundary, not a ranking.
+  "anthropic/claude-haiku-4.5": {
     tier: "premium",
     input: 1.0,
-    output: 6.0,
+    output: 5.0,
     cacheRead: 0.1,
-    cacheWrite: 0,
-    confidence: "unconfirmed",
+    cacheWrite: 1.25,
+    confidence: "confirmed",
   },
 } as const satisfies Record<string, ModelSpec>;
 
@@ -167,4 +178,4 @@ export type ModelId = keyof typeof MODELS;
 export const MODEL_IDS = Object.keys(MODELS) as ModelId[];
 
 /** What an unknown or absent id resolves to. Must be `MODEL_IDS[0]`. */
-export const DEFAULT_MODEL: ModelId = "anthropic/claude-haiku-4.5";
+export const DEFAULT_MODEL: ModelId = "deepseek/deepseek-v4-flash-0731";
