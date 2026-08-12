@@ -64,6 +64,15 @@ compare them is gone with the copies it existed to police; the static suite
 now asserts things about the catalogue's content instead. Adding or removing a
 model is one edit in one file.
 
+**Update 2026-08-12 — the premium slot re-tenanted a second time.** Luna's
+short-context price is now published at $0.20/$1.20 per 1M, which makes it a
+cheap model, so it moved to `standard` as a workhorse alongside the new
+default, `deepseek/deepseek-v4-flash-0731` (the Gateway id for the snapshot
+that replaced deepseek-v4-flash upstream). Haiku 4.5 — now the most expensive
+input price in the catalogue at $1/1M on an input-dominated workload — holds
+the premium slot's 5/hour bucket instead. Same reasoning as when Sonnet left:
+the tier is a cost boundary, and it holds whichever model bills most per turn.
+
 ## 3. Copy — Sidhant is doing this, do not write it
 
 Two blocks on the live site are Claude's drafts, marked `[DRAFT]` in
