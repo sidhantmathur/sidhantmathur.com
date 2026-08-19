@@ -80,3 +80,17 @@ Native Ubuntu — run directly from the repo root (the old WSL wrapper is gone).
   point at a deploy with `BASE=https://…`). Needs `npx playwright install chromium` once per machine.
 
 The chat knowledge base is built from `content/knowledge/*.md` by `scripts/build-knowledge.mjs`, wired as `predev`/`prebuild`. It writes two git-ignored files: `lib/knowledge.generated.ts` (the prompt text) and `lib/chunks.generated.ts` (the same content as addressable chunks — the ids the model cites and `lib/verify.ts` checks against).
+
+## Agent skills
+
+### Issue tracker
+
+Issues live in this repo's GitHub Issues, via the `gh` CLI. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Default label vocabulary: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: `CONTEXT.md` and `docs/adr/` at the repo root (created lazily). See `docs/agents/domain.md`.
