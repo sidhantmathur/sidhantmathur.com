@@ -1,3 +1,5 @@
+import { readFile } from "node:fs/promises";
+import { join } from "node:path";
 import { ImageResponse } from "next/og";
 
 export const alt = "Sidhant Mathur";
@@ -11,7 +13,15 @@ export const contentType = "image/png";
 // --text-soft #C4BCB4, --accent #E4522B. This is what renders when the link is
 // pasted into Slack or LinkedIn, so it has to read as the same object as the
 // site.
-export default function Image() {
+export default async function Image() {
+  // Satori can't use CSS font stacks — without real font data the mono
+  // families silently fall back to its default sans. These TTFs are the same
+  // Geist Mono the site loads via next/font.
+  const [geistMonoRegular, geistMonoMedium] = await Promise.all([
+    readFile(join(process.cwd(), "assets/fonts/GeistMono-Regular.ttf")),
+    readFile(join(process.cwd(), "assets/fonts/GeistMono-Medium.ttf")),
+  ]);
+
   return new ImageResponse(
     (
       <div
@@ -38,7 +48,7 @@ export default function Image() {
         />
         <div
           style={{
-            fontFamily: "monospace",
+            fontFamily: "Geist Mono",
             fontSize: 64,
             fontWeight: 500,
             letterSpacing: "-0.02em",
@@ -50,7 +60,7 @@ export default function Image() {
         <div
           style={{
             marginTop: 24,
-            fontFamily: "monospace",
+            fontFamily: "Geist Mono",
             fontSize: 32,
             lineHeight: 1.4,
             color: "#C4BCB4",
@@ -60,6 +70,22 @@ export default function Image() {
         </div>
       </div>
     ),
-    { ...size }
+    {
+      ...size,
+      fonts: [
+        {
+          name: "Geist Mono",
+          data: geistMonoRegular,
+          weight: 400,
+          style: "normal",
+        },
+        {
+          name: "Geist Mono",
+          data: geistMonoMedium,
+          weight: 500,
+          style: "normal",
+        },
+      ],
+    }
   );
 }
