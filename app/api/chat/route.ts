@@ -25,7 +25,14 @@ import {
   type TurnTelemetry,
 } from "@/lib/chat-telemetry";
 import { PROJECTS } from "@/content/projects";
-import { MODELS, DEFAULT_MODEL, type ModelId, type Tier } from "@/lib/models";
+import {
+  MODELS,
+  DEFAULT_MODEL,
+  TIER_LIMITS,
+  MAX_USER_MESSAGES,
+  type ModelId,
+  type Tier,
+} from "@/lib/models";
 
 // Node runtime: both @upstash/ratelimit and the in-memory fallback work fine on
 // Node, and there's no edge-specific requirement here.
@@ -74,28 +81,24 @@ const messageSchema = z
     { message: "Message text exceeds the allowed length." },
   );
 
-// History cap: must fit the full intended conversation — up to 10 user turns
-// (enforced below with the graceful 429) plus their assistant replies — with
-// headroom, so the >10-user-messages case reaches the rate-limit copy instead
-// of dying on a schema 400.
+// History cap: must fit the full intended conversation — MAX_USER_MESSAGES user
+// turns (enforced below with the graceful 429) plus their assistant replies —
+// with headroom, so exceeding that cap reaches the rate-limit copy instead of
+// dying on a schema 400.
 // --- Model policy ---------------------------------------------------------
 //
 // WHICH models exist, what they cost, and why the allowlist is what it is: all
 // of that is `lib/models.ts`, imported above, and this route is one of its four
-// readers. What lives here is policy about THIS endpoint — how much of each
-// tier's budget an hour buys, and what to do with an id that isn't on the list.
+// readers. The per-tier hourly budget and the conversation cap live there too
+// (`TIER_LIMITS`, `MAX_USER_MESSAGES`) — this route enforces them, the status
+// strip renders them, and the chat's own prompt states them in words, so they
+// stopped being one endpoint's private policy. What lives here is enforcement,
+// and what to do with an id that isn't on the list.
 //
 // The client picks a model, so the allowlist is a security AND a cost boundary:
 // the id from the request is never passed through to the Gateway, only used to
 // look up an entry in the catalogue. An unknown id falls back to the default
 // rather than erroring, so a stale client can't break the chat.
-//
-// Each tier has its own rate-limit bucket. The point is that the budget is
-// visible in the UI — showing the cost engineering rather than hiding it.
-const TIER_LIMITS: Record<Tier, number> = {
-  standard: 20,
-  premium: 5,
-};
 
 function resolveModel(requested: string | undefined): ModelId {
   return requested && requested in MODELS ? (requested as ModelId) : DEFAULT_MODEL;
@@ -594,9 +597,9 @@ export async function POST(req: Request): Promise<Response> {
   const model = resolveModel(parsed.model);
   const tier = MODELS[model].tier;
 
-  // (b) Conversation cap: more than 10 user messages → rate-limit state.
+  // (b) Conversation cap: past MAX_USER_MESSAGES visitor messages → rate-limit state.
   const userMessageCount = messages.filter((m) => m.role === "user").length;
-  if (userMessageCount > 10) {
+  if (userMessageCount > MAX_USER_MESSAGES) {
     return jsonError("rate_limited", 429);
   }
 

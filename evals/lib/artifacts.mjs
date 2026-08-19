@@ -119,16 +119,6 @@ export function buildSiteAppendixApproximation() {
 // --experimental-strip-types. Comparing the lists would be comparing a constant
 // to itself, so the scrapers have no caller and are gone.
 
-/** Tier names that have a rate-limit bucket. */
-export function readTierLimits() {
-  const src = read("app/api/chat/route.ts");
-  const block = src.match(/const TIER_LIMITS: Record<Tier, number> = \{([\s\S]*?)\};/);
-  if (!block) throw new Error("Could not locate TIER_LIMITS in app/api/chat/route.ts");
-  const limits = {};
-  for (const m of block[1].matchAll(/(\w+):\s*(\d+)/g)) limits[m[1]] = Number(m[2]);
-  return limits;
-}
-
 /**
  * Tool names defined on the chat route.
  *

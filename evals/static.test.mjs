@@ -22,11 +22,10 @@ import {
   read,
   readKnowledgeBase,
   readSystemPromptSource,
-  readTierLimits,
   readToolNames,
 } from "./lib/artifacts.mjs";
 import { GROUNDED, ROLE_FIT } from "./cases.mjs";
-import { DEFAULT_MODEL, MODELS, MODEL_IDS } from "../lib/models.ts";
+import { DEFAULT_MODEL, MODELS, MODEL_IDS, TIER_LIMITS } from "../lib/models.ts";
 import { JD_PREFIX, looksLikeJobPosting } from "../lib/job-posting.ts";
 
 describe("knowledge base", () => {
@@ -91,6 +90,30 @@ describe("system prompt", () => {
     }
   });
 
+  // The chat states its own rate limits in words. Those numbers exist in
+  // lib/models.ts, and the paragraph interpolates them — so this asserts the
+  // shape rather than the values: the paragraph must reference the constants
+  // and must not contain a bare integer. A number retyped here would go stale
+  // the first time a bucket changed, and the chat would confidently tell
+  // visitors the wrong allowance.
+  test("the rate-limit paragraph derives its numbers instead of retyping them", () => {
+    const src = readSystemPromptSource();
+    const start = src.indexOf("rate limited, deliberately");
+    assert.ok(start > 0, "system prompt lost the paragraph stating its own rate limits");
+    const paragraph = src.slice(start, src.indexOf("\n\n", start));
+
+    for (const ref of ["${MAX_USER_MESSAGES}", "${TIER_LIMITS.standard}", "${TIER_LIMITS.premium}"]) {
+      assert.ok(paragraph.includes(ref), `the rate-limit paragraph stopped reading ${ref}`);
+    }
+
+    const literal = paragraph.match(/(?<!\$\{[^}]*)\b\d+\b/);
+    assert.equal(
+      literal,
+      null,
+      `the rate-limit paragraph hard-codes "${literal?.[0]}" — read it from lib/models.ts instead`,
+    );
+  });
+
   test("documents every tool the route defines", () => {
     const src = readSystemPromptSource();
     for (const name of readToolNames()) {
@@ -123,10 +146,11 @@ describe("model catalogue", () => {
   // the single table says everything its four readers need.
 
   test("every model has a tier with a rate-limit bucket", () => {
-    const limits = readTierLimits();
+    // TIER_LIMITS used to be scraped out of the route's source text; it lives
+    // in the catalogue beside the tiers now, so this imports it like MODELS.
     for (const [id, spec] of Object.entries(MODELS)) {
       assert.ok(
-        spec.tier in limits,
+        spec.tier in TIER_LIMITS,
         `"${id}" has tier "${spec.tier}", which has no entry in TIER_LIMITS — consumeBudget would read undefined`,
       );
     }

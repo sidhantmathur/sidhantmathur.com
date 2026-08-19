@@ -284,6 +284,15 @@ composer stays honestly disabled forever. Same register as `app/not-found.tsx`.
 | draft | `app/error.tsx` | "Something broke in the browser and the conversation didn't start. That one is on me, not you." | none | Takes the blame the way `lib/chat-telemetry.ts` already does for the two deploy-side error classes. Says where it broke (the browser) without guessing why. |
 | draft | `app/error.tsx` → buttons | "Try again" · "Read the resume instead →" | none | UI chrome. The first calls Next's `reset()`; the second is a plain link to a server-rendered document, so the fallback does not need the thing that just failed. |
 
+**The chat knows its own limits, 2026-08-18** (branch `main`, from an unlanded
+worktree). The prompt never told the assistant it was rate limited, so asked
+directly it either guessed or said it had no limits — a claim the route
+contradicts on the eleventh message.
+
+| Status | Where | What it says | Claims | Grounding |
+| --- | --- | --- | --- | --- |
+| draft | `lib/system-prompt.ts` → Scope | **Model-facing, and published verbatim at `/prompt`.** One paragraph stating that the chat is rate limited on purpose: a conversation allows at most 10 visitor messages, and each visitor gets 20 messages an hour on the standard tier and 5 on the premium one, in separate sliding one-hour buckets, after which the chat returns its rate-limited state. Closes with "Never tell a visitor this chat is unlimited or has no rate limits." | none about Sidhant; three factual claims about the site | Every number is interpolated from `TIER_LIMITS` and `MAX_USER_MESSAGES` in `lib/models.ts` — the same constants the route enforces and the status strip renders — so the sentence cannot drift from the behaviour. `evals/static.test.mjs` fails the build if a literal is retyped here. |
+
 ## Pending `[VERIFY]` markers
 
 Sentences drafted with a fact-shaped hole in them, waiting on Sidhant. Listing them

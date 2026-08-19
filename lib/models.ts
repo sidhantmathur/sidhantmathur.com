@@ -18,10 +18,11 @@
 // from the request is never passed through to the Gateway, only used to look up
 // an entry here.
 //
-// Each tier has its own rate-limit bucket (`TIER_LIMITS` in the route — that is
-// policy about that endpoint, not a fact about a model). The point is that the
-// budget is visible in the UI, showing the cost engineering rather than hiding
-// it. `standard` is cheap-tier models only; `premium` is one substantially more
+// Each tier has its own rate-limit bucket — `TIER_LIMITS`, below. It lived in
+// the route while the route was its only reader; the chat's own prompt now
+// states the allowance too, so it lives here with the tier it describes and
+// both files read it. The point is that the budget is visible in the UI,
+// showing the cost engineering rather than hiding it. `standard` is cheap-tier models only; `premium` is one substantially more
 // expensive model on a small bucket. Delete the premium entry to turn the whole
 // tier off; nothing else needs to change.
 //
@@ -179,3 +180,26 @@ export const MODEL_IDS = Object.keys(MODELS) as ModelId[];
 
 /** What an unknown or absent id resolves to. Must be `MODEL_IDS[0]`. */
 export const DEFAULT_MODEL: ModelId = "deepseek/deepseek-v4-flash-0731";
+
+// --- What a visitor is allowed ---------------------------------------------
+//
+// Endpoint policy rather than a fact about any model, but it has three readers
+// now — the route enforces it, the status strip renders it, and the system
+// prompt tells the visitor about it in words — so it is stated once, here,
+// beside the tiers it is indexed by.
+//
+// Anything that phrases these for a human must read them from here. A number
+// retyped into prose is a number that goes stale silently.
+
+/** Turns an hour each tier's bucket buys, on a sliding one-hour window. */
+export const TIER_LIMITS: Record<Tier, number> = {
+  standard: 20,
+  premium: 5,
+};
+
+/**
+ * Visitor messages one conversation allows before the route returns its
+ * rate-limited state. The body schema's 30-message cap is deliberately looser
+ * so that exceeding this reaches the graceful 429 rather than a schema 400.
+ */
+export const MAX_USER_MESSAGES = 10;
