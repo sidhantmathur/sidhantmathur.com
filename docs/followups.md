@@ -14,10 +14,15 @@ Do not undo those without reading the reasoning.
 **Done — `f33d629` redrew the favicon, apple icon, and OG image on the
 instrument palette.** Verified 2026-07-31: all three render dark
 (`#111010`/`#0B0A09` grounds, `#E4522B` accent), and `/opengraph-image`
-renders correctly from a live server. One nit remains: the OG image asks for
-`monospace` but satori loads no monospace font, so it renders its default
-sans instead of Geist Mono — filed as its own task. Original brief kept below
-for the palette references.
+renders correctly from a live server.
+
+**The mono nit is closed too (2026-08-18).** The OG image asked for
+`monospace`, but satori ignores CSS font stacks and fell back to its default
+sans. The Geist Mono 400/500 TTFs are vendored in `assets/fonts/` (byte-identical
+to the `geist` package) and passed to `ImageResponse`; `/opengraph-image`
+prerenders at build time, so the read costs nothing at request time. Verified by
+reading the generated PNG, not by inspecting the source. Original brief kept
+below for the palette references.
 
 The site has `app/icon.svg` from the light-system era; it has not
 been looked at since the redesign and is very likely still the old paper/ink
