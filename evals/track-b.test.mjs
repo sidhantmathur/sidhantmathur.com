@@ -39,16 +39,25 @@ import { looksLikeJobPosting } from "../lib/job-posting.ts";
 import { looksLikeSiteQuestion } from "../lib/site-question.ts";
 import {
   FIT_QUESTION,
+  HERO_TLDR,
+  POSITIONING,
   RECRUITER_TLDR,
   SUGGESTED_QUESTIONS,
   TLDR_FOOTER,
   TLDR_LABEL,
 } from "../content/recruiter.ts";
+
 import {
   ADARLE_MEDIA,
   FEATURE_SURFACE,
   FEATURE_SURFACE_NOTE,
 } from "../content/adarle20-media.ts";
+
+// Every fact-carrying row the empty state renders: the six-row canon plus the
+// hero subline the front-door pass fused out of two of them. POSITIONING is a
+// recombination, not a new claim — but a recombined sentence can still drift,
+// so it goes through every check the rows do.
+const TLDR_ROWS = [...RECRUITER_TLDR, POSITIONING];
 
 /** One synthetic chunk per corpus file, so checkClaim can be pointed at it. */
 function corpusLookup(relativePath) {
@@ -61,7 +70,7 @@ describe("#25 — the recruiter TL;DR", () => {
   test("every row's facts are in the corpus file it names", () => {
     // The site's own checker, on the site's own copy. If a row cites
     // faq.md and says "Toronto", the word has to be in faq.md.
-    for (const row of RECRUITER_TLDR) {
+    for (const row of TLDR_ROWS) {
       const check = checkClaim(row.value, [row.source], corpusLookup(row.source));
       assert.equal(
         check.verdict,
@@ -72,7 +81,7 @@ describe("#25 — the recruiter TL;DR", () => {
   });
 
   test("every row's source file exists", () => {
-    for (const row of RECRUITER_TLDR) {
+    for (const row of TLDR_ROWS) {
       assert.ok(
         existsSync(join(ROOT, row.source)),
         `TL;DR row "${row.label}" names ${row.source}, which is not in the repo`,
@@ -84,7 +93,7 @@ describe("#25 — the recruiter TL;DR", () => {
     // A row with no numbers and no proper nouns in it would pass the check
     // above vacuously — verified because there was nothing to verify. That is
     // the failure mode this whole track is about, so it is asserted directly.
-    for (const row of RECRUITER_TLDR) {
+    for (const row of TLDR_ROWS) {
       assert.ok(
         checkableTokens(row.value).length > 0,
         `TL;DR row "${row.label}" contains nothing checkable — it is passing the corpus check for free`,
@@ -93,9 +102,23 @@ describe("#25 — the recruiter TL;DR", () => {
   });
 
   test("carries no unresolved markers", () => {
-    for (const row of [...RECRUITER_TLDR.map((r) => r.value), TLDR_FOOTER, TLDR_LABEL]) {
+    for (const row of [...TLDR_ROWS.map((r) => r.value), TLDR_FOOTER, TLDR_LABEL]) {
       assert.ok(!row.includes("[VERIFY"), `"${row}" ships a [VERIFY] marker to the homepage`);
       assert.ok(!row.includes("[TODO"), `"${row}" ships a [TODO] marker to the homepage`);
+    }
+  });
+
+  test("every canon row reaches the homepage through one of the two surfaces", () => {
+    // The block renders HERO_TLDR and the subline renders POSITIONING. A row
+    // filtered out of the block without being folded into the subline would
+    // silently vanish from the page while staying green in every check above.
+    const inBlock = new Set(HERO_TLDR.map((r) => r.label));
+    for (const row of RECRUITER_TLDR) {
+      const inSubline = row.label === "looking for" || row.label === "where";
+      assert.ok(
+        inBlock.has(row.label) || inSubline,
+        `TL;DR row "${row.label}" is rendered neither in the block nor in the subline`,
+      );
     }
   });
 
@@ -115,7 +138,7 @@ describe("#25 — the recruiter TL;DR", () => {
 
   test("is in docs/site-copy.md", () => {
     const copy = read("docs/site-copy.md").replace(/\s+/g, " ");
-    for (const row of RECRUITER_TLDR) {
+    for (const row of TLDR_ROWS) {
       assert.ok(
         copy.includes(row.value.replace(/\s+/g, " ")),
         `TL;DR row "${row.label}" is on the site but not in docs/site-copy.md`,

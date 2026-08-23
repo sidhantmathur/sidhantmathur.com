@@ -70,6 +70,25 @@ export const RECRUITER_TLDR: TldrRow[] = [
 
 export const TLDR_FOOTER = "The resume has the rest, and so does the box below.";
 
+// The hero subline — the front-door pass (docs/mockups/front-door-1-hero.html,
+// approved 2026-08-23). The `looking for` and `where` rows fused into the one
+// sentence a visitor must not have to scroll for. Same claims, same source
+// file; the eval suite runs the citation checker over this string exactly as
+// it does over the rows, so it cannot drift from the corpus independently.
+export const POSITIONING: TldrRow = {
+  label: "positioning",
+  value:
+    "Looking for a RevOps / GTM systems role at an AI-forward company. Toronto, ON — Canadian citizen, no visa sponsorship needed.",
+  source: "content/knowledge/faq.md",
+};
+
+// What the tl;dr block under the hero renders: the rows the subline doesn't
+// already carry. Derived, not retyped — the full six-row list above stays the
+// canonical set and stays fully checked.
+export const HERO_TLDR = RECRUITER_TLDR.filter(
+  (r) => r.label !== "looking for" && r.label !== "where",
+);
+
 // #26 — a copy swap, per the decisions doc's note that the recruiter chips
 // replace the current ones rather than adding a mode. The old three ("What did
 // Sidhant build at Nokia?", "How does A Darle 20 work?", "Is he a fit for a

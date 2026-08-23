@@ -44,6 +44,18 @@ export type RailItem = {
   view?: PanelView;
 };
 
+// The front door's header nav (2026-08-23). The empty state shows these three
+// links plus a Contact button where the telemetry readouts will later sit —
+// a visitor who has not engaged yet gets destinations, not instrumentation.
+// Real routes on purpose: they work before hydration. The full index is behind
+// the ☰ control at every width, and once a conversation starts the readouts
+// take this spot back.
+export const HEADER_NAV = [
+  { label: "Resume", href: "/resume" },
+  { label: "Projects", href: "/projects" },
+  { label: "Colophon", href: "/colophon" },
+] as const;
+
 export const RAIL_ITEMS: RailItem[] = [
   { label: "Resume", href: "/resume", view: { kind: "resume" } },
   { label: "Resume PDF", href: "/resume.pdf", external: true },

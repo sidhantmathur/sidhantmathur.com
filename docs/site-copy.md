@@ -28,16 +28,37 @@ Heading:
 I learn what the problem needs, then I build the thing.
 
 Subline:
-Ask what you'd ask on a call.
+Looking for a RevOps / GTM systems role at an AI-forward company. Toronto, ON —
+Canadian citizen, no visa sponsorship needed.
 
-The two lines do different jobs and both are load-bearing: the heading is the
-positioning claim, the subline turns the chat input directly below it into the
-call to action. Don't drop the subline to "tighten" the hero.
+[Front-door pass, 2026-08-23 — Sidhant's call, from
+`docs/mockups/front-door-1-hero.html`. The old subline ("Ask what you'd ask on
+a call.") moved into the composer as the empty state's desktop placeholder —
+the invitation now lives in the input it was pointing at. The new subline is
+the `looking for` and `where` TL;DR rows fused into one sentence
+(`POSITIONING` in `content/recruiter.ts`), checked by the eval suite like
+every row.]
 
-The old metadata line ("Sidhant Mathur · Toronto, ON · Open to new roles") and
-the "Ask me anything" / "View resume" buttons are retired. The status strip
-carries the name and location; the rail carries the resume link; the input is
-the only call to action.
+CTA row (under the subline):
+View resume · Email me · Interview this site ↓
+
+[Same pass. This reverses the 2026-07-27 note below, deliberately: a
+chat-first page failed the five-second scan, and "the input is the only call
+to action" is the line that made it fail. The buttons are back — resume
+primary — and "Interview this site" is the chat's CTA, doing double duty as a
+competence claim. The status strip still carries the name and location; the
+permanent rail is gone (the index is a sheet behind the ☰ control at every
+width, with Resume / Projects / Colophon / Contact in the header until a
+conversation starts).]
+
+Composer fine print (empty state only, replaces the disclaimer there):
+Answers cite their sources — this chat publishes its system prompt and eval
+results, and shows what each answer costs. It can make mistakes; the resume is
+the authoritative version.
+
+[Four claims, all about the site, all checkable in this repo: citations ship
+since Sprint 3, /prompt since Sprint 7, /measurements since Sprint 6, the cost
+meter since Sprint 2. The old disclaimer sentence survives inside it.]
 
 ### Recruiter TL;DR (#25)
 
@@ -46,8 +67,11 @@ the only call to action.
 Sidhant. Rewrite the wording freely, but a fact that leaves this block has to
 leave the corpus too.]
 
-Shown in the homepage's empty state only, between the hero subline and the
-suggested questions. Gone as soon as a conversation starts.
+Shown in the homepage's empty state only, under the CTA row. Gone as soon as a
+conversation starts. Since the front-door pass (2026-08-23) the block renders
+four of the six rows at body scale — `looking for` and `where` live in the
+hero subline instead (see above), so they are not repeated four lines apart.
+All six rows stay canonical here and stay checked by the suite.
 
 Label: tl;dr
 

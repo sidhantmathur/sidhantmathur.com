@@ -4,6 +4,7 @@ import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "rea
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import {
+  HEADER_NAV,
   IDLE_LINES,
   JD_COPY,
   RAIL_ITEMS,
@@ -31,7 +32,7 @@ import { permalinkFor } from "@/lib/permalink";
 import { DISCLAIMER, SITE_NAME, SITE_URL } from "@/lib/site";
 import { track } from "@/lib/analytics";
 import { RecruiterTldr } from "./recruiter-tldr";
-import { SUGGESTED_QUESTIONS as SUGGESTED } from "@/content/recruiter";
+import { POSITIONING, SUGGESTED_QUESTIONS as SUGGESTED } from "@/content/recruiter";
 import { costOfTurn, sumCosts } from "@/lib/pricing";
 import { MODEL_IDS } from "@/lib/models";
 import { isShellPanel, type ShellPanelKind } from "./panels";
@@ -112,7 +113,11 @@ const PrintSheet = dynamic(() => import("./print-sheet").then((m) => m.PrintShee
 // Copy — verbatim from docs/site-copy.md.
 // ---------------------------------------------------------------------------
 const HERO = "I learn what the problem needs, then I build the thing.";
-const HERO_SUB = "Ask what you'd ask on a call.";
+// The front-door pass (2026-08-23) moved this line from under the headline
+// into the composer it was pointing at: it is the empty state's desktop
+// placeholder now. The subline's job — say what he wants — is done by
+// POSITIONING from content/recruiter.ts, where the citation checker covers it.
+const HERO_SUB = "Ask what you'd ask on a call";
 // DISCLAIMER, SITE_NAME and SITE_URL used to sit here and be threaded into the
 // export deck, the print document and the transcript serializer as props. They
 // are in `lib/site.ts` now: the deck and the document import them, and the two
@@ -512,6 +517,30 @@ export function AppShell() {
   const panelOpen = panel.kind !== "none";
   const lastId = messages[messages.length - 1]?.id;
 
+  // One address, already in shell-data — the Email CTA must not retype it.
+  const emailHref = SOCIAL_LINKS.find((s) => s.label === "Email")!.href;
+
+  // The four recruiter chips (#26), built once and rendered in two places by
+  // width: in the dock above the composer from md up — grouped with the
+  // interview they start — and in the hero column below md, after the facts,
+  // where a phone's fold belongs to the headline and the CTAs.
+  const chipButtons = SUGGESTED.map((q) => (
+    <button
+      key={q}
+      type="button"
+      onClick={() => {
+        stick.current = true;
+        submit(q);
+      }}
+      disabled={isBusy || !hydrated}
+      // py-2.5 keeps a chip over 44px on a phone, where it is a finger
+      // target; md:py-2 matches the header's pointer-sized controls.
+      className="border border-line-strong px-3 py-2.5 text-left text-[14px] text-text-soft transition-colors hover:border-accent hover:text-text disabled:border-line disabled:text-text-dim md:py-2"
+    >
+      {q}
+    </button>
+  ));
+
   // Two panel views aren't built from content — the export surface is
   // conversation state and the deck is instrument state — so they're rendered
   // here rather than inside PanelBody, which would otherwise need every
@@ -581,9 +610,10 @@ export function AppShell() {
         {announcement}
       </p>
       <div className="screen-only flex h-dvh flex-col bg-bg text-text [font-family:var(--font-geist-mono)]">
-      {/* Skip link. The rail is ~10 links deep and sits before the input in
-          tab order, so a keyboard user otherwise tabs through the entire nav
-          to reach the only call to action. Visually hidden until focused. */}
+      {/* Skip link. The header carries the index control and four nav stops
+          before the content, and the empty state adds three CTAs — this jumps
+          a keyboard user straight to the question box. Visually hidden until
+          focused. */}
       <a
         href="#ask"
         className="sr-only focus:not-sr-only focus:absolute focus:left-3 focus:top-3 focus:z-50 focus:border focus:border-accent focus:bg-panel focus:px-3 focus:py-1.5 focus:text-[12px] focus:text-text focus:no-underline"
@@ -598,12 +628,17 @@ export function AppShell() {
             for, and it read as thin besides. The strip is 44px tall now, so
             this finally fills it at spec instead of a shade under. Drawn as an
             SVG because the Unicode trigram renders inconsistently across
-            platforms, hairline-thin on iOS in particular. */}
+            platforms, hairline-thin on iOS in particular.
+
+            AT EVERY WIDTH since the front-door pass: the permanent desktop
+            rail is gone, so this is the one way into the full index
+            everywhere, and it opens the same sheet on a desktop that it
+            always opened on a phone. */}
         <button
           ref={railTriggerRef}
           type="button"
           onClick={() => setRailOpen(true)}
-          aria-label="Open navigation"
+          aria-label="Open the index"
           // `disabled` as well as the CSS gate, and the difference is the
           // keyboard. `pointer-events: none` stops a tap and nothing else: the
           // button stayed in the tab order before hydration, so Enter on it was
@@ -612,7 +647,7 @@ export function AppShell() {
           // what happened. A disabled button leaves the tab order entirely.
           disabled={!hydrated}
           data-js-control
-          className="-ml-1.5 flex h-11 w-11 shrink-0 touch-manipulation items-center justify-center text-text-soft hover:text-accent lg:hidden"
+          className="-ml-1.5 flex h-11 w-11 shrink-0 touch-manipulation items-center justify-center text-text-soft hover:text-accent"
         >
           <svg
             width="17"
@@ -638,51 +673,87 @@ export function AppShell() {
         <span className="hidden text-text-faint sm:inline">Toronto, ON</span>
 
         <div className="ml-auto flex items-center gap-4 text-text-faint">
-          {/* The always-visible half of the instruments. One click opens the
-              rest in the context panel — the readouts are the affordance, so
-              nothing new has to be added to the page to advertise them.
-              Hidden below md, where the rail item is the way in instead. */}
-          <button
-            type="button"
-            onClick={() => openPanel({ kind: "instruments" })}
-            title="Open the instruments"
-            aria-label="Open the instruments"
-            disabled={!hydrated}
-            data-js-control
-            className="hidden items-center gap-4 transition-colors hover:text-accent md:flex"
-          >
-            <Stat label="turns" value={reading.turns} />
-            <Stat label="ttft" value={reading.ttft} />
-            <span className="hidden lg:flex">
-              <Seismograph rate={rate} settled={settledRate} />
-            </span>
-            <Stat label="est." value={reading.cost} />
-            {budget && (
-              <Stat label={budget.tier} value={`${budget.remaining}/${budget.limit}`} />
-            )}
-          </button>
-          <label className="hidden items-center gap-1.5 xl:flex">
-            <span>model</span>
-            <select
-              value={model}
-              onChange={(e) => setModel(e.target.value)}
-              // A native select is the one control that "works" before
-              // hydration in the worst way: it opens, it takes a choice, and
-              // the choice reaches nothing.
-              disabled={!hydrated}
-              className="min-h-[36px] disabled:cursor-progress disabled:border-line disabled:text-text-dim cursor-pointer border border-line-strong bg-raised px-1.5 py-0.5 text-[13px] text-text-soft outline-none focus:border-accent"
-            >
-              {/* Catalogue order, and the ids as written — the last entry is
-                  the `premium` tier, and selecting it switches the header
-                  budget strip from "standard n/20" to "premium n/5", which is
-                  the point of showing it. */}
-              {MODEL_IDS.map((m) => (
-                <option key={m} value={m}>
-                  {m}
-                </option>
+          {/* The front-door swap: before a conversation exists, this side of
+              the strip is destinations; after, it is telemetry. A visitor who
+              has not engaged has no numbers worth reading — every readout is a
+              dash or a zero — and a row of dashes plus a model select is the
+              "tech demo" signal ahead of the "person you can hire" one. The
+              model select goes with the readouts, which costs choosing a model
+              for the very first turn: switching after any turn still works,
+              and the select is live from the first answer on. */}
+          {hasMessages ? (
+            <>
+              {/* The always-visible half of the instruments. One click opens
+                  the rest in the context panel — the readouts are the
+                  affordance, so nothing new has to be added to the page to
+                  advertise them. Hidden below md, where the index sheet is the
+                  way in instead. */}
+              <button
+                type="button"
+                onClick={() => openPanel({ kind: "instruments" })}
+                title="Open the instruments"
+                aria-label="Open the instruments"
+                disabled={!hydrated}
+                data-js-control
+                className="hidden items-center gap-4 transition-colors hover:text-accent md:flex"
+              >
+                <Stat label="turns" value={reading.turns} />
+                <Stat label="ttft" value={reading.ttft} />
+                <span className="hidden lg:flex">
+                  <Seismograph rate={rate} settled={settledRate} />
+                </span>
+                <Stat label="est." value={reading.cost} />
+                {budget && (
+                  <Stat label={budget.tier} value={`${budget.remaining}/${budget.limit}`} />
+                )}
+              </button>
+              <label className="hidden items-center gap-1.5 xl:flex">
+                <span>model</span>
+                <select
+                  value={model}
+                  onChange={(e) => setModel(e.target.value)}
+                  // A native select is the one control that "works" before
+                  // hydration in the worst way: it opens, it takes a choice,
+                  // and the choice reaches nothing.
+                  disabled={!hydrated}
+                  className="min-h-[36px] disabled:cursor-progress disabled:border-line disabled:text-text-dim cursor-pointer border border-line-strong bg-raised px-1.5 py-0.5 text-[13px] text-text-soft outline-none focus:border-accent"
+                >
+                  {/* Catalogue order, and the ids as written — the last entry
+                      is the `premium` tier, and selecting it switches the
+                      header budget strip from "standard n/20" to
+                      "premium n/5", which is the point of showing it. */}
+                  {MODEL_IDS.map((m) => (
+                    <option key={m} value={m}>
+                      {m}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </>
+          ) : (
+            // Hidden below sm — the ☰ control carries the same destinations
+            // there, and a phone header has room for the name and the dot.
+            <nav aria-label="Site" className="hidden items-center sm:flex">
+              {HEADER_NAV.map((n) => (
+                <Link
+                  key={n.label}
+                  href={n.href}
+                  className="flex h-11 touch-manipulation items-center px-2.5 text-[13px] no-underline transition-colors hover:text-accent"
+                >
+                  {n.label}
+                </Link>
               ))}
-            </select>
-          </label>
+              <button
+                type="button"
+                onClick={() => openPanel({ kind: "contact" })}
+                disabled={!hydrated}
+                data-js-control
+                className="flex h-11 touch-manipulation items-center px-2.5 text-[13px] transition-colors hover:text-accent"
+              >
+                Contact
+              </button>
+            </nav>
+          )}
           <span className="flex items-center gap-1.5">
             {/* The strip said "ready" from the first paint, which on a slow
                 connection was the single most confident lie on the page — the
@@ -714,12 +785,12 @@ export function AppShell() {
       </header>
 
       {/* ---- Body --------------------------------------------------------- */}
+      {/* No permanent rail since the front-door pass. The 224px column of
+          links was chrome standing ahead of engagement — thirteen destinations
+          a visitor met before the page had said who this is. The same index is
+          a sheet behind the header's ☰ at every width now, and the four
+          destinations that earn the first screen are in the header itself. */}
       <div className="flex min-h-0 flex-1">
-        {/* Rail — desktop */}
-        <nav className="hidden w-56 shrink-0 flex-col border-r border-line bg-panel p-4 text-[13px] lg:flex">
-          <RailContent onOpenPanel={openPanel} hydrated={hydrated} />
-        </nav>
-
         {/* Conversation.
             A <main> rather than a <div>: the shell had a banner and a nav and
             no main landmark at all, so the one region a screen reader user
@@ -736,35 +807,13 @@ export function AppShell() {
           <div
             ref={scrollRef}
             onScroll={onScroll}
-            // py-6 rather than py-8, and py-4 again from md up.
-            //
-            // The comment that used to sit here said py-8 → py-6 had brought
-            // the disclaimer above the fold at 1280×800. It had not, and the
-            // claim survived because nobody measured it. Measured: this scroll
-            // area is 655px tall at that size and the empty state was 744, so
-            // the disclaimer's first line ended 24px BELOW the fold and the
-            // paragraph entire was 65px below it. The one thing on the page
-            // that has to be read without being looked for was the one thing
-            // you had to scroll for.
-            //
-            // Four md-scoped trims close it, the chips being half of it on
-            // their own (149px of chip rows down to 107): two-up chips, this
-            // padding, gap-3 → gap-2 on the stack, and the TL;DR's row
-            // spacing. 744 → 660 against a 655px fold, so the whole disclaimer
-            // now sits 11px clear of it and the only thing still below the
-            // line is 5px of this element's own bottom padding.
-            //
-            // RE-MEASURED, AND THE CAVEAT IS PART OF THE RESULT. That 11px
-            // holds at 1280×800 and grows to 111px at 1440×900. It does not
-            // survive a shorter window: at 1280×720 the disclaimer ends 69px
-            // below the fold and at 1024×768 it ends 21px below, because the
-            // empty state is 660px tall and a 720px-high window leaves a 575px
-            // fold. Closing an 85px gap needs either smaller type or a
-            // different reading order on a phone, and neither is worth paying
-            // for a line that is still one short scroll away. Recorded here so
-            // the next person measures at 800 knowing what happens at 720
-            // rather than discovering it as a bug.
-            className="relative min-h-0 flex-1 overflow-y-auto px-4 py-6 md:px-10 md:py-4"
+            // The old fold arithmetic that lived here (disclaimer trims, chip
+            // row budgets) measured a layout the front-door pass replaced.
+            // The fold target now is simpler and checked with `npm run shot`:
+            // headline, subline and all three CTAs above the fold at 1280×800
+            // and on a 390×844 phone. The tl;dr may break the fold — it is
+            // the scroll's first reward, not the pitch.
+            className="relative min-h-0 flex-1 overflow-y-auto px-4 py-6 md:px-10 md:py-5"
           >
             {/* Idle dims the column rather than covering it. The conversation
                 stays legible and every control stays live — this is a settle,
@@ -793,68 +842,60 @@ export function AppShell() {
               )}
 
               {!hasMessages && (
-                // A flex column rather than space-y, because the reading order
-                // is not the source order below sm — see the chips.
-                <div className="flex flex-col gap-3 md:gap-2">
-                  {/* 30ch, not 24. The measure is set in the h1's OWN ch, so
-                      the bigger hero was wrapping to three lines inside a
-                      column wide enough for two — and the line it bought
-                      pushed the disclaimer off a 800px-tall desktop. At 30ch
-                      the column itself is the constraint again. */}
-                  <h1 className="t-hero order-1 max-w-[30ch] font-medium text-text">
+                // The front door (2026-08-23): who, what he wants, and three
+                // ways to act — all before any engagement, in source order at
+                // every width. The headline and the facts read in the sans
+                // face because they are prose to be read; everything
+                // actionable keeps the mono register of the controls around
+                // it. The old fold arithmetic (chip order swaps, disclaimer
+                // trims) went with the layout it measured.
+                <div className="flex flex-col gap-4">
+                  <h1 className="t-hero max-w-[24ch] font-semibold text-text [font-family:var(--font-geist-sans)]">
                     {HERO}
                   </h1>
-                  <p className="t-body order-2 text-text-soft">{HERO_SUB}</p>
-                  {/* THE CHIPS COME BEFORE THE TL;DR ON A PHONE.
-                      The tl;dr is the six-second scan and it wants to be first,
-                      which is what it got — but it has grown to six rows since,
-                      and on a 390×844 screen those six rows plus the hero fill
-                      the viewport exactly. The chips were never on screen at
-                      all: the one control that shows a visitor what this site
-                      is for sat below the fold on the only device where the
-                      fold is the whole page. Above sm both fit, and the
-                      original scan order — positioning, facts, the question you
-                      can ask — is restored. */}
-                  {/* TWO-UP FROM md, and the reason is arithmetic rather than
-                      taste. Wrapped inline, the four chips take three rows at
-                      1280 — the first two share a row, the long fit question
-                      takes one alone, the visa question takes a third — and
-                      those two extra rows are most of what was pushing the
-                      disclaimer off the screen. A grid puts the fit question
-                      beside the visa question, costs one wrapped line inside
-                      it, and buys back 42px. Below md they still wrap: at 390
-                      a two-column grid would put four chips at 175px each and
-                      every one of them would be three lines deep. */}
-                  <div className="order-3 flex flex-wrap gap-2 sm:order-4 sm:pt-1 md:grid md:grid-cols-2 md:pt-0">
-                    {SUGGESTED.map((q) => (
-                      <button
-                        key={q}
-                        type="button"
-                        onClick={() => {
-                          stick.current = true;
-                          submit(q);
-                        }}
-                        disabled={isBusy || !hydrated}
-                        // py-2.5 keeps a chip over 44px on a phone, where it is
-                        // a finger target. md:py-2 takes it to 39px, which is
-                        // the height the model select in the header already
-                        // uses on the same screens — a pointer does not need
-                        // the thumb allowance, and four chips at the phone
-                        // height cost the disclaimer eight more pixels.
-                        className="border border-line-strong px-3 py-2.5 text-left text-[14px] text-text-soft transition-colors hover:border-accent hover:text-text disabled:border-line disabled:text-text-dim md:py-2"
-                      >
-                        {q}
-                      </button>
-                    ))}
+                  {/* Answers "what does he want" without a scroll. The string
+                      lives in content/recruiter.ts under the same citation
+                      check as the tl;dr rows — see POSITIONING. */}
+                  <p className="t-body max-w-[52ch] text-text-soft [font-family:var(--font-geist-sans)]">
+                    {POSITIONING.value}
+                  </p>
+                  {/* The three CTAs, resume first — the one thing every
+                      visitor type needs a path to. "Interview this site" is a
+                      CTA doing a competence claim's work; it only focuses the
+                      composer, so it needs hydration and is gated like every
+                      control that does. */}
+                  <div className="flex flex-col gap-2.5 pt-2 sm:flex-row">
+                    <Link
+                      href="/resume"
+                      className="flex h-11 touch-manipulation items-center justify-center border border-accent bg-accent px-5 text-[13px] font-medium text-bg no-underline transition-opacity hover:opacity-90"
+                    >
+                      View resume
+                    </Link>
+                    <a
+                      href={emailHref}
+                      className="flex h-11 touch-manipulation items-center justify-center border border-line-strong px-5 text-[13px] text-text no-underline transition-colors hover:border-accent hover:text-accent"
+                    >
+                      Email me
+                    </a>
+                    <button
+                      type="button"
+                      onClick={() => inputRef.current?.focus()}
+                      disabled={!hydrated}
+                      data-js-control
+                      className="flex h-11 touch-manipulation items-center justify-center border border-line-strong px-5 text-[13px] text-text transition-colors hover:border-accent hover:text-accent disabled:border-line disabled:text-text-dim"
+                    >
+                      Interview this site ↓
+                    </button>
                   </div>
-                  {/* #25 — the six-second scan. See the note in
-                      recruiter-tldr.tsx for why it is empty-state only. */}
-                  <div className="order-4 sm:order-3">
+                  {/* #25 — the six-second scan, at body scale. See the notes
+                      in recruiter-tldr.tsx. */}
+                  <div className="pt-3">
                     <RecruiterTldr />
                   </div>
-                  <p className="t-meta order-5 max-w-[58ch] text-text-faint">
-                    {DISCLAIMER}
-                  </p>
+                  {/* Below md the chips live here, after the facts; from md
+                      up they sit in the dock, grouped with the composer they
+                      feed. See chipButtons above. */}
+                  <div className="flex flex-wrap gap-2 pt-1 md:hidden">{chipButtons}</div>
                 </div>
               )}
 
@@ -1027,6 +1068,14 @@ export function AppShell() {
                 ))}
               </div>
             )}
+            {/* From md up the chips sit here, over the composer — the whole
+                interview affordance in one dock: suggested questions, the
+                input, and the proof line under it. */}
+            {!hasMessages && (
+              <div className="hidden flex-wrap gap-2 px-4 pt-3 md:flex md:px-10">
+                {chipButtons}
+              </div>
+            )}
             <form
               // NO NATIVE SUBMIT, EVER — not "not while disabled".
               //
@@ -1090,7 +1139,18 @@ export function AppShell() {
                 // clipped mid-word at every width a phone actually has, and the
                 // half of it that got cut was the half doing the teaching. The
                 // slash menu advertises itself the moment a "/" is typed.
-                placeholder={hydrated ? "Ask a question" : "Loading the conversation…"}
+                // The empty state's desktop placeholder is the old hero
+                // subline — the invitation moved into the input it was
+                // pointing at. Phones keep the short one: the long version
+                // clips on a 320px screen (see the note this replaced), and
+                // isMobile is settled by the time hydration lifts this gate.
+                placeholder={
+                  !hydrated
+                    ? "Loading the conversation…"
+                    : hasMessages || isMobile
+                      ? "Ask a question"
+                      : HERO_SUB
+                }
                 aria-label="Ask a question"
                 enterKeyHint="send"
                 // 16px below md is not a style choice: iOS Safari zooms the
@@ -1138,6 +1198,35 @@ export function AppShell() {
               </button>
             </form>
 
+            {/* The proof line (front-door pass). It replaces the empty
+                state's mistakes-disclaimer and still carries it — same
+                honesty, but the line now also does the credibility work,
+                and every claim in it is checkable on this site: citations
+                ship since Sprint 3, /prompt since Sprint 7, /measurements
+                since Sprint 6, the cost meter since Sprint 2. Gone once a
+                conversation starts: answers then carry their own sources,
+                and the strip takes this row. Logged in docs/copy-ledger.md. */}
+            {!hasMessages && (
+              <p className="t-meta px-4 pb-3 text-text-faint md:px-10">
+                Answers cite their sources — this chat publishes its{" "}
+                <Link
+                  href="/prompt"
+                  className="text-text-soft underline decoration-line-strong underline-offset-2 hover:text-accent"
+                >
+                  system prompt
+                </Link>{" "}
+                and{" "}
+                <Link
+                  href="/measurements"
+                  className="text-text-soft underline decoration-line-strong underline-offset-2 hover:text-accent"
+                >
+                  eval results
+                </Link>
+                , and shows what each answer costs. It can make mistakes; the
+                resume is the authoritative version.
+              </p>
+            )}
+
             {/* ---- Actions strip (#27) ---------------------------------
                 Was a nudge fired at "session end", an event that doesn't
                 exist on this site — visitors close tabs, they don't finish.
@@ -1154,11 +1243,12 @@ export function AppShell() {
                 maskImage: "linear-gradient(to right, black 85%, transparent)",
                 WebkitMaskImage: "linear-gradient(to right, black 85%, transparent)",
               }}
-              // Before the first turn the strip holds only the job-description
-              // entry, which is desktop-only — an empty 44px band under the
-              // composer on a phone earns nothing, so it goes entirely.
+              // Conversation-only since the front-door pass: the empty state's
+              // dock carries the chips and the proof line instead, and pasting
+              // a posting straight into the composer works — the route's
+              // detector, not this entry, is what makes the JD flow fire.
               className={`h-11 items-center gap-4 overflow-x-auto whitespace-nowrap border-t px-4 text-[13px] transition-colors md:px-10 ${
-                hasMessages ? "flex" : "hidden md:flex"
+                hasMessages ? "flex" : "hidden"
               } ${emphasis ? "border-accent" : "border-line"}`}
             >
               {hasMessages && (
@@ -1279,21 +1369,22 @@ export function AppShell() {
         )}
       </div>
 
-      {/* ---- Mobile sheets ------------------------------------------------
+      {/* ---- Sheets -------------------------------------------------------
           Loaded on demand. Radix's dialog — portal, overlay, focus trap,
-          scroll lock — is a real chunk of JavaScript, and below lg it is the
-          only thing that uses it. `isMobile` is false until an effect measures
-          the viewport, so on a desktop the module is never fetched at all, and
-          on a phone it is fetched after hydration rather than before it. */}
-      {isMobile && (idleReady || railOpen || panelOpen) && (
+          scroll lock — is a real chunk of JavaScript, fetched at idle or on
+          the first thing that needs a sheet, whichever comes first. Since the
+          front-door pass the index sheet opens at EVERY width — it replaced
+          the permanent desktop rail — so desktops fetch this too now. The
+          bottom panel sheet is still mobile-only by construction: `sheetOpen`
+          is only ever set where `isMobile` holds, and the desktop panel stays
+          the resizable aside. */}
+      {(idleReady || railOpen || panelOpen) && (
         <MobileSheets
           rail={{
             open: railOpen,
             onOpenChange: setRailOpen,
             onClosed: () => railTriggerRef.current?.focus(),
-            content: (
-              <RailContent onOpenPanel={openPanel} hydrated={hydrated} showHeading={false} />
-            ),
+            content: <RailContent onOpenPanel={openPanel} hydrated={hydrated} />,
           }}
           panel={{
             open: panelOpen,
@@ -1318,20 +1409,20 @@ export function AppShell() {
   );
 }
 
+// The index — the full destination list, rendered inside the sheet that
+// replaced the permanent rail (the sheet's own header carries the "Index"
+// title, so there is no heading here).
 function RailContent({
   onOpenPanel,
   hydrated,
-  showHeading = true,
 }: {
   onOpenPanel: (v: PanelView) => void;
   /** Rail entries with no href need JavaScript; see RailLink. */
   hydrated: boolean;
-  showHeading?: boolean;
 }) {
   return (
     <>
-      {showHeading && <div className="text-text-faint">Index</div>}
-      <div className={`flex flex-col ${showHeading ? "mt-3" : "mt-2"}`}>
+      <div className="mt-2 flex flex-col">
         {RAIL_ITEMS.map((item) => (
           <RailLink
             key={item.label}

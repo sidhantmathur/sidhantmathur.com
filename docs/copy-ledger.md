@@ -306,6 +306,19 @@ don't go to Sidhant's review unlogged. All tl;dr rows are verbatim from
 | draft | `docs/mockups/front-door-2-split.html` → composer placeholder | "Or paste a job description" | none | UI chrome; the JD flow exists (Sprint 4). |
 | draft | `docs/mockups/front-door-*.html` → composer fine print | "Answers cite their sources — this chat publishes its system prompt and eval results, and shows what each answer costs. It can make mistakes; the resume is the authoritative version." | four, all about the site, none about Sidhant | Citations ship since Sprint 3, `/prompt` since Sprint 7, `/measurements` since Sprint 6, the cost meter since Sprint 2. Replaces the current disclaimer rather than adding a second line. |
 
+**The front door ships, 2026-08-23** (branch `front-door`). Variant 1 of the
+mockups above, chosen by Sidhant. The mockup rows above stay as the record of
+the exploration; these are the strings as they ship. The hero heading, the
+tl;dr rows and the chips are unchanged and already logged.
+
+| Status | Where | What it says | Claims | Grounding |
+| --- | --- | --- | --- | --- |
+| draft | `content/recruiter.ts` → `POSITIONING`, rendered as the hero subline | "Looking for a RevOps / GTM systems role at an AI-forward company. Toronto, ON — Canadian citizen, no visa sponsorship needed." | two, both about Sidhant | The `looking for` and `where` TL;DR rows fused; source `content/knowledge/faq.md`. Checked by `evals/track-b.test.mjs` with the same citation pass as the rows — verified green on 2026-08-23. |
+| draft | `components/shell/app-shell.tsx` → CTA row | "View resume" · "Email me" · "Interview this site ↓" | none | UI chrome. Resume links `/resume`, email uses the `SOCIAL_LINKS` address, the third focuses the composer. |
+| draft | `components/shell/app-shell.tsx` → header nav (empty state) | "Resume · Projects · Colophon · Contact" | none | UI chrome; real routes plus the contact panel. Replaced by the telemetry readouts once a conversation starts. |
+| draft | `components/shell/app-shell.tsx` → composer fine print (empty state) | "Answers cite their sources — this chat publishes its system prompt and eval results, and shows what each answer costs. It can make mistakes; the resume is the authoritative version." | four, all about the site, none about Sidhant | Citations since Sprint 3, `/prompt` since Sprint 7, `/measurements` since Sprint 6, the cost meter since Sprint 2. Replaces the empty state's `DISCLAIMER` render and carries its sentence; `DISCLAIMER` itself still ships in exports and print. |
+| draft | `components/shell/app-shell.tsx` → composer placeholder (empty state, md up) | "Ask what you'd ask on a call" | none | The 2026-07-27 hero subline, moved surfaces — trailing period dropped for a placeholder. Phones keep "Ask a question" (the long version clips at 320px). |
+
 ## Pending `[VERIFY]` markers
 
 Sentences drafted with a fact-shaped hole in them, waiting on Sidhant. Listing them
