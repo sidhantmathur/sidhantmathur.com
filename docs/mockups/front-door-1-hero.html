@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Front door 1 — the hero — mockup</title>
+<!-- Variant 1 of 3 for the "5-second front door" pass. Single column, sans
+     hero, three CTAs above the fold, tl;dr promoted to body scale, proof
+     strip, chat docked as a standing invitation. Telemetry appears only once
+     a conversation starts (so: absent here). Tokens are current globals.css
+     values; every factual string is from content/recruiter.ts. New strings
+     are logged in docs/copy-ledger.md under "The front door mockups". -->
+<style>
+  :root{
+    --bg:#0B0A09; --panel:#111010; --raised:#171614;
+    --line:#2C2825; --line-strong:#6B6259;
+    --text:#EFEBE4; --text-soft:#C4BCB4; --text-faint:#97918A; --text-dim:#6B655E;
+    --accent:#E4522B; --signal:#6FA85C;
+    --mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+    --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);
+       font-size:16px;line-height:1.6;overflow:hidden}
+
+  /* ---- backdrop: the existing texture, same treatment as the shell ---- */
+  .backdrop{position:fixed;inset:0;pointer-events:none;overflow:hidden}
+  .backdrop img{width:100%;height:100%;object-fit:cover;opacity:.5}
+  .backdrop .scrim{position:absolute;inset:0;
+    background:linear-gradient(90deg,
+      color-mix(in srgb, var(--bg) 10%, transparent) 0%,
+      color-mix(in srgb, var(--bg) 72%, transparent) 30%,
+      color-mix(in srgb, var(--bg) 72%, transparent) 70%,
+      color-mix(in srgb, var(--bg) 10%, transparent) 100%)}
+  @media(max-width:720px){
+    .backdrop img{opacity:.35}
+    .backdrop .scrim{background:color-mix(in srgb, var(--bg) 78%, transparent)}
+  }
+
+  .frame{position:relative;height:100%;display:flex;flex-direction:column}
+
+  /* ---- top bar: identity left, plain nav right, no telemetry ---- */
+  .topbar{display:flex;align-items:center;justify-content:space-between;
+          padding:0 24px;height:52px;border-bottom:1px solid var(--line);
+          background:color-mix(in srgb, var(--panel) 82%, transparent);flex:none}
+  .who{font-family:var(--mono);font-size:13px}
+  .who b{font-weight:600}
+  .who span{color:var(--text-faint);margin-left:10px;font-size:12px}
+  .nav{display:flex;align-items:center;gap:18px;font-family:var(--mono);font-size:12px}
+  .nav a{color:var(--text-faint);text-decoration:none}
+  .nav a:hover{color:var(--text)}
+  .dot{width:7px;height:7px;background:var(--signal);border-radius:0}
+
+  /* ---- hero column ---- */
+  .main{flex:1;overflow-y:auto;display:flex}
+  .hero{max-width:880px;margin:0 auto;padding:7vh 24px 40px;width:100%}
+  h1{font-size:clamp(34px, 4.6vw, 50px);line-height:1.12;letter-spacing:-0.02em;
+     font-weight:650;margin:0;max-width:18ch}
+  .sub{font-size:17px;color:var(--text-soft);max-width:52ch;margin:18px 0 0}
+  .sub b{color:var(--text);font-weight:550}
+
+  .ctas{display:flex;gap:12px;margin-top:30px;flex-wrap:wrap}
+  .btn{display:inline-flex;align-items:center;justify-content:center;height:44px;
+       padding:0 22px;font-family:var(--mono);font-size:13px;font-weight:500;
+       text-decoration:none;border:1px solid var(--line-strong);color:var(--text)}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:var(--bg);font-weight:600}
+  .btn .g{color:inherit;opacity:.75;margin-left:8px}
+
+  .tldr{margin-top:52px;border-top:1px solid var(--line);padding-top:20px}
+  .tldr .k{font-family:var(--mono);font-size:11px;color:var(--text-faint);margin-bottom:14px}
+  .row{display:grid;grid-template-columns:118px 1fr;gap:14px;padding:7px 0}
+  .row .l{font-family:var(--mono);font-size:12px;color:var(--text-faint);padding-top:3px}
+  .row .v{font-size:16px;color:var(--text-soft);max-width:64ch}
+  .row .v b{color:var(--text);font-weight:550}
+
+  /* ---- docked composer: the standing invitation ---- */
+  .dock{flex:none;border-top:1px solid var(--line);
+        background:color-mix(in srgb, var(--panel) 92%, transparent)}
+  .dock-in{max-width:880px;margin:0 auto;padding:14px 24px 16px}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+  .chip{font-family:var(--mono);font-size:12.5px;color:var(--text-soft);
+        border:1px solid var(--line-strong);padding:8px 12px;cursor:pointer;
+        background:transparent}
+  .composer{display:flex;align-items:center;gap:12px;background:var(--raised);
+            border:1px solid var(--line-strong);padding:0 14px;height:52px}
+  .composer .p{color:var(--accent);font-family:var(--mono);font-size:14px}
+  .composer .ph{color:var(--text-faint);font-family:var(--mono);font-size:14px;flex:1}
+  .composer .send{font-family:var(--mono);font-size:12px;color:var(--text-dim);
+                  border:1px solid var(--line);padding:6px 12px}
+  .fine{font-family:var(--mono);font-size:11.5px;color:var(--text-faint);margin:10px 0 0;line-height:1.7}
+  .fine a{color:var(--text-soft);text-decoration:none;border-bottom:1px solid var(--accent)}
+
+  @media(max-width:720px){
+    .nav a{display:none}
+    .hero{padding-top:6vh}
+    .sub{font-size:16px}
+    .ctas{flex-direction:column}
+    .btn{width:100%}
+    .row{grid-template-columns:1fr;gap:2px}
+    .proof{grid-template-columns:1fr;gap:4px}
+    .chips{display:none}
+  }
+</style>
+</head>
+<body>
+<div class="backdrop" aria-hidden="true">
+  <img src="../../public/ambient-wave.avif" alt="">
+  <div class="scrim"></div>
+</div>
+
+<div class="frame">
+  <header class="topbar">
+    <div class="who"><b>Sidhant Mathur</b><span>Toronto, ON</span></div>
+    <nav class="nav">
+      <a href="#">Resume</a><a href="#">Projects</a><a href="#">Colophon</a><a href="#">Contact</a>
+      <span class="dot"></span>
+    </nav>
+  </header>
+
+  <div class="main">
+    <div class="hero">
+      <h1>I learn what the problem needs, then I build the thing.</h1>
+      <p class="sub">Looking for a <b>RevOps / GTM systems role</b> at an AI-forward
+        company. Toronto, ON — Canadian citizen, no visa sponsorship needed.</p>
+
+      <div class="ctas">
+        <a class="btn primary" href="#">View resume</a>
+        <a class="btn" href="#">Email me</a>
+        <a class="btn" href="#">Interview this site<span class="g">↓</span></a>
+      </div>
+
+      <div class="tldr">
+        <div class="k">tl;dr</div>
+        <div class="row"><div class="l">now</div>
+          <div class="v">Sales operations specialist at <b>Nokia</b>, in Toronto.
+            Co-founder and CTO of <b>A Darle 20</b>.</div></div>
+        <div class="row"><div class="l">shipped</div>
+          <div class="v">A Darle 20 — a two-sided marketplace, architected and shipped
+            solo. <b>1,400+ registered users</b>, 127 hosts and <b>2,100+ bookings</b>
+            in its first four months.</div></div>
+        <div class="row"><div class="l">before that</div>
+          <div class="v">At Nokia: a self-serve Power App used by 80+ stakeholders across
+            seven regions, and a Salesforce Analytics to Power BI migration for 150+ users.</div></div>
+        <div class="row"><div class="l">how he builds</div>
+          <div class="v">An AI-agent-heavy workflow in Claude Code — agents write most of
+            the code, he keeps architecture, code review and release.</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="dock">
+    <div class="dock-in">
+      <div class="chips">
+        <button class="chip">Give me the 30-second version</button>
+        <button class="chip">What has he shipped end to end?</button>
+        <button class="chip">Is he a fit for a RevOps role at an AI-forward company?</button>
+        <button class="chip">Does he need visa sponsorship?</button>
+      </div>
+      <div class="composer">
+        <span class="p">&gt;</span>
+        <span class="ph">Ask what you'd ask on a call</span>
+        <span class="send">send ⏎</span>
+      </div>
+      <p class="fine">Answers cite their sources — this chat publishes its
+        <a href="#">system prompt</a> and <a href="#">eval results</a>, and shows what
+        each answer costs. It can make mistakes; the resume is the authoritative version.</p>
+    </div>
+  </div>
+</div>
+</body>
+</html>

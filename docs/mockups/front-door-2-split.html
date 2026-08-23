@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Front door 2 — the exhibit — mockup</title>
+<!-- Variant 2 of 3. Split stage: identity column on the left answers the
+     5-second questions with zero engagement; the chat sits on the right as a
+     framed exhibit that carries its own instruments. The telemetry lives on
+     the exhibit's frame, not on the page chrome — the demo is labelled as a
+     demo. Facts from content/recruiter.ts; new strings logged in
+     docs/copy-ledger.md under "The front door mockups". -->
+<style>
+  :root{
+    --bg:#0B0A09; --panel:#111010; --raised:#171614;
+    --line:#2C2825; --line-strong:#6B6259;
+    --text:#EFEBE4; --text-soft:#C4BCB4; --text-faint:#97918A; --text-dim:#6B655E;
+    --accent:#E4522B; --signal:#6FA85C;
+    --mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+    --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);
+       font-size:16px;line-height:1.6;overflow:hidden}
+
+  .backdrop{position:fixed;inset:0;pointer-events:none;overflow:hidden}
+  .backdrop img{width:100%;height:100%;object-fit:cover;opacity:.5}
+  .backdrop .scrim{position:absolute;inset:0;
+    background:linear-gradient(90deg,
+      color-mix(in srgb, var(--bg) 55%, transparent) 0%,
+      color-mix(in srgb, var(--bg) 78%, transparent) 40%,
+      color-mix(in srgb, var(--bg) 60%, transparent) 100%)}
+  @media(max-width:920px){
+    .backdrop img{opacity:.35}
+    .backdrop .scrim{background:color-mix(in srgb, var(--bg) 78%, transparent)}
+  }
+
+  .frame{position:relative;height:100%;display:flex;flex-direction:column}
+  .topbar{display:flex;align-items:center;justify-content:space-between;
+          padding:0 28px;height:52px;border-bottom:1px solid var(--line);flex:none;
+          background:color-mix(in srgb, var(--panel) 82%, transparent)}
+  .who{font-family:var(--mono);font-size:13px}
+  .who b{font-weight:600}
+  .who span{color:var(--text-faint);margin-left:10px;font-size:12px}
+  .nav{display:flex;gap:18px;font-family:var(--mono);font-size:12px}
+  .nav a{color:var(--text-faint);text-decoration:none}
+
+  .main{flex:1;display:grid;grid-template-columns:1fr 1.08fr;gap:56px;
+        max-width:1280px;margin:0 auto;width:100%;padding:56px 40px;
+        align-items:start;overflow-y:auto}
+
+  /* ---- left: the person ---- */
+  h1{font-size:clamp(32px, 3.4vw, 42px);line-height:1.14;letter-spacing:-0.02em;
+     font-weight:650;margin:0}
+  .sub{font-size:16px;color:var(--text-soft);max-width:46ch;margin:16px 0 0}
+  .sub b{color:var(--text);font-weight:550}
+  .ctas{display:flex;gap:10px;margin-top:26px;flex-wrap:wrap}
+  .btn{display:inline-flex;align-items:center;height:44px;padding:0 20px;
+       font-family:var(--mono);font-size:13px;font-weight:500;text-decoration:none;
+       border:1px solid var(--line-strong);color:var(--text)}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:var(--bg);font-weight:600}
+
+  .tldr{margin-top:42px;border-top:1px solid var(--line);padding-top:16px}
+  .row{display:grid;grid-template-columns:104px 1fr;gap:12px;padding:6px 0}
+  .row .l{font-family:var(--mono);font-size:12px;color:var(--text-faint);padding-top:2px}
+  .row .v{font-size:15px;color:var(--text-soft)}
+  .row .v b{color:var(--text);font-weight:550}
+  .links{margin-top:30px;display:flex;gap:16px;font-family:var(--mono);font-size:12px}
+  .links a{color:var(--text-faint);text-decoration:none;border-bottom:1px dotted var(--line-strong)}
+
+  /* ---- right: the exhibit ---- */
+  .exhibit{border:1px solid var(--line-strong);background:color-mix(in srgb, var(--panel) 92%, transparent);
+           display:flex;flex-direction:column;min-height:520px}
+  .ex-head{display:flex;align-items:center;justify-content:space-between;gap:12px;
+           padding:10px 16px;border-bottom:1px solid var(--line)}
+  .ex-title{font-family:var(--mono);font-size:12px;color:var(--text)}
+  .ex-meters{display:flex;align-items:center;gap:14px;font-family:var(--mono);
+             font-size:11px;color:var(--text-faint);white-space:nowrap}
+  .ex-meters .sel{border:1px solid var(--line);padding:3px 8px;color:var(--text-soft)}
+  .ex-meters .dot{width:6px;height:6px;background:var(--signal);display:inline-block}
+  .ex-body{flex:1;padding:28px 24px;display:flex;flex-direction:column;justify-content:center}
+  .ex-ask{font-size:19px;font-weight:600;letter-spacing:-0.01em;margin:0 0 18px}
+  .chips{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px}
+  .chip{font-family:var(--mono);font-size:12px;color:var(--text-soft);text-align:left;
+        border:1px solid var(--line-strong);padding:10px 12px;background:transparent;cursor:pointer}
+  .composer{display:flex;align-items:center;gap:12px;background:var(--raised);
+            border:1px solid var(--line-strong);padding:0 14px;height:50px}
+  .composer .p{color:var(--accent);font-family:var(--mono);font-size:14px}
+  .composer .ph{color:var(--text-faint);font-family:var(--mono);font-size:13.5px;flex:1}
+  .composer .send{font-family:var(--mono);font-size:12px;color:var(--text-dim);
+                  border:1px solid var(--line);padding:6px 12px}
+  .ex-foot{border-top:1px solid var(--line);padding:10px 16px;
+           font-family:var(--mono);font-size:11.5px;color:var(--text-faint);line-height:1.7}
+  .ex-foot a{color:var(--text-soft);text-decoration:none;border-bottom:1px solid var(--accent)}
+
+  @media(max-width:920px){
+    .nav a{display:none}
+    .main{grid-template-columns:1fr;gap:32px;padding:32px 20px}
+    .exhibit{min-height:0}
+    .chips{grid-template-columns:1fr}
+    .ctas{flex-direction:column}
+    .btn{width:100%;justify-content:center}
+  }
+</style>
+</head>
+<body>
+<div class="backdrop" aria-hidden="true">
+  <img src="../../public/ambient-wave.avif" alt="">
+  <div class="scrim"></div>
+</div>
+
+<div class="frame">
+  <header class="topbar">
+    <div class="who"><b>Sidhant Mathur</b><span>Toronto, ON</span></div>
+    <nav class="nav">
+      <a href="#">Resume</a><a href="#">Projects</a><a href="#">Colophon</a><a href="#">Contact</a>
+    </nav>
+  </header>
+
+  <div class="main">
+    <div>
+      <h1>I learn what the problem needs, then I build the thing.</h1>
+      <p class="sub">Looking for a <b>RevOps / GTM systems role</b> at an AI-forward
+        company. Toronto, ON — no visa sponsorship needed.</p>
+
+      <div class="ctas">
+        <a class="btn primary" href="#">View resume</a>
+        <a class="btn" href="#">Email me</a>
+      </div>
+
+      <div class="tldr">
+        <div class="row"><div class="l">now</div>
+          <div class="v">Sales operations specialist at <b>Nokia</b>. Co-founder and CTO
+            of <b>A Darle 20</b>.</div></div>
+        <div class="row"><div class="l">shipped</div>
+          <div class="v">A two-sided marketplace, solo — <b>1,400+ users</b>, 127 hosts,
+            <b>2,100+ bookings</b> in four months.</div></div>
+        <div class="row"><div class="l">before that</div>
+          <div class="v">At Nokia: a Power App for 80+ stakeholders across seven regions;
+            a Salesforce Analytics to Power BI migration for 150+ users.</div></div>
+        <div class="row"><div class="l">how he builds</div>
+          <div class="v">An AI-agent-heavy workflow in Claude Code — agents write most of
+            the code, he keeps architecture, review and release.</div></div>
+      </div>
+
+      <div class="links">
+        <a href="#">GitHub</a><a href="#">LinkedIn</a><a href="#">Email</a><a href="#">Resume PDF ↗</a>
+      </div>
+    </div>
+
+    <div class="exhibit">
+      <div class="ex-head">
+        <span class="ex-title">Interview this site</span>
+        <span class="ex-meters">turns 0/10 · est. $0.0000
+          <span class="sel">deepseek-v4-flash ▾</span><span class="dot"></span></span>
+      </div>
+      <div class="ex-body">
+        <p class="ex-ask">Ask what you'd ask on a call.</p>
+        <div class="chips">
+          <button class="chip">Give me the 30-second version</button>
+          <button class="chip">What has he shipped end to end?</button>
+          <button class="chip">Is he a fit for a RevOps role at an AI-forward company?</button>
+          <button class="chip">Does he need visa sponsorship?</button>
+        </div>
+        <div class="composer">
+          <span class="p">&gt;</span>
+          <span class="ph">Or paste a job description</span>
+          <span class="send">send ⏎</span>
+        </div>
+      </div>
+      <div class="ex-foot">Answers cite their sources. It publishes its
+        <a href="#">system prompt</a> and <a href="#">eval results</a>, and meters its
+        own cost per answer. It can make mistakes — the resume is authoritative.</div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

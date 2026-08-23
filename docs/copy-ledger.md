@@ -293,6 +293,19 @@ contradicts on the eleventh message.
 | --- | --- | --- | --- | --- |
 | draft | `lib/system-prompt.ts` → Scope | **Model-facing, and published verbatim at `/prompt`.** One paragraph stating that the chat is rate limited on purpose: a conversation allows at most 10 visitor messages, and each visitor gets 20 messages an hour on the standard tier and 5 on the premium one, in separate sliding one-hour buckets, after which the chat returns its rate-limited state. Closes with "Never tell a visitor this chat is unlimited or has no rate limits." | none about Sidhant; three factual claims about the site | Every number is interpolated from `TIER_LIMITS` and `MAX_USER_MESSAGES` in `lib/models.ts` — the same constants the route enforces and the status strip renders — so the sentence cannot drift from the behaviour. `evals/static.test.mjs` fails the build if a literal is retyped here. |
 
+**The front door mockups, 2026-08-22** (branch `main`, unshipped). Three
+explorations in `docs/mockups/front-door-*.html` for the "5-second clarity"
+homepage pass. Mockups, not shipping surfaces — but per the ledger rule they
+don't go to Sidhant's review unlogged. All tl;dr rows are verbatim from
+`content/recruiter.ts` and are not re-logged here; only the new strings are.
+
+| Status | Where | What it says | Claims | Grounding |
+| --- | --- | --- | --- | --- |
+| draft | `docs/mockups/front-door-*.html` → hero subline | "Looking for a RevOps / GTM systems role at an AI-forward company. Toronto, ON — Canadian citizen, no visa sponsorship needed." | two, both about Sidhant | A recombination of the `looking for` and `where` TL;DR rows in `content/recruiter.ts` (both sourced to `content/knowledge/faq.md`). No new fact. |
+| draft | `docs/mockups/front-door-*.html` → CTA labels | "View resume" · "Email me" · "Interview this site" | none | UI chrome. "Interview this site" doubles as the exhibit-panel title in variant 2. |
+| draft | `docs/mockups/front-door-2-split.html` → composer placeholder | "Or paste a job description" | none | UI chrome; the JD flow exists (Sprint 4). |
+| draft | `docs/mockups/front-door-*.html` → composer fine print | "Answers cite their sources — this chat publishes its system prompt and eval results, and shows what each answer costs. It can make mistakes; the resume is the authoritative version." | four, all about the site, none about Sidhant | Citations ship since Sprint 3, `/prompt` since Sprint 7, `/measurements` since Sprint 6, the cost meter since Sprint 2. Replaces the current disclaimer rather than adding a second line. |
+
 ## Pending `[VERIFY]` markers
 
 Sentences drafted with a fact-shaped hole in them, waiting on Sidhant. Listing them

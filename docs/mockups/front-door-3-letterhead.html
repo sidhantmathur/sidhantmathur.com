@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Front door 3 — the letterhead — mockup</title>
+<!-- Variant 3 of 3: the minimal-diff version. Current layout DNA survives —
+     left rail, mono headline, status strip — but the strip is dimmed until a
+     conversation starts, a CTA row is inserted under the headline, the tl;dr
+     is promoted from 12px to 15px, and a proof line is added. This is
+     approximately what the smallest real diff to app-shell.tsx would produce.
+     Facts from content/recruiter.ts; new strings logged in
+     docs/copy-ledger.md under "The front door mockups". -->
+<style>
+  :root{
+    --bg:#0B0A09; --panel:#111010; --raised:#171614;
+    --line:#2C2825; --line-strong:#6B6259;
+    --text:#EFEBE4; --text-soft:#C4BCB4; --text-faint:#97918A; --text-dim:#6B655E;
+    --accent:#E4522B; --signal:#6FA85C;
+    --mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+    --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);
+       font-size:16px;line-height:1.6;overflow:hidden}
+
+  .backdrop{position:fixed;inset:0;pointer-events:none;overflow:hidden}
+  .backdrop img{width:100%;height:100%;object-fit:cover;opacity:.5}
+  .backdrop .scrim{position:absolute;inset:0;
+    background:linear-gradient(90deg,
+      color-mix(in srgb, var(--bg) 30%, transparent) 0%,
+      color-mix(in srgb, var(--bg) 74%, transparent) 32%,
+      color-mix(in srgb, var(--bg) 74%, transparent) 72%,
+      color-mix(in srgb, var(--bg) 14%, transparent) 100%)}
+  @media(max-width:860px){
+    .backdrop img{opacity:.35}
+    .backdrop .scrim{background:color-mix(in srgb, var(--bg) 78%, transparent)}
+  }
+
+  .frame{position:relative;height:100%;display:flex;flex-direction:column}
+
+  /* ---- status strip: present but dimmed until a conversation starts ---- */
+  .topbar{display:flex;align-items:center;justify-content:space-between;
+          padding:0 20px;height:44px;border-bottom:1px solid var(--line);flex:none;
+          background:color-mix(in srgb, var(--panel) 82%, transparent);
+          font-family:var(--mono);font-size:12px}
+  .who b{font-weight:600}
+  .who span{color:var(--text-faint);margin-left:10px}
+  .meters{display:flex;align-items:center;gap:14px;color:var(--text-dim);font-size:11px}
+  .meters .sel{border:1px solid var(--line);padding:3px 8px}
+  .meters .dot{width:6px;height:6px;background:var(--signal)}
+
+  .cols{flex:1;display:flex;min-height:0}
+
+  /* ---- left rail, as it exists today ---- */
+  .rail{width:196px;flex:none;border-right:1px solid var(--line);padding:14px 0;
+        font-family:var(--mono);font-size:12.5px;overflow-y:auto;
+        background:color-mix(in srgb, var(--panel) 55%, transparent)}
+  .rail a{display:block;color:var(--text-faint);text-decoration:none;
+          padding:8px 18px;border-bottom:1px solid color-mix(in srgb, var(--line) 55%, transparent)}
+  .rail a.hot{color:var(--text)}
+  .rail a:first-child{color:var(--text-soft)}
+
+  /* ---- main column ---- */
+  .main{flex:1;min-width:0;display:flex;flex-direction:column}
+  .scroll{flex:1;overflow-y:auto}
+  .col{max-width:780px;padding:7vh 48px 40px}
+  h1{font-family:var(--mono);font-size:clamp(28px, 3.2vw, 38px);line-height:1.22;
+     letter-spacing:-0.01em;font-weight:600;margin:0}
+  .sub{font-size:16px;color:var(--text-soft);margin:16px 0 0;max-width:54ch}
+  .sub b{color:var(--text);font-weight:550}
+
+  .ctas{display:flex;gap:12px;margin-top:26px;flex-wrap:wrap}
+  .btn{display:inline-flex;align-items:center;height:44px;padding:0 20px;
+       font-family:var(--mono);font-size:13px;font-weight:500;text-decoration:none;
+       border:1px solid var(--line-strong);color:var(--text)}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:var(--bg);font-weight:600}
+  .btn .g{opacity:.75;margin-left:8px}
+
+  .tldr{margin-top:44px;border-left:2px solid var(--line-strong);padding-left:20px}
+  .tldr .k{font-family:var(--mono);font-size:11px;color:var(--text-faint);margin-bottom:10px}
+  .row{display:grid;grid-template-columns:110px 1fr;gap:12px;padding:6px 0}
+  .row .l{font-family:var(--mono);font-size:12px;color:var(--text-faint);padding-top:2px}
+  .row .v{font-size:15px;color:var(--text-soft);max-width:60ch}
+  .row .v b{color:var(--text);font-weight:550}
+  .foot-line{font-family:var(--mono);font-size:12px;color:var(--text-faint);
+             border-bottom:1px solid var(--line-strong);display:inline-block;
+             margin-top:12px;padding-bottom:1px}
+
+  .dock{flex:none;border-top:1px solid var(--line);
+        background:color-mix(in srgb, var(--panel) 92%, transparent)}
+  .dock-in{max-width:780px;padding:12px 48px 14px}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+  .chip{font-family:var(--mono);font-size:12px;color:var(--text-soft);
+        border:1px solid var(--line-strong);padding:7px 11px;background:transparent;cursor:pointer}
+  .composer{display:flex;align-items:center;gap:12px;background:var(--raised);
+            border:1px solid var(--line-strong);padding:0 14px;height:50px}
+  .composer .p{color:var(--accent);font-family:var(--mono);font-size:14px}
+  .composer .ph{color:var(--text-faint);font-family:var(--mono);font-size:13.5px;flex:1}
+  .composer .send{font-family:var(--mono);font-size:12px;color:var(--text-dim);
+                  border:1px solid var(--line);padding:6px 12px}
+  .fine{font-family:var(--mono);font-size:11.5px;color:var(--text-faint);
+        margin:10px 0 0;line-height:1.7}
+  .fine a{color:var(--text-soft);text-decoration:none;border-bottom:1px solid var(--accent)}
+
+  @media(max-width:860px){
+    .rail{display:none}
+    .meters{display:none}
+    .col{padding:5vh 20px 32px}
+    .ctas{flex-direction:column}
+    .btn{width:100%;justify-content:center}
+    .row{grid-template-columns:1fr;gap:2px}
+    .dock-in{padding:12px 20px 14px}
+    .chips{display:none}
+  }
+</style>
+</head>
+<body>
+<div class="backdrop" aria-hidden="true">
+  <img src="../../public/ambient-wave.avif" alt="">
+  <div class="scrim"></div>
+</div>
+
+<div class="frame">
+  <header class="topbar">
+    <div class="who"><b>Sidhant Mathur</b><span>Toronto, ON</span></div>
+    <div class="meters">turns 0/10 · ttft — · tok/s — · est. $0.0000
+      <span class="sel">deepseek-v4-flash ▾</span><span class="dot"></span></div>
+  </header>
+
+  <div class="cols">
+    <nav class="rail">
+      <a href="#">Index</a>
+      <a class="hot" href="#">Resume →</a>
+      <a class="hot" href="#">Resume PDF ↗</a>
+      <a href="#">A Darle 20 →</a>
+      <a href="#">Nokia →</a>
+      <a href="#">Dell →</a>
+      <a href="#">Colophon →</a>
+      <a href="#">The instructions →</a>
+      <a href="#">What it won't do →</a>
+      <a href="#">Why this site is a chatbot</a>
+      <a href="#">Paste a job description</a>
+      <a href="#">Instruments</a>
+      <a class="hot" href="#">Contact</a>
+    </nav>
+
+    <div class="main">
+      <div class="scroll">
+        <div class="col">
+          <h1>I learn what the problem needs, then I build the thing.</h1>
+          <p class="sub">Looking for a <b>RevOps / GTM systems role</b> at an AI-forward
+            company. Toronto, ON — no visa sponsorship needed.</p>
+
+          <div class="ctas">
+            <a class="btn primary" href="#">View resume</a>
+            <a class="btn" href="#">Email me</a>
+            <a class="btn" href="#">Interview this site<span class="g">↓</span></a>
+          </div>
+
+          <div class="tldr">
+            <div class="k">tl;dr</div>
+            <div class="row"><div class="l">now</div>
+              <div class="v">Sales operations specialist at <b>Nokia</b>, in Toronto.
+                Co-founder and CTO of <b>A Darle 20</b>.</div></div>
+            <div class="row"><div class="l">shipped</div>
+              <div class="v">A Darle 20 — a two-sided marketplace, architected and shipped
+                solo. <b>1,400+ registered users</b>, 127 hosts and <b>2,100+ bookings</b>
+                in its first four months.</div></div>
+            <div class="row"><div class="l">before that</div>
+              <div class="v">At Nokia: a self-serve Power App used by 80+ stakeholders
+                across seven regions, and a Salesforce Analytics to Power BI migration
+                for 150+ users.</div></div>
+            <div class="row"><div class="l">how he builds</div>
+              <div class="v">An AI-agent-heavy workflow in Claude Code — agents write
+                most of the code, he keeps architecture, code review and release.</div></div>
+            <span class="foot-line">The resume has the rest, and so does the box below.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="dock">
+        <div class="dock-in">
+          <div class="chips">
+            <button class="chip">Give me the 30-second version</button>
+            <button class="chip">What has he shipped end to end?</button>
+            <button class="chip">Is he a fit for a RevOps role?</button>
+            <button class="chip">Does he need visa sponsorship?</button>
+          </div>
+          <div class="composer">
+            <span class="p">&gt;</span>
+            <span class="ph">Ask what you'd ask on a call</span>
+            <span class="send">send ⏎</span>
+          </div>
+          <p class="fine">Answers cite their sources — this chat publishes its
+            <a href="#">system prompt</a> and <a href="#">eval results</a>, and shows
+            what each answer costs. It can make mistakes; the resume is authoritative.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>
