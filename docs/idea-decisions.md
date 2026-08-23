@@ -303,6 +303,28 @@ Note this does **not** soften the grounding rules. Selling him means making the
 strongest case the evidence supports, not padding it — the citation enforcement
 (#21) and eval suite (#2) exist precisely so advocacy stays checkable.
 
+### The front door — added 2026-08-23, after the fact
+
+Set by Sidhant when the seven sprints were done and the homepage was reviewed
+whole, so it postdates the four above; recorded here because it governs any
+future homepage or empty-state work the way §4's instrumentation line governs
+the instruments.
+
+> *"I want 5-second clarity on this site. If someone lands here they should
+> immediately know what to do in 5 seconds. They shouldn't be required to
+> engage with a chatbot."*
+
+**The policy:** the front door answers who this is, what he wants, and how to
+act — resume, contact, chat — with zero engagement, at every width. The chat is
+the flagship exhibit, never the entrance. This is the instrumentation principle
+one level up: §4 already said density lives around the conversation, never in
+front of it; this says the conversation itself lives around the person, never
+in front of him. A visitor who ignores the chatbot entirely still has a working
+portfolio. Shipped as the front-door pass (`docs/mockups/front-door-1-hero.html`
+was the chosen exploration); the empty state's telemetry deferral, the CTA row
+and the proof line are its expression, and `docs/site-copy.md` § Hero records
+what it reversed.
+
 ---
 
 ## 5. For whoever plans these — what this review already established
