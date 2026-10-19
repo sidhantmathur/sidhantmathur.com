@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { initAnalytics } from "@/lib/analytics";
+import { initAnalytics, rememberLanding } from "@/lib/analytics";
 
 // Initializes PostHog on the client exactly once. Renders nothing. When
 // NEXT_PUBLIC_POSTHOG_KEY is unset, initAnalytics is a no-op — no network calls.
@@ -18,8 +18,15 @@ import { initAnalytics } from "@/lib/analytics";
 // so the timeout is both the fallback there and the ceiling everywhere else —
 // a page that never goes idle (a conversation streaming from the first second)
 // must still eventually report.
+//
+// THE ONE THING THAT CAN'T WAIT is reading the landing address. An application
+// link's `?ref=` (see lib/analytics.ts) is only guaranteed to be in the address
+// bar at first paint: a replayed fit check opens its panel, and pushes a new
+// address, long before the idle callback below fires. Reading it costs nothing
+// and loads nothing, so it happens on mount.
 export function AnalyticsProvider() {
   useEffect(() => {
+    rememberLanding();
     let idle: number | undefined;
     const timer = window.setTimeout(() => initAnalytics(), 2000);
     const ric = window.requestIdleCallback;

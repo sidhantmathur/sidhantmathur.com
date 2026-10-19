@@ -1,0 +1,245 @@
+{
+ "_note": "One real job-description turn, recorded 2026-10-19 through the site UI against a fictional 3,891-character RevOps posting written for the measurement. Model output, not site copy: it is never rendered, and exists so the permalink length tests measure a real table rather than an estimate. See docs/application-links.md.",
+ "messages": [
+  {
+   "role": "user",
+   "parts": [
+    {
+     "type": "text",
+     "text": "Here's a job description. Map my experience onto it, and be straight about where I don't match.\n\nSenior Revenue Operations Analyst — B2B data infrastructure company (Hybrid, Toronto or Remote in Canada)\n\nAbout the role\nWe're a Series C company selling a usage-based data platform to mid-market and enterprise engineering teams. Our go-to-market organization has grown from 20 to 85 people in eighteen months, and the systems underneath it have not kept up. We're looking for a senior revenue operations analyst to own the reporting, forecasting and tooling that sales, customer success and finance leadership rely on every week. You'll report to the Director of Revenue Operations and work daily with the CRO, the VP of Finance and frontline sales managers across three regions.\n\nWhat you'll do\n- Own the weekly forecast call package: pipeline coverage, commit and best-case roll-ups, and slippage analysis by segment and region.\n- Rebuild our quarter-end close reporting so bookings, ARR and commission inputs reconcile between Salesforce and NetSuite without a spreadsheet in the middle.\n- Design and maintain executive dashboards for the CRO and the board deck, in Tableau today and possibly Looker after an evaluation next year.\n- Partner with sales leadership to turn vague requests (\"why is EMEA slipping?\") into scoped analyses with a clear answer and a recommendation.\n- Administer and improve Salesforce: opportunity stages, validation rules, flows, and the data model behind territories and account hierarchies.\n- Build lightweight internal tools and automations that remove manual work from the deal desk, renewals and commission processes.\n- Run territory and quota planning analysis with finance for the annual plan, including capacity models and ramp assumptions.\n- Define and document the metrics the GTM organization runs on, and make sure every team calculates them the same way.\n- Evaluate AI and LLM-based tooling for the revenue team, and ship the pieces that hold up in daily use.\n\nRequirements\n- 4+ years in revenue operations, sales operations, business operations or a similar analytical role at a B2B software company.\n- Advanced SQL. You can write the query yourself rather than asking a data team for an extract.\n- Hands-on experience with Salesforce reporting and administration; Salesforce Administrator certification preferred.\n- Experience building dashboards in a BI tool such as Tableau, Looker or Power BI for an executive audience.\n- Demonstrated ownership of a forecasting or quarter-end reporting process end to end.\n- Experience with usage-based or consumption pricing models and how they change pipeline and revenue reporting.\n- Familiarity with CPQ and billing systems (Salesforce CPQ, NetSuite, Zuora or similar).\n- Experience with dbt and a cloud data warehouse such as Snowflake or BigQuery.\n- Strong written communication: you can explain a messy dataset to a CRO in three sentences.\n- Comfortable automating your own work in Python, JavaScript, Apps Script or a low-code platform.\n\nNice to have\n- Experience supporting a sales team through a pricing change or a CRM migration.\n- Exposure to commission tooling such as CaptivateIQ, Spiff or Xactly.\n- Experience at a company that grew past 100 GTM headcount.\n- Prior experience managing or mentoring a junior analyst.\n- French is an asset.\n\nHow we work\nWe're hybrid, with a Toronto office for anyone who wants it and two in-person planning weeks a year. We write things down: every recurring report has an owner, a definition and a changelog. You'll have real authority over the GTM systems roadmap, a budget for tooling, and a director who would rather you ship a working v1 than a perfect deck.\n\nCompensation and benefits\nThe salary range for this role is CAD 105,000–125,000 plus equity, depending on experience. Benefits include health and dental coverage from day one, a learning budget, four weeks of vacation and a home-office stipend. We're unable to sponsor work permits for this role."
+    }
+   ]
+  },
+  {
+   "role": "assistant",
+   "parts": [
+    {
+     "type": "tool-extractRequirements",
+     "state": "output-available",
+     "output": {
+      "role": "Senior Revenue Operations Analyst",
+      "requirements": [
+       "Own the weekly forecast call package: pipeline coverage, commit and best-case roll-ups, and slippage analysis by segment and region.",
+       "Rebuild our quarter-end close reporting so bookings, ARR and commission inputs reconcile between Salesforce and NetSuite without a spreadsheet in the middle.",
+       "Design and maintain executive dashboards for the CRO and the board deck, in Tableau today and possibly Looker after an evaluation next year.",
+       "Partner with sales leadership to turn vague requests (\"why is EMEA slipping?\") into scoped analyses with a clear answer and a recommendation.",
+       "Administer and improve Salesforce: opportunity stages, validation rules, flows, and the data model behind territories and account hierarchies.",
+       "Build lightweight internal tools and automations that remove manual work from the deal desk, renewals and commission processes.",
+       "Run territory and quota planning analysis with finance for the annual plan, including capacity models and ramp assumptions.",
+       "Define and document the metrics the GTM organization runs on, and make sure every team calculates them the same way.",
+       "Evaluate AI and LLM-based tooling for the revenue team, and ship the pieces that hold up in daily use.",
+       "4+ years in revenue operations, sales operations, business operations or a similar analytical role at a B2B software company.",
+       "Advanced SQL. You can write the query yourself rather than asking a data team for an extract.",
+       "Hands-on experience with Salesforce reporting and administration; Salesforce Administrator certification preferred.",
+       "Experience building dashboards in a BI tool such as Tableau, Looker or Power BI for an executive audience.",
+       "Demonstrated ownership of a forecasting or quarter-end reporting process end to end."
+      ]
+     }
+    },
+    {
+     "type": "tool-roleFit",
+     "state": "output-available",
+     "output": {
+      "role": "Senior Revenue Operations Analyst",
+      "rows": [
+       {
+        "requirement": "Own the weekly forecast call package: pipeline coverage, commit and best-case roll-ups, and slippage analysis by segment and region.",
+        "verdict": "partial",
+        "claimedVerdict": null,
+        "downgrade": null,
+        "evidence": "He owns headcount forecasting for a 3,000–4,000-person organization and sales reporting for Nokia, but weekly pipeline coverage, commit/best-case roll-ups, and slippage analysis are not documented.",
+        "sources": [
+         "resume:nokia"
+        ],
+        "unknownSources": [],
+        "unverified": []
+       },
+       {
+        "requirement": "Rebuild our quarter-end close reporting so bookings, ARR and commission inputs reconcile between Salesforce and NetSuite without a spreadsheet in the middle.",
+        "verdict": "partial",
+        "claimedVerdict": null,
+        "downgrade": null,
+        "evidence": "He replaced Nokia's quarter-end manual reporting collection process with a self-serve Power App, but bookings, ARR, commission reconciliation, and NetSuite experience are not documented.",
+        "sources": [
+         "resume:nokia"
+        ],
+        "unknownSources": [],
+        "unverified": []
+       },
+       {
+        "requirement": "Design and maintain executive dashboards for the CRO and the board deck, in Tableau today and possibly Looker after an evaluation next year.",
+        "verdict": "partial",
+        "claimedVerdict": null,
+        "downgrade": null,
+        "evidence": "He migrated sales reporting to Power BI for 150+ users and built quarterly executive reporting tools, but Tableau, Looker, and board-deck ownership are not documented.",
+        "sources": [
+         "resume:nokia"
+        ],
+        "unknownSources": [],
+        "unverified": []
+       },
+       {
+        "requirement": "Partner with sales leadership to turn vague requests (\"why is EMEA slipping?\") into scoped analyses with a clear answer and a recommendation.",
+        "verdict": "met",
+        "claimedVerdict": null,
+        "downgrade": null,
+        "evidence": "At Nokia he translates vague requests from sales and finance leadership into scoped requirements and owns delivery through executive demos, rollout, and iteration.",
+        "sources": [
+         "resume:nokia"
+        ],
+        "unknownSources": [],
+        "unverified": []
+       },
+       {
+        "requirement": "Administer and improve Salesforce: opportunity stages, validation rules, flows, and the data model behind territories and account hierarchies.",
+        "verdict": "partial",
+        "claimedVerdict": null,
+        "downgrade": null,
+        "evidence": "He has Salesforce experience and migrated sales reporting from Salesforce Analytics, but Salesforce administration of stages, validation rules, flows, territories, and account hierarchies is not documented.",
+        "sources": [
+         "resume:technical-skills",
+         "resume:nokia"
+        ],
+        "unknownSources": [],
+        "unverified": []
+       },
+       {
+        "requirement": "Build lightweight internal tools and automations that remove manual work from the deal desk, renewals and commission processes.",
+        "verdict": "partial",
+        "claimedVerdict": null,
+        "downgrade": null,
+        "evidence": "He built a Power App that eliminated a manual quarter-end data-collection process and has Power Apps/Power Automate skills, but deal desk, renewals, and commission workflows are not documented.",
+        "sources": [
+         "resume:nokia",
+         "resume:technical-skills"
+        ],
+        "unknownSources": [],
+        "unverified": []
+       },
+       {
+        "requirement": "Run territory and quota planning analysis with finance for the annual plan, including capacity models and ramp assumptions.",
+        "verdict": "partial",
+        "claimedVerdict": null,
+        "downgrade": null,
+        "evidence": "He owned headcount reporting and forecasting for a 3,000–4,000-person organization, but territory and quota planning, capacity models, and ramp assumptions are not documented.",
+        "sources": [
+         "resume:nokia"
+        ],
+        "unknownSources": [],
+        "unverified": []
+       },
+       {
+        "requirement": "Define and document the metrics the GTM organization runs on, and make sure every team calculates them the same way.",
+        "verdict": "partial",
+        "claimedVerdict": null,
+        "downgrade": null,
+        "evidence": "He owned data modeling and SQL/DAX transformation logic for Nokia sales reporting, but organization-wide metric definitions and documentation are not specifically described.",
+        "sources": [
+         "resume:nokia"
+        ],
+        "unknownSources": [],
+        "unverified": []
+       },
+       {
+        "requirement": "Evaluate AI and LLM-based tooling for the revenue team, and ship the pieces that hold up in daily use.",
+        "verdict": "partial",
+        "claimedVerdict": null,
+        "downgrade": null,
+        "evidence": "He uses LLMs and Python in Nokia workflows where useful and runs AI-agent-heavy development workflows, but evaluating and shipping AI tooling specifically for a revenue team is not documented.",
+        "sources": [
+         "nokia:what-he-built",
+         "resume:a-darle-20"
+        ],
+        "unknownSources": [],
+        "unverified": []
+       },
+       {
+        "requirement": "4+ years in revenue operations, sales operations, business operations or a similar analytical role at a B2B software company.",
+        "verdict": "partial",
+        "claimedVerdict": null,
+        "downgrade": null,
+        "evidence": "His Nokia sales-operations role began in June 2024, preceded by workforce management at Nokia from October 2022 to June 2024, but four years in a comparable role at a B2B software company is not established.",
+        "sources": [
+         "resume:nokia"
+        ],
+        "unknownSources": [],
+        "unverified": []
+       },
+       {
+        "requirement": "Advanced SQL. You can write the query yourself rather than asking a data team for an extract.",
+        "verdict": "partial",
+        "claimedVerdict": null,
+        "downgrade": null,
+        "evidence": "He owned SQL/DAX transformation logic for Nokia's Power BI migration, but the record does not establish advanced SQL proficiency.",
+        "sources": [
+         "resume:nokia",
+         "resume:technical-skills"
+        ],
+        "unknownSources": [],
+        "unverified": []
+       },
+       {
+        "requirement": "Hands-on experience with Salesforce reporting and administration; Salesforce Administrator certification preferred.",
+        "verdict": "partial",
+        "claimedVerdict": null,
+        "downgrade": null,
+        "evidence": "He migrated reporting from Salesforce Analytics and lists Salesforce as a skill, but Salesforce administration and an Administrator certification are not documented.",
+        "sources": [
+         "resume:nokia",
+         "resume:technical-skills"
+        ],
+        "unknownSources": [],
+        "unverified": []
+       },
+       {
+        "requirement": "Experience building dashboards in a BI tool such as Tableau, Looker or Power BI for an executive audience.",
+        "verdict": "met",
+        "claimedVerdict": null,
+        "downgrade": null,
+        "evidence": "He migrated sales reporting to Power BI for 150+ users and built self-serve quarterly executive reporting used by 80+ stakeholders across seven regions.",
+        "sources": [
+         "resume:nokia"
+        ],
+        "unknownSources": [],
+        "unverified": []
+       },
+       {
+        "requirement": "Demonstrated ownership of a forecasting or quarter-end reporting process end to end.",
+        "verdict": "met",
+        "claimedVerdict": null,
+        "downgrade": null,
+        "evidence": "He owned Nokia's headcount forecasting and delivered a self-serve quarter-end reporting tool from requirements through rollout and support.",
+        "sources": [
+         "resume:nokia"
+        ],
+        "unknownSources": [],
+        "unverified": []
+       }
+      ],
+      "counts": {
+       "met": 3,
+       "partial": 11,
+       "unmet": 0,
+       "unclear": 0
+      },
+      "gaps": [
+       "Experience with usage-based or consumption pricing models and how they change pipeline and revenue reporting.",
+       "Familiarity with CPQ and billing systems (Salesforce CPQ, NetSuite, Zuora or similar).",
+       "Experience with dbt and a cloud data warehouse such as Snowflake or BigQuery.",
+       "Exposure to commission tooling such as CaptivateIQ, Spiff or Xactly.",
+       "Prior experience managing or mentoring a junior analyst."
+      ],
+      "noGapsRationale": null,
+      "verdict": "Strong alignment on reporting ownership, executive-facing Power BI, automating manual work, and translating stakeholder requests; the main qualification questions are SaaS/consumption-revenue specifics and the surrounding finance stack.",
+      "uncovered": 0,
+      "downgraded": 0
+     }
+    },
+    {
+     "type": "text",
+     "text": "Overall, he’s a partial fit: his strongest match is owning reporting and automation end to end, including Power BI reporting for 150+ users and a quarter-end tool used across seven regions. [resume:nokia]\n\nThe record does not show experience with usage-based pricing, CPQ or billing systems, dbt or cloud data warehouses, commission tools, or managing junior analysts. It also does not establish four years in a comparable role, advanced SQL, or Salesforce administration."
+    }
+   ]
+  }
+ ]
+}

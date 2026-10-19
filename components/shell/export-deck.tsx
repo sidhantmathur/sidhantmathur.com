@@ -8,7 +8,12 @@ import {
   scorecardMarkdown,
   verdictCounts,
 } from "@/lib/transcript";
-import { PERMALINK_SAFE_CHARS, permalinkFor, permalinkSupported } from "@/lib/permalink";
+import {
+  PERMALINK_SAFE_CHARS,
+  fitPermalinkFor,
+  permalinkFor,
+  permalinkSupported,
+} from "@/lib/permalink";
 import { DISCLAIMER, SITE_NAME, SITE_URL } from "@/lib/site";
 import { track } from "@/lib/analytics";
 import { CopyButton } from "./copy-button";
@@ -48,6 +53,9 @@ const EXPORT_COPY = {
   unsupported: "This browser can't build a link — the markdown and print options still work.",
   scorecard:
     "The assessment in scorecard shape: the verdict, the counts, the strongest cited rows, and every gap.",
+  // The short fit link (docs/application-links.md). Logged in the ledger.
+  shortLink:
+    "The same scorecard as a link, with the answer's summary — short enough for an application form or a plain-text email. The posting itself stays out of it.",
   mail: "Opens a draft in your mail client with the condensed version already in the body.",
 };
 
@@ -84,6 +92,24 @@ export function ExportDeck({
   );
 
   const fit = latestRoleFit(messages);
+
+  // The short fit link. Local rather than hoisted like `permalink`: nothing
+  // else on the page carries it, and it is rebuilt from the same conversation.
+  const [shortLink, setShortLink] = useState<string | null>(null);
+  const makeShortLink = useCallback(async () => {
+    setBusy(true);
+    try {
+      const link = await fitPermalinkFor(`${window.location.origin}/`, messages);
+      setShortLink(link);
+      if (link) track("chat_permalink_created", { chars: link.length, kind: "fit" });
+      onAction();
+    } catch {
+      setShortLink(null);
+      setSupported(false);
+    } finally {
+      setBusy(false);
+    }
+  }, [messages, onAction]);
 
   const makeLink = useCallback(async () => {
     setBusy(true);
@@ -222,6 +248,35 @@ export function ExportDeck({
           </a>
           <p className="t-meta w-full text-text-faint">{EXPORT_COPY.mail}</p>
           <p className="t-meta w-full text-text-faint">{verdictCounts(fit)}</p>
+        </Section>
+      )}
+
+      {fit && supported && (
+        <Section label="Short link" note={EXPORT_COPY.shortLink}>
+          <button type="button" onClick={makeShortLink} disabled={busy} className={BUTTON}>
+            {shortLink ? "rebuild the short link" : "build a short link"}
+          </button>
+          {shortLink && (
+            <CopyButton
+              getText={() => shortLink}
+              label="copy the short link"
+              copiedLabel="copied"
+              event="chat_export"
+              className="inline-flex min-h-[44px] items-center border border-line-strong px-3 py-2.5 hover:border-accent"
+              onCopied={onAction}
+            />
+          )}
+          {shortLink && (
+            <div className="w-full space-y-1">
+              <p className="t-meta break-all text-text-soft">{shortLink}</p>
+              <p className="t-meta text-text-faint">
+                <span className="tabular-nums text-text-soft">{shortLink.length}</span> characters
+                {shortLink.length > PERMALINK_SAFE_CHARS && (
+                  <span className="text-accent"> — {EXPORT_COPY.linkTooLong}</span>
+                )}
+              </p>
+            </div>
+          )}
         </Section>
       )}
     </div>

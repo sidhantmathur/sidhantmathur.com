@@ -24,7 +24,6 @@ lead targeting, built as an intern.
 enforced by code rather than asked of the model.
 /measurements — What the assistant scores against a fixed eval corpus.
 /measurements/models — Five models this site has run, compared on one corpus: pass rate, latency, tokens and cost per task.
-/chat — Ask a question about my work directly.
 `;
 
 export async function GET() {

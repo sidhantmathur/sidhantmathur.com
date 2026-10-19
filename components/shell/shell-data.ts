@@ -153,6 +153,18 @@ export const FIT_LABELS = {
     "Each row is a judgment against the record, not a score, and the four tags don't add up to one. A row claiming a fit has to name the part of the record it stands on; where it didn't, the site downgraded it rather than the model.",
 };
 
+/**
+ * Said over a table that is an excerpt — the short fit link carries the
+ * scorecard's rows, not all of them (lib/transcript.ts → fitSnapshot). The
+ * counts above it still count every row, so without this line three rows
+ * under "3 met · 11 partial" would read as a complete assessment.
+ */
+export function fitExcerptNote(shown: number, total: number): string {
+  return shown > 0
+    ? `Showing ${shown} of ${total} requirements: the strongest cited ones. The counts cover all ${total}, and every gap is listed below.`
+    : `This link carries the counts for all ${total} requirements and every gap, but none of the rows.`;
+}
+
 // Nokia first, as everywhere since wave 2.
 export const PROJECT_LINKS = [
   { label: "Nokia", href: "/projects/nokia" },
