@@ -333,6 +333,7 @@ on public pages, and sentences that were no longer true.
 | removed | `components/project-media.tsx` → media surface | Only slots with a file render. Off the page: the six empty frames, their "Nothing here yet — waiting on a {kind}." text and "{title} — not captured yet." captions, and the intro "Frames with nothing in them are waiting on a file…". The heading "What it looks like" and the one filled slot stay. | none | Council review: empty frames on the flagship case study read as unfinished work. The briefs stay in `content/adarle20-media.ts` and are pending below. |
 | removed | `components/project-media.tsx` → `FEATURE_SURFACE_NOTE` | Not rendered while it carries its `[VERIFY]` marker. The draft stays in `content/adarle20-media.ts`. | none | Pending below. |
 | removed | `app/colophon/page.tsx` | "The spec, design brief, and source are on GitHub. [TODO: confirm repo is public before linking]" | none | The repo is public and so is `docs/`, so linking it is an open decision, pending below. |
+| draft | `lib/site.ts` → `COLOPHON_STACK`, on `/colophon` and in the colophon panel | "…The chat assistant runs through Vercel's AI Gateway on {DEFAULT_MODEL} by default, with the knowledge base injected directly into the prompt…" — was "runs on Claude through Vercel's AI Gateway". The rest of the paragraph is unchanged. | one, about the site | The id is interpolated from `DEFAULT_MODEL` in `lib/models.ts`, the same constant the route falls back to, so it can't go stale. |
 
 ## Pending `[VERIFY]` markers
 

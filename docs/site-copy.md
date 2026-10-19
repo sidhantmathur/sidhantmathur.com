@@ -394,9 +394,15 @@ Button: Download PDF
 Heading: How this site was built
 Body:
 Next.js, TypeScript, and Tailwind, deployed on Vercel. Type is Geist Sans and
-Geist Mono. The chat assistant runs on Claude through Vercel's AI Gateway, with
-the knowledge base injected directly into the prompt — at this scale, a vector
-database would be complexity for its own sake, so there isn't one.
+Geist Mono. The chat assistant runs through Vercel's AI Gateway on
+{DEFAULT_MODEL} by default, with the knowledge base injected directly into the
+prompt — at this scale, a vector database would be complexity for its own
+sake, so there isn't one.
+
+[Wave 1, 2026-10-19: "runs on Claude" stopped being true when the default moved
+to DeepSeek in August. The model id is now read from `DEFAULT_MODEL` in
+`lib/models.ts` (`COLOPHON_STACK` in `lib/site.ts`), so the sentence stays true
+whichever model is the default.]
 
 Most of the code was written by AI agents working from a build spec; the
 decisions, copy, and mistakes are mine.

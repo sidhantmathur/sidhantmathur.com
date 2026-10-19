@@ -14,6 +14,7 @@ import { ENFORCEMENT_LABEL, REFUSALS } from "@/lib/refusals";
 import type { RequirementVerdict } from "@/lib/role-fit";
 import { FIT_LABELS, JD_COPY, PROJECT_LINKS, SOCIAL_LINKS, WHY_CHATBOT } from "./shell-data";
 import type { PanelView, RoleFit } from "./use-conversation";
+import { COLOPHON_STACK } from "@/lib/site";
 import { ActionLink } from "./action-link";
 
 const CASE_STUDIES = {
@@ -186,12 +187,7 @@ export function PanelBody({
   if (panel.kind === "colophon") {
     return (
       <div className="space-y-3">
-        <p className="t-body text-text-soft">
-          Next.js, TypeScript, and Tailwind, deployed on Vercel. Type is Geist Sans and
-          Geist Mono. The chat assistant runs on Claude through Vercel&apos;s AI Gateway,
-          with the knowledge base injected directly into the prompt — at this scale, a
-          vector database would be complexity for its own sake, so there isn&apos;t one.
-        </p>
+        <p className="t-body text-text-soft">{COLOPHON_STACK}</p>
         <div className="flex flex-wrap gap-2">
           <ActionLink href="/colophon">Open as a page</ActionLink>
           <ActionLink href="/measurements">What it scores</ActionLink>

@@ -1,3 +1,5 @@
+import { DEFAULT_MODEL } from "./models.ts";
+
 /**
  * Who the site says it is, and the one sentence it says about its own answers.
  *
@@ -29,3 +31,13 @@ export const SITE_URL = "https://sidhantmathur.com";
  */
 export const DISCLAIMER =
   "AI-generated answers about my professional background. It can make mistakes — the resume is the authoritative version.";
+
+/**
+ * The colophon's opening paragraph, on /colophon and in the colophon panel.
+ *
+ * It used to say the chat "runs on Claude", which stopped being true when the
+ * default moved to DeepSeek in August — on the one page whose job is to be
+ * exact about how the site works. The model is read from the catalogue now, so
+ * the sentence is true whichever model is the default the day it is read.
+ */
+export const COLOPHON_STACK = `Next.js, TypeScript, and Tailwind, deployed on Vercel. Type is Geist Sans and Geist Mono. The chat assistant runs through Vercel's AI Gateway on ${DEFAULT_MODEL} by default, with the knowledge base injected directly into the prompt — at this scale, a vector database would be complexity for its own sake, so there isn't one.`;
