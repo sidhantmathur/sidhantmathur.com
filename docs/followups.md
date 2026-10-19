@@ -78,6 +78,50 @@ input price in the catalogue at $1/1M on an input-dominated workload — holds
 the premium slot's 5/hour bucket instead. Same reasoning as when Sonnet left:
 the tier is a cost boundary, and it holds whichever model bills most per turn.
 
+**Update 2026-10-19 — successors in, four decisions open.** Haiku 4.5 became
+`anthropic/claude-haiku-5.5` and gpt-5.6-luna became `openai/gpt-6-luna`, both
+$0.10/$0.50. DeepSeek 0731 was repriced to $0.076/$0.153. Every cache rate is
+now the Gateway's published figure, and two of the derived ones had been well
+off. The per-row record is in the header of `lib/models.ts`. **Not
+smoke-tested**: there was no `AI_GATEWAY_API_KEY` in `.env.local`. What needs
+Sidhant:
+
+1. **The premium tier no longer separates anything.** Applied as written, the
+   rule now puts `gemini-3.5-flash-lite` in premium. At $0.30/$2.50 it is the
+   priciest row, but only 1.2x gpt-5-mini; Haiku 4.5's input price was more
+   than 3x the next row's. A 5/hour bucket on a model that costs what the
+   20/hour ones cost shows no cost engineering at all. The options:
+   - **Turn the tier off** (recommended): every model goes standard. That
+     touches `lib/models.ts`, the "exactly one model is premium" test in
+     `evals/static.test.mjs`, the allowance paragraph in `lib/system-prompt.ts`
+     (published at `/prompt`), and the dropdown comment in `app-shell.tsx`.
+   - **Re-tenant it** with a model that is actually expensive, such as
+     `anthropic/claude-sonnet-5.5` at $2/$10, about 20x the standard rows per
+     token. That is a new model to choose and to measure.
+   - **Leave it**, with gemini on 5/hour.
+2. **The default model's price is unconfirmed per turn.** The Gateway serves
+   deepseek-v4-flash-0731 through fifteen providers, at $0.02–$0.44 input and
+   $0.15–$1.32 output. The catalogue carries the headline rate, which is the
+   cheapest provider's. The route pins no provider, so the meter for most
+   visitors' turns can read several times low. There are two fixes, both route
+   changes: pin a provider (`providerOptions.gateway.order` or `only`), or price
+   turns from the Gateway's own per-request cost in the response metadata
+   instead of estimating at list price.
+3. **deepseek-v4.1-flash is the newer version.** DeepSeek's own endpoint on
+   the Gateway serves it rather than 0731. It was not swapped in for two
+   reasons: its first-party rate doubles in weekday peak windows (01:00–04:00
+   and 06:00–10:00 UTC), which a list-price meter cannot express, and the swap
+   would change the default model.
+4. **Haiku 5.5 thinks by default; 4.5 did not.** Thinking bills against
+   `MAX_OUTPUT_TOKENS`, which is 600 on an ordinary turn. If a smoke test shows
+   `finishReason: "length"` with a short or empty answer, lower Haiku's effort
+   level, which defaults to medium, rather than raising the cap. GPT-6 Luna is a
+   reasoning model as 5.6 was, and 5.6 fit under the cap.
+
+The bake-off should be re-run once 1–4 are settled. Three of the five models
+on offer have never been measured. At current list prices, with July's token
+counts, it should cost roughly $0.20–$0.50 in total.
+
 ## 3. Copy — Sidhant is doing this, do not write it
 
 Two blocks on the live site are Claude's drafts, marked `[DRAFT]` in
