@@ -312,6 +312,36 @@ describe("false alarms the live corpus produced", () => {
     assert.deepEqual(checkableTokens("Want to hear how the Nokia rollout went?"), []);
   });
 
+  test("a sentence naming what the record lacks is not a claim", () => {
+    // 2026-10-19, a live posting run after the strengths-first summary: the
+    // honest gap sentences were marked "not in the record" for naming CPQ,
+    // Gong and B2B SaaS, which is exactly what they said was missing.
+    for (const sentence of [
+      "The key gaps are hands-on Salesforce administration, lead routing, CPQ and quote-to-cash, and ownership of tools such as Gong or Outreach.",
+      "The record doesn't establish four years at a B2B SaaS company.",
+      "The record does not show Salesforce Administrator certification or CPQ.",
+      "He also hasn't demonstrated GTM tool integrations like Gong.",
+      "The assessment above lists the remaining gaps, including Series B-to-D experience.",
+      "Distributed ML infrastructure and GPU clusters are outside the record.",
+    ]) {
+      assert.deepEqual(checkableTokens(sentence), [], sentence);
+    }
+  });
+
+  test("a gap clause is dropped, the claim beside it is still checked", () => {
+    const mixed = checkableTokens("Strong on Power BI reporting at Nokia; the main gaps are CPQ and Gong.");
+    for (const kept of ["Power", "BI", "Nokia"]) assert.ok(mixed.includes(kept), `dropped ${kept}`);
+    for (const gone of ["CPQ", "Gong"]) assert.ok(!mixed.includes(gone), `kept ${gone}`);
+    const butNot = checkableTokens("His experience covers reporting automation at Nokia, but not Workato.");
+    assert.ok(butNot.includes("Nokia") && !butNot.includes("Workato"), String(butNot));
+    // An invented positive claim next to a gap clause is still caught.
+    const result = verifyAnswer(
+      "He ran CPQ for 900 reps at Nokia; the main gaps are lead routing and Gong. [resume:nokia]",
+      FIXTURE,
+    );
+    assert.notEqual(result.claims[0].verdict, "verified");
+  });
+
   test("a compound the corpus writes as two words is not a fabrication", () => {
     // Sprint 4's live run: rows citing chunks that say "TypeScript", "Next.js"
     // and "LLM" separately, flagged for writing "TypeScript/Next.js" and

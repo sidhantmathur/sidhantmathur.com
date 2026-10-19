@@ -306,6 +306,32 @@ const NUMBER = /\d[\d,]*(?:\.\d+)?/g;
 /** Capitalized words, keeping internal punctuation: `Power`, `B.S.`, `OXXO`. */
 const NAME = /\b[A-Z][A-Za-z0-9&.'’/-]*/g;
 
+/**
+ * A clause that says what the record does NOT contain. The fit check's summary
+ * names gaps ("the key gaps are CPQ and lead routing", "the record doesn't
+ * establish four years at a B2B SaaS company"), and every name in such a clause
+ * is, correctly, absent from the corpus. Checking it marked the site's most
+ * honest sentences "not in the record", which reads as the site calling its own
+ * statement invented (2026-10-19, found on a live posting run). An absence has
+ * nothing to point at, the same reason an unmet row cites nothing.
+ */
+const ABSENCE = new RegExp(
+  [
+    String.raw`\b(?:does|did|do|has|have|had)(?:n['’]t| not)\b[^;]*?\b(?:show|establish|demonstrate|evidence|mention|include|cover|indicate|name|list|record)\w*`,
+    String.raw`\b(?:hasn['’]t|haven['’]t|has not|have not)\s+(?:demonstrated|shown|done|worked|held|owned|used)\b`,
+    String.raw`\b(?:key|main|central|core|biggest|remaining|other|real|clear)\s+gaps?\b`,
+    String.raw`\bgaps?\s+(?:are|is|include|includes|would be)\b`,
+    String.raw`\b(?:outside|beyond|not in|absent from|missing from)\s+(?:the|his)\s+record\b`,
+    String.raw`\bno\s+(?:evidence|record|sign)\s+of\b`,
+    String.raw`\bthe ramp would be\b`,
+    String.raw`^\s*(?:but\s+)?not\b`,
+  ].join("|"),
+  "i",
+);
+
+/** Splits a sentence at the joints where a gap clause usually starts. */
+const CLAUSE = /;|\s[—–]\s|,?\s+but\s+|,?\s+while\s+/i;
+
 /** Lowercases, drops apostrophes, and closes up thousands separators. */
 function normalize(text: string): string {
   return text
@@ -332,12 +358,19 @@ export function checkableTokens(sentence: string): string[] {
   // go deeper, and marking "Want to see how the payments work?" as an uncited
   // claim was the single loudest false alarm in the first live run.
   if (/\?\s*$/.test(text)) return [];
+  // Only the clauses that assert something present are checked; a gap clause
+  // is dropped and the rest of the sentence is still held to its sources, so
+  // "Strong on Power BI at Nokia; the main gaps are CPQ" still checks Nokia.
+  const asserted = text
+    .split(CLAUSE)
+    .filter((clause) => !ABSENCE.test(clause))
+    .join(" ; ");
   const tokens: string[] = [];
 
   // The trailing comma of "in 2026, he shipped" is punctuation, not a digit.
-  for (const match of text.matchAll(NUMBER)) tokens.push(match[0].replace(/,+$/, ""));
+  for (const match of asserted.matchAll(NUMBER)) tokens.push(match[0].replace(/,+$/, ""));
 
-  for (const match of text.matchAll(NAME)) {
+  for (const match of asserted.matchAll(NAME)) {
     const raw = match[0].replace(/[.,;:!?'’]+$/, "");
     if (raw.length < 2) continue;
     // A compound the answer joins and the corpus writes apart:
