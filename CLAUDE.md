@@ -8,7 +8,7 @@ Chat: Vercel AI SDK via Vercel AI Gateway · Rate limiting: Upstash · Analytics
 
 ## Sources of truth — read before building, never contradict
 - `docs/portfolio-build-spec.md` — architecture, phases, chatbot design
-- `docs/site-copy.md` — ALL site text. Draft copy is allowed (see Copy below); `[TODO]` markers stay visible.
+- `docs/site-copy.md` — ALL site text. Draft copy is allowed (see Copy below); `[TODO]` and `[VERIFY]` markers live in drafts and the ledger, never in a rendered page.
 - `docs/` design files — tokens and visual direction
 
 ## What to build next
@@ -56,14 +56,22 @@ Not available in a cloud sandbox: authenticated MCP connectors (PostHog, Vercel)
 
 ## Copy
 Draft placeholder copy freely so pages can be seen whole — empty `[TODO]` markers
-hide what the site actually looks like. Two hard conditions:
+hide what the site actually looks like. Three hard conditions:
 
 1. **Log every drafted string in `docs/copy-ledger.md`** — file, what it says, and
    whether it makes a factual claim. Nothing ships to Sidhant's review unlogged.
 2. **Never invent facts about Sidhant.** Employers, dates, titles, metrics, tools,
    outcomes, and anything a hiring manager could check must come from
    `content/knowledge/` or the resume. If a sentence needs a fact you don't have,
-   write the sentence and mark the fact `[VERIFY]` — do not guess a plausible one.
+   write the sentence in the draft and mark the fact `[VERIFY]` — do not guess a
+   plausible one.
+3. **Markers never render.** A `[TODO]` or `[VERIFY]` lives in drafts
+   (`docs/site-copy.md`, `content/knowledge/`, a constant nothing renders yet) and in
+   the ledger's pending table — never in a page a visitor can load. A sentence that
+   still needs its fact stays off the page until it has one, and so does an empty
+   placeholder frame. `postbuild` (`scripts/check-rendered-markers.mjs`) fails the
+   build if `[TODO`, `[VERIFY` or "Nothing here yet" reaches the served output, and
+   `scripts/build-knowledge.mjs` holds a marked chunk out of the prompt.
 
 Voice-and-tone drafting is yours. Claims about his experience are not.
 
