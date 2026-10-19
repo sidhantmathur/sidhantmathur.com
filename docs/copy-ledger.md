@@ -406,6 +406,8 @@ was taken and the row says so.
 | draft | `components/case-study-layout.tsx` → the end of each case study | Label "Contact"; "If this is the kind of work you're hiring for, the resume has the rest."; the three contact controls; then "Next case study" · "{title} →" · "{status}" (Nokia → A Darle 20 → Dell → Nokia). | none | UI chrome; titles and status lines from `content/projects.ts`. In the shared layout, not the `.mdx` files. |
 | draft | `app/resume/page.tsx` → heading | Label "Resume" over the heading "Sidhant Mathur". Was the heading "Resume". | none | His name, as `resume.md` opens. |
 | draft | `content/projects.ts` → order and index numbers | Nokia "01", A Darle 20 "02" (were 02 and 01), on `/projects`, the projects panel and the index. | none | Order only; no card copy changed. |
+| draft | `components/shell/app-shell.tsx` → composer fine print (empty state) | Below lg: "AI answers can be wrong." · lg up: "Answers cite their sources and can be wrong — the resume is the authoritative version." Both followed by the link "How it works" (to `/colophon`). | one, about the site | Replaces the four-claim proof line logged under the front-door rows; its claims (published prompt, published evals, the cost meter) are on the colophon. `DISCLAIMER` in `lib/site.ts` still ships with exports and print, unchanged. |
+| removed | `components/shell/app-shell.tsx` → composer fine print (empty state) | "Answers cite their sources — this chat publishes its system prompt and eval results, and shows what each answer costs. It can make mistakes; the resume is the authoritative version." | — | Four lines on a phone; see the row above. |
 
 ## Pending `[VERIFY]` markers
 

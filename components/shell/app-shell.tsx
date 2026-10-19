@@ -134,6 +134,11 @@ const HERO = "I learn what the problem needs, then I build the thing.";
 // placeholder now. The subline's job — say what he wants — is done by
 // POSITIONING from content/recruiter.ts, where the citation checker covers it.
 const HERO_SUB = "Ask what you'd ask on a call";
+// The composer's fine print, one line at each width (wave 2). Logged in
+// docs/copy-ledger.md; DISCLAIMER in lib/site.ts still travels with exports.
+const DISCLAIMER_SHORT = "AI answers can be wrong.";
+const DISCLAIMER_LONG =
+  "Answers cite their sources and can be wrong — the resume is the authoritative version.";
 // DISCLAIMER, SITE_NAME and SITE_URL used to sit here and be threaded into the
 // export deck, the print document and the transcript serializer as props. They
 // are in `lib/site.ts` now: the deck and the document import them, and the two
@@ -1262,24 +1267,23 @@ export function AppShell() {
                 since Sprint 6, the cost meter since Sprint 2. Gone once a
                 conversation starts: answers then carry their own sources,
                 and the strip takes this row. Logged in docs/copy-ledger.md. */}
+            {/* Wave 2: one line plus a link, at every width. The four-line
+                version took about a fifth of a phone's viewport, permanently,
+                and pushed the tl;dr below the fold. The honesty survives (the
+                answers can be wrong); the credibility claims it carried —
+                published prompt, published evals, the cost meter — are on the
+                colophon, which the link opens. A phone gets the short
+                sentence because the long one is two lines at 390px. */}
             {!hasMessages && (
               <p className="t-meta px-4 pb-3 text-text-faint md:px-10">
-                Answers cite their sources — this chat publishes its{" "}
+                <span className="lg:hidden">{DISCLAIMER_SHORT}</span>
+                <span className="hidden lg:inline">{DISCLAIMER_LONG}</span>{" "}
                 <Link
-                  href="/prompt"
-                  className="text-text-soft underline decoration-line-strong underline-offset-2 hover:text-accent"
+                  href="/colophon"
+                  className="-my-2 py-2 text-text-soft underline decoration-line-strong underline-offset-2 hover:text-accent"
                 >
-                  system prompt
-                </Link>{" "}
-                and{" "}
-                <Link
-                  href="/measurements"
-                  className="text-text-soft underline decoration-line-strong underline-offset-2 hover:text-accent"
-                >
-                  eval results
+                  How it works
                 </Link>
-                , and shows what each answer costs. It can make mistakes; the
-                resume is the authoritative version.
               </p>
             )}
 

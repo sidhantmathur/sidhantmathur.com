@@ -110,6 +110,17 @@ the authoritative version.
 since Sprint 3, /prompt since Sprint 7, /measurements since Sprint 6, the cost
 meter since Sprint 2. The old disclaimer sentence survives inside it.]
 
+[Wave 2, 2026-10-19: replaced by one line plus a link, at every width. The
+four-line version took about a fifth of a phone's viewport and pushed the
+tl;dr below the fold. The claims it carried are on the colophon, which the
+link opens.]
+
+Composer fine print (empty state only, wave 2):
+- Below lg: AI answers can be wrong. How it works
+- lg and up: Answers cite their sources and can be wrong — the resume is the
+  authoritative version. How it works
+("How it works" links to /colophon.)
+
 ### Recruiter TL;DR (#25)
 
 [DRAFT 2026-07-27 — assembled by Claude for Track B. Every value is lifted from
