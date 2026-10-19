@@ -69,8 +69,11 @@ export function ScrollFade({
   /**
    * Names the box for a screen reader. A scrolling box is a tab stop in
    * Chrome, so the keyboard can reach it — and an unnamed stop announces
-   * nothing. Given only where the content is long enough to be worth landing
-   * on; the charts carry their own `role="img"` label instead.
+   * nothing. The charts used to go without one on the grounds that the SVG
+   * carries its own `role="img"` label, but below their floor width the BOX
+   * scrolls, Chrome makes it the tab stop, and the mobile a11y audit counted
+   * three stops on /measurements/models that announced nothing. Every
+   * ScrollFade that can scroll passes one now.
    */
   label?: string;
   children: React.ReactNode;

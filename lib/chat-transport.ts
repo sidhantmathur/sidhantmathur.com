@@ -124,12 +124,133 @@ function classifyStreamError(err: unknown, outer: AbortSignal | null | undefined
   return err;
 }
 
+// --- A turn that said nothing ----------------------------------------------
+//
+// The other silent failure, and the one that was reproduced on production. A
+// reasoning model can spend its whole output ceiling thinking and finish on
+// `finishReason: "length"` without writing a word. Nothing errors anywhere on
+// that path: the stream closes cleanly, the SDK says "ready", the status dot
+// goes green, and the conversation column shows nothing at all, because the
+// shell skips a message with no text and no tool output.
+//
+// The transport already reads every byte of the turn to run its idle clock, so
+// it is the one place that can answer "did this turn put anything on the page?"
+// for every turn, whichever model or route produced it. When the answer is no,
+// it appends one error chunk to the stream, in the SDK's own wire format, so
+// the turn fails through exactly the path a real mid-stream failure takes:
+// `onError` fires with the class, status becomes "error", and TurnError renders
+// with a way out. Appended rather than thrown, because erroring a stream
+// discards whatever the reader hasn't consumed yet, and the turn's closing
+// telemetry record is among the last chunks to arrive.
+
+/**
+ * Tools whose output has no surface of its own. `extractRequirements` is the
+ * first half of a job-description turn: its output is the input to the
+ * assessment that follows and is rendered inside it, so a turn that extracted
+ * and then stopped has still shown the reader nothing. The shell reads the same
+ * set to decide which tool parts get a chip.
+ */
+export const INTERNAL_TOOLS: ReadonlySet<string> = new Set(["extractRequirements"]);
+
+/** The chunk appended to a turn that finished empty. SSE, as the route writes it. */
+const EMPTY_ANSWER_CHUNK = `data: ${JSON.stringify({
+  type: "error",
+  errorText: "empty_answer",
+} satisfies { type: "error"; errorText: TurnErrorClass })}\n\n`;
+
+type StreamChunk = {
+  type?: unknown;
+  delta?: unknown;
+  toolCallId?: unknown;
+  toolName?: unknown;
+};
+
+/**
+ * Reads a UI message stream as it passes, for one question only.
+ *
+ * Deliberately narrow, so it can't invent a failure. It answers "empty" only
+ * for a COMPLETE turn — one that reached its `finish` chunk — that carried no
+ * visible text, no tool output with a surface, and no error of its own. A body
+ * that isn't a UI message stream never reaches `finish`, so it passes through
+ * untouched, and once anything visible has arrived it stops parsing at all.
+ */
+function answerWatcher() {
+  const dec = new TextDecoder();
+  let pending = "";
+  let said = false;
+  let finished = false;
+  let failed = false;
+  const toolNames = new Map<string, string>();
+
+  function readLine(line: string) {
+    if (!line.startsWith("data:")) return;
+    const payload = line.slice(5).trim();
+    if (!payload || payload === "[DONE]") return;
+    let chunk: StreamChunk;
+    try {
+      chunk = JSON.parse(payload) as StreamChunk;
+    } catch {
+      return;
+    }
+    switch (chunk.type) {
+      case "text-delta":
+        if (typeof chunk.delta === "string" && chunk.delta.trim()) said = true;
+        break;
+      case "tool-input-start":
+      case "tool-input-available":
+        if (typeof chunk.toolCallId === "string" && typeof chunk.toolName === "string") {
+          toolNames.set(chunk.toolCallId, chunk.toolName);
+        }
+        break;
+      case "tool-output-available": {
+        // An output whose call was never named counts as visible: the watcher
+        // would rather miss an empty turn than fail a real one.
+        const name =
+          typeof chunk.toolCallId === "string" ? toolNames.get(chunk.toolCallId) : undefined;
+        if (name === undefined || !INTERNAL_TOOLS.has(name)) said = true;
+        break;
+      }
+      case "error":
+        failed = true;
+        break;
+      case "finish":
+        finished = true;
+        break;
+    }
+  }
+
+  function readLines(text: string) {
+    pending += text;
+    const lines = pending.split("\n");
+    pending = lines.pop() ?? "";
+    for (const line of lines) {
+      readLine(line);
+      if (said) return;
+    }
+  }
+
+  return {
+    feed(bytes: Uint8Array) {
+      if (!said) readLines(dec.decode(bytes, { stream: true }));
+    },
+    /** Called once, after the last chunk. */
+    saidNothing(): boolean {
+      if (said) return false;
+      readLines(dec.decode() + "\n");
+      return finished && !said && !failed;
+    },
+  };
+}
+
 /**
  * Wraps a response body so a stream that goes quiet fails instead of hanging.
  *
  * The wrapped stream is errored with a real class, which is the whole point:
  * the SDK surfaces it, `onError` fires, `status` becomes "error", `isBusy`
  * goes false, and the NEXT SEND WORKS. A silent stall does none of that.
+ *
+ * It also watches for the turn that finishes having said nothing — see
+ * `answerWatcher` above.
  */
 function watchStream(
   body: ReadableStream<Uint8Array>,
@@ -139,6 +260,7 @@ function watchStream(
   idleTimeoutMs: number,
 ): ReadableStream<Uint8Array> {
   const reader = body.getReader();
+  const watcher = answerWatcher();
   let timer: ReturnType<typeof setTimeout> | null = null;
   let firedTimeout = false;
 
@@ -168,9 +290,16 @@ function watchStream(
             const { done, value } = await reader.read();
             if (done) break;
             controller.enqueue(value);
+            watcher.feed(value);
             bump();
           }
           clear();
+          // Not when the reader pressed stop: an aborted turn renders nothing,
+          // and a stream that happened to close cleanly under the abort is
+          // still an abort.
+          if (!outer?.aborted && watcher.saidNothing()) {
+            controller.enqueue(new TextEncoder().encode(EMPTY_ANSWER_CHUNK));
+          }
           controller.close();
         } catch (err) {
           clear();

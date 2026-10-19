@@ -147,7 +147,7 @@ export function FrontierScatter({
       {/* The fade earns its place below 560px — the SVG's floor width, and now
           its viewBox width — where the box scrolls; at or above it the drawing
           fits and a fade would only be dimming real data. */}
-      <ScrollFade width={560} className="mt-3">
+      <ScrollFade width={560} className="mt-3" label={heading}>
         <svg
           viewBox={`0 0 ${W} ${H}`}
           // The floor width IS the viewBox width. It was 480 against a 560

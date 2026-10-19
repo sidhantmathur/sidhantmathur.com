@@ -121,7 +121,9 @@ surfaced about 20,000 qualified accounts representing an estimated $129M in
 pipeline.
 
 Role: Marketing intern
-Stack: Python, Azure ML
+Stack: Azure ML
+[Wave 1, 2026-10-19: "Python" removed — the Dell record names Azure ML and no
+language. It comes back if Sidhant confirms it.]
 Status: 2018
 Link: Read the case study
 Stat column (display numeral): $129M / estimated pipeline
@@ -239,11 +241,12 @@ a player can actually do.
 - Operations: End-to-end funnel instrumentation — bookings, conversion,
   cancellations, refunds, host activation
 
-Closing note: This list is everything the written record names, which is not the
-same as everything the product does — [VERIFY: the features that exist in A
-Darle 20 but appear in no source file. Sidhant's own note on this page was that
-there is a lot buried up there; nothing can be added here until it is written
-down somewhere checkable.]
+Closing note (draft, NOT RENDERED since wave 1, 2026-10-19 — it carries a
+marker, and markers never ship on a page): This list is everything the written
+record names, which is not the same as everything the product does — [VERIFY:
+the features that exist in A Darle 20 but appear in no source file. Sidhant's
+own note on this page was that there is a lot buried up there; nothing can be
+added here until it is written down somewhere checkable.]
 
 ### What it looks like (#19 — the media surface)
 
@@ -251,17 +254,16 @@ down somewhere checkable.]
 are Sidhant's. No caption below describes an asset that does not exist.]
 
 Section heading: What it looks like
-Intro: Frames with nothing in them are waiting on a file. Each one says what it
-is for rather than showing a stand-in, because a placeholder that looks like a
-product is a claim about a product.
 
-Empty-frame text: Nothing here yet — waiting on a {screenshot / screen
-recording / video}.
-Empty caption: {slot title} — not captured yet.
+[Wave 1, 2026-10-19: only slots with a file render. The empty frames, their
+"Nothing here yet" text and the intro about them came off the page — on the
+flagship case study they read as unfinished work. The retired strings were:
+intro "Frames with nothing in them are waiting on a file…", empty-frame text
+"Nothing here yet — waiting on a {kind}.", empty caption "{slot title} — not
+captured yet." A slot appears the day its file is added.]
 
-The seven slots, and what each needs, live in `content/adarle20-media.ts` —
-the brief IS the placeholder text, so there is no second list to fall out of
-sync. Summary:
+The seven slots, and what each needs, live in `content/adarle20-media.ts` as
+capture briefs. Summary:
 
 | Slot | Kind | Shape | Must show |
 | --- | --- | --- | --- |
@@ -394,13 +396,23 @@ Button: Download PDF
 Heading: How this site was built
 Body:
 Next.js, TypeScript, and Tailwind, deployed on Vercel. Type is Geist Sans and
-Geist Mono. The chat assistant runs on Claude through Vercel's AI Gateway, with
-the knowledge base injected directly into the prompt — at this scale, a vector
-database would be complexity for its own sake, so there isn't one.
+Geist Mono. The chat assistant runs through Vercel's AI Gateway on
+{DEFAULT_MODEL} by default, with the knowledge base injected directly into the
+prompt — at this scale, a vector database would be complexity for its own
+sake, so there isn't one.
+
+[Wave 1, 2026-10-19: "runs on Claude" stopped being true when the default moved
+to DeepSeek in August. The model id is now read from `DEFAULT_MODEL` in
+`lib/models.ts` (`COLOPHON_STACK` in `lib/site.ts`), so the sentence stays true
+whichever model is the default.]
 
 Most of the code was written by AI agents working from a build spec; the
-decisions, copy, and mistakes are mine. The spec, design brief, and source are
-on GitHub. [TODO: confirm repo is public before linking]
+decisions, copy, and mistakes are mine.
+
+[Wave 1, 2026-10-19: cut from the page, pending a decision — "The spec, design
+brief, and source are on GitHub. [TODO: confirm repo is public before
+linking]". The repo is public, and so is `docs/`, so whether to link it is
+Sidhant's call.]
 
 ---
 

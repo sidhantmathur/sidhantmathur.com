@@ -62,7 +62,10 @@ export const PROJECTS: Record<ProjectSlug, Project> = {
     description:
       "As an intern, I built a propensity model on Dell's historical customer database to find cross-sell targets for a high-margin software product — it surfaced about 20,000 qualified accounts representing an estimated $129M in pipeline.",
     role: "Marketing intern",
-    stack: ["Python", "Azure ML"],
+    // Azure ML only: it is the one tool content/knowledge/projects-dell.md
+    // names. "Python" was here too and is nowhere in the record — it comes
+    // back when Sidhant confirms it (copy ledger, pending).
+    stack: ["Azure ML"],
     status: "2018",
     caseStudyHref: "/projects/dell-ml",
   },

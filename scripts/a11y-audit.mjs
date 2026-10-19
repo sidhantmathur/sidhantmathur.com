@@ -105,11 +105,30 @@ async function freePort(from) {
   throw new Error("no free port");
 }
 
+// `npx` runs next through a shell, so killing the process spawned here used to
+// leave the server it started running on its port — every run of this script
+// left one behind (seven of them by the end of wave 1's verification). The
+// server is started as its own process group and the whole group is stopped.
+// A separate group no longer receives the terminal's Ctrl-C, so that is
+// forwarded by hand.
+function stopServer(proc) {
+  try {
+    process.kill(-proc.pid, "SIGKILL");
+  } catch {
+    /* already gone */
+  }
+}
+
 async function startServer(port) {
   const proc = spawn("npx", ["next", "start", "-p", String(port)], {
     stdio: ["ignore", "pipe", "pipe"],
+    detached: true,
   });
-  process.once("exit", () => proc.kill("SIGKILL"));
+  process.once("exit", () => stopServer(proc));
+  process.once("SIGINT", () => {
+    stopServer(proc);
+    process.exit(130);
+  });
   const bound = await new Promise((resolve, reject) => {
     const timer = setTimeout(() => reject(new Error("next start timed out")), 60_000);
     let seen = null;
@@ -340,10 +359,10 @@ if (mobile && routes.includes("/")) {
   };
 
   // Open it the way a keyboard user would: focus the trigger, press Enter.
-  const trigger = page.locator('button[aria-label="Open navigation"]');
+  const trigger = page.locator('button[aria-label="Open the index"]');
   await trigger.focus();
   const triggerWasFocused = await page.evaluate(
-    () => document.activeElement?.getAttribute("aria-label") === "Open navigation",
+    () => document.activeElement?.getAttribute("aria-label") === "Open the index",
   );
   note("the navigation trigger can be focused", triggerWasFocused);
 
@@ -401,7 +420,7 @@ if (mobile && routes.includes("/")) {
   await page.waitForTimeout(700);
   const restored = await page.evaluate(() => ({
     closed: !document.querySelector('[data-slot="sheet-content"]'),
-    back: document.activeElement?.getAttribute("aria-label") === "Open navigation",
+    back: document.activeElement?.getAttribute("aria-label") === "Open the index",
     landedOn:
       document.activeElement?.getAttribute("aria-label") ||
       document.activeElement?.tagName ||
@@ -470,6 +489,32 @@ const FAILURE_CASES = [
         body: JSON.stringify({ error: "invalid_request" }),
       }),
     wayOut: false,
+  },
+  // The one with no error anywhere on the wire: a clean HTTP 200 whose turn
+  // reasons and finishes without a word, as the default model did on the
+  // RevOps chip in production. The alert has to come from the browser's own
+  // transport noticing, which is the path this case exists to walk.
+  {
+    label: "empty_answer",
+    handle: (route) =>
+      route.fulfill({
+        status: 200,
+        headers: {
+          "content-type": "text/event-stream",
+          "x-vercel-ai-ui-message-stream": "v1",
+        },
+        body:
+          [
+            { type: "start" },
+            { type: "reasoning-start", id: "r1" },
+            { type: "reasoning-delta", id: "r1", delta: "Thinking about the question…" },
+            { type: "reasoning-end", id: "r1" },
+            { type: "finish" },
+          ]
+            .map((chunk) => `data: ${JSON.stringify(chunk)}\n\n`)
+            .join("") + "data: [DONE]\n\n",
+      }),
+    wayOut: true,
   },
 ];
 
@@ -611,7 +656,7 @@ if (routes.includes("/")) {
 }
 
 await browser.close();
-if (server) server.kill("SIGKILL");
+if (server) stopServer(server);
 
 console.log(`\n${problems} problem stop(s)\n`);
 process.exit(problems ? 1 : 0);

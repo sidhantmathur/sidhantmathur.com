@@ -56,11 +56,30 @@ async function freePort(from) {
   throw new Error("no free port");
 }
 
+// `npx` runs next through a shell, so killing the process spawned here used to
+// leave the server it started running on its port — every run of this script
+// left one behind (seven of them by the end of wave 1's verification). The
+// server is started as its own process group and the whole group is stopped.
+// A separate group no longer receives the terminal's Ctrl-C, so that is
+// forwarded by hand.
+function stopServer(proc) {
+  try {
+    process.kill(-proc.pid, "SIGKILL");
+  } catch {
+    /* already gone */
+  }
+}
+
 async function startServer(port) {
   const proc = spawn("npx", ["next", "start", "-p", String(port)], {
     stdio: ["ignore", "pipe", "pipe"],
+    detached: true,
   });
-  process.once("exit", () => proc.kill("SIGKILL"));
+  process.once("exit", () => stopServer(proc));
+  process.once("SIGINT", () => {
+    stopServer(proc);
+    process.exit(130);
+  });
   const bound = await new Promise((resolve, reject) => {
     const timer = setTimeout(() => reject(new Error("next start timed out")), 60_000);
     let seen = null;
@@ -261,7 +280,7 @@ const sendLive = await page.evaluate(() => {
 check("the send button enables once there is something to send", sendLive);
 
 await browser.close();
-if (server) server.kill("SIGKILL");
+if (server) stopServer(server);
 
 const failed = results.filter((r) => !r.pass);
 console.log(

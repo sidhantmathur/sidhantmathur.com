@@ -364,3 +364,207 @@ describe("rewrapping the stream keeps the response intact", () => {
     assert.equal(res.body, null);
   });
 });
+
+// --- A turn that finished having said nothing --------------------------------
+//
+// The failure reproduced on production on 2026-10-19: the default model, a
+// reasoning model, spent the whole 600-token ceiling thinking about the RevOps
+// chip and finished on "length" with no text and no tool call. The stream was
+// clean, so nothing anywhere noticed — the shell said "ready" over an empty
+// column. The transport now appends an error chunk to a complete turn with
+// nothing visible in it, and these pin both halves of that: it fires on the
+// empty turn in every shape it arrives in, and on nothing else.
+
+/** One SSE frame, exactly as createUIMessageStreamResponse writes it. */
+const sse = (chunk) => `data: ${JSON.stringify(chunk)}\n\n`;
+const DONE = "data: [DONE]\n\n";
+
+const opening = { type: "data-turn", id: "turn", data: { usage: null, error: null } };
+const closing = { type: "data-turn", id: "turn", data: { usage: { outputTokens: 600 }, error: null } };
+
+/** The stream the live repro recorded: reasoning, then finish, then nothing. */
+const REASONED_OUT = [
+  { type: "start" },
+  opening,
+  { type: "start-step" },
+  { type: "reasoning-start", id: "r1" },
+  { type: "reasoning-delta", id: "r1", delta: "The user asks whether he fits a RevOps role…" },
+  { type: "reasoning-end", id: "r1" },
+  { type: "finish-step" },
+  closing,
+  { type: "finish" },
+];
+
+/** Every SSE `data:` payload in a drained body, parsed, [DONE] skipped. */
+function framesOf(chunks) {
+  return chunks
+    .join("")
+    .split("\n")
+    .filter((line) => line.startsWith("data: ") && line !== "data: [DONE]")
+    .map((line) => JSON.parse(line.slice(6)));
+}
+
+/** Plays a list of chunks through the guarded fetch and returns what came out. */
+async function play(chunks, { split = false, signal } = {}) {
+  const script = scriptedBody({ status: 200, headers: { "content-type": "text/event-stream" } });
+  const gf = guardedFetch({ fetch: async () => script.response, idleTimeoutMs: 500 });
+  const res = await gf("/api/chat", signal ? { signal } : undefined);
+  const wire = chunks.map(sse).join("") + DONE;
+  if (split) {
+    // Network reads don't respect frame boundaries. Seven bytes at a time puts
+    // a cut inside nearly every JSON payload.
+    for (let i = 0; i < wire.length; i += 7) script.push(wire.slice(i, i + 7));
+  } else {
+    script.push(wire);
+  }
+  script.close();
+  return framesOf(await drain(res));
+}
+
+const isEmptyAnswerChunk = (frame) =>
+  frame?.type === "error" && frame.errorText === "empty_answer";
+
+describe("a turn that finished having said nothing", () => {
+  test("reasoning, then finish, ends in an empty_answer error chunk", async () => {
+    const frames = await play(REASONED_OUT);
+    assert.ok(isEmptyAnswerChunk(frames.at(-1)), "the last frame should be the empty_answer error");
+    // Appended, never substituted: the closing record is still delivered, so
+    // the turn's numbers reach the instruments.
+    assert.deepEqual(frames.slice(0, REASONED_OUT.length), REASONED_OUT);
+  });
+
+  test("it holds when the reads cut frames in half", async () => {
+    const frames = await play(REASONED_OUT, { split: true });
+    assert.ok(isEmptyAnswerChunk(frames.at(-1)));
+  });
+
+  test("whitespace is not an answer", async () => {
+    const chunks = [
+      { type: "start" },
+      { type: "text-start", id: "t1" },
+      { type: "text-delta", id: "t1", delta: "\n  " },
+      { type: "text-end", id: "t1" },
+      { type: "finish" },
+    ];
+    assert.ok(isEmptyAnswerChunk((await play(chunks)).at(-1)));
+  });
+
+  test("a job-description turn that extracted and then stopped is empty", async () => {
+    // Step 0 ran, step 1 reasoned itself out of room before calling roleFit.
+    // The extraction has no surface of its own, so the reader saw nothing.
+    const chunks = [
+      { type: "start" },
+      { type: "tool-input-start", toolCallId: "c1", toolName: "extractRequirements" },
+      {
+        type: "tool-input-available",
+        toolCallId: "c1",
+        toolName: "extractRequirements",
+        input: { role: "GTM systems manager", requirements: ["Salesforce admin"] },
+      },
+      {
+        type: "tool-output-available",
+        toolCallId: "c1",
+        output: { role: "GTM systems manager", requirements: ["Salesforce admin"] },
+      },
+      { type: "reasoning-start", id: "r1" },
+      { type: "reasoning-delta", id: "r1", delta: "…" },
+      { type: "reasoning-end", id: "r1" },
+      { type: "finish" },
+    ];
+    assert.ok(isEmptyAnswerChunk((await play(chunks)).at(-1)));
+  });
+
+  test("a turn with text is left alone", async () => {
+    const chunks = [
+      { type: "start" },
+      { type: "text-start", id: "t1" },
+      { type: "text-delta", id: "t1", delta: "Yes, and here is why." },
+      { type: "text-end", id: "t1" },
+      { type: "finish" },
+    ];
+    const frames = await play(chunks);
+    assert.deepEqual(frames, chunks, "nothing should be appended to a turn that answered");
+  });
+
+  test("a card with no prose is still something on the page", async () => {
+    const chunks = [
+      { type: "start" },
+      { type: "tool-input-start", toolCallId: "c1", toolName: "showResume" },
+      { type: "tool-output-available", toolCallId: "c1", output: { htmlHref: "/resume" } },
+      { type: "finish" },
+    ];
+    assert.deepEqual(await play(chunks), chunks);
+  });
+
+  test("a turn that already failed is not failed twice", async () => {
+    const chunks = [{ type: "start" }, { type: "error", errorText: "upstream_timeout" }, { type: "finish" }];
+    assert.deepEqual(await play(chunks), chunks);
+  });
+
+  test("a stream that never finished is not called empty", async () => {
+    // No `finish` means the watcher can't know the turn is over, and a body
+    // that isn't a UI message stream at all never has one either. Both pass
+    // through: the watcher would rather miss an empty turn than invent one.
+    const chunks = [{ type: "start" }, { type: "reasoning-start", id: "r1" }];
+    assert.deepEqual(await play(chunks), chunks);
+  });
+
+  test("an aborted turn gets no failure appended", async () => {
+    const ctrl = new AbortController();
+    ctrl.abort();
+    const frames = await play(REASONED_OUT, { signal: ctrl.signal });
+    assert.ok(!frames.some(isEmptyAnswerChunk), "pressing stop must never render a failure");
+  });
+});
+
+// The test above proves the chunk is appended. This one proves the chunk does
+// what it is for, through the SDK's own chat loop — the same `AbstractChat`
+// that useChat wraps, the same DefaultChatTransport the shell builds, and the
+// guarded fetch between them. Before the fix this turn ended with status
+// "ready" and onError never fired.
+describe("the empty turn through the SDK's chat loop", () => {
+  class MemoryState {
+    status = "ready";
+    error = undefined;
+    messages = [];
+    pushMessage = (m) => {
+      this.messages = [...this.messages, m];
+    };
+    popMessage = () => {
+      this.messages = this.messages.slice(0, -1);
+    };
+    replaceMessage = (i, m) => {
+      this.messages = [...this.messages.slice(0, i), m, ...this.messages.slice(i + 1)];
+    };
+    snapshot = (v) => structuredClone(v);
+  }
+
+  test("the turn fails with empty_answer instead of settling on ready", async () => {
+    const { AbstractChat, DefaultChatTransport } = await import("ai");
+    const errors = [];
+    const finished = [];
+    const state = new MemoryState();
+    const chat = new AbstractChat({
+      state,
+      transport: new DefaultChatTransport({
+        api: "/api/chat",
+        fetch: guardedFetch({
+          fetch: async () =>
+            new Response(REASONED_OUT.map(sse).join("") + DONE, {
+              status: 200,
+              headers: { "content-type": "text/event-stream" },
+            }),
+          idleTimeoutMs: 500,
+        }),
+      }),
+      onError: (err) => errors.push(err.message),
+      onFinish: ({ isError }) => finished.push(isError),
+    });
+
+    await chat.sendMessage({ text: "Is he a fit for a RevOps role?" });
+
+    assert.deepEqual(errors, ["empty_answer"], "onError should receive the class, once");
+    assert.equal(state.status, "error");
+    assert.deepEqual(finished, [true]);
+  });
+});

@@ -26,7 +26,13 @@ import {
 } from "./lib/artifacts.mjs";
 import { GROUNDED, ROLE_FIT } from "./cases.mjs";
 import { DEFAULT_MODEL, HOURLY_LIMIT, MODELS, MODEL_IDS } from "../lib/models.ts";
-import { JD_PREFIX, looksLikeJobPosting } from "../lib/job-posting.ts";
+import {
+  JD_PREFIX,
+  MAX_POSTING_TEXT,
+  MAX_USER_TEXT,
+  looksLikeJobPosting,
+} from "../lib/job-posting.ts";
+import { findRenderedMarkers, hasBuild } from "../scripts/check-rendered-markers.mjs";
 
 describe("knowledge base", () => {
   test("builds and is non-empty", () => {
@@ -54,10 +60,46 @@ describe("knowledge base", () => {
     assert.ok(tokens < 8000, `knowledge base is ~${tokens} tokens, over the 8k target`);
   });
 
-  test("has no unresolved TODO markers", () => {
+  test("has no unresolved TODO or VERIFY markers", () => {
+    // This used to look for the literal "[TODO]". The marker in faq.md is
+    // "[TODO: Sidhant — stated nowhere; do not guess]", which that string never
+    // matches, so it rode into the system prompt and onto /prompt for months
+    // with this test green. A marker is the opening bracket and the word.
     const kb = readKnowledgeBase();
-    assert.ok(!kb.includes("[TODO]"), "knowledge base contains a [TODO] marker");
+    const marker = kb.match(/\[(TODO|VERIFY)\b[^\]]*\]?/);
+    assert.equal(marker, null, `knowledge base contains a marker: ${marker?.[0]}`);
   });
+
+  test("a chunk with a marker is held back from the chunk index too", () => {
+    // Held back from both artifacts, not one, so the ids the model is shown
+    // and the ids the panel can open stay the same set.
+    const chunks = read("lib/chunks.generated.ts");
+    assert.ok(!/\[(TODO|VERIFY)\b/.test(chunks), "lib/chunks.generated.ts carries a marker");
+  });
+});
+
+// --- Nothing unfinished on a page ------------------------------------------
+//
+// Markers live in drafts and docs/copy-ledger.md, never in a rendered page
+// (CLAUDE.md, Copy). The check reads the build output, because the source holds
+// these strings legitimately; `postbuild` runs the same function and fails the
+// build, so this test is the suite's view of the last build on disk.
+
+describe("rendered pages", () => {
+  test(
+    // Named without the markers themselves: test names are published on
+    // /measurements, and this one used to fail its own check there.
+    "no served file carries an unfinished-work marker",
+    { skip: hasBuild() ? false : "no build output — `npm run build` runs this check as postbuild" },
+    () => {
+      const found = findRenderedMarkers();
+      assert.deepEqual(
+        found.map((f) => `${f.file}: ${f.marker} …${f.context}…`),
+        [],
+        "an unfinished-work marker reached the served output",
+      );
+    },
+  );
 });
 
 // The chunk index and the citation machinery it feeds are tested in
@@ -283,6 +325,16 @@ describe("live-eval assertions are still grounded", () => {
       shellData.includes("prefix: JD_PREFIX"),
       "the JD panel no longer uses the shared JD_PREFIX — the server's strongest detection signal is broken",
     );
+  });
+
+  test("the paste panel's cap is the route's cap, less the prefix", () => {
+    // They disagreed by 400 characters for months: 3,500 in the panel against
+    // 4,000 in the route, both hand-typed. One constant now, read by both.
+    const longest = `${JD_PREFIX}\n\n${"x".repeat(MAX_POSTING_TEXT)}`;
+    assert.equal(longest.length, MAX_USER_TEXT, "the longest pasteable posting should land exactly on the route's limit");
+    assert.match(read("app/api/chat/route.ts"), /msg\.role === "user" \? MAX_USER_TEXT/);
+    assert.match(read("components/shell/panel-body.tsx"), /const JD_MAX = MAX_POSTING_TEXT;/);
+    assert.match(read("components/shell/app-shell.tsx"), /submit\(`\$\{JD_COPY\.prefix\}\\n\\n\$\{text\}`\)/);
   });
 
   test("the unqualified postings really are unqualified", () => {

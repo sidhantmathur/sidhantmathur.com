@@ -29,7 +29,14 @@ import { AmbientBackdrop } from "./ambient-backdrop";
 import { TurnError } from "./turn-error";
 import { conversationToMarkdown, messageToMarkdown } from "@/lib/transcript";
 import { permalinkFor } from "@/lib/permalink";
-import { DISCLAIMER, SITE_NAME, SITE_URL } from "@/lib/site";
+import {
+  DISCLAIMER,
+  downloadAs,
+  RESUME_PDF,
+  RESUME_PDF_FILENAME,
+  SITE_NAME,
+  SITE_URL,
+} from "@/lib/site";
 import { track } from "@/lib/analytics";
 import { RecruiterTldr } from "./recruiter-tldr";
 import { POSITIONING, SUGGESTED_QUESTIONS as SUGGESTED } from "@/content/recruiter";
@@ -966,9 +973,10 @@ export function AppShell() {
                                     write a link in its sentence. */}
                                 {o.type === "tool-showResume" && (
                                   <a
-                                    href="/resume.pdf"
+                                    href={RESUME_PDF}
                                     target="_blank"
                                     rel="noreferrer"
+                                    download={RESUME_PDF_FILENAME}
                                     className={`border px-3 py-2.5 text-[13px] no-underline transition-colors hover:border-accent hover:text-accent ${
                                       m.id === lastId
                                         ? "border-line-strong text-text-soft"
@@ -1004,22 +1012,29 @@ export function AppShell() {
                     string swapping under a continuous animation reads as a
                     glitch. The elapsed count is NOT keyed, so it measures the
                     whole turn rather than restarting at each step. */}
-                {phase && (
+                {(phase || stallable) && (
                   <div className="flex items-center gap-3">
-                    <PhaseLine key={phase} phase={phase} elapsed={elapsed} />
+                    {phase && <PhaseLine key={phase} phase={phase} elapsed={elapsed} />}
                     {/* A way out of a turn that is taking too long, and only
                         then: offering "stop" against a two-second answer is
                         noise, and the reader has nothing to decide yet. Eight
                         seconds is roughly double a normal turn's wait, so it
                         appears when the wait has become a question. Quiet by
                         construction — same faint-until-hover vocabulary as the
-                        actions strip, no border, no box. */}
+                        actions strip, no border, no box.
+
+                        It outlives the phase line. That line goes away the
+                        moment prose arrives, and the button used to go with it,
+                        so it only existed between eight seconds and the first
+                        token — a window a healthy turn never opens. A
+                        job-description answer streams for most of a minute, and
+                        that is when a reader wants out (followups #3). */}
                     {stallable && (
                       <button
                         type="button"
                         onClick={stop}
                         data-js-control
-                        className="shrink-0 text-[13px] text-text-faint transition-colors hover:text-accent"
+                        className="flex min-h-[44px] shrink-0 touch-manipulation items-center text-[13px] text-text-faint transition-colors hover:text-accent"
                       >
                         stop
                       </button>
@@ -1030,7 +1045,15 @@ export function AppShell() {
                     class has always been measured; this is the first thing to
                     render it, and to offer the turn back. */}
                 {errorKind === "error" && (
-                  <TurnError errorClass={errorClass} onRetry={retry} />
+                  <TurnError
+                    errorClass={errorClass}
+                    onRetry={retry}
+                    model={model}
+                    onSwitchModel={(next) => {
+                      setModel(next);
+                      retry(next);
+                    }}
+                  />
                 )}
                 {/* Out of turns is the one state where the thing this page is
                     for stops working, and it used to be one grey sentence.
@@ -1470,7 +1493,13 @@ function RailLink({
 
   if (item.external && item.href) {
     return (
-      <a href={item.href} target="_blank" rel="noreferrer" className={cls}>
+      <a
+        href={item.href}
+        target="_blank"
+        rel="noreferrer"
+        {...downloadAs(item.href)}
+        className={cls}
+      >
         {item.label} ↗
       </a>
     );

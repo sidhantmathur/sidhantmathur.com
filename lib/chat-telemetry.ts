@@ -55,6 +55,12 @@ export type FailureSpec = {
   simulateStatus: number | null;
   /** Whether "try again" belongs under the sentence. See `isRetryableClass`. */
   retryable: boolean;
+  /**
+   * Whether asking a different model is a real way out. True only where the
+   * failure is the model's own behaviour, so a second model is a different
+   * attempt rather than the same one again. See `offersModelSwitch`.
+   */
+  switchModel: boolean;
   /** Whether the site renders nothing at all. See `isSilentClass`. */
   silent: boolean;
   /** Whether this is "you've hit the cap" rather than "broken". */
@@ -88,6 +94,7 @@ export const TURN_FAILURES = {
     simulatable: true,
     simulateStatus: 400,
     retryable: false,
+    switchModel: false,
     silent: false,
     rateLimit: false,
     label: "bad request",
@@ -100,6 +107,7 @@ export const TURN_FAILURES = {
     simulatable: true,
     simulateStatus: 429,
     retryable: true,
+    switchModel: false,
     silent: false,
     rateLimit: true,
     label: null,
@@ -112,6 +120,7 @@ export const TURN_FAILURES = {
     simulatable: true,
     simulateStatus: 502,
     retryable: true,
+    switchModel: false,
     silent: false,
     rateLimit: false,
     label: "misconfigured",
@@ -124,6 +133,7 @@ export const TURN_FAILURES = {
     simulatable: true,
     simulateStatus: null,
     retryable: true,
+    switchModel: false,
     silent: false,
     rateLimit: false,
     label: "misconfigured",
@@ -137,6 +147,7 @@ export const TURN_FAILURES = {
     simulatable: true,
     simulateStatus: null,
     retryable: true,
+    switchModel: false,
     silent: false,
     rateLimit: false,
     label: "server timeout",
@@ -149,12 +160,46 @@ export const TURN_FAILURES = {
     simulatable: true,
     simulateStatus: null,
     retryable: true,
+    switchModel: false,
     silent: false,
     rateLimit: false,
     label: "upstream",
     copy: "Something went wrong on my end. Give it another try in a moment.",
     cause: "The gateway or the model itself failed.",
     wire: "200, error chunk",
+  },
+  /**
+   * A turn that finished cleanly and said nothing: no text, and no tool output
+   * with a surface of its own. The usual cause is a reasoning model spending
+   * the whole output ceiling thinking and stopping on `finishReason: "length"`
+   * before it writes a word — measured on the default model on 2026-10-19,
+   * where the RevOps chip came back blank under a green "ready".
+   *
+   * Nothing errors on the way, so nothing used to notice. The route marks the
+   * turn's record with this class so it is not priced or logged as an answer,
+   * and the browser's transport (`watchStream` in chat-transport.ts) is what
+   * turns it into a failure the reader can see: it reads the stream it is
+   * already watching, and a complete turn with nothing in it fails with this
+   * class instead of closing. The stream carries no error chunk, which is why
+   * the wire description says so.
+   *
+   * The only class where a different model is offered as well as a retry. The
+   * same model on the same question tends to think itself out of room the same
+   * way, so "try again" alone is often the identical attempt.
+   */
+  empty_answer: {
+    origin: "server",
+    simulatable: true,
+    simulateStatus: null,
+    retryable: true,
+    switchModel: true,
+    silent: false,
+    rateLimit: false,
+    label: "no answer",
+    copy: "The model ran out of room before it got to an answer. That's a limit on my end, not a problem with your question.",
+    cause:
+      "A reasoning model spent its whole output budget thinking and finished with no text and no tool output.",
+    wire: "200, finishes empty",
   },
   /**
    * Client-detected connection failure — the request never reached the server,
@@ -170,6 +215,7 @@ export const TURN_FAILURES = {
     simulatable: false,
     simulateStatus: null,
     retryable: true,
+    switchModel: false,
     silent: false,
     rateLimit: false,
     label: "connection",
@@ -182,6 +228,7 @@ export const TURN_FAILURES = {
     simulatable: true,
     simulateStatus: null,
     retryable: true,
+    switchModel: false,
     silent: true,
     rateLimit: false,
     label: null,
@@ -194,6 +241,7 @@ export const TURN_FAILURES = {
     simulatable: true,
     simulateStatus: null,
     retryable: true,
+    switchModel: false,
     silent: false,
     rateLimit: false,
     label: "unknown",
@@ -341,6 +389,11 @@ export function isSilentClass(cls: TurnErrorClass): boolean {
  */
 export function isRetryableClass(cls: TurnErrorClass): boolean {
   return TURN_FAILURES[cls].retryable;
+}
+
+/** Whether "ask a different model" belongs beside "try again". */
+export function offersModelSwitch(cls: TurnErrorClass): boolean {
+  return TURN_FAILURES[cls].switchModel;
 }
 
 /** Narrows an arbitrary string (an error message, a JSON error body) to a class. */

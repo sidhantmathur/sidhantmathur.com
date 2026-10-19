@@ -180,7 +180,25 @@ function chunkFile({ file, source, label }) {
   return chunks;
 }
 
-const chunks = FILES.flatMap(chunkFile);
+const allChunks = FILES.flatMap(chunkFile);
+
+// --- Held back: a chunk with an unresolved marker ---------------------------
+//
+// A `[TODO` or `[VERIFY` in content/knowledge is a question for Sidhant, not
+// part of the record. Shipped, it was worse than a gap: the model read "stated
+// nowhere; do not guess" as if it were a line about him, and /prompt publishes
+// the prompt verbatim, so the marker was live on a public page (council review,
+// 2026-10-19). Manual mode already filtered these out on its own; the prompt
+// didn't, and the static check that should have caught it looked for the
+// literal string "[TODO]", which a marker with a note inside never is.
+//
+// So the chunk stays in the markdown, where it IS the question, and out of
+// both artifacts until it has an answer. Dropped from both rather than one, so
+// the ids the model is shown and the ids the panel can open stay one set — the
+// static suite asserts exactly that.
+const MARKER = /\[(TODO|VERIFY)\b/;
+const heldBack = allChunks.filter((c) => MARKER.test(c.text));
+const chunks = allChunks.filter((c) => !MARKER.test(c.text));
 
 // An id collision would make two different pieces of the record answer to the
 // same citation, which is exactly the failure the verifier exists to prevent.
@@ -256,3 +274,10 @@ console.log(
     .map((c) => c.id)
     .join(", ")})`,
 );
+if (heldBack.length) {
+  console.log(
+    `[build-knowledge] held back ${heldBack.length} chunk(s) with an unresolved marker: ${heldBack
+      .map((c) => c.id)
+      .join(", ")}`,
+  );
+}

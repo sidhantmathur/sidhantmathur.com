@@ -11,7 +11,7 @@ import { z } from "zod";
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 import { buildSystemPrompt } from "@/lib/system-prompt";
-import { looksLikeJobPosting, wrapPosting } from "@/lib/job-posting";
+import { looksLikeJobPosting, MAX_USER_TEXT, wrapPosting } from "@/lib/job-posting";
 import { looksLikeSiteQuestion } from "@/lib/site-question";
 import { reconcileRoleFit } from "@/lib/role-fit";
 import { CHUNK_BY_ID } from "@/lib/chunks.generated";
@@ -24,6 +24,7 @@ import {
   type TurnErrorClass,
   type TurnTelemetry,
 } from "@/lib/chat-telemetry";
+import { INTERNAL_TOOLS } from "@/lib/chat-transport";
 import { PROJECTS } from "@/content/projects";
 import {
   MODELS,
@@ -72,10 +73,11 @@ const messageSchema = z
             p.type === "text" && typeof p.text === "string",
         )
         .reduce((sum, p) => sum + p.text.length, 0);
-      // 4000 for user turns: the JD-paste flow sends a whole job description
-      // as one message, and 500 truncated every real posting. Abuse is bounded
-      // by the hourly budget, not by this cap.
-      return textLength <= (msg.role === "user" ? 4000 : 8000);
+      // MAX_USER_TEXT (4000) for user turns: the JD-paste flow sends a whole
+      // job description as one message, and 500 truncated every real posting.
+      // Abuse is bounded by the hourly budget, not by this cap. The
+      // paste panel reads the same constant, so the two can't disagree.
+      return textLength <= (msg.role === "user" ? MAX_USER_TEXT : 8000);
     },
     { message: "Message text exceeds the allowed length." },
   );
@@ -510,9 +512,9 @@ function simulatedClass(req: Request): TurnErrorClass | null {
  * `onError` classifies it exactly as it would a Gateway failure, so the client
  * receives the same error chunk and the same closing telemetry record.
  */
-function simulateStreamFailure(cls: TurnErrorClass, model: ModelId): Response {
-  const startedAt = Date.now();
-  const telemetry: TurnTelemetry = {
+/** The opening record of a simulated turn: full budget, nothing measured yet. */
+function simulatedTelemetry(model: ModelId): TurnTelemetry {
+  return {
     model,
     budgetRemaining: HOURLY_LIMIT,
     budgetLimit: HOURLY_LIMIT,
@@ -525,6 +527,11 @@ function simulateStreamFailure(cls: TurnErrorClass, model: ModelId): Response {
     finishReason: null,
     error: null,
   };
+}
+
+function simulateStreamFailure(cls: TurnErrorClass, model: ModelId): Response {
+  const startedAt = Date.now();
+  const telemetry = simulatedTelemetry(model);
 
   const stream = createUIMessageStream<ChatUIMessage>({
     // Returned verbatim rather than run through `classifyTurnError`. The
@@ -562,6 +569,40 @@ function simulateStreamFailure(cls: TurnErrorClass, model: ModelId): Response {
   });
 }
 
+/**
+ * The empty turn, which is not a throw at all. A real one is a clean stream:
+ * the model reasons, runs out of room and finishes, and nothing errors on the
+ * server. So the simulation is a clean stream too — reasoning, the closing
+ * record, `finish` — and the browser's transport has to notice on its own that
+ * nothing in it reached the page. That is the exit being exercised.
+ */
+function simulateEmptyTurn(model: ModelId): Response {
+  const startedAt = Date.now();
+  const telemetry = simulatedTelemetry(model);
+
+  const stream = createUIMessageStream<ChatUIMessage>({
+    execute: async ({ writer }) => {
+      writer.write({ type: "start" });
+      writer.write({ type: "data-turn", id: TURN_PART_ID, data: { ...telemetry } });
+      writer.write({ type: "reasoning-start", id: "simulated" });
+      writer.write({ type: "reasoning-delta", id: "simulated", delta: "(simulated reasoning)" });
+      writer.write({ type: "reasoning-end", id: "simulated" });
+      telemetry.steps = 1;
+      telemetry.toolsCalled = [];
+      telemetry.finishReason = "length";
+      telemetry.error = { class: "empty_answer", detail: "simulated" };
+      telemetry.timing = { ttftMs: null, durationMs: Date.now() - startedAt, tokensPerSecond: null };
+      writer.write({ type: "data-turn", id: TURN_PART_ID, data: { ...telemetry } });
+      writer.write({ type: "finish" });
+    },
+  });
+
+  return createUIMessageStreamResponse({
+    stream,
+    headers: { "x-model": model, "x-simulated": "empty_answer" },
+  });
+}
+
 export async function POST(req: Request): Promise<Response> {
   // (0) Failure theatre, ahead of everything: no body parsing, no budget, no
   // model. See the block comment above.
@@ -571,6 +612,7 @@ export async function POST(req: Request): Promise<Response> {
     // means the failure belongs mid-stream, on an HTTP 200.
     const status = TURN_FAILURES[simulate].simulateStatus;
     if (status) return jsonError(simulate, status);
+    if (simulate === "empty_answer") return simulateEmptyTurn(DEFAULT_MODEL);
     return simulateStreamFailure(simulate, DEFAULT_MODEL);
   }
 
@@ -771,6 +813,21 @@ export async function POST(req: Request): Promise<Response> {
         telemetry.steps = steps.length;
         telemetry.toolsCalled = steps.flatMap((s) => s.toolCalls.map((c) => c.toolName));
         telemetry.finishReason = finishReason;
+
+        // A turn that finished and said nothing — usually a reasoning model
+        // that spent the whole ceiling thinking and stopped on "length". It
+        // billed tokens and produced no answer, so its record says so rather
+        // than being priced and logged as one. The browser's transport is what
+        // shows the reader the failure (see `answerWatcher`); this is the
+        // record agreeing with it.
+        const said = steps.some(
+          (s) =>
+            s.text.trim() !== "" ||
+            s.toolResults.some((r) => !INTERNAL_TOOLS.has(r.toolName)),
+        );
+        if (!said) {
+          telemetry.error = { class: "empty_answer", detail: finishReason };
+        }
       } catch (err) {
         // The merged stream has already surfaced the failure to the reader.
         // What's added here is the CLASS, so #6 can render the difference

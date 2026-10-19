@@ -282,15 +282,19 @@ describe("#19 — the media surface", () => {
     }
   });
 
-  test("at least one slot is still empty, and the page says so", () => {
-    // Guards the renderer's placeholder path against bit-rotting unnoticed
-    // while every slot happens to be full.
-    const empty = ADARLE_MEDIA.filter((s) => !s.asset);
-    assert.ok(empty.length > 0, "no empty slots left — delete this test with the placeholder path");
+  test("only slots with a file render", () => {
+    // Wave 1 (2026-10-19): empty frames on the flagship case study read as
+    // unfinished work to every recruiter who clicked through. The briefs stay
+    // in the manifest; the renderer filters on `asset` and has no empty path.
     const component = read("components/project-media.tsx");
+    assert.match(
+      component,
+      /ADARLE_MEDIA\.filter\([^;]*slot\.asset != null/,
+      "the media surface should render only slots that have an asset",
+    );
     assert.ok(
-      component.includes("Nothing here yet"),
-      "the empty frame no longer says it is empty",
+      !component.includes("Nothing here yet"),
+      "the renderer still has an empty-frame path",
     );
   });
 
@@ -337,6 +341,15 @@ describe("#19 — the feature surface", () => {
     );
   });
 
+  test("the marked note is not rendered while it carries its marker", () => {
+    const component = read("components/project-media.tsx");
+    if (!FEATURE_SURFACE_NOTE.includes("[VERIFY")) return;
+    assert.ok(
+      !/\{FEATURE_SURFACE_NOTE\}/.test(component),
+      "FEATURE_SURFACE_NOTE carries a [VERIFY] marker and is rendered on /projects/adarle20",
+    );
+  });
+
   test("is in docs/site-copy.md", () => {
     const copy = read("docs/site-copy.md").replace(/\s+/g, " ");
     for (const group of FEATURE_SURFACE) {
@@ -359,7 +372,9 @@ describe("#19 — the feature surface", () => {
 // --- The ledger ------------------------------------------------------------
 
 describe("the copy ledger", () => {
-  test("every [VERIFY] marker in shipped copy is listed in the ledger", () => {
+  // Named "VERIFY", not "[VERIFY]": test names are published on /measurements,
+  // and a bracketed marker there is exactly what the postbuild check forbids.
+  test("every VERIFY marker in shipped copy is listed in the ledger", () => {
     // docs/copy-ledger.md's pending table exists so a [VERIFY] left in a file
     // can't quietly ship. This is the half that makes that true.
     const ledger = read("docs/copy-ledger.md");

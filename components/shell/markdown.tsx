@@ -1,6 +1,7 @@
 import { Fragment, type ReactNode } from "react";
 
 import { splitBlocks, type AnswerBlock } from "@/lib/answer-blocks";
+import { downloadAs } from "@/lib/site";
 
 // A deliberately small markdown renderer for assistant turns.
 //
@@ -80,6 +81,7 @@ function inline(text: string, keyPrefix: string): ReactNode[] {
             key={key}
             href={href}
             {...(href.startsWith("/") ? {} : { target: "_blank", rel: "noreferrer" })}
+            {...downloadAs(href)}
             className="text-text underline decoration-line-strong underline-offset-2 transition-colors hover:text-accent hover:decoration-accent"
           >
             {label}
@@ -97,6 +99,7 @@ function inline(text: string, keyPrefix: string): ReactNode[] {
           key={key}
           href={token}
           {...(token.endsWith(".pdf") ? { target: "_blank", rel: "noreferrer" } : {})}
+          {...downloadAs(token)}
           className="text-text underline decoration-line-strong underline-offset-2 transition-colors hover:text-accent hover:decoration-accent"
         >
           {token}
