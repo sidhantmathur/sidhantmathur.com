@@ -258,6 +258,39 @@ committed code):
 | gemini-3.5-flash-lite | default | visa | text | stop | 0.9 | 1.1 | 6,691 / 0 | 25 (0) | 0.00207 |
 | gemini-3.5-flash-lite | default | JD | card, but only 6 of the posting's 14 requirements extracted | stop | 3.9 | 4.9 | 21,769 / 0 | 970 (0) | 0.00896 |
 
+### Re-test on the committed default, 2026-10-19
+
+The same five turns, run on commit 4a1b4d6: GPT-6 Luna as the default, one
+hourly budget. The requests sent **no model id**, so the route's
+`DEFAULT_MODEL` picked the model; every response came back as
+`openai/gpt-6-luna`. The server was `next start` on a build newer than every
+source file, so it served exactly that commit. Each turn ran in a fresh
+conversation, with only the gateway key set. Total cost: $0.0041.
+
+**5/5 rendered.** No turn hit the cap, and no tool call errored. The new
+`x-budget-remaining` / `x-budget-limit` headers counted down from 19/20 to
+15/20, and no `x-tier` header was sent.
+
+| Prompt | Served | What rendered | finishReason | First text (s) | Total (s) | In / cached | Out | Budget after | $ list |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 30-second | gpt-6-luna | text | stop | 1.8 | 3.0 | 6,251 / 0 | 171 | 19/20 | 0.00087 |
+| shipped | gpt-6-luna | text | stop | 2.0 | 3.4 | 6,252 / 6,237 | 238 | 18/20 | 0.00018 |
+| RevOps fit | gpt-6-luna | text + `roleFit` card (3 met, 2 partial) | stop | 6.3 | 7.3 | 13,569 / 12,493 | 617 | 17/20 | 0.00057 |
+| visa | gpt-6-luna | text | stop | 0.8 | 1.1 | 6,250 / 6,237 | 42 | 16/20 | 0.00008 |
+| JD | gpt-6-luna | text + `roleFit` card (3 met, 9 partial, 2 unmet) | stop | 31.3 | 32.5 | 25,385 / 20,242 | 3,177 | 15/20 | 0.00243 |
+
+On the RevOps chip the card arrived at 4.9 s, before the text. On the
+posting, the model's first output was `extractRequirements` at 4.1 s. That
+step has no card; the UI shows "reading the job description…" while it runs.
+This run did not time the `roleFit` card on its own. The first run timed it
+at 25 s. Both runs measured the posting at about 32 s from start to finish,
+the slowest turn on the default. `reasoning: 'low'` on posting turns is
+still the experiment to try, and it has not been tested.
+
+Two earlier turns from this re-test (the 30-second and shipped chips, both
+rendered) ran on `next dev` before the run was stopped and restarted. They
+are not in the table, so every row comes from the same server.
+
 ## 3. Copy — Sidhant is doing this, do not write it
 
 Two blocks on the live site are Claude's drafts, marked `[DRAFT]` in
