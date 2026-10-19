@@ -281,6 +281,42 @@ body {
 }
 
 /* ---------------------------------------------------------------------------
+   Long-form prose on the document pages
+   ---------------------------------------------------------------------------
+   Wave 2, from the council review, under Sidhant's own legibility-beats-
+   atmosphere rule: every document page set its paragraphs in tracked
+   monospace, and on a phone the resume summary broke at about 25 characters a
+   line. These are the pages that get read rather than scanned, so their
+   paragraphs and list items read in Geist Sans — the face the front door's
+   headline and tl;dr already use. Everything that is a label stays mono:
+   headings, section markers, datelines, the contact line, metadata lists,
+   navigation, buttons, and anything that opts out with `font-mono`.
+
+   Scoped to `.doc-prose` (the <main> of components/layout/doc-page.tsx), so
+   the same MDX inside the shell's context panel keeps the instrument register.
+   Unlayered on purpose, like the type scale: it has to beat the `font-mono`
+   the document wrapper inherits — and it excludes `.font-mono` and
+   `.t-label` explicitly rather than losing to them by layer order.
+
+   The case-study MDX was 13px, a caption size, because the panel it was first
+   written for is narrow. On the page it takes the body tier instead; sans at
+   13px reads smaller still than mono at 13px. */
+.doc-prose :is(p, li):not(.font-mono, .t-label) {
+  font-family: var(--font-geist-sans);
+}
+
+.doc-prose .mdx-prose {
+  font-size: 16px;
+  line-height: 1.65;
+}
+
+@media (min-width: 768px) {
+  .doc-prose .mdx-prose {
+    font-size: 15px;
+  }
+}
+
+/* ---------------------------------------------------------------------------
    The headshot
    ---------------------------------------------------------------------------
    A daylight photo — bright foliage, warm brick — set beside a name on a
