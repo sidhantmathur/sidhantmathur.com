@@ -368,6 +368,20 @@ on public pages, and sentences that were no longer true.
 | draft | `components/shell/panel-body.tsx` → job-description form | The character counter and cap now read 3,903; was 3,500. | none | UI chrome. It is the route's 4,000-character limit on a user turn (`MAX_USER_TEXT` in `lib/job-posting.ts`) less the 97-character prefix the panel sends ahead of the posting, so a full paste lands exactly on the server's limit. |
 | draft | `lib/site.ts` → `RESUME_PDF_FILENAME`, on every resume PDF link | The resume saves as "Sidhant_Mathur_Resume.pdf" (the `download` attribute) rather than "resume.pdf". | none | The file is unchanged; only the name it saves under. |
 
+**Wave 2 of the council plan, 2026-10-19** (branch `worktree-agent-ad0a5e15366e3ef87`).
+The recruiter front of house: the name and role line, the CTA row, the reordered
+tl;dr and its two case-study cards, the header and the document-page chrome, the
+citation marks, and the mobile fold. Sidhant had not recorded his decisions when
+this was drafted; where a choice was his, the council synthesis's recommendation
+was taken and the row says so.
+
+| Status | Where | What it says | Claims | Grounding |
+| --- | --- | --- | --- | --- |
+| draft | `components/shell/answer.tsx` → citation margin (lg) | Margin marks per verdict: "uncited" (unchanged) · "not in source" (faint, was red "unverified") · "not in record" (accent). | none | Labels for `lib/verify.ts`'s verdicts. "not in source" is the new `miscited` verdict: the token is in the record under a different chunk. Only "not in record" — a number or name no chunk contains — keeps the accent. |
+| draft | `components/shell/answer.tsx` → source row under an answer | "not in cited source · one sentence names facts the record holds under a different source. See the trace" (or "{n} sentences name"). "not in the record · {tokens}, in "{sentence}"" for the strong case. | none | The site describing its own check. "See the trace" opens the instruments panel, where the per-token detail now lives. |
+| draft | `components/shell/instruments.tsx` → "Citations" section | Heading "Citations", hint "checked by string comparison". Rows: "answer {n}" · "{k}/{m} verified"; per claim "not in the cited chunk", "cited", "found in", "in no source", "no such source". Empty state: "Nothing checked yet. Every sentence that names a number or a proper noun is checked against the source it cites, and lands here." | none | Instrument-deck prose; restates what `lib/verify.ts` does. |
+| draft | `components/shell/panel-body.tsx` → requirement-table row marks | "not in the record · {tokens}" (accent) or "not in cited source · {tokens} — in {chunk ids}" (faint). Was "unverified · {tokens} — not in {ids}" in the accent for both. | none | Same split as the answer marks. |
+
 ## Pending `[VERIFY]` markers
 
 Sentences drafted with a fact-shaped hole in them, waiting on Sidhant. Listing them

@@ -18,6 +18,11 @@
 // failure mode that matters here: a number, employer, tool, or date that is not
 // in the record the answer says it came from.
 //
+// AND WHAT IT DOESN'T MEAN WHEN IT FAILS. Since wave 2 a failed check is split
+// in two before anything is rendered: `miscited` (the token is in the record,
+// under a different chunk) and `unverified` (the token is nowhere in it). Only
+// the second gets the accent. See `locateMissing`.
+//
 // WHAT IT DELIBERATELY DOESN'T CHECK: sentences with no numbers and no proper
 // nouns ("he likes owning the result"). There is nothing deterministic to check
 // them against, and inventing a check would be the same self-certifying theatre
@@ -88,7 +93,19 @@ export function citationIds(text: string): string[] {
 export type ClaimVerdict =
   /** Every number and proper noun in the sentence is in the chunk it cited. */
   | "verified"
-  /** It cited something, and the something doesn't contain what it claims. */
+  /**
+   * It cited a real chunk that doesn't contain everything the sentence says —
+   * but every missing token IS in the record, under another chunk. The fact
+   * is real; the pointer is wrong. The commonest case by far: a sentence that
+   * joins two chunks ("Nokia … and A Darle 20 reached 1,400+ users") and cites
+   * one of them.
+   */
+  | "miscited"
+  /**
+   * A number or name the record doesn't contain anywhere — or a citation to a
+   * chunk that doesn't exist alongside a real one. This is the failure the
+   * check exists for, and the only verdict that earns the strong mark.
+   */
   | "unverified"
   /** It states a checkable fact and cites nothing at all. */
   | "uncited";
@@ -104,6 +121,10 @@ export type Claim = {
   unknownIds: string[];
   /** Tokens the cited chunks don't contain. Empty when verified. */
   missing: string[];
+  /** Of `missing`, the tokens no chunk in the record contains. */
+  absent: string[];
+  /** Chunks, other than the cited ones, that hold a missing token. */
+  elsewhere: string[];
   verdict: ClaimVerdict;
 };
 
@@ -119,10 +140,75 @@ export type ClaimCheck = {
   ids: string[];
   unknownIds: string[];
   missing: string[];
+  /** Of `missing`, the tokens no chunk in the record contains. */
+  absent: string[];
+  /** Chunks, other than the cited ones, that hold a missing token. */
+  elsewhere: string[];
   /** False when there is no number and no proper noun to check. */
   checkable: boolean;
   verdict: ClaimVerdict;
 };
+
+// --- Where else a missing token lives ---------------------------------------
+//
+// "Not in the chunk it cited" used to be the whole verdict, and it was painted
+// in the accent. The council review (2026-10-19) watched the first answer to
+// "Give me the 30-second version" carry two of those marks — on 1,400, 2,100
+// and "March 2026", all true, cited to resume:nokia instead of
+// resume:a-darle-20. To a recruiter that read as the site doubting his own
+// headline numbers. So a missing token is now looked up across the record
+// before anything is said about it: found elsewhere, the sentence is
+// `miscited` and the mark is neutral; found nowhere, it is `unverified` and the
+// mark keeps its weight.
+//
+// THE RECORD IS PARTITIONED. The lookup the shell passes holds two corpora —
+// Sidhant's record and this site's own source (`repo:` ids, Sprint 7) — and a
+// fabricated number in a sentence about Nokia must not be excused because
+// some line of TypeScript happens to contain it. A claim is searched against
+// the corpus its citations belong to and no further.
+
+const REPO_PREFIX = "repo:";
+
+function corpusOf(id: string): "repo" | "record" {
+  return id.startsWith(REPO_PREFIX) ? "repo" : "record";
+}
+
+/** Normalized chunk text, cached per lookup so a long answer normalizes once. */
+const NORMALIZED = new WeakMap<Record<string, VerifiableChunk>, Map<string, string>>();
+
+function normalizedChunks(lookup: Record<string, VerifiableChunk>): Map<string, string> {
+  let cached = NORMALIZED.get(lookup);
+  if (!cached) {
+    cached = new Map(Object.values(lookup).map((c) => [c.id, normalize(c.text)]));
+    NORMALIZED.set(lookup, cached);
+  }
+  return cached;
+}
+
+/**
+ * Splits the tokens a cited chunk didn't contain into the ones the rest of the
+ * record does (and where) and the ones it doesn't. Exported for the role-fit
+ * rows, which carry their missing tokens rather than a Claim.
+ */
+export function locateMissing(
+  missing: string[],
+  ids: string[],
+  lookup: Record<string, VerifiableChunk>,
+): { absent: string[]; elsewhere: string[] } {
+  if (!missing.length) return { absent: [], elsewhere: [] };
+  const corpora = new Set(ids.map(corpusOf));
+  const others = [...normalizedChunks(lookup)].filter(
+    ([id]) => !ids.includes(id) && corpora.has(corpusOf(id)),
+  );
+  const absent: string[] = [];
+  const elsewhere: string[] = [];
+  for (const token of missing) {
+    const holders = others.filter(([, text]) => present(token, text)).map(([id]) => id);
+    if (!holders.length) absent.push(token);
+    for (const id of holders) if (!elsewhere.includes(id)) elsewhere.push(id);
+  }
+  return { absent, elsewhere };
+}
 
 export function checkClaim(
   text: string,
@@ -134,16 +220,31 @@ export function checkClaim(
   const tokens = checkableTokens(text);
 
   if (!ids.length) {
-    return { ids, unknownIds, missing: [], checkable: tokens.length > 0, verdict: "uncited" };
+    return {
+      ids,
+      unknownIds,
+      missing: [],
+      absent: [],
+      elsewhere: [],
+      checkable: tokens.length > 0,
+      verdict: "uncited",
+    };
   }
   const haystack = normalize(ids.map((id) => lookup[id]!.text).join("\n"));
   const missing = tokens.filter((t) => !present(t, haystack));
+  const { absent, elsewhere } = locateMissing(missing, ids, lookup);
+  // A citation to a chunk that doesn't exist is a fabricated source whatever
+  // the tokens say, so it keeps the strong verdict even beside a real one.
+  const verdict: ClaimVerdict =
+    absent.length || unknownIds.length ? "unverified" : missing.length ? "miscited" : "verified";
   return {
     ids,
     unknownIds,
     missing,
+    absent,
+    elsewhere,
     checkable: tokens.length > 0,
-    verdict: missing.length || unknownIds.length ? "unverified" : "verified",
+    verdict,
   };
 }
 
@@ -419,6 +520,8 @@ export function verifyAnswer(
         ids: check.ids,
         unknownIds: check.unknownIds,
         missing: check.missing,
+        absent: check.absent,
+        elsewhere: check.elsewhere,
         verdict: check.verdict,
       });
     }

@@ -15,6 +15,8 @@ import {
   turnErrorCopy,
   type TurnErrorClass,
 } from "@/lib/chat-telemetry";
+import { ALL_CHUNKS_BY_ID } from "@/lib/corpus";
+import { verifyAnswer, type Claim } from "@/lib/verify";
 import type { Budget, TurnRecord } from "./use-conversation";
 import type { TokenRate } from "./use-token-rate";
 
@@ -127,6 +129,7 @@ export function InstrumentDeck({
   teletype,
   onToggleTeletype,
   errorCopy,
+  answers,
 }: {
   turnLog: TurnRecord[];
   budget: Budget | null;
@@ -135,6 +138,8 @@ export function InstrumentDeck({
   teletype: boolean;
   onToggleTeletype: () => void;
   errorCopy: ErrorCopy;
+  /** Every settled assistant answer's raw text, oldest first, markers intact. */
+  answers: string[];
 }) {
   const settled = lastSettledRate(turnLog);
   return (
@@ -156,6 +161,10 @@ export function InstrumentDeck({
 
       <Section title="Trace" hint={`${turnLog.length} turn${turnLog.length === 1 ? "" : "s"}`}>
         <TraceInspector turnLog={turnLog} />
+      </Section>
+
+      <Section title="Citations" hint="checked by string comparison">
+        <CitationTrace answers={answers} />
       </Section>
 
       <Section title="Failure theatre">
@@ -212,8 +221,14 @@ function Row({
 }) {
   return (
     <div className="flex items-baseline justify-between gap-3 text-[12px]">
-      <span className="text-text-faint">{label}</span>
-      <span className={`tabular-nums ${emphasis ? "text-accent" : "text-text-soft"}`}>{value}</span>
+      <span className="shrink-0 text-text-faint">{label}</span>
+      {/* min-w-0 and break-words: the citation trace puts token lists and
+          chunk ids here, which are longer than any number the deck had. */}
+      <span
+        className={`min-w-0 break-words text-right tabular-nums ${emphasis ? "text-accent" : "text-text-soft"}`}
+      >
+        {value}
+      </span>
     </div>
   );
 }
@@ -437,6 +452,78 @@ function TraceInspector({ turnLog }: { turnLog: TurnRecord[] }) {
         Two latencies on purpose: the server measures the model, the browser measures the
         wait. The gap between them is the network.
       </p>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Citation trace (wave 2)
+// ---------------------------------------------------------------------------
+
+const VERDICT_LABEL: Record<Claim["verdict"], string> = {
+  verified: "verified",
+  miscited: "not in cited source",
+  unverified: "not in the record",
+  uncited: "uncited",
+};
+
+/**
+ * Every checked sentence of every answer, with the tokens behind its verdict.
+ *
+ * This is where the per-token detail went when the answer's own marks were
+ * quietened (council review, 2026-10-19). Under an answer, a mis-citation is
+ * one faint line; here it is the sentence, the tokens the cited chunk lacked,
+ * and the chunks that do hold them — the same check, read out in full for the
+ * visitor who wants to audit it.
+ */
+function CitationTrace({ answers }: { answers: string[] }) {
+  const checks = useMemo(
+    () => answers.map((text) => verifyAnswer(text, ALL_CHUNKS_BY_ID)),
+    [answers],
+  );
+  if (!checks.some((c) => c.claims.length)) {
+    return (
+      <p className="t-meta text-text-faint">
+        Nothing checked yet. Every sentence that names a number or a proper noun is
+        checked against the source it cites, and lands here.
+      </p>
+    );
+  }
+  return (
+    <div className="space-y-3">
+      {checks.map((check, i) =>
+        check.claims.length ? (
+          <div key={i} className="space-y-1 border border-line px-2 py-2">
+            <Row
+              label={`answer ${i + 1}`}
+              value={`${check.verified}/${check.claims.length} verified`}
+            />
+            {check.claims
+              .filter((c) => c.verdict !== "verified")
+              .map((claim, j) => (
+                <div key={j} className="border-t border-line pt-1.5 text-[12px] leading-[1.5]">
+                  <div className={claim.verdict === "unverified" ? "text-accent" : "text-text-soft"}>
+                    {VERDICT_LABEL[claim.verdict]}
+                  </div>
+                  <p className="t-meta text-text-faint">{claim.text}</p>
+                  {claim.missing.length > 0 && (
+                    <Row label="not in the cited chunk" value={claim.missing.join(", ")} />
+                  )}
+                  {claim.ids.length > 0 && <Row label="cited" value={claim.ids.join(", ")} />}
+                  {claim.elsewhere.length > 0 && (
+                    <Row label="found in" value={claim.elsewhere.slice(0, 3).join(", ")} />
+                  )}
+                  {claim.absent.length > 0 && (
+                    <Row label="in no source" value={claim.absent.join(", ")} emphasis />
+                  )}
+                  {claim.unknownIds.length > 0 && (
+                    <Row label="no such source" value={claim.unknownIds.join(", ")} emphasis />
+                  )}
+                </div>
+              ))}
+          </div>
+        ) : null,
+      )}
     </div>
   );
 }

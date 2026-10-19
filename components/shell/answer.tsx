@@ -95,11 +95,9 @@ export function Answer({
           <span
             key={i}
             title={claimDetail(claim)}
-            className={`block truncate ${
-              claim.verdict === "uncited" ? "text-text-faint" : "text-accent"
-            }`}
+            className={`block truncate ${claim.verdict === "unverified" ? "text-accent" : "text-text-faint"}`}
           >
-            {claim.verdict === "uncited" ? "uncited" : "unverified"}
+            {MARGIN_LABEL[claim.verdict]}
           </span>
         ))}
       </div>
@@ -127,8 +125,18 @@ function SourceRow({
   onOpenSource: (view: PanelView) => void;
 }) {
   const nothingCited = !check.citedIds.length && !check.unknownIds.length;
-  const shown = nothingCited ? [] : check.downgraded.slice(0, MAX_LISTED_DOWNGRADES);
-  const rest = nothingCited ? 0 : check.downgraded.length - shown.length;
+  // Listed one by one: the two verdicts a reader should actually weigh. A
+  // mis-citation is not listed per sentence — its facts are in the record, so
+  // the only news is that the pointer is off, and that is one quiet line with
+  // the token detail one click away in the trace.
+  const listable = nothingCited
+    ? []
+    : check.downgraded.filter((c) => c.verdict !== "miscited");
+  const shown = listable.slice(0, MAX_LISTED_DOWNGRADES);
+  const rest = listable.length - shown.length;
+  const miscited = nothingCited
+    ? 0
+    : check.downgraded.filter((c) => c.verdict === "miscited").length;
 
   if (!check.citedIds.length && !check.claims.length) return null;
 
@@ -155,20 +163,36 @@ function SourceRow({
 
       {/* The downgrades. Quiet, specific, and never more than a few lines —
           the detail is what makes this a check rather than a badge. */}
-      {/* Two verdicts, two weights. "The chunk it cited doesn't say that" is a
-          different order of problem from "it attached no source", and rendering
-          them at the same volume would flatten the distinction the check exists
-          to draw. */}
+      {/* Three verdicts, two weights. Since wave 2 the accent is reserved for
+          a number or name the record has nowhere (or a source that doesn't
+          exist). "It attached no source" and "the fact is real but cited to
+          the wrong chunk" are said in the faint register — the second used to
+          be painted the same colour as a fabrication, which made the site look
+          like it doubted its own owner's headline numbers. */}
       {shown.map((claim, i) => (
         <p key={i} className="t-meta text-text-faint">
-          <span className={claim.verdict === "uncited" ? "text-text-soft" : "text-accent"}>
-            {claim.verdict === "uncited" ? "uncited" : "unverified"}
+          <span className={claim.verdict === "unverified" ? "text-accent" : "text-text-soft"}>
+            {ROW_LABEL[claim.verdict]}
           </span>{" "}
-          · {claimDetail(claim)}
+          · {rowDetail(claim)}
         </p>
       ))}
       {rest > 0 && (
         <p className="t-meta text-text-faint">and {rest} more like it.</p>
+      )}
+      {miscited > 0 && (
+        <p className="t-meta text-text-faint">
+          <span className="text-text-soft">{ROW_LABEL.miscited}</span> ·{" "}
+          {miscited === 1 ? "one sentence names" : `${miscited} sentences name`} facts the
+          record holds under a different source.{" "}
+          <button
+            type="button"
+            onClick={() => onOpenSource({ kind: "instruments" })}
+            className="-my-2 py-2 text-text-soft underline decoration-line-strong underline-offset-2 transition-colors hover:text-accent"
+          >
+            See the trace
+          </button>
+        </p>
       )}
 
       {nothingCited && check.claims.length > 0 && (
@@ -208,9 +232,29 @@ function shortLabel(id: string): string {
 }
 
 /**
- * Why a claim was downgraded, in a sentence. Says what was checked and what
- * wasn't found, rather than asserting the sentence is wrong — the check knows
- * the difference and the copy has to as well.
+ * The margin is 6.5rem — fourteen characters of 12px mono — so each verdict
+ * gets a label that fits it whole rather than one that truncates mid-word.
+ */
+const MARGIN_LABEL: Record<Claim["verdict"], string> = {
+  verified: "verified",
+  uncited: "uncited",
+  miscited: "not in source",
+  unverified: "not in record",
+};
+
+/** The same verdicts under the answer, where there is room for the full phrase. */
+const ROW_LABEL: Record<Claim["verdict"], string> = {
+  verified: "verified",
+  uncited: "uncited",
+  miscited: "not in cited source",
+  unverified: "not in the record",
+};
+
+/**
+ * Why a claim was downgraded, in a sentence — the hover text on the margin
+ * mark. Says what was checked and what wasn't found, rather than asserting the
+ * sentence is wrong: the check knows the difference and the copy has to as
+ * well. The full per-token version lives in the instruments' citation trace.
  */
 function claimDetail(claim: Claim): string {
   if (claim.verdict === "uncited") {
@@ -219,7 +263,21 @@ function claimDetail(claim: Claim): string {
   if (claim.unknownIds.length) {
     return `cited ${claim.unknownIds.join(", ")}, which isn't a source on this site`;
   }
-  return `${claim.missing.join(", ")} — not in ${claim.ids.join(", ")}`;
+  if (claim.verdict === "miscited") {
+    return `${claim.missing.join(", ")} — not in ${claim.ids.join(", ")}, but in ${claim.elsewhere.join(", ")}`;
+  }
+  return `${claim.absent.join(", ")} — not in any source on this site`;
+}
+
+/** The line under the answer for the two verdicts that are listed one by one. */
+function rowDetail(claim: Claim): string {
+  if (claim.verdict === "uncited") {
+    return `no source cited for "${clip(claim.text)}"`;
+  }
+  if (claim.unknownIds.length) {
+    return `cited ${claim.unknownIds.join(", ")}, which isn't a source on this site`;
+  }
+  return `${claim.absent.join(", ")}, in "${clip(claim.text, 60)}"`;
 }
 
 function clip(text: string, max = 70): string {

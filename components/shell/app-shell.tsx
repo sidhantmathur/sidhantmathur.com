@@ -524,6 +524,19 @@ export function AppShell() {
   const panelOpen = panel.kind !== "none";
   const lastId = messages[messages.length - 1]?.id;
 
+  // What the instruments' citation trace checks: every answer that has
+  // finished arriving. The streaming one is left out — its last sentence is
+  // half a sentence, and checking it would flash verdicts that change a token
+  // later.
+  const settledAnswers = useMemo(
+    () =>
+      messages
+        .filter((m) => m.role === "assistant" && (!isBusy || m.id !== lastId))
+        .map((m) => textOf(m))
+        .filter(Boolean),
+    [messages, isBusy, lastId],
+  );
+
   // One address, already in shell-data — the Email CTA must not retype it.
   const emailHref = SOCIAL_LINKS.find((s) => s.label === "Email")!.href;
 
@@ -574,6 +587,7 @@ export function AppShell() {
         teletype={teletype}
         onToggleTeletype={toggleTeletype}
         errorCopy={{ rateLimited: RATE_LIMIT_STATE }}
+        answers={settledAnswers}
       />
     ),
   };

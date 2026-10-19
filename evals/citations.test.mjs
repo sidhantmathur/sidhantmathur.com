@@ -376,6 +376,88 @@ describe("false alarms the live corpus produced", () => {
   });
 });
 
+// The council review's finding (2026-10-19): one sentence joining two chunks,
+// citing one of them, was painted with the same accent as a fabrication. The
+// first answer to "Give me the 30-second version" flagged 1,400, 2,100 and
+// "March 2026" — all true, cited to resume:nokia instead of resume:a-darle-20 —
+// and a recruiter read the site doubting its owner's headline numbers. A true
+// fact under the wrong pointer is `miscited` and rendered quietly; only a token
+// the record has nowhere is `unverified`.
+describe("a sentence that spans two chunks and cites one", () => {
+  const SPAN =
+    "He builds Power App reporting at Nokia, and his marketplace has 1,400+ registered users and 127 hosts. [resume:nokia]";
+
+  test("is miscited, not unverified, when the rest of the record holds the facts", () => {
+    const result = verifyAnswer(SPAN, FIXTURE);
+    const claim = result.claims[0];
+    assert.equal(claim.verdict, "miscited", `got ${claim.verdict}: missing ${claim.missing}`);
+    assert.deepEqual(claim.absent, [], `called absent: ${claim.absent}`);
+    assert.ok(claim.missing.includes("1,400"), `missing: ${claim.missing}`);
+    assert.ok(claim.missing.includes("127"), `missing: ${claim.missing}`);
+    assert.deepEqual(claim.elsewhere, ["adarle20:where-it-stands"]);
+    // Still not a verified claim: the pointer is wrong, and the groundedness
+    // figure on /measurements counts pointers.
+    assert.equal(result.verified, 0);
+    assert.equal(result.downgraded.length, 1);
+  });
+
+  test("verifies once both chunks are cited", () => {
+    const result = verifyAnswer(
+      SPAN.replace("[resume:nokia]", "[resume:nokia] [adarle20:where-it-stands]"),
+      FIXTURE,
+    );
+    assert.equal(result.claims[0].verdict, "verified", `flagged: ${result.claims[0].missing}`);
+  });
+
+  test("a token the record has nowhere keeps the strong verdict, even beside miscited ones", () => {
+    const result = verifyAnswer(
+      "His marketplace has 1,400+ registered users and 900 game masters. [resume:nokia]",
+      FIXTURE,
+    );
+    const claim = result.claims[0];
+    assert.equal(claim.verdict, "unverified");
+    assert.deepEqual(claim.absent, ["900"], "only the fabricated number is absent");
+    assert.ok(claim.missing.includes("1,400"), "the true number is still reported as missing from the cited chunk");
+  });
+
+  test("a citation to a chunk that does not exist stays unverified beside a real one", () => {
+    const result = verifyAnswer(
+      "He built a Power App used by 80+ stakeholders. [resume:nokia] [resume:invented-section]",
+      FIXTURE,
+    );
+    assert.equal(result.claims[0].verdict, "unverified");
+    assert.deepEqual(result.claims[0].unknownIds, ["resume:invented-section"]);
+  });
+
+  test("the site's own source cannot excuse a claim about the record", () => {
+    // The shell's lookup holds two corpora. A number in a sentence about
+    // Nokia must not pass as "elsewhere in the record" because some file in
+    // the repo happens to contain it.
+    const lookup = {
+      ...FIXTURE,
+      "repo:verify": { id: "repo:verify", text: "const LIMIT = 900; // tokens" },
+    };
+    const result = verifyAnswer("He built a Power App used by 900 stakeholders. [resume:nokia]", lookup);
+    assert.equal(result.claims[0].verdict, "unverified");
+    assert.deepEqual(result.claims[0].absent, ["900"]);
+  });
+
+  test("the council's sentence, against the real corpus", () => {
+    // Its shape exactly: A Darle 20's figures and launch month, cited to the
+    // Nokia resume block.
+    const result = verifyAnswer(
+      "He co-founded A Darle 20, which reached 1,400+ registered users and 2,100+ bookings after launching in March 2026. [resume:nokia]",
+      BY_ID,
+    );
+    const claim = result.claims[0];
+    assert.equal(claim.verdict, "miscited", `absent: ${claim.absent}`);
+    assert.ok(
+      claim.elsewhere.includes("resume:a-darle-20"),
+      `the facts' real home was not found: ${claim.elsewhere}`,
+    );
+  });
+});
+
 describe("the real corpus verifies against itself", () => {
   // An end-to-end check with no fixture: a sentence lifted from a chunk, cited
   // to that chunk, must verify. If the tokenizer and the chunk text ever stop
