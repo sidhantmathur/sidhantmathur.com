@@ -340,10 +340,10 @@ if (mobile && routes.includes("/")) {
   };
 
   // Open it the way a keyboard user would: focus the trigger, press Enter.
-  const trigger = page.locator('button[aria-label="Open navigation"]');
+  const trigger = page.locator('button[aria-label="Open the index"]');
   await trigger.focus();
   const triggerWasFocused = await page.evaluate(
-    () => document.activeElement?.getAttribute("aria-label") === "Open navigation",
+    () => document.activeElement?.getAttribute("aria-label") === "Open the index",
   );
   note("the navigation trigger can be focused", triggerWasFocused);
 
@@ -401,7 +401,7 @@ if (mobile && routes.includes("/")) {
   await page.waitForTimeout(700);
   const restored = await page.evaluate(() => ({
     closed: !document.querySelector('[data-slot="sheet-content"]'),
-    back: document.activeElement?.getAttribute("aria-label") === "Open navigation",
+    back: document.activeElement?.getAttribute("aria-label") === "Open the index",
     landedOn:
       document.activeElement?.getAttribute("aria-label") ||
       document.activeElement?.tagName ||
