@@ -44,28 +44,28 @@ describe("cost arithmetic", () => {
   };
 
   test("prices a turn at list price, splitting fresh input from cache reads", () => {
-    // haiku 4.5: $1.00 input, $5.00 output, $0.10 cache read, per 1M tokens.
-    const cost = costOfTurn("anthropic/claude-haiku-4.5", usage);
+    // haiku 5.5: $0.10 input, $0.50 output, $0.01 cache read, per 1M tokens.
+    const cost = costOfTurn("anthropic/claude-haiku-5.5", usage);
     assert.ok(cost);
-    // 2,000 fresh input tokens at $1/1M.
-    assert.equal(cost.freshInput.toFixed(6), (0.002).toFixed(6));
-    // 8,000 cache reads at $0.10/1M.
-    assert.equal(cost.cacheRead.toFixed(6), (0.0008).toFixed(6));
-    // 500 output tokens at $5/1M.
-    assert.equal(cost.output.toFixed(6), (0.0025).toFixed(6));
-    assert.equal(cost.total.toFixed(6), (0.002 + 0.0008 + 0.0025).toFixed(6));
+    // 2,000 fresh input tokens at $0.10/1M.
+    assert.equal(cost.freshInput.toFixed(7), (0.0002).toFixed(7));
+    // 8,000 cache reads at $0.01/1M.
+    assert.equal(cost.cacheRead.toFixed(7), (0.00008).toFixed(7));
+    // 500 output tokens at $0.50/1M.
+    assert.equal(cost.output.toFixed(7), (0.00025).toFixed(7));
+    assert.equal(cost.total.toFixed(7), (0.0002 + 0.00008 + 0.00025).toFixed(7));
   });
 
   test("the cache saving is what those tokens would have cost fresh", () => {
-    const cost = costOfTurn("anthropic/claude-haiku-4.5", usage);
-    // 8,000 tokens at $1/1M instead of $0.10/1M.
-    assert.equal(cost.saved.toFixed(6), (0.008 - 0.0008).toFixed(6));
+    const cost = costOfTurn("anthropic/claude-haiku-5.5", usage);
+    // 8,000 tokens at $0.10/1M instead of $0.01/1M.
+    assert.equal(cost.saved.toFixed(7), (0.0008 - 0.00008).toFixed(7));
   });
 
   test("cached tokens are never double-counted as fresh input", () => {
     // The whole point of the split: a provider reporting a fully-cached prompt
     // must not be billed as if none of it were cached.
-    const cost = costOfTurn("anthropic/claude-haiku-4.5", {
+    const cost = costOfTurn("anthropic/claude-haiku-5.5", {
       inputTokens: 8_000,
       cachedInputTokens: 8_000,
       cacheWriteTokens: 0,
@@ -79,13 +79,13 @@ describe("cost arithmetic", () => {
   });
 
   test("summing skips unpriced turns instead of counting them as free", () => {
-    const priced = costOfTurn("anthropic/claude-haiku-4.5", usage);
+    const priced = costOfTurn("anthropic/claude-haiku-5.5", usage);
     const summed = sumCosts([priced, null, priced]);
     assert.equal(summed.total.toFixed(6), (priced.total * 2).toFixed(6));
   });
 
   test("a turn with no usage costs zero, not NaN", () => {
-    const cost = costOfTurn("anthropic/claude-haiku-4.5", null);
+    const cost = costOfTurn("anthropic/claude-haiku-5.5", null);
     assert.equal(cost.total, 0);
     assert.equal(formatUsd(cost.total), "$0.0000");
   });

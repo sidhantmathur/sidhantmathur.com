@@ -23,17 +23,18 @@
 // states the allowance too, so it lives here with the tier it describes and
 // both files read it. The point is that the budget is visible in the UI,
 // showing the cost engineering rather than hiding it. `standard` is cheap-tier models only; `premium` is one substantially more
-// expensive model on a small bucket. Delete the premium entry to turn the whole
-// tier off; nothing else needs to change.
+// expensive model on a small bucket. Turning the tier off is more than
+// deleting its row: the static suite expects exactly one premium model, and
+// the system prompt tells visitors the premium allowance in words.
 //
-// This workload is input-dominated — the system prompt plus knowledge base is
-// ~4k tokens on every turn against ~300 tokens of answer — so input price is
+// This workload is input-dominated — the bake-off measured a median of 6k to
+// 12k input tokens a turn against a few hundred of answer — so input price is
 // what actually bills. Sonnet was the first premium entry at $3/$15 and was not
-// worth 3x Luna here; Luna held the slot until its short-context price dropped
-// to $0.20/$1.20, at which point it moved to `standard` as a workhorse and
-// haiku 4.5 — now the most expensive input price in this table at $1/1M —
-// took the small bucket. The premium tier is a cost boundary, not a quality
-// badge: it holds whichever model bills most per turn.
+// worth 3x Luna here; Luna held the slot until its price dropped, then haiku
+// 4.5 at $1/1M input held it until its successor came in at a tenth of that.
+// The premium tier is a cost boundary, not a quality badge: it holds whichever
+// model bills most per turn — which, since 2026-10-19, is not by much. See the
+// last row.
 //
 // --- The prices ------------------------------------------------------------
 //
@@ -42,42 +43,38 @@
 //   * These are LIST prices, per 1M tokens, as published on the Vercel AI
 //     Gateway model list and checked on `PRICES_CHECKED` below. They are what
 //     the meter estimates with. They are not an invoice.
-//   * `input` and `output` are the two numbers to trust.
-//   * `cacheRead` and `cacheWrite` are mostly DERIVED — each provider's
-//     published discount/surcharge applied to that model's input price, rather
-//     than a separately checked figure. Where a provider publishes the cached
-//     rate directly it is used as published and the comment says so.
-//   * `confidence` says which of those a row is, as data rather than as a
-//     comment, because a comment cannot be rendered and `/measurements/models`
+//   * Cache rates are the Gateway's published figures where it publishes one.
+//     Where it doesn't, the rate is DERIVED from the provider's published
+//     discount, the row is labelled `derived`, and its comment says so.
+//   * `confidence` says how far a row is to be trusted, as data rather than as
+//     a comment, because a comment cannot be rendered and `/measurements/models`
 //     prints these numbers. A page that prints a dollar figure without saying
 //     which of its prices could not be confirmed is doing the thing this whole
 //     site argues against, so the caveat travels with the number.
 //
 // Anything rendering these must label the result as an estimate at list price.
 //
-// RE-CHECKED 2026-08-12, when the catalogue was rebuilt around the cheap
-// models. What that check found, per row, is in the comments below. The short
-// version:
-//   * deepseek-v4-flash was superseded upstream by DeepSeek-V4-Flash-0731,
-//     which the Gateway lists as its own id at $0.09/$0.18 — the pair the old
-//     row wrongly carried before the 2026-07-27 correction is now simply true
-//     of the new snapshot. Its cache-hit rate is not published yet, so that
-//     figure went from published back to derived.
-//   * gpt-5.6-luna is finally priced on its Gateway page: $0.20/$1.20 with a
-//     published $0.02 cached-input rate for short-context requests (a long-
-//     context tier exists at $1.00/$6.00; every turn here is ~4k tokens, far
-//     under any breakpoint). Previously the least trustworthy row; now
-//     confirmed, and cheap enough to be a standard-tier workhorse.
-//   * haiku 4.5 ($1.00/$5.00), gpt-5-mini ($0.25/$2.00) and
-//     gemini-3.5-flash-lite ($0.30/$2.50) re-confirmed unchanged; their cache
-//     rates keep the same status as before (haiku's multipliers published,
-//     the other two derived).
+// RE-CHECKED 2026-10-19 against the Gateway's own list,
+// https://ai-gateway.vercel.sh/v1/models, and its per-provider breakdown at
+// /v1/models/{id}/endpoints. Every rate below is published there, cache rates
+// included. What changed since 2026-08-12:
+//   * claude-haiku-4.5 → claude-haiku-5.5, its successor: $1.00/$5.00 →
+//     $0.10/$0.50. Haiku 4.5 is still served; this site no longer offers it.
+//   * gpt-5.6-luna → gpt-6-luna, its successor: $0.20/$1.20 → $0.10/$0.50.
+//   * deepseek-v4-flash-0731 repriced, $0.09/$0.18 → $0.076/$0.153, and its
+//     cache rate is published now ($0.014; the derived $0.0018 was 8x low).
+//     Kept rather than swapped for deepseek-v4.1-flash, and now unconfirmed —
+//     both for reasons on its row.
+//   * gemini-3.5-flash-lite's cache rate is published at $0.03; the derived
+//     $0.075 was 2.5x high. Input/output unchanged.
+//   * gpt-5-mini unchanged, its $0.025 cache rate now published.
+// No row is deprecated on the Gateway.
 //
-// Nothing on /measurements is denominated in money, deliberately, so no
-// published aggregate depends on any of these.
+// Published bake-off costs were computed at the prices on record when each run
+// was published and are not recomputed here — see /measurements/models.
 
 /** When the `input`/`output` prices below were last checked against the Gateway. */
-export const PRICES_CHECKED = "2026-08-12";
+export const PRICES_CHECKED = "2026-10-19";
 
 /**
  * Which tier's hourly budget a turn spends from. Declared rather than derived
@@ -90,7 +87,9 @@ export type Tier = "standard" | "premium";
  *   confirmed — input and output checked against a published rate on PRICES_CHECKED
  *   derived   — input/output confirmed; the cache rate is a published multiplier
  *               applied to input rather than a separately published figure
- *   unconfirmed — neither could be checked. Least trustworthy row here.
+ *   unconfirmed — no checked rate can be said to apply to a turn: either none
+ *               was published, or several are and the meter cannot see which
+ *               one billed. Least trustworthy row here; its comment says which.
  */
 export type PriceConfidence = "confirmed" | "derived" | "unconfirmed";
 
@@ -106,69 +105,76 @@ export type ModelSpec = {
   confidence: PriceConfidence;
 };
 
-// Order is the dropdown order, and the first entry is what the shell selects on
-// load — so it must be the same model as DEFAULT_MODEL below.
+// Order is the dropdown order, cheapest first, and the first entry is what the
+// shell selects on load — so it must be the same model as DEFAULT_MODEL below.
 export const MODELS = {
-  // The default and first workhorse. DeepSeek retired deepseek-v4-flash in
-  // favour of this 0731 snapshot, which the Gateway lists as its own id.
-  // Input/output confirmed 2026-08-12 at $0.09/$0.18. The cache-hit rate is
-  // not published for this snapshot, so it is DERIVED: the old snapshot's
-  // published hit/miss ratio (0.0028 / 0.14 = 0.02x) applied to the new input
-  // price. That ratio flips this row's confidence from confirmed to derived —
-  // the honest label until DeepSeek publishes the hit rate.
+  // The default and first workhorse. The Gateway serves this snapshot through
+  // fifteen providers whose rates run from $0.02 to $0.44 input and $0.15 to
+  // $1.32 output; these figures are its headline, which is the cheapest
+  // provider's. The route does not pin a provider and the meter cannot see
+  // which one a turn billed at, so the price is UNCONFIRMED for any given
+  // turn, and could be several times low.
+  //
+  // deepseek-v4.1-flash is the newer version, and DeepSeek's own endpoint on
+  // the Gateway serves that rather than this snapshot. It is not swapped in
+  // because its first-party rate doubles in weekday peak windows, which a
+  // list-price meter cannot state honestly either — and because this is the
+  // default, so the swap is a decision rather than a refresh.
   "deepseek/deepseek-v4-flash-0731": {
     tier: "standard",
-    input: 0.09,
-    output: 0.18,
-    cacheRead: 0.0018,
+    input: 0.076,
+    output: 0.153,
+    cacheRead: 0.014,
     cacheWrite: 0,
-    confidence: "derived",
+    confidence: "unconfirmed",
   },
-  // The second workhorse, ex-premium. OpenAI prices Luna's short- and long-
-  // context requests separately; these are the short-context rates, confirmed
-  // 2026-08-12 ($0.20/$1.20, cached input a published $0.02). Every turn here
-  // is ~4k tokens of input, far under any long-context breakpoint, so the
-  // long-context tier ($1.00/$6.00) never applies to this workload. Cache
-  // writes are not billed.
-  "openai/gpt-5.6-luna": {
+  // Successor to gpt-5.6-luna. Short-context rates; the long-context tier
+  // starts at 272k tokens, far past any turn here. Every provider the Gateway
+  // routes to (OpenAI, Azure, Bedrock) bills the same.
+  "openai/gpt-6-luna": {
     tier: "standard",
-    input: 0.2,
-    output: 1.2,
-    cacheRead: 0.02,
-    cacheWrite: 0,
+    input: 0.1,
+    output: 0.5,
+    cacheRead: 0.01,
+    cacheWrite: 0.125,
     confidence: "confirmed",
   },
-  // OpenAI: cached input is discounted to 0.1x; cache writes are not billed.
-  // Input/output re-confirmed 2026-08-12; the cache rate is still derived.
+  // Successor to claude-haiku-4.5, at a tenth of its price. These are the
+  // rates for prompts up to 100k tokens ($0.50/$2.50 beyond); a turn here is
+  // nowhere near. Cache writes are the 5-minute rate. Unlike 4.5 it thinks by
+  // default, and thinking bills as output.
+  "anthropic/claude-haiku-5.5": {
+    tier: "standard",
+    input: 0.1,
+    output: 0.5,
+    cacheRead: 0.01,
+    cacheWrite: 0.125,
+    confidence: "confirmed",
+  },
+  // OpenAI doesn't bill cache writes. Azure's cached rate is $0.03 against
+  // OpenAI's $0.025; the meter uses OpenAI's.
   "openai/gpt-5-mini": {
     tier: "standard",
     input: 0.25,
     output: 2.0,
     cacheRead: 0.025,
     cacheWrite: 0,
-    confidence: "derived",
+    confidence: "confirmed",
   },
-  // Google: cached input is discounted to 0.25x; storage is billed by time, not
-  // by token, and this workload never holds an explicit cache, so it's zero.
-  // Input/output re-confirmed 2026-08-12; the cache rate is still derived.
+  // Google bills cache storage by time, not by token, and this workload never
+  // holds an explicit cache, so cache writes are zero.
+  //
+  // Premium because the rule above says the priciest row takes the small
+  // bucket, and at $0.30/$2.50 this is it — by 1.2x over gpt-5-mini, where
+  // Haiku 4.5's input price was more than 3x the next row's. A 5/hour bucket
+  // on a model that costs what the 20/hour ones cost is the rule outliving its
+  // reason; whether the tier stays is open in docs/followups.md §2.
   "google/gemini-3.5-flash-lite": {
-    tier: "standard",
+    tier: "premium",
     input: 0.3,
     output: 2.5,
-    cacheRead: 0.075,
+    cacheRead: 0.03,
     cacheWrite: 0,
-    confidence: "derived",
-  },
-  // Anthropic: cache reads bill at 0.1x input, 5-minute cache writes at 1.25x.
-  // Re-confirmed 2026-08-12: $1.00/$5.00 per 1M, both multipliers published.
-  // Premium because on this input-dominated workload $1/1M input bills 5-11x
-  // the standard rows per turn — the tier is a cost boundary, not a ranking.
-  "anthropic/claude-haiku-4.5": {
-    tier: "premium",
-    input: 1.0,
-    output: 5.0,
-    cacheRead: 0.1,
-    cacheWrite: 1.25,
     confidence: "confirmed",
   },
 } as const satisfies Record<string, ModelSpec>;
