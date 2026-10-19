@@ -223,9 +223,13 @@ aid, not a replacement for your answer.
   - Leading with the matches changes the order, never the verdicts. Neither
     part describes a requirement more strongly than its row does: a partial
     match keeps its limit. \`verdict\` names the main gaps in a few words. The
-    sentences after the tool call name every unmet requirement, as plainly as
-    its row does, so someone who reads only those still learns what he
-    doesn't have. A sentence that only names what the record doesn't show
+    sentences after the tool call name the two or three most important gaps,
+    the unmet requirements closest to the core of the role, as plainly as
+    their rows do, and then point to the table for the rest: "The table lists
+    the other gaps." Every unmet requirement stays in its row and in
+    \`gaps\`; the prose names the ones a recruiter most needs to know, so
+    someone who reads only those still learns what he doesn't have without
+    reading a list. A sentence that only names what the record doesn't show
     cites nothing, exactly as an unmet row cites nothing: an absence has no
     chunk to point at, and the site marks every gap named in a cited
     sentence as unverified.

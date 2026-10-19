@@ -156,11 +156,11 @@ describe("system prompt", () => {
     );
   });
 
-  // The job-description summary: strengths first, every gap still named
-  // (2026-10-19, a policy call for Sidhant — docs/idea-decisions.md §4). The
-  // order of the summary moved; the honesty of the rows did not, and these are
-  // the sentences that say so. Losing one of them is how "lead with the
-  // matches" quietly becomes "leave out the gaps".
+  // The job-description summary: strengths first, the top gaps named in prose
+  // and every gap kept in the table (2026-10-19, Sidhant's call — docs/idea-
+  // decisions.md §4). The order and length of the summary moved; the honesty
+  // of the rows did not, and these are the sentences that say so. Losing one
+  // of them is how "lead with the matches" quietly becomes "leave out the gaps".
   test("the job-description summary leads with the matches and keeps every gap", () => {
     // Whitespace-folded: the prompt is hard-wrapped, and a rule reflowed onto
     // two lines is still the rule.
@@ -168,7 +168,10 @@ describe("system prompt", () => {
     for (const rule of [
       "Leading with the matches changes the order, never the verdicts.",
       "describes a requirement more strongly than its row does",
-      "name every unmet requirement",
+      "name the two or three most important gaps",
+      "point to the table for the rest",
+      "Every unmet requirement stays in its row",
+      "lists every requirement he doesn't meet",
       "Don't open either one",
       "A requirement no ramp closes",
       "Ramp framing is only for a posting where the matches outweigh the gaps.",
