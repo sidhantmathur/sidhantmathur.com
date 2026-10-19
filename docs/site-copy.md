@@ -8,10 +8,23 @@ No taglines beyond what's written here. [TODO] items are placeholders for Sidhan
 ## Meta
 
 Site title: Sidhant Mathur
-Meta description: Sales operations specialist and builder. I make internal tools
-and revenue systems at Nokia, and I'm co-founder and CTO of A Darle 20, a
-marketplace for tabletop game sessions in Latin America — 2,100+ bookings in
-its first four months.
+Homepage title (tab, search result, share card): Sidhant Mathur — RevOps and
+sales operations
+Meta description: Revenue and sales operations: I build the tools sales and
+finance teams run on. Sales operations specialist at Nokia, co-founder and CTO
+of A Darle 20, based in Toronto. Looking for a RevOps / GTM systems role.
+
+[DRAFT 2026-10-19, wave 2 of the council plan. The previous description
+("Sales operations specialist and builder. I make internal tools and revenue
+systems at Nokia, and I'm co-founder and CTO of A Darle 20, a marketplace for
+tabletop game sessions in Latin America — 2,100+ bookings in its first four
+months.") led with neither role and spent half its length on tabletop games.
+The same description is the Person JSON-LD's, and `llms.txt` opens with the
+role line.]
+
+Share card (OG image): the headshot beside "Sidhant Mathur" and "Revenue and
+sales operations", then "I build the tools sales and finance teams run on." —
+replacing the hero heading, which says nothing about the job.
 
 ---
 
@@ -23,6 +36,16 @@ Chosen 2026-07-27 from docs/hero-options.md. The previous heading ("I build
 internal tools, revenue systems, and the occasional whole product") entered
 Sidhant into a comparison with career software engineers, which is not the
 contest he wants to be judged in.
+
+Name and role line (above the heading, beside a small square headshot):
+Sidhant Mathur
+Revenue and sales operations: I build the tools sales and finance teams run on.
+
+[DRAFT 2026-10-19, wave 2. The council's finding: the front door named neither
+him nor his role. The heading stays Sidhant's; this sits over it in the words a
+recruiter searches for. `ROLE_LINE` in `content/recruiter.ts`, checked against
+`resume.md` by the eval suite ("AI-native revenue operations builder"; "sales
+and finance teams at Nokia").]
 
 Heading:
 I learn what the problem needs, then I build the thing.
@@ -40,7 +63,15 @@ the `looking for` and `where` TL;DR rows fused into one sentence
 every row.]
 
 CTA row (under the subline):
-View resume · Email me · Interview this site ↓
+Download resume (PDF) · hello@sidhantmathur.com [copy] · LinkedIn ↗
+Text links under it: Resume as a web page · Interview this site ↓
+
+[DRAFT 2026-10-19, wave 2. Was "View resume · Email me · Interview this site
+↓". The PDF is primary because it is what a recruiter attaches to an ATS; the
+HTML resume is a text link. That is an open question ("resume target") until
+PostHog says which one visitors take — both are tracked. The address is on
+screen with a copy button because a bare mailto: does nothing on a desktop with
+no mail client. "Interview this site" is a text link now, not a third button.]
 
 [Same pass. This reverses the 2026-07-27 note below, deliberately: a
 chat-first page failed the five-second scan, and "the input is the only call
@@ -75,16 +106,41 @@ All six rows stay canonical here and stay checked by the suite.
 
 Label: tl;dr
 
+[Wave 2, 2026-10-19: reordered. Nokia — the current job and the sales-ops
+evidence — was labelled "before that" and sat under A Darle 20. It now leads,
+labelled "now", with its outcomes in the rows; A Darle 20 follows as "also".
+The old rows were: now — "Sales operations specialist at Nokia, in Toronto.
+Co-founder and CTO of A Darle 20." (`bio.md`); shipped — "A Darle 20 — a
+two-sided marketplace, architected and shipped solo. 1,400+ registered users,
+127 hosts and 2,100+ bookings in its first four months."; before that — "At
+Nokia: a self-serve Power App used by 80+ stakeholders across seven regions,
+and a Salesforce Analytics to Power BI migration for 150+ users."]
+
 | Row label | Value | From |
 | --- | --- | --- |
-| now | Sales operations specialist at Nokia, in Toronto. Co-founder and CTO of A Darle 20. | `bio.md` |
-| shipped | A Darle 20 — a two-sided marketplace, architected and shipped solo. 1,400+ registered users, 127 hosts and 2,100+ bookings in its first four months. | `resume.md` |
-| before that | At Nokia: a self-serve Power App used by 80+ stakeholders across seven regions, and a Salesforce Analytics to Power BI migration for 150+ users. | `projects-nokia.md` |
+| now | Sales operations specialist at Nokia since Jun 2024, building internal tools and automation for global sales and finance teams. | `resume.md` |
+| shipped | A self-serve Power App used by 80+ stakeholders across 7 regions, which ended a manual process that took one finance analyst's entire workday, every day of quarter-end close — and the migration of all sales reporting from Salesforce Analytics to Power BI for 150+ users. | `resume.md` |
+| also | Co-founder and CTO of A Darle 20, a two-sided marketplace he architected and shipped solo: 1,400+ registered users, 127 hosts and 2,100+ bookings in its first four months. | `resume.md` |
 | how he builds | An AI-agent-heavy workflow in Claude Code — agents write most of the code, he keeps architecture, code review and release. | `projects-adarle20.md` |
 | looking for | A RevOps / GTM systems role at an AI-forward company. | `faq.md`, `resume.md` |
 | where | Toronto, ON. Canadian citizen, no visa sponsorship needed. | `faq.md` |
 
 Footer link (to /resume): The resume has the rest, and so does the box below.
+
+### Case-study cards (under the tl;dr)
+
+[DRAFT 2026-10-19, wave 2. One number each, a link to the long version. Dell
+stays off the homepage. `CASE_CARDS` in `content/recruiter.ts`, checked
+against the file each names.]
+
+Label: case studies
+
+| Card | Number | Under it | From |
+| --- | --- | --- | --- |
+| Reporting tools at Nokia | 150+ | users on the sales reporting he moved from Salesforce Analytics to Power BI | `projects-nokia.md` |
+| A Darle 20 | 2,100+ | bookings in the marketplace's first four months | `projects-adarle20.md` |
+
+Link on each: Read the case study →
 
 ### Projects section
 
@@ -146,7 +202,10 @@ recruiter/engineer toggle, per decisions #26.]
 - Give me the 30-second version
 - What has he shipped end to end?
 - Is he a fit for a RevOps role at an AI-forward company?
-- Does he need visa sponsorship?
+- What did he build at Nokia?
+
+[Wave 2, 2026-10-19: the fourth chip was "Does he need visa sponsorship?",
+which the hero subline already answers. The Nokia work had no chip.]
 
 The `/fit` slash command sends the third one verbatim, so the two can't drift
 into different questions.

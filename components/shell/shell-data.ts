@@ -1,6 +1,7 @@
 import { FIT_QUESTION } from "@/content/recruiter";
 import { JD_PREFIX } from "@/lib/job-posting";
 import { ROAST_REQUEST, SITE_REQUEST } from "@/lib/site-question";
+import { EMAIL, GITHUB_URL, LINKEDIN_URL } from "@/lib/site";
 import { PANELS, SLASH_PANELS, type PanelView, type PlainPanelKind } from "./panels";
 
 // Navigation and copy for the app shell.
@@ -136,9 +137,9 @@ export const PROJECT_LINKS = [
 ];
 
 export const SOCIAL_LINKS = [
-  { label: "GitHub", href: "https://github.com/sidhantmathur" },
-  { label: "LinkedIn", href: "https://www.linkedin.com/in/sidhantmathur" },
-  { label: "Email", href: "mailto:hello@sidhantmathur.com" },
+  { label: "GitHub", href: GITHUB_URL },
+  { label: "LinkedIn", href: LINKEDIN_URL },
+  { label: "Email", href: `mailto:${EMAIL}` },
 ];
 
 export type SlashCommand = {

@@ -54,6 +54,9 @@ export type AnalyticsEvent =
   | "chat_error"
   | "chat_rate_limited"
   | "resume_download"
+  // The HTML resume, opened from a CTA. Its own event so the PDF-or-HTML
+  // question the council left open can be answered from real clicks.
+  | "resume_open"
   | "contact_click"
   // Copy-to-clipboard. Worth measuring: the site stores nothing, so a copy is
   // the clearest signal that an answer was considered worth keeping.

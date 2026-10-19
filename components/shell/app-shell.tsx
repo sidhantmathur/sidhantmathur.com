@@ -2,6 +2,7 @@
 
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
+import Image from "next/image";
 import Link from "next/link";
 import {
   HEADER_NAV,
@@ -33,13 +34,19 @@ import {
   DISCLAIMER,
   downloadAs,
   RESUME_PDF,
+  HEADSHOT,
   RESUME_PDF_FILENAME,
   SITE_NAME,
   SITE_URL,
 } from "@/lib/site";
 import { track } from "@/lib/analytics";
-import { RecruiterTldr } from "./recruiter-tldr";
-import { POSITIONING, SUGGESTED_QUESTIONS as SUGGESTED } from "@/content/recruiter";
+import { CaseCards, RecruiterTldr } from "./recruiter-tldr";
+import {
+  POSITIONING,
+  ROLE_LINE,
+  SUGGESTED_QUESTIONS as SUGGESTED,
+} from "@/content/recruiter";
+import { EmailCopy, LinkedInButton, ResumePdfButton } from "@/components/contact-actions";
 import { costOfTurn, sumCosts } from "@/lib/pricing";
 import { MODEL_IDS } from "@/lib/models";
 import { isShellPanel, type ShellPanelKind } from "./panels";
@@ -537,9 +544,6 @@ export function AppShell() {
     [messages, isBusy, lastId],
   );
 
-  // One address, already in shell-data — the Email CTA must not retype it.
-  const emailHref = SOCIAL_LINKS.find((s) => s.label === "Email")!.href;
-
   // The four recruiter chips (#26), built once and rendered in two places by
   // width: in the dock above the composer from md up — grouped with the
   // interview they start — and in the hero column below md, after the facts,
@@ -871,6 +875,32 @@ export function AppShell() {
                 // it. The old fold arithmetic (chip order swaps, disclaimer
                 // trims) went with the layout it measured.
                 <div className="flex flex-col gap-4">
+                  {/* Who and what, above his headline (wave 2). The name was
+                      a 13px label in the header and the role was nowhere on
+                      the first screen; this line says both in the words a
+                      recruiter searches for. The photo is small on purpose —
+                      a marker of a person beside his name, not a portrait —
+                      and slightly settled into the dark ground (see the
+                      headshot rule in app/globals.css). */}
+                  <div className="flex items-center gap-3">
+                    <Image
+                      src={HEADSHOT}
+                      alt="Sidhant Mathur"
+                      width={56}
+                      height={56}
+                      sizes="56px"
+                      loading="eager"
+                      className="headshot h-12 w-12 shrink-0 border border-line-strong object-cover md:h-14 md:w-14"
+                    />
+                    <p className="min-w-0 [font-family:var(--font-geist-sans)]">
+                      <span className="block text-[16px] font-medium leading-snug text-text">
+                        {SITE_NAME}
+                      </span>
+                      <span className="block text-[15px] leading-snug text-text-soft">
+                        {ROLE_LINE.value}
+                      </span>
+                    </p>
+                  </div>
                   <h1 className="t-hero max-w-[24ch] font-semibold text-text [font-family:var(--font-geist-sans)]">
                     {HERO}
                   </h1>
@@ -880,39 +910,49 @@ export function AppShell() {
                   <p className="t-body max-w-[52ch] text-text-soft [font-family:var(--font-geist-sans)]">
                     {POSITIONING.value}
                   </p>
-                  {/* The three CTAs, resume first — the one thing every
-                      visitor type needs a path to. "Interview this site" is a
-                      CTA doing a competence claim's work; it only focuses the
-                      composer, so it needs hydration and is gated like every
-                      control that does. */}
-                  <div className="flex flex-col gap-2.5 pt-2 sm:flex-row">
+                  {/* The ways to act (wave 2). The resume PDF is primary —
+                      it is the file a recruiter attaches to an ATS record —
+                      with the HTML resume a text link beside the chat's.
+                      That choice is one the council left open until PostHog
+                      can say which one visitors take; both are tracked. The
+                      email is on screen and copyable, because a bare mailto:
+                      is a dead end on a desktop with no mail client. */}
+                  <div className="flex flex-col gap-2.5 pt-2 sm:flex-row sm:flex-wrap">
+                    <ResumePdfButton surface="front-door" primary />
+                    <EmailCopy surface="front-door" />
+                    <LinkedInButton surface="front-door" />
+                  </div>
+                  {/* Two text links. "Interview this site" was a third equal
+                      button; it only focuses the composer, so it is demoted
+                      to the register of a link and still gated on hydration
+                      like every control that needs JavaScript. */}
+                  <div className="-mt-1.5 flex flex-wrap items-center gap-x-5 text-[14px] md:text-[13px]">
                     <Link
                       href="/resume"
-                      className="flex h-11 touch-manipulation items-center justify-center border border-accent bg-accent px-5 text-[13px] font-medium text-bg no-underline transition-opacity hover:opacity-90"
+                      onClick={() => track("resume_open", { surface: "front-door" })}
+                      className="flex min-h-[44px] touch-manipulation items-center text-text-soft underline decoration-line-strong underline-offset-4 transition-colors hover:text-accent hover:decoration-accent"
                     >
-                      View resume
+                      Resume as a web page
                     </Link>
-                    <a
-                      href={emailHref}
-                      className="flex h-11 touch-manipulation items-center justify-center border border-line-strong px-5 text-[13px] text-text no-underline transition-colors hover:border-accent hover:text-accent"
-                    >
-                      Email me
-                    </a>
                     <button
                       type="button"
                       onClick={() => inputRef.current?.focus()}
                       disabled={!hydrated}
                       data-js-control
-                      className="flex h-11 touch-manipulation items-center justify-center border border-line-strong px-5 text-[13px] text-text transition-colors hover:border-accent hover:text-accent disabled:border-line disabled:text-text-dim"
+                      className="flex min-h-[44px] touch-manipulation items-center text-text-soft underline decoration-line-strong underline-offset-4 transition-colors hover:text-accent hover:decoration-accent disabled:text-text-dim disabled:no-underline"
                     >
                       Interview this site ↓
                     </button>
                   </div>
                   {/* #25 — the six-second scan, at body scale. See the notes
                       in recruiter-tldr.tsx. */}
-                  <div className="pt-3">
+                  <div>
                     <RecruiterTldr />
                   </div>
+                  {/* Two case studies, one number each (wave 2). Before this
+                      no project was linked from the front door's body at any
+                      width. */}
+                  <CaseCards />
                   {/* Below md the chips live here, after the facts; from md
                       up they sit in the dock, grouped with the composer they
                       feed. See chipButtons above. */}

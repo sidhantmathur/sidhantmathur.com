@@ -31,24 +31,32 @@ export const TLDR_LABEL = "tl;dr";
 
 // Scan-shaped rather than prose on purpose: the reader this exists for has not
 // started reading yet. Six seconds, per decisions #25.
+//
+// ORDER (wave 2, 2026-10-19). Nokia first and labelled as current, because it
+// is: the council review found the current job and the only sales-ops evidence
+// labelled "before that" and sitting second, under a tabletop marketplace. For
+// the RevOps and sales-ops roles he is applying to, Nokia is the proof and A
+// Darle 20 the differentiator, so they now run in that order — and the Nokia
+// rows carry outcomes (the close process the Power App ended, the migration's
+// reach) rather than a job title alone. Every figure is the resume's.
 export const RECRUITER_TLDR: TldrRow[] = [
   {
     label: "now",
     value:
-      "Sales operations specialist at Nokia, in Toronto. Co-founder and CTO of A Darle 20.",
-    source: "content/knowledge/bio.md",
+      "Sales operations specialist at Nokia since Jun 2024, building internal tools and automation for global sales and finance teams.",
+    source: "content/knowledge/resume.md",
   },
   {
     label: "shipped",
     value:
-      "A Darle 20 — a two-sided marketplace, architected and shipped solo. 1,400+ registered users, 127 hosts and 2,100+ bookings in its first four months.",
+      "A self-serve Power App used by 80+ stakeholders across 7 regions, which ended a manual process that took one finance analyst's entire workday, every day of quarter-end close — and the migration of all sales reporting from Salesforce Analytics to Power BI for 150+ users.",
     source: "content/knowledge/resume.md",
   },
   {
-    label: "before that",
+    label: "also",
     value:
-      "At Nokia: a self-serve Power App used by 80+ stakeholders across seven regions, and a Salesforce Analytics to Power BI migration for 150+ users.",
-    source: "content/knowledge/projects-nokia.md",
+      "Co-founder and CTO of A Darle 20, a two-sided marketplace he architected and shipped solo: 1,400+ registered users, 127 hosts and 2,100+ bookings in its first four months.",
+    source: "content/knowledge/resume.md",
   },
   {
     label: "how he builds",
@@ -82,6 +90,61 @@ export const POSITIONING: TldrRow = {
   source: "content/knowledge/faq.md",
 };
 
+// The name and role line above the H1 (wave 2). The council's finding: the
+// front door didn't name him or his role — the name was a 13px header label
+// and "I learn what the problem needs…" is a personality line, not a job. So
+// this sits over it, in the words a recruiter searches for: revenue
+// operations, sales operations. Sidhant's H1 stays exactly as it was.
+//
+// Two claims, both the resume's: he is a sales operations specialist and an
+// "AI-native revenue operations builder", and the tools are for sales and
+// finance ("quarter-end close infrastructure for global sales and finance
+// teams at Nokia"; "vague requests from sales and finance leadership").
+// Checked like the rows.
+export const ROLE_LINE: TldrRow = {
+  label: "role",
+  value: "Revenue and sales operations: I build the tools sales and finance teams run on.",
+  source: "content/knowledge/resume.md",
+};
+
+// The two case-study cards under the tl;dr (wave 2). One number each, the
+// biggest true one for the reader the site is for, and a link to the long
+// version. Nokia first for the same reason the rows are. Dell stays off the
+// homepage — it is a 2018 internship, and its $129M is an estimate.
+//
+// `stat` and `statLabel` together are a claim and are checked against
+// `source` by evals/track-b.test.mjs, like every row.
+export type CaseCard = {
+  slug: "nokia" | "adarle20";
+  /** The case study's own title, as content/projects.ts writes it. */
+  title: string;
+  stat: string;
+  statLabel: string;
+  href: string;
+  source: string;
+};
+
+export const CASE_CARDS: CaseCard[] = [
+  {
+    slug: "nokia",
+    title: "Reporting tools at Nokia",
+    stat: "150+",
+    statLabel: "users on the sales reporting he moved from Salesforce Analytics to Power BI",
+    href: "/projects/nokia",
+    source: "content/knowledge/projects-nokia.md",
+  },
+  {
+    slug: "adarle20",
+    title: "A Darle 20",
+    stat: "2,100+",
+    statLabel: "bookings in the marketplace's first four months",
+    href: "/projects/adarle20",
+    source: "content/knowledge/projects-adarle20.md",
+  },
+];
+
+export const CASE_CARDS_LABEL = "case studies";
+
 // What the tl;dr block under the hero renders: the rows the subline doesn't
 // already carry. Derived, not retyped — the full six-row list above stays the
 // canonical set and stays fully checked.
@@ -100,11 +163,16 @@ export const HERO_TLDR = RECRUITER_TLDR.filter(
 // suggested question that forces a roleFit call or loads the repo corpus turns
 // the site's own affordance into its worst path. Asserted in
 // evals/track-b.test.mjs.
+//
+// Wave 2 swapped the fourth. "Does he need visa sponsorship?" asked what the
+// hero subline already answers in so many words, so it spent a chip on a
+// question nobody left the first screen with. The Nokia work is the proof for
+// the roles he is applying to and had no chip at all.
 export const SUGGESTED_QUESTIONS = [
   "Give me the 30-second version",
   "What has he shipped end to end?",
   "Is he a fit for a RevOps role at an AI-forward company?",
-  "Does he need visa sponsorship?",
+  "What did he build at Nokia?",
 ];
 
 /** The chip the `/fit` slash command sends. One string, two surfaces. */

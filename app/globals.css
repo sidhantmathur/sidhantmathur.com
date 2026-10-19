@@ -281,6 +281,19 @@ body {
 }
 
 /* ---------------------------------------------------------------------------
+   The headshot
+   ---------------------------------------------------------------------------
+   A daylight photo — bright foliage, warm brick — set beside a name on a
+   near-black ground. At full saturation it was the brightest thing on the
+   first screen by a distance and read as pasted on. Taken down a step in
+   saturation and brightness it sits in the palette without being altered in
+   any way a person would notice: skin tones hold, the green stops shouting.
+   Square, a hairline border, radius 0, like every other object here. */
+.headshot {
+  filter: saturate(0.82) brightness(0.9);
+}
+
+/* ---------------------------------------------------------------------------
    Before hydration
    ---------------------------------------------------------------------------
    The seconds between the page painting and its JavaScript arriving. On a
