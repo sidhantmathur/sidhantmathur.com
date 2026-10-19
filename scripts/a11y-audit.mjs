@@ -471,6 +471,32 @@ const FAILURE_CASES = [
       }),
     wayOut: false,
   },
+  // The one with no error anywhere on the wire: a clean HTTP 200 whose turn
+  // reasons and finishes without a word, as the default model did on the
+  // RevOps chip in production. The alert has to come from the browser's own
+  // transport noticing, which is the path this case exists to walk.
+  {
+    label: "empty_answer",
+    handle: (route) =>
+      route.fulfill({
+        status: 200,
+        headers: {
+          "content-type": "text/event-stream",
+          "x-vercel-ai-ui-message-stream": "v1",
+        },
+        body:
+          [
+            { type: "start" },
+            { type: "reasoning-start", id: "r1" },
+            { type: "reasoning-delta", id: "r1", delta: "Thinking about the question…" },
+            { type: "reasoning-end", id: "r1" },
+            { type: "finish" },
+          ]
+            .map((chunk) => `data: ${JSON.stringify(chunk)}\n\n`)
+            .join("") + "data: [DONE]\n\n",
+      }),
+    wayOut: true,
+  },
 ];
 
 if (routes.includes("/")) {
