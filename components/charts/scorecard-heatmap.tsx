@@ -28,7 +28,7 @@ export function ScorecardHeatmap({ rows, groups }: ScorecardHeatmapProps) {
     // saying there was one.
     <>
       <ScaleKey />
-      <ScrollFade width={520} className="mt-3">
+      <ScrollFade width={520} className="mt-3" label="Pass rate by model and eval group">
       <table className={`t-meta w-full ${floorWidth(520)} border-separate border-spacing-[2px]`}>
         <caption className="sr-only">
           Pass rate by model and eval group. Each cell prints its own value.
