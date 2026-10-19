@@ -82,9 +82,8 @@ the tier is a cost boundary, and it holds whichever model bills most per turn.
 `anthropic/claude-haiku-5.5` and gpt-5.6-luna became `openai/gpt-6-luna`, both
 $0.10/$0.50. DeepSeek 0731 was repriced to $0.076/$0.153. Every cache rate is
 now the Gateway's published figure, and two of the derived ones had been well
-off. The per-row record is in the header of `lib/models.ts`. **Not
-smoke-tested**: there was no `AI_GATEWAY_API_KEY` in `.env.local`. What needs
-Sidhant:
+off. The per-row record is in the header of `lib/models.ts`. The smoke test
+that followed is below the list. What needs Sidhant:
 
 1. **The premium tier no longer separates anything.** Applied as written, the
    rule now puts `gemini-3.5-flash-lite` in premium. At $0.30/$2.50 it is the
@@ -106,21 +105,151 @@ Sidhant:
    visitors' turns can read several times low. There are two fixes, both route
    changes: pin a provider (`providerOptions.gateway.order` or `only`), or price
    turns from the Gateway's own per-request cost in the response metadata
-   instead of estimating at list price.
+   instead of estimating at list price. *In the smoke test the risk did not
+   show:* all ten DeepSeek turns went to runware, the headline-price provider,
+   and on every one of the 35 turns the Gateway's reported cost matched the
+   meter's list-price estimate exactly. Nothing guarantees that routing,
+   though, which is why the label stays.
 3. **deepseek-v4.1-flash is the newer version.** DeepSeek's own endpoint on
    the Gateway serves it rather than 0731. It was not swapped in for two
    reasons: its first-party rate doubles in weekday peak windows (01:00–04:00
    and 06:00–10:00 UTC), which a list-price meter cannot express, and the swap
    would change the default model.
 4. **Haiku 5.5 thinks by default; 4.5 did not.** Thinking bills against
-   `MAX_OUTPUT_TOKENS`, which is 600 on an ordinary turn. If a smoke test shows
-   `finishReason: "length"` with a short or empty answer, lower Haiku's effort
-   level, which defaults to medium, rather than raising the cap. GPT-6 Luna is a
-   reasoning model as 5.6 was, and 5.6 fit under the cap.
+   `MAX_OUTPUT_TOKENS`, which is 600 on an ordinary turn. The smoke test
+   confirmed it: with default thinking, the RevOps chip spent 599 of 600 tokens
+   thinking and rendered nothing. With thinking off, that chip still failed: a
+   one-line preamble plus the `roleFit` call came to more than 600 tokens, and
+   the call was cut off. Haiku needs thinking off *and* more room on
+   tool-calling turns.
 
 The bake-off should be re-run once 1–4 are settled. Three of the five models
 on offer have never been measured. At current list prices, with July's token
 counts, it should cost roughly $0.20–$0.50 in total.
+
+### Smoke test, 2026-10-19 — the data for choosing a default
+
+The council reviews found that the default, deepseek-v4-flash-0731, returns
+blank answers. This test reproduces that and measures every model in the
+catalogue on the same five turns: the four homepage chips
+(`SUGGESTED_QUESTIONS` in `content/recruiter.ts`) and one GTM-systems job
+posting of about 2,500 characters, sent with the JD form's prefix. DeepSeek
+and Haiku 5.5 also ran with reasoning switched off.
+
+**Method.** One turn per cell, each in a fresh conversation. The server was
+`next dev` on this branch, with only `AI_GATEWAY_API_KEY` set, so the route
+used its in-memory limiter. Reasoning was switched off with AI SDK 7's
+top-level `reasoning: 'none'` option, which the Gateway translates per
+provider. Both models then reported 0 reasoning tokens. It was passed through
+a temporary local hook in the route that was never committed. Times are
+measured at the client: "first visible" is the first text or tool card,
+"total" is the end of the stream. Cost is the list price from `lib/models.ts`,
+and the Gateway's own reported cost was identical on every turn. In total:
+35 turns, $0.070.
+
+**Summary.**
+
+| Model | Reasoning | Rendered | Chips: first visible | JD: card at / done | $ per chip turn (warm cache) | $ JD |
+| --- | --- | --- | --- | --- | --- | --- |
+| deepseek-v4-flash-0731 | default | **3/5**: RevOps chip and JD blank | 1.5–3.2 s | never / 43 s | 0.0001–0.0003 | 0.0008 |
+| deepseek-v4-flash-0731 | none | 4/5: JD card all unclear, raw markup in the answer | 0.8–5.6 s | 4.5 / 18 s | 0.0001–0.0009 | 0.0009 |
+| **gpt-6-luna** | default | **5/5** | 0.9–4.6 s | 25 / 32 s | 0.0001–0.0006 | 0.0026 |
+| claude-haiku-5.5 | default | **2/5** clean: RevOps chip blank, "shipped" truncated, JD card duplicated | 1.1–2.6 s | 12 / 22 s | 0.0002–0.0004 | 0.0049 |
+| claude-haiku-5.5 | none | 4/5: RevOps chip has no card | 0.7–1.2 s | 11 / 16 s | 0.0001–0.0004 | 0.0040 |
+| gpt-5-mini | default | **2/5** clean: two chips blank, JD has no card | 1.7–4.1 s | 31 / 72 s | 0.0005–0.0013 | 0.0198 |
+| gemini-3.5-flash-lite | default | 5/5, but the JD covered 6 of 14 requirements | 0.7–3.2 s | 3.9 / 4.9 s | 0.0021–0.0056 | 0.0090 |
+
+The first turn for each model ran with a cold cache and cost several times a
+warm one; it is left out of the "warm" column. Gemini's cache almost never
+hit, so every Gemini turn is effectively cold.
+
+**Recommendation: make `openai/gpt-6-luna` the default, unchanged.** It is the
+only model that rendered all five turns with no configuration change. Its
+chips finished in 1–7 s for under a tenth of a cent each. On the posting it
+produced a 14-row card that names the gaps (3 met, 8 partial, 3 unmet), and it
+was the cheapest JD turn to produce a usable card. Its weakness is
+JD latency: 25 s before the card appears, with 1,397 reasoning tokens. Trying
+`reasoning: 'low'` on JD turns is the obvious next experiment (untested).
+
+How the others rank:
+
+- **Haiku 5.5 with thinking off** produced a complete JD card (5 met,
+  6 partial, 2 unmet, 1 unclear) in 16 s, the fastest complete card in the
+  test. It loses only the RevOps chip, and only to the 600-token cap. If the non-JD cap rose to about 1,000, it is the
+  likely second choice (untested).
+- **DeepSeek with reasoning off** fixes the chips, but on the posting its
+  `roleFit` call came back empty (14/14 unclear). It then wrote its retry into
+  the visible answer as 6,200 characters of raw `<｜DSML｜tool_calls>` markup.
+  Not usable for JD turns.
+- **Gemini** is the fastest and never blank, but it extracted 6 of the
+  posting's 14 requirements and needed two `roleFit` attempts on the RevOps
+  chip. With no cache hits, it costs 3 to 20 times Luna per turn, though still
+  under a cent.
+- **gpt-5-mini** should be fixed or dropped. It blanked on two chips, and the
+  JD took 72 s and $0.02 and still produced no card.
+- **DeepSeek at default reasoning should not stay the default.** It blanked
+  on 2 of 5 turns. Both blanks spent the entire cap on reasoning
+  (600/600 and 4,000/4,000).
+
+**The premium tier should not survive.** No turn in the test cost two cents.
+The model the literal rule makes premium, Gemini, is the fastest one that
+never blanked, so the 5/hour bucket currently rations the snappiest model
+rather than the expensive one. Option (a) above, turning the tier off, is what
+the data supports.
+
+**What the data says about the route** (Sidhant's call, none of it in
+committed code):
+
+- **Choose reasoning per model.** A `reasoning` field on each catalogue row,
+  passed to `streamText`, would stop a reasoning-heavy model spending the
+  whole cap. The top-level option works through the Gateway: `'none'` took
+  DeepSeek and Haiku to 0 reasoning tokens.
+- **The 600-token cap is per step.** A `roleFit` call alone took 360–450
+  tokens on the models that completed one, so a model that writes a sentence
+  before the call runs out.
+- **Show a turn that ends empty as a failure.** Five of the 35 turns ended
+  with no text and no card, behind a green dot. That is the council's
+  point, now measured.
+
+**Every turn:**
+
+| Model | Reasoning | Prompt | What rendered | finishReason | First visible (s) | Total (s) | In / cached | Out (reasoning) | $ list |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| deepseek-v4-flash-0731 | default | 30-second | text | stop | 1.8 | 2.8 | 7,196 / 0 | 274 (80) | 0.00059 |
+| deepseek-v4-flash-0731 | default | shipped | text + `showProject` card | stop | 3.2 | 6.8 | 14,837 / 14,592 | 518 (278) | 0.00030 |
+| deepseek-v4-flash-0731 | default | RevOps fit | **nothing**: all 600 tokens spent reasoning | length | — | 6.5 | 7,204 / 7,168 | 600 (600) | 0.00019 |
+| deepseek-v4-flash-0731 | default | visa | text | stop | 1.5 | 1.5 | 7,195 / 7,168 | 67 (37) | 0.00011 |
+| deepseek-v4-flash-0731 | default | JD | **nothing**: all 4,000 tokens spent reasoning | length | — | 43.2 | 7,787 / 7,168 | 4,000 (4000) | 0.00076 |
+| deepseek-v4-flash-0731 | none | 30-second | text + `showResume` card | stop | 1.0 | 6.4 | 14,534 / 7,168 | 308 (0) | 0.00071 |
+| deepseek-v4-flash-0731 | none | shipped | text + `showProject` card | stop | 0.8 | 4.2 | 14,603 / 14,080 | 260 (0) | 0.00028 |
+| deepseek-v4-flash-0731 | none | RevOps fit | text + `roleFit` card | stop | 5.6 | 9.7 | 15,425 / 6,912 | 863 (0) | 0.00088 |
+| deepseek-v4-flash-0731 | none | visa | text | stop | 0.9 | 0.9 | 7,116 / 6,912 | 29 (0) | 0.00012 |
+| deepseek-v4-flash-0731 | none | JD | card with 14/14 unclear, then 6.2k chars of raw `DSML` tool-call markup as the answer | stop | 4.5 | 18.4 | 23,743 / 19,712 | 1,807 (0) | 0.00086 |
+| gpt-6-luna | default | 30-second | text | stop | 1.5 | 2.6 | 6,267 / 0 | 139 (23) | 0.00085 |
+| gpt-6-luna | default | shipped | text | stop | 2.0 | 2.8 | 6,268 / 6,253 | 204 (122) | 0.00017 |
+| gpt-6-luna | default | RevOps fit | text + `roleFit` card | stop | 4.6 | 7.0 | 13,568 / 12,525 | 601 (61) | 0.00056 |
+| gpt-6-luna | default | visa | text | stop | 0.9 | 1.2 | 6,266 / 6,253 | 42 (9) | 0.00009 |
+| gpt-6-luna | default | JD | card (3 met, 8 partial, 3 unmet) | stop | 25.0 | 32.1 | 25,932 / 20,437 | 3,361 (1397) | 0.00256 |
+| claude-haiku-5.5 | default | 30-second | text | stop | 2.1 | 2.8 | 10,375 / 0 | 440 (208) | 0.00151 |
+| claude-haiku-5.5 | default | shipped | text cut off mid-answer | length | 2.6 | 3.2 | 10,376 / 10,290 | 600 (449) | 0.00041 |
+| claude-haiku-5.5 | default | RevOps fit | **nothing**: 599 of 600 tokens spent thinking | length | — | 3.7 | 10,388 / 10,290 | 600 (599) | 0.00041 |
+| claude-haiku-5.5 | default | visa | text | stop | 1.1 | 1.2 | 10,378 / 10,290 | 92 (43) | 0.00016 |
+| claude-haiku-5.5 | default | JD | good card, then a second card with 14/14 unclear | stop | 12.0 | 22.1 | 48,948 / 30,870 | 5,458 (1594) | 0.00485 |
+| claude-haiku-5.5 | none | 30-second | text | stop | 1.0 | 2.1 | 10,374 / 0 | 311 (0) | 0.00145 |
+| claude-haiku-5.5 | none | shipped | text | stop | 0.7 | 2.0 | 10,375 / 10,289 | 354 (0) | 0.00029 |
+| claude-haiku-5.5 | none | RevOps fit | a one-line preamble, then the `roleFit` call cut off by the cap; no card | length | 0.9 | 3.6 | 10,387 / 10,289 | 600 (0) | 0.00041 |
+| claude-haiku-5.5 | none | visa | text | stop | 1.2 | 1.4 | 10,377 / 10,289 | 59 (0) | 0.00014 |
+| claude-haiku-5.5 | none | JD | card (5 met, 6 partial, 2 unmet, 1 unclear); answer opens with commentary on its own retry | stop | 10.8 | 15.5 | 47,770 / 30,867 | 4,076 (0) | 0.00404 |
+| gpt-5-mini | default | 30-second | text | stop | 4.1 | 5.4 | 6,267 / 0 | 584 (384) | 0.00273 |
+| gpt-5-mini | default | shipped | **nothing**: 576 of 576 tokens spent reasoning | length | — | 5.5 | 6,268 / 6,144 | 576 (576) | 0.00134 |
+| gpt-5-mini | default | RevOps fit | **nothing**: 576 of 576 tokens spent reasoning | length | — | 5.8 | 6,275 / 6,144 | 576 (576) | 0.00134 |
+| gpt-5-mini | default | visa | text | stop | 1.7 | 2.0 | 6,266 / 6,144 | 149 (64) | 0.00048 |
+| gpt-5-mini | default | JD | no card (`roleFit` produced no output); 6.1k chars of prose instead | stop | 31.3 | 72.4 | 32,696 / 22,144 | 8,284 (5184) | 0.01976 |
+| gemini-3.5-flash-lite | default | 30-second | text | stop | 0.7 | 1.2 | 6,694 / 0 | 197 (0) | 0.00250 |
+| gemini-3.5-flash-lite | default | shipped | text | stop | 0.9 | 1.7 | 6,693 / 0 | 262 (0) | 0.00266 |
+| gemini-3.5-flash-lite | default | RevOps fit | called `roleFit` twice before a card rendered | stop | 3.2 | 4.2 | 22,206 / 11,472 | 797 (0) | 0.00556 |
+| gemini-3.5-flash-lite | default | visa | text | stop | 0.9 | 1.1 | 6,691 / 0 | 25 (0) | 0.00207 |
+| gemini-3.5-flash-lite | default | JD | card, but only 6 of the posting's 14 requirements extracted | stop | 3.9 | 4.9 | 21,769 / 0 | 970 (0) | 0.00896 |
 
 ## 3. Copy — Sidhant is doing this, do not write it
 
