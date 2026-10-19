@@ -291,6 +291,185 @@ Two earlier turns from this re-test (the 30-second and shipped chips, both
 rendered) ran on `next dev` before the run was stopped and restarted. They
 are not in the table, so every row comes from the same server.
 
+### Reasoning on posting turns, 2026-10-19 — `low` for Luna
+
+**Applied:** `openai/gpt-6-luna` runs `reasoning: 'low'` on posting turns
+and keeps the provider default everywhere else. Catalogue rows now take an
+optional `reasoning: { chat?, jobPosting? }`, which the route passes to
+`streamText` through `reasoningFor()` in `lib/models.ts`. A row without the
+key sends nothing, so every other model behaves exactly as before. The turn
+record now carries `usage.reasoningTokens`, and PostHog's
+`chat_turn_complete` gets `reasoning_tokens`.
+
+**Method.** Every turn went through the real route on `next dev`, with only
+`AI_GATEWAY_API_KEY` set. The level came from a temporary request header that
+was never committed. Each turn ran in a fresh conversation and was sent with
+the JD form's prefix. Times are measured at the client, from send. "Card" is
+the `roleFit` result arriving, which is when the table can render. "Evidenced
+rows" counts met and partial rows that cite a chunk. Prices are list prices
+via `lib/pricing.ts`. There were two postings. The first is a 2,500-character
+"GTM Systems Manager, Revenue Operations" posting written for this test: a
+mainstream Salesforce, CPQ, lead-routing and reporting role, the kind Sidhant
+is applying to. It is reproduced at the end of this section so the run can
+be repeated. The second is the eval suite's `revops-strong-fit` posting (566
+characters).
+
+| Setting | Posting | Extracted at | Card at | Done | Requirements | Met / partial / unmet | Evidenced rows | Out (reasoning) | $ list |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| default | long | 4.9 s | 28.3 s | 36.6 s | 14 | 0 / 7 / 7 | 7 | 3,740 (1,560) | 0.0035 |
+| default | long | 4.9 s | 32.5 s | 41.0 s | 14 | 1 / 7 / 6 | 8 | 3,775 (1,652) | 0.0028 |
+| default | long | 4.9 s | 29.4 s | 39.5 s | 14 | 2 / 7 / 5 | 9 | 3,331 (1,362) | 0.0025 |
+| **low** | long | 3.0 s | **13.1 s** | 16.9 s | 14 | 2 / 7 / 5 | 9 | 2,051 (132) | 0.0025 |
+| **low** | long | 3.7 s | **14.0 s** | 15.7 s | 14 | 2 / 7 / 5 | 9 | 1,865 (0) | 0.0016 |
+| **low** | long | 3.4 s | **14.2 s** | 16.2 s | 14 | 3 / 7 / 4 | 10 | 1,945 (0) | 0.0017 |
+| none | long | 3.6 s | 15.4 s | 17.9 s | 14 | 2 / 10 / 2 | 12 | 1,909 (0) | 0.0024 |
+| none | long | 3.6 s | 16.4 s | 18.7 s | 14 | 1 / 8 / 5 | 9 | 1,888 (0) | 0.0015 |
+| default | short | 6.3 s | 18.5 s | 37.9 s | 6 | 6 / 0 / 0 | 6 | 1,165 (512) | 0.0010 |
+| **low** | short | 1.9 s | **6.5 s** | 7.9 s | 6 | 5 / 1 / 0 | 6 | 633 (0) | 0.0007 |
+| none | short | 1.9 s | 6.9 s | 8.9 s | 6 | 5 / 1 / 0 | 6 | 681 (0) | 0.0008 |
+
+**Why `low`.** It was the fastest setting on both postings. The card arrived in
+13–14 s instead of 28–33 s, and in 6.5 s instead of 18.5 s on the short
+posting. Every run extracted the same requirements: 14 of 14 on the long
+posting and 6 of 6 on the short one. Its verdict counts are inside the
+default's own spread. Two of its three runs match the default's third run
+exactly (2 / 7 / 5), and the default ranged from 5 to 7 unmet on its own.
+`none` was barely slower, but one of its two runs rated the posting 2 unmet
+and 10 partial, the most generous reading in the test. That run makes `none`
+the less trustworthy choice for a feature whose point is naming gaps. `low`
+also halved output tokens, so the turn got cheaper too. On the short posting,
+`low` and `none` both marked "Strong SQL and executive-facing dashboards"
+partial where the default said met. The record names SQL/DAX modeling but
+doesn't establish "strong", so this is a stricter row, not a lost one.
+
+**Ordinary turns were not changed or re-measured.** Luna's chips already
+finished in 1–7 s with 9–122 reasoning tokens (the smoke test above), so there
+was no wait to cut.
+
+**What the stream does, which the phase line now uses.** At the default
+level, Luna sends `reasoning-start` and `reasoning-end` with nothing in
+between: 0 reasoning deltas on every default run. Each step's reasoning is a
+silent stretch: about 1 s before extraction, 10 s before the rows, and 5 s
+before the closing sentence. The longest gap between chunks was 5.3–8.6 s,
+less than half the client's 20 s stall watchdog. At `low` the longest gap was
+0.6–2.2 s. Sometimes `low` sends a short reasoning summary as deltas (75 of
+them, 431 characters, on one run). After reasoning, the `roleFit` call's own
+input streams for most of the step: about 10 s of rows at `low` on the long
+posting. Both are now visible. The line names the step, and an aria-hidden
+readout beside it shows `thinking` while reasoning is open and `6/14` while
+the rows arrive (`lib/turn-phase.ts`).
+
+**Not applied, for whoever picks this up next.** The smoke test above
+supports `reasoning: { chat: 'none', jobPosting: 'none' }` for
+`claude-haiku-5.5`: its fastest complete card, and three of four clean chips
+instead of two. The RevOps chip still needs a higher non-JD cap. gpt-5-mini
+needs a setting or should be dropped. DeepSeek at `none` must not be used on
+posting turns, because it writes raw DSML markup into the answer. Each of
+these is one key on its catalogue row now.
+
+**Cost.** 21 scripted turns, $0.038 at list price, plus 4 browser turns for
+the screenshots, about $0.009.
+
+<details>
+<summary>The long posting, verbatim</summary>
+
+```text
+GTM Systems Manager, Revenue Operations (Remote, North America)
+
+About the role
+We're a 400-person B2B SaaS company selling workflow software to mid-market and enterprise finance teams. Our revenue operations team owns the systems, data and processes that sales, customer success and finance run on. We're looking for a GTM Systems Manager to own our go-to-market tech stack end to end and to be the person sales leadership calls when a number doesn't look right.
+
+What you'll do
+- Own Salesforce administration: objects, fields, validation rules, flows, permission sets and page layouts
+- Design and maintain lead routing and territory assignment across inbound, outbound and partner channels
+- Run the quote-to-cash process with finance, including CPQ configuration, approvals and order handoff
+- Build and maintain pipeline, forecast and bookings reporting for sales leadership and the board
+- Own quarter-end close support for the revenue team: data reconciliation, commission inputs, and clean bookings
+- Evaluate, implement and integrate new GTM tools (Gong, Outreach, ZoomInfo or similar), and retire the ones we don't use
+- Automate manual work across the funnel, using native tools first and scripting where it pays off
+- Translate vague requests from sales, marketing and finance leaders into scoped, prioritized work
+- Write documentation and train reps and managers on new processes and tools
+
+What we're looking for
+- 4+ years in revenue operations, sales operations, or business systems at a B2B SaaS company
+- Hands-on Salesforce administration; Salesforce Administrator certification preferred
+- Experience with CPQ (Salesforce CPQ, DealHub or similar) and quote-to-cash processes
+- Strong reporting skills in Salesforce and at least one BI tool (Tableau, Looker or Power BI)
+- Working SQL, and comfort reconciling data across CRM, billing and finance systems
+- Experience supporting forecasting and quarter-end close
+- Comfortable with ambiguity, and able to own a problem from discovery to rollout
+- Excellent written communication and stakeholder management with senior leaders
+
+Nice to have
+- Experience with iPaaS tools (Workato, Zapier or Tray.io) or light scripting in Python or JavaScript
+- Exposure to LLM-based automation for sales workflows
+- Experience at a company scaling from Series B to Series D
+
+Compensation: $130,000 to $155,000 base plus equity and benefits. This role is remote within the US or Canada, full-time.
+```
+
+</details>
+
+### The summary, strengths first, 2026-10-19 — Sidhant's call
+
+**A policy change, in its own commit so it can be dropped.** Opus found the
+summary opening on a grade ("a genuine partial fit, not a strong one") on
+exactly the kind of posting Sidhant wants. GPT-6 Luna does the same: "He is a
+partial fit", "This role is a partial fit", "a credible adjacent fit". The
+roleFit instruction in `lib/system-prompt.ts` now says the summary (the card's
+one-line `verdict` and the sentences after it) leads with the strongest
+matches, then says what the ramp would be. It does not open with a grade. It
+never states a row more strongly than its verdict, and the sentences after
+the card name every unmet requirement. A gap no ramp closes (years, a
+certification, a location) is stated as a gap. When most rows are unmet, the
+word "ramp" is not used, and the summary says the core of the role is outside
+his record. The `verdict` field's description in the route says the same in
+one line. Nothing about the rows changed: no row is upgraded, and every unmet
+requirement is still in the table and in `gaps`.
+
+All runs below are at `low` on the same postings.
+
+| | Before | After |
+| --- | --- | --- |
+| Long posting, `verdict` | "A credible adjacent fit for reporting, forecasting, automation, and ambiguous systems ownership, but the central gaps are hands-on Salesforce administration, lead routing, CPQ/quote-to-cash, and B2B SaaS RevOps tenure." | "Strongest matches are ambiguous-work ownership, forecasting and quarter-end reporting; the role's core Salesforce administration, lead routing and CPQ are outside the record." |
+| Long posting, answer | "Sidhant is a credible adjacent fit on reporting, forecasting, automation, and taking ambiguous systems work from requirements through rollout. The main gaps are hands-on Salesforce administration, lead routing, CPQ and quote-to-cash experience, and the required B2B SaaS RevOps tenure; …" | "His strongest matches are Power BI/SQL reporting, forecasting and quarter-end close support, manual-work automation, and taking ambiguous requests through rollout. The record does not show Salesforce administration or certification, lead routing and territory assignment, CPQ or quote-to-cash, documentation and rep training, four years at a B2B SaaS company, or experience scaling from Series B to Series D." |
+| Short posting, answer | "The assessment indicates a strong match for the core reporting and systems work, with one partial area: …" | "Sidhant matches the role's sales operations tenure, Salesforce-to-Power BI reporting, work translating leadership requests into scoped requirements, forecasting and quarter-end reporting, and hands-on LLM tooling. His SQL strength and experience building executive-facing dashboards are only partly evidenced; …" |
+| ML infrastructure posting (6 of 6 unmet), `verdict` | — | "His background includes Python automation and ETL/data workflows, but distributed ML infrastructure, GPU clusters, and training optimization are outside the record." |
+
+Citations are left out of the quotes. The "before" answers are from the runs
+in the table above.
+
+**How the wording got here.** It took three drafts, all measured. The first
+made `verdict` a paragraph that listed every gap. That field streams inside
+the `roleFit` call, so the card waited for it, at 20.9 and 21.3 s. The second
+capped `verdict` at one line, but on the ML infrastructure posting it called
+"the role's core infrastructure work" "the ramp". The rule against using
+"ramp" when most rows are unmet comes from that run. The third is what's
+committed, plus one later sentence on citing absences (below). It passed
+both checks. The long-posting quotes above come from its two scripted runs,
+which ran before that sentence was added. The short-posting quote comes from
+the second draft. The rows did not get kinder. Every run after the change
+had 6 or 7 unmet, against 4–5 at `low` before it and 5–7 at the default. If
+anything, telling the summary it can't outrun a row made the rows stricter.
+
+**What it costs.** On the long posting the card arrives about 3 s later than
+at `low` without it: 16.6 and 17.2 s scripted, and 12.9–18.3 s in three
+browser runs (one more browser run took 21.6 s after an 11 s extraction
+step). Before the change, the three `low` runs took 13.1–14.2 s. It costs
+nothing on the short posting (6.9 s against 6.5 s). Output and reasoning
+tokens rise slightly, and `gaps` comes back longer (8–13 entries against
+5–6). Before it, the card already arrived twice as fast as the default.
+
+**Open, and not fixable from the prompt.** The answer's gap sentences get
+marked either way. Cited, the checker reports the names of the things he
+doesn't have ("CPQ, B2B, SaaS") as unverified against the chunk, in red.
+Uncited, it marks the sentence "uncited". The prompt now says an absence
+cites nothing, as an unmet row does, but in the two browser runs after it
+was added the model still cited two of its three gap sentences. The fix is
+in `lib/verify.ts`. A sentence whose claim is an absence ("the record does
+not show…", "doesn't establish…") has nothing to check against a chunk, and
+the checker should skip it rather than mark it.
+
 ## 3. Copy — Sidhant is doing this, do not write it
 
 Two blocks on the live site are Claude's drafts, marked `[DRAFT]` in

@@ -87,6 +87,39 @@ export const PRICES_CHECKED = "2026-10-19";
  */
 export type PriceConfidence = "confirmed" | "derived" | "unconfirmed";
 
+/**
+ * AI SDK 7's top-level `reasoning` option, which the Gateway translates into
+ * each provider's own setting. Restated rather than imported so this file stays
+ * dependency-free: the evals read it under plain `node --test`. The route passes
+ * one of these straight to `streamText`, so the type checker holds the two
+ * lists together.
+ */
+export type ReasoningLevel =
+  | "provider-default"
+  | "none"
+  | "minimal"
+  | "low"
+  | "medium"
+  | "high"
+  | "xhigh"
+  | "max";
+
+/**
+ * How hard one model thinks, by kind of turn. A key that is absent means the
+ * provider's default, which is what every row got before this existed.
+ *
+ * Split by turn because the two kinds fail differently. An ordinary turn has a
+ * 600-token ceiling, and a model that thinks by default can spend all of it
+ * before saying a word. A job-posting turn has room, but spends three steps, and
+ * its hidden reasoning is most of the wait before the card appears.
+ */
+export type ReasoningSetting = {
+  /** Every turn that is not a pasted job posting. */
+  chat?: ReasoningLevel;
+  /** A pasted job posting: extract, judge, then the sentence after. */
+  jobPosting?: ReasoningLevel;
+};
+
 /** One model. Prices are dollars per 1M tokens. */
 export type ModelSpec = {
   input: number;
@@ -96,6 +129,8 @@ export type ModelSpec = {
   /** Input tokens written into the cache. Zero where the provider doesn't bill it. */
   cacheWrite: number;
   confidence: PriceConfidence;
+  /** Optional. Absent means the provider's default reasoning on every turn. */
+  reasoning?: ReasoningSetting;
 };
 
 // Order is the dropdown order: the default first, then cheapest first. The
@@ -106,12 +141,22 @@ export const MODELS = {
   // rates; the long-context tier starts at 272k tokens, far past any turn here.
   // Every provider the Gateway routes to (OpenAI, Azure, Bedrock) bills the
   // same.
+  //
+  // Reasoning `low` on a pasted posting, measured 2026-10-19 (docs/followups.md
+  // §2, "Reasoning on posting turns"): on a 2,500-character posting the card
+  // arrived at 13–14 s instead of 28–33 s, with the same 14 requirements
+  // extracted and verdict counts inside the default's own run-to-run spread.
+  // `none` was barely slower (15–16 s) but less consistent: one of its two runs
+  // rated the posting 2 unmet where every other run said 4–7. Ordinary turns
+  // keep the provider default, because they were never slow (1–7 s) and were
+  // not re-measured.
   "openai/gpt-6-luna": {
     input: 0.1,
     output: 0.5,
     cacheRead: 0.01,
     cacheWrite: 0.125,
     confidence: "confirmed",
+    reasoning: { jobPosting: "low" },
   },
   // The default until 2026-10-19. At its default reasoning level it can spend
   // a turn's whole output cap thinking and render nothing.
@@ -196,6 +241,19 @@ export function modelName(id: string): string {
 
 /** What an unknown or absent id resolves to. Must be `MODEL_IDS[0]`. */
 export const DEFAULT_MODEL: ModelId = "openai/gpt-6-luna";
+
+/**
+ * The reasoning level to send for one turn, or undefined to send none and leave
+ * the provider on its default. The route's only way to read `reasoning`, so a
+ * row without the key behaves exactly as it did before the key existed.
+ */
+export function reasoningFor(
+  model: ModelId,
+  turn: { jobPosting: boolean },
+): ReasoningLevel | undefined {
+  const setting = (MODELS[model] as ModelSpec).reasoning;
+  return turn.jobPosting ? setting?.jobPosting : setting?.chat;
+}
 
 // --- What a visitor is allowed ---------------------------------------------
 //

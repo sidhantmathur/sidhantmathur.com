@@ -21,6 +21,8 @@ import {
   type TurnTelemetry,
 } from "@/lib/chat-telemetry";
 import { guardedFetch, INTERNAL_TOOLS, TurnFailure, type Budget } from "@/lib/chat-transport";
+import { activityOf, phaseOf } from "@/lib/turn-phase";
+import { publishPhaseActivity } from "./phase-activity";
 
 /** Re-exported from lib/chat-transport, where the fetch that reads it lives. */
 export type { Budget };
@@ -95,63 +97,10 @@ export function toolOutputs(message: UIMessage): ToolOut[] {
 
 // --- What the turn is doing right now --------------------------------------
 //
-// `awaitingReply` alone left a hole. It goes false the moment an assistant
-// message exists, but a message holding only a tool call and no text yet
-// renders as nothing at all (app-shell skips messages with neither) — so a
-// job-description turn, which spends its first step extracting requirements
-// and its second judging them, showed a live indicator, then an empty column
-// for the length of two model calls, then an answer.
-//
-// So the line reports the step instead of the wait. It stays ONE line, under
-// the conversation, and it never becomes an expandable trace: the
-// instrumentation policy puts density around the conversation, and a reasoning
-// drawer in the message column is the thing that policy exists to refuse.
-//
-// The phases are read off the stream, not guessed on a timer. Nothing here
-// claims work that isn't happening.
-const TOOL_PHASE: Record<string, string> = {
-  "tool-extractRequirements": "reading the job description…",
-  "tool-roleFit": "checking it against the record…",
-  "tool-showProject": "pulling up the project…",
-  "tool-showResume": "pulling up the resume…",
-  "tool-contactCard": "finding the contact details…",
-};
-
-/** The default, and the string the site has always shown while a turn opens. */
-export const OPENING_PHASE = "reading the resume…";
-
-/** The gap between a finished tool call and the first token of the answer. */
-const WRITING_PHASE = "writing the answer…";
-
-/**
- * The one-line status for a turn in flight, or null once prose is on screen.
- * Once there is text to read, the reader has the answer — a status line under
- * it would be describing something they can already see.
- */
-export function phaseOf(status: string, messages: UIMessage[]): string | null {
-  if (status === "submitted") return OPENING_PHASE;
-  if (status !== "streaming") return null;
-
-  const last = messages[messages.length - 1];
-  if (!last || last.role !== "assistant") return OPENING_PHASE;
-  if (textOf(last).trim()) return null;
-
-  // The most recent tool call that hasn't produced its output yet is the step
-  // actually in flight. Reading from the end matters on the JD turn, where
-  // extraction has already finished by the time roleFit starts.
-  const parts = last.parts as unknown as ToolOut[];
-  for (let i = parts.length - 1; i >= 0; i--) {
-    const p = parts[i]!;
-    if (typeof p.type !== "string" || !p.type.startsWith("tool-")) continue;
-    if (p.state === "output-available" || p.state === "output-error") break;
-    return TOOL_PHASE[p.type] ?? OPENING_PHASE;
-  }
-
-  // A tool has returned and the model is composing around it.
-  return parts.some((p) => typeof p.type === "string" && p.type.startsWith("tool-"))
-    ? WRITING_PHASE
-    : OPENING_PHASE;
-}
+// The step, and what the stream is doing inside it, are read in
+// lib/turn-phase.ts, where the evals can reach them. Re-exported so callers of
+// this hook read them from where they always have.
+export { OPENING_PHASE, phaseOf } from "@/lib/turn-phase";
 
 /**
  * First tool output in a turn wins the panel.
@@ -299,6 +248,7 @@ export function useConversation(model: string) {
         input_tokens: data.usage?.inputTokens ?? null,
         cached_input_tokens: data.usage?.cachedInputTokens ?? null,
         output_tokens: data.usage?.outputTokens ?? null,
+        reasoning_tokens: data.usage?.reasoningTokens ?? null,
         cache_hit: cached > 0,
         cache_hit_ratio: input > 0 ? Math.round((cached / input) * 100) / 100 : null,
         steps: data.steps,
@@ -349,6 +299,15 @@ export function useConversation(model: string) {
   });
 
   const isBusy = status === "submitted" || status === "streaming";
+
+  // The phase line's readout (see ./phase-activity for why it travels this
+  // way). Published after commit rather than during render, and cleared when
+  // the hook goes away, so a remounted shell never inherits a stale "6/14".
+  useEffect(() => {
+    publishPhaseActivity(activityOf(status, messages));
+  }, [status, messages]);
+  useEffect(() => () => publishPhaseActivity(null), []);
+
   const sentAt = useRef<number | null>(null);
   const sentCount = useRef(0);
 

@@ -460,6 +460,33 @@ was taken and the row says so.
 | draft | `components/shell/app-shell.tsx` → composer fine print (empty state) | Below lg: "AI answers can be wrong." · lg up: "Answers cite their sources and can be wrong — the resume is the authoritative version." Both followed by the link "How it works" (to `/colophon`). | one, about the site | Replaces the four-claim proof line logged under the front-door rows; its claims (published prompt, published evals, the cost meter) are on the colophon. `DISCLAIMER` in `lib/site.ts` still ships with exports and print, unchanged. |
 | removed | `components/shell/app-shell.tsx` → composer fine print (empty state) | "Answers cite their sources — this chat publishes its system prompt and eval results, and shows what each answer costs. It can make mistakes; the resume is the authoritative version." | — | Four lines on a phone; see the row above. |
 
+**The fit check: steps you can see, 2026-10-19** (branch
+`worktree-agent-ab22acd4eb6a2a223`). A pasted posting now shows three named
+steps instead of one string, plus a readout of what the stream is doing
+inside the step. All of these strings are read off the live stream and say
+nothing about Sidhant. The labels are short on purpose. At 375px the line
+shares its row with the readout, the timer and the stop button, and
+"checking 14 requirements…" wrapped onto two lines. Measured widths are in
+`lib/turn-phase.ts`.
+
+| Status | Where | What it says | Claims | Grounding |
+| --- | --- | --- | --- | --- |
+| draft | `lib/turn-phase.ts` → `JD_READING_PHASE` (the extraction step's label) | "reading the posting…". Shown from the moment a posting is sent, through the extraction step. It used to read "reading the resume…" until the extraction call began. | none | The route's own `looksLikeJobPosting`, run on the same text, and then the route's `jobPosting` flag on the stream |
+| removed | `lib/turn-phase.ts` (was `use-conversation.ts`) → the extraction step | "reading the job description…". Replaced by "reading the posting…", which fits at 375px beside the readout. | none | — |
+| draft | `lib/turn-phase.ts` → `JD_CHECKING_PHASE` | "checking the fit…". The judging step, from the moment extraction returns until the card is in. Through the reasoning before the rows, it used to say "writing the answer…", which was false. | none | The `roleFit` step, read off the stream |
+| draft | `lib/turn-phase.ts` → `JD_WRITING_PHASE` | "summarizing…". After the card, while the model writes the sentences under it. On posting turns this was "writing the answer…". | none | The step after `roleFit` |
+| draft | `components/shell/phase-line.tsx` → readout (`formatActivity` in `lib/turn-phase.ts`) | "thinking" while a reasoning part is open; "6/14" (rows so far out of requirements extracted) while the assessment streams. Beside the timer, aria-hidden. | none | `reasoning-start`/`reasoning-end` parts; the `roleFit` call's partial input |
+| draft | `lib/turn-phase.ts` → `TOOL_PHASE`, `OPENING_PHASE`, `WRITING_PHASE` | Moved unchanged from `components/shell/use-conversation.ts`: "reading the resume…" · "checking it against the record…" · "pulling up the project…" · "pulling up the resume…" · "finding the contact details…" · "writing the answer…". Logged so the older row's "Where" isn't stale. | none | — |
+
+**The fit check's summary, strengths first, 2026-10-19.** A policy call for
+Sidhant, in its own commit so it can be dropped. Before and after summaries
+from real runs are in `docs/followups.md` §2, "The summary, strengths first".
+
+| Status | Where | What it says | Claims | Grounding |
+| --- | --- | --- | --- | --- |
+| draft | `lib/system-prompt.ts` → Tools, the `roleFit` entry | **Model-facing, and published verbatim at `/prompt`.** Four bullets replace one sentence ("The sentence you write after the tool call is prose like any other…"). (1) The summary is `verdict`, "one line of under 25 words", plus "the two or three sentences you write after the tool call". Both lead with the strongest matches, then say what the ramp would be, with the example "Strong on sales reporting and quarter-end close; the ramp would be Salesforce administration and CPQ.", and neither opens with a grade ("a partial fit", "not a strong fit", "an adjacent fit"). (2) "Leading with the matches changes the order, never the verdicts." No requirement is described more strongly than its row, and the sentences after the card "name every unmet requirement". A sentence that only names what the record doesn't show cites nothing. (3) "A ramp is what a hire learns on the job." A requirement no ramp closes (years, a certification, a degree, a location) is stated as a gap, and nothing predicts how fast he would close one. (4) "Ramp framing is only for a posting where the matches outweigh the gaps." When most rows are unmet, the summary says the core of the role is outside his record. The paragraph after them now opens "The summary is prose like any other". | One illustrative example. It is not said to visitors, but the model may echo it: strong on sales reporting and quarter-end close, with Salesforce administration and CPQ absent. | `content/knowledge/resume.md` (Nokia: sales reporting migration, the quarter-end reporting tool; no Salesforce administration or CPQ anywhere in the corpus). The policy is `docs/idea-decisions.md` §4, "Honesty and advocacy", and Opus review #9. |
+| draft | `app/api/chat/route.ts` → the `roleFit` input schema, `verdict` description | **Model-facing, not on `/prompt`.** Tool schemas go to the provider, not to the page. "One line, under 25 words, a recruiter could read on its own: what matches first, then what the ramp would be. Never describes a requirement more strongly than its row, never opens with a grade, and when most rows are unmet says the core of the role is outside the record instead of calling it a ramp." Was "One line a recruiter could read on its own: where he fits, and what the real question is." | none | The prompt row above |
+
 ## Pending `[VERIFY]` markers
 
 Sentences drafted with a fact-shaped hole in them, waiting on Sidhant. Listing them

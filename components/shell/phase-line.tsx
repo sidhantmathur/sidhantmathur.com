@@ -1,12 +1,14 @@
 "use client";
 
+import { formatActivity } from "@/lib/turn-phase";
+import { usePhaseActivity } from "./phase-activity";
 import { formatElapsed } from "./use-elapsed";
 
 // The turn-in-flight indicator (replaces the bare `animate-pulse` paragraph
 // that used to sit under the conversation).
 //
 // It says the same thing it always said — the STEP, not the wait; see the long
-// note above phaseOf in use-conversation.ts, which this does not change — but
+// note at the top of lib/turn-phase.ts, which this does not change — but
 // it now says it in the three registers this site already speaks in:
 //
 //   a grid   nine square cells blinking on a stagger, in the accent. The
@@ -22,6 +24,15 @@ import { formatElapsed } from "./use-elapsed";
 // Still one line, still under the conversation, still never an expandable
 // trace. The instrumentation policy's line about density living AROUND the
 // conversation is untouched: nothing here opens, and nothing here is clickable.
+//
+// A fourth piece, between the step and the count (2026-10-19): what the stream
+// is doing inside the step, when that is something the page can't otherwise
+// show. `thinking` while a reasoning part is open, which on GPT-6 Luna is a
+// stretch with no visible output at all, and `6/14` while the assessment's
+// rows arrive. It is read off the stream like the step is (activityOf in
+// lib/turn-phase.ts), and it is marked aria-hidden for the same reason the
+// timer is: a counter announced every row is noise, and the step name is
+// already the announcement.
 
 const PIXELS = 9;
 // A diagonal-ish stagger rather than a left-to-right wipe — reading order is
@@ -37,6 +48,7 @@ export function PhaseLine({
   /** Seconds in flight, or null before the first sample lands. */
   elapsed: number | null;
 }) {
+  const activity = usePhaseActivity();
   return (
     <p
       // aria-live is on the wrapper so a screen reader hears the step name and
@@ -56,12 +68,16 @@ export function PhaseLine({
         ))}
       </span>
       <span className="shimmer-text">{phase}</span>
-      {elapsed != null && (
+      {/* The readout and the count, as one cluster with a tighter gap: they are
+          both measurements, and the 4px saved is what keeps "checking the fit…
+          thinking 9.0s stop" on one line at 375px (see lib/turn-phase.ts). */}
+      {(activity || elapsed != null) && (
         <span
           aria-hidden
-          className="tabular-nums text-[13px] text-text-faint [font-family:var(--font-geist-mono)]"
+          className="flex shrink-0 items-center gap-1.5 tabular-nums text-[13px] [font-family:var(--font-geist-mono)]"
         >
-          {formatElapsed(elapsed)}
+          {activity && <span className="text-text-soft">{formatActivity(activity)}</span>}
+          {elapsed != null && <span className="text-text-faint">{formatElapsed(elapsed)}</span>}
         </span>
       )}
     </p>
