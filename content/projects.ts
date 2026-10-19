@@ -34,7 +34,7 @@ export type Project = {
 export const PROJECTS: Record<ProjectSlug, Project> = {
   adarle20: {
     slug: "adarle20",
-    index: "01",
+    index: "02",
     title: "A Darle 20",
     description:
       "A marketplace connecting tabletop game hosts with paying players across Latin America. I designed and shipped the whole product solo — bookings, payments, chat, refunds, notifications — running an AI-agent-heavy development workflow. Four months after launch: 1,400+ registered users, 127 hosts, and 2,100+ bookings.",
@@ -46,7 +46,7 @@ export const PROJECTS: Record<ProjectSlug, Project> = {
   },
   nokia: {
     slug: "nokia",
-    index: "02",
+    index: "01",
     title: "Reporting tools at Nokia",
     description:
       "Self-serve reporting tools for a global sales organization. A Power App used by 80+ stakeholders across seven regions replaced a manual quarterly process, and a migration from Salesforce Analytics to Power BI moved 150+ users onto reporting I model and maintain.",
@@ -71,9 +71,12 @@ export const PROJECTS: Record<ProjectSlug, Project> = {
   },
 };
 
-// Ordered list for rendering the homepage cards in sequence.
+// The order the site lists them in — /projects, and the "next case study" at
+// the end of each one. Nokia first since wave 2 (2026-10-19): it is the
+// current job and the evidence for the sales-ops roles he is applying to, and
+// the council review found it second, under the marketplace, everywhere.
 export const PROJECT_LIST: Project[] = [
-  PROJECTS.adarle20,
   PROJECTS.nokia,
+  PROJECTS.adarle20,
   PROJECTS["dell-ml"],
 ];

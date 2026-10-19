@@ -1,19 +1,28 @@
 import type { Metadata, Viewport } from "next";
 import { geistSans, geistMono } from "./fonts";
 import { AnalyticsProvider } from "@/components/analytics-provider";
-import { SITE_NAME, SITE_URL } from "@/lib/site";
+import { EMAIL, GITHUB_URL, HEADSHOT, LINKEDIN_URL, SITE_NAME, SITE_URL } from "@/lib/site";
 import "./globals.css";
 
+// Wave 2: the role leads, in the words a recruiter types into a search box —
+// revenue operations, sales operations, RevOps — and Nokia comes before the
+// marketplace. The old version spent half its length on tabletop games and
+// never said what he does for a living.
 const DESCRIPTION =
-  "Sales operations specialist and builder. I make internal tools and revenue systems at Nokia, and I'm co-founder and CTO of A Darle 20, a marketplace for tabletop game sessions in Latin America — 2,100+ bookings in its first four months.";
+  "Revenue and sales operations: I build the tools sales and finance teams run on. Sales operations specialist at Nokia, co-founder and CTO of A Darle 20, based in Toronto. Looking for a RevOps / GTM systems role.";
+
+/** The homepage's tab, search result and share-card title. */
+const HOME_TITLE = `${SITE_NAME} — RevOps and sales operations`;
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   // `template` applies to every route that exports its own title, so the
   // /resume tab reads "Resume — Sidhant Mathur" instead of a bare "Resume".
-  // `default` is the homepage, which has no title of its own.
+  // `default` is the homepage, which has no title of its own — and carries
+  // the role since wave 2, because it is what a search result and a pasted
+  // link lead with.
   title: {
-    default: SITE_NAME,
+    default: HOME_TITLE,
     template: `%s — ${SITE_NAME}`,
   },
   description: DESCRIPTION,
@@ -32,7 +41,7 @@ export const metadata: Metadata = {
     type: "profile",
     siteName: SITE_NAME,
     url: "/",
-    title: SITE_NAME,
+    title: HOME_TITLE,
     description: DESCRIPTION,
   },
   // The og:image tags come from app/opengraph-image.tsx — Next generates the
@@ -53,25 +62,25 @@ export const viewport: Viewport = {
 //
 // Deliberately no `jobTitle`: Sidhant does not want a single title asserted
 // as machine-readable fact while he is looking at more than one kind of role.
-// `description` reuses the meta description verbatim rather than introducing a
-// second, drifting summary.
+// The role travels in `description` instead, which reuses the meta
+// description verbatim rather than introducing a second, drifting summary.
+// `image` is the headshot (wave 2), absolute because structured data is read
+// off the page by things that don't resolve relative URLs.
 const PERSON_SCHEMA = {
   "@context": "https://schema.org",
   "@type": "Person",
   name: SITE_NAME,
   url: SITE_URL,
+  image: `${SITE_URL}${HEADSHOT}`,
   description: DESCRIPTION,
-  email: "mailto:hello@sidhantmathur.com",
+  email: `mailto:${EMAIL}`,
   address: {
     "@type": "PostalAddress",
     addressLocality: "Toronto",
     addressRegion: "ON",
     addressCountry: "CA",
   },
-  sameAs: [
-    "https://github.com/sidhantmathur",
-    "https://www.linkedin.com/in/sidhantmathur",
-  ],
+  sameAs: [GITHUB_URL, LINKEDIN_URL],
 };
 
 // The root layout carries no chrome of its own. The app shell (`/`) owns the

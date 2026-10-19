@@ -330,7 +330,9 @@ function summarizeCitations(answer) {
     downgraded: check.downgraded.map((c) =>
       c.verdict === "uncited"
         ? `uncited: "${c.text.slice(0, 60)}"`
-        : `unverified: ${c.missing.join(", ") || c.unknownIds.join(", ")} not in ${c.ids.join(", ")}`,
+        : c.verdict === "miscited"
+          ? `miscited: ${c.missing.join(", ")} not in ${c.ids.join(", ")}, in ${c.elsewhere.join(", ")}`
+          : `unverified: ${c.absent.join(", ") || c.unknownIds.join(", ")} not in the record`,
     ),
   };
 }

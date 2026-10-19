@@ -1,5 +1,11 @@
 import Link from "next/link";
-import { HERO_TLDR, TLDR_FOOTER, TLDR_LABEL } from "@/content/recruiter";
+import {
+  CASE_CARDS,
+  CASE_CARDS_LABEL,
+  HERO_TLDR,
+  TLDR_FOOTER,
+  TLDR_LABEL,
+} from "@/content/recruiter";
 
 // The recruiter TL;DR (#25, Track B — promoted by the front-door pass).
 //
@@ -42,6 +48,41 @@ export function RecruiterTldr() {
           {TLDR_FOOTER}
         </Link>
       </p>
+    </section>
+  );
+}
+
+// The two case-study cards under the tl;dr (wave 2). One number each, set
+// large in the sans face because it is the thing to read, with the case
+// study's title over it and one link out. The whole card is not the link: a
+// card-sized anchor reads its every word as the link's name, and "Read the
+// case study" twice on one page needs the title appended for a screen reader
+// to tell the two apart.
+export function CaseCards() {
+  return (
+    <section aria-label="Case studies" className="max-w-[64ch]">
+      <h2 className="t-label text-text-faint">{CASE_CARDS_LABEL}</h2>
+      <div className="mt-2 grid gap-2.5 sm:grid-cols-2">
+        {CASE_CARDS.map((card) => (
+          <article key={card.slug} className="flex flex-col border border-line-strong bg-bg/60 p-4">
+            <h3 className="t-meta text-text">{card.title}</h3>
+            <p className="mt-2 [font-family:var(--font-geist-sans)]">
+              <span className="block text-[32px] font-semibold leading-none tracking-tight text-text">
+                {card.stat}
+              </span>
+              <span className="mt-1.5 block text-[15px] leading-snug text-text-soft">
+                {card.statLabel}
+              </span>
+            </p>
+            <Link
+              href={card.href}
+              className="t-meta mt-auto flex min-h-[44px] items-end pt-3 text-text-soft no-underline transition-colors hover:text-accent"
+            >
+              Read the case study →<span className="sr-only">: {card.title}</span>
+            </Link>
+          </article>
+        ))}
+      </div>
     </section>
   );
 }

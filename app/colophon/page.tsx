@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { DocPage } from "@/components/layout/doc-page";
 import { COLOPHON_STACK } from "@/lib/site";
+import { WHY_CHATBOT, WHY_CHATBOT_HEADING } from "@/components/shell/shell-data";
 
 export const metadata: Metadata = {
   alternates: { canonical: "/colophon" },
@@ -54,6 +55,16 @@ export default function ColophonPage() {
           is measured in public. A chatbot asking for a hiring manager&apos;s
           trust should have to show its receipts.
         </p>
+        {/* Folded in from the index's "Why this site is a chatbot" panel in
+            wave 2. The front door is portfolio-first now, so the argument
+            for the chat belongs here, with the rest of how the site works,
+            rather than one tap from the resume. */}
+        <h2 className="t-head mt-10 font-medium text-text">{WHY_CHATBOT_HEADING}</h2>
+        {WHY_CHATBOT.map((para, i) => (
+          <p key={i} className="t-body mt-4 max-w-[58ch] text-text-soft">
+            {para}
+          </p>
+        ))}
       </DocPage>
   );
 }

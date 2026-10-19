@@ -11,6 +11,7 @@ export const metadata: Metadata = {
 export default function NokiaPage() {
   return (
     <CaseStudyLayout
+      slug="nokia"
       title="Reporting tools at Nokia"
       subtitle="Internal tools for a global sales organization."
     >

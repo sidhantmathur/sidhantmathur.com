@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { MonoLabel } from "@/components/mono-label";
 import { ResumeDownloadButton } from "@/components/resume-download-button";
+import { SITE_NAME } from "@/lib/site";
 
 export const metadata: Metadata = {
   alternates: {
@@ -18,9 +19,12 @@ export const metadata: Metadata = {
 export default function ResumePage() {
   return (
     <DocPage>
-        <h1 className="t-title font-medium text-text">
-          Resume
-        </h1>
+        {/* His name heads the page (wave 2). The H1 used to be "Resume", so
+            someone who landed here from an application or a search saw no
+            name above the contact line — on the page most likely to be
+            pasted into an ATS note. The page's purpose moves to a label. */}
+        <p className="t-label text-text-faint">Resume</p>
+        <h1 className="t-title mt-1 font-medium text-text">{SITE_NAME}</h1>
         <p className="t-body mt-3 max-w-[72ch] text-text-soft">
           The current version, last updated July 2026. A
           plain-text version lives at{" "}

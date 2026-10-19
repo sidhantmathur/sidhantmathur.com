@@ -8,11 +8,19 @@ import Nokia from "@/content/nokia.mdx";
 import { PROJECTS } from "@/content/projects";
 import { CHUNKS } from "@/lib/chunks.generated";
 import { ALL_CHUNKS, ALL_CHUNKS_BY_ID, type Chunk } from "@/lib/corpus";
-import { stripCitations } from "@/lib/verify";
+import { locateMissing, stripCitations } from "@/lib/verify";
 import { buildSystemPrompt } from "@/lib/system-prompt";
 import { ENFORCEMENT_LABEL, REFUSALS } from "@/lib/refusals";
 import type { RequirementVerdict } from "@/lib/role-fit";
-import { FIT_LABELS, JD_COPY, PROJECT_LINKS, SOCIAL_LINKS, WHY_CHATBOT } from "./shell-data";
+import {
+  FIT_LABELS,
+  JD_COPY,
+  PROJECT_LINKS,
+  SOCIAL_LINKS,
+  WHY_CHATBOT,
+  WHY_CHATBOT_HEADING,
+} from "./shell-data";
+import { EmailCopy, ResumePdfButton } from "@/components/contact-actions";
 import type { PanelView, RoleFit } from "./use-conversation";
 import { MAX_POSTING_TEXT } from "@/lib/job-posting";
 import { COLOPHON_STACK } from "@/lib/site";
@@ -146,9 +154,14 @@ export function PanelBody({
   }
 
   if (panel.kind === "contact") {
+    // Wave 2: the address on screen and copyable, as on the front door — the
+    // panel was three bordered links, one of them a bare mailto that does
+    // nothing on a desktop with no mail client.
     return (
       <div className="space-y-2">
-        {SOCIAL_LINKS.map((s) => (
+        <EmailCopy surface="contact-panel" />
+        <ResumePdfButton surface="contact-panel" />
+        {SOCIAL_LINKS.filter((s) => s.label !== "Email").map((s) => (
           <a
             key={s.label}
             href={s.href}
@@ -195,6 +208,13 @@ export function PanelBody({
           <ActionLink href="/prompt">Its instructions</ActionLink>
           <ActionLink href="/refusals">What it won&apos;t do</ActionLink>
         </div>
+        {/* Folded in from its own panel in wave 2 — see WHY_CHATBOT. */}
+        <h3 className="t-label pt-3 text-text-faint">{WHY_CHATBOT_HEADING}</h3>
+        {WHY_CHATBOT.map((para, i) => (
+          <p key={i} className="t-meta text-text-soft">
+            {para}
+          </p>
+        ))}
       </div>
     );
   }
@@ -244,19 +264,6 @@ export function PanelBody({
           ))}
         </div>
         <ActionLink href="/refusals">Why each one exists</ActionLink>
-      </div>
-    );
-  }
-
-  if (panel.kind === "why") {
-    return (
-      <div className="space-y-4">
-        {WHY_CHATBOT.map((para, i) => (
-          <p key={i} className="t-meta text-text-soft">
-            {para}
-          </p>
-        ))}
-        <ActionLink href="/colophon">How it&apos;s built</ActionLink>
       </div>
     );
   }
@@ -375,11 +382,11 @@ function RequirementTable({
                 {row.downgrade === "unjudged" && (
                   <span>the assessment restated this one without judging it</span>
                 )}
-                {row.unverified.length > 0 && (
-                  <span className="text-accent">
-                    unverified · {row.unverified.join(", ")} — not in {row.sources.join(", ")}
-                  </span>
-                )}
+                {/* Same split as an answer's marks (wave 2): a token the
+                    record holds under another chunk is a pointer problem and
+                    is said quietly; only one the record has nowhere keeps the
+                    accent. */}
+                {row.unverified.length > 0 && <RowMark row={row} />}
                 {row.unknownSources.length > 0 && (
                   <span className="text-accent">
                     cited {row.unknownSources.join(", ")}, which isn&apos;t a source on this site
@@ -421,6 +428,23 @@ function RequirementTable({
 
       <p className="t-meta text-text-faint">{FIT_LABELS.notAScore}</p>
     </div>
+  );
+}
+
+/**
+ * A cited row's missing tokens, split the way lib/verify.ts splits an answer's:
+ * in the record under another chunk (quiet), or nowhere in it (the accent).
+ */
+function RowMark({ row }: { row: RoleFit["rows"][number] }) {
+  const { absent, elsewhere } = locateMissing(row.unverified, row.sources, ALL_CHUNKS_BY_ID);
+  if (absent.length) {
+    return <span className="text-accent">not in the record · {absent.join(", ")}</span>;
+  }
+  return (
+    <span>
+      not in cited source · {row.unverified.join(", ")}
+      {elsewhere.length > 0 && <> — in {elsewhere.join(", ")}</>}
+    </span>
   );
 }
 

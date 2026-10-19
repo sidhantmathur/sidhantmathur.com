@@ -24,6 +24,23 @@ export const SITE_NAME = "Sidhant Mathur";
 export const SITE_URL = "https://sidhantmathur.com";
 
 /**
+ * How to reach him, as `content/knowledge/faq.md` lists it. Written out once:
+ * the front door's CTA row, the document pages' contact block, the contact
+ * panel and the Person JSON-LD all read these rather than retyping an address.
+ */
+export const EMAIL = "hello@sidhantmathur.com";
+export const LINKEDIN_URL = "https://www.linkedin.com/in/sidhantmathur";
+export const GITHUB_URL = "https://github.com/sidhantmathur";
+
+/**
+ * The headshot (1000×1000, no metadata). Small, beside the name and role line,
+ * on the front door and in the Person JSON-LD. Never on /resume and never in
+ * the resume PDF — that was the brief when it was placed (wave 2), and the
+ * resume is the document that goes into an ATS as it is.
+ */
+export const HEADSHOT = "/images/headshot.jpg";
+
+/**
  * Verbatim from docs/site-copy.md. Under the composer on screen, and the
  * footer of every conversation that leaves the page — the transcript is read
  * somewhere this site's chrome isn't, which is exactly where the caveat has to

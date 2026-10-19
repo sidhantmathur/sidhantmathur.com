@@ -1,4 +1,5 @@
 import { formatUsd } from "@/lib/pricing";
+import { modelName } from "@/lib/models";
 
 // The four numbers the shell shows about the session: turns used, time to
 // first token, session cost, and which model is answering.
@@ -45,6 +46,22 @@ export function readoutValues({ turns, ttft, cost, model }: ReadoutState): Reado
     turns: `${turns}/${TURN_CAP}`,
     ttft: ttft == null ? "—" : `${ttft}ms`,
     cost: formatUsd(cost),
-    model,
+    // The name a person uses, not the Gateway id (wave 2) — the rail sheet is
+    // a recruiter's surface on a phone, not an instrument.
+    model: modelName(model),
   };
+}
+
+/**
+ * The header's one-line receipt (wave 2): turns used, and what the last
+ * answer cost. Everything else the status strip used to carry — time to first
+ * token, the rate needle, the session total, the hourly budget, the model
+ * picker — is one click away in the instruments panel, which this opens.
+ *
+ * `lastCost` is null until an answer has been priced; the receipt then says
+ * so with the same em dash every withheld readout on the site uses.
+ */
+export function receiptText(turns: number, lastCost: number | null): string {
+  const used = `${turns}/${TURN_CAP} turns`;
+  return `${used} · last answer ${lastCost == null ? "—" : formatUsd(lastCost)}`;
 }

@@ -15,6 +15,9 @@ import {
   turnErrorCopy,
   type TurnErrorClass,
 } from "@/lib/chat-telemetry";
+import { ALL_CHUNKS_BY_ID } from "@/lib/corpus";
+import { DEFAULT_MODEL, MODEL_IDS, modelName } from "@/lib/models";
+import { verifyAnswer, type Claim } from "@/lib/verify";
 import type { Budget, TurnRecord } from "./use-conversation";
 import type { TokenRate } from "./use-token-rate";
 
@@ -27,9 +30,11 @@ import type { TokenRate } from "./use-token-rate";
 // conversation and never in front of it, and a visitor who ignores every
 // readout still has a working chatbot. So:
 //
-//   * The always-visible half is four numbers in the status strip that was
-//     already there — turns, latency, rate, dollars. Nothing new appears in the
-//     message column, and nothing pushes the answer down the page.
+//   * The always-visible half is one line in the status strip — turns used
+//     and what the last answer cost (wave 2; it was four readouts, a rate
+//     needle and the model picker, which pushed the nav out of the header).
+//     Nothing new appears in the message column, and nothing pushes the
+//     answer down the page.
 //   * The dense half opens in the existing context panel, on a deliberate
 //     click, next to the conversation rather than over it. It is the same
 //     surface the resume and the role-fit breakdown already use.
@@ -123,22 +128,62 @@ export function InstrumentDeck({
   turnLog,
   budget,
   model,
+  onModelChange,
+  hydrated,
   rate,
   teletype,
   onToggleTeletype,
   errorCopy,
+  answers,
 }: {
   turnLog: TurnRecord[];
   budget: Budget | null;
   model: string;
+  /** Selects who answers the next question. The picker lives here since wave 2. */
+  onModelChange: (model: string) => void;
+  hydrated: boolean;
   rate: TokenRate;
   teletype: boolean;
   onToggleTeletype: () => void;
   errorCopy: ErrorCopy;
+  /** Every settled assistant answer's raw text, oldest first, markers intact. */
+  answers: string[];
 }) {
   const settled = lastSettledRate(turnLog);
   return (
     <div className="space-y-6">
+      {/* The model picker, moved out of the header in wave 2. It sat in the
+          status strip as a select of raw Gateway ids, which is the first
+          thing a recruiter met after asking a question and the thing that
+          pushed the nav out. Here it is beside the meter it changes, under
+          the names people call these models. */}
+      <Section title="Model" hint="for the next question">
+        <label className="flex flex-col gap-1.5">
+          <span className="sr-only">Model</span>
+          <select
+            value={model}
+            onChange={(e) => onModelChange(e.target.value)}
+            // A native select is the one control that "works" before
+            // hydration in the worst way: it opens, it takes a choice, and
+            // the choice reaches nothing.
+            disabled={!hydrated}
+            className="min-h-[44px] w-full cursor-pointer border border-line-strong bg-raised px-2 text-[13px] text-text-soft outline-none focus:border-accent disabled:cursor-progress disabled:border-line disabled:text-text-dim"
+          >
+            {/* Catalogue order: the default first, then cheapest first. */}
+            {MODEL_IDS.map((m) => (
+              <option key={m} value={m}>
+                {m === DEFAULT_MODEL ? `${modelName(m)} (default)` : modelName(m)}
+              </option>
+            ))}
+          </select>
+        </label>
+        <p className="t-meta mt-2 text-text-faint">
+          Every model spends from the same hourly budget, so switching changes what the
+          meter below charges and nothing else. The id it runs under is{" "}
+          <span className="text-text-soft">{model}</span>.
+        </p>
+      </Section>
+
       <Section title="Cost" hint={`est. at list price · checked ${PRICES_CHECKED}`}>
         <CostMeter turnLog={turnLog} budget={budget} model={model} />
       </Section>
@@ -156,6 +201,10 @@ export function InstrumentDeck({
 
       <Section title="Trace" hint={`${turnLog.length} turn${turnLog.length === 1 ? "" : "s"}`}>
         <TraceInspector turnLog={turnLog} />
+      </Section>
+
+      <Section title="Citations" hint="checked by string comparison">
+        <CitationTrace answers={answers} />
       </Section>
 
       <Section title="Failure theatre">
@@ -212,8 +261,14 @@ function Row({
 }) {
   return (
     <div className="flex items-baseline justify-between gap-3 text-[12px]">
-      <span className="text-text-faint">{label}</span>
-      <span className={`tabular-nums ${emphasis ? "text-accent" : "text-text-soft"}`}>{value}</span>
+      <span className="shrink-0 text-text-faint">{label}</span>
+      {/* min-w-0 and break-words: the citation trace puts token lists and
+          chunk ids here, which are longer than any number the deck had. */}
+      <span
+        className={`min-w-0 break-words text-right tabular-nums ${emphasis ? "text-accent" : "text-text-soft"}`}
+      >
+        {value}
+      </span>
     </div>
   );
 }
@@ -437,6 +492,78 @@ function TraceInspector({ turnLog }: { turnLog: TurnRecord[] }) {
         Two latencies on purpose: the server measures the model, the browser measures the
         wait. The gap between them is the network.
       </p>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Citation trace (wave 2)
+// ---------------------------------------------------------------------------
+
+const VERDICT_LABEL: Record<Claim["verdict"], string> = {
+  verified: "verified",
+  miscited: "not in cited source",
+  unverified: "not in the record",
+  uncited: "uncited",
+};
+
+/**
+ * Every checked sentence of every answer, with the tokens behind its verdict.
+ *
+ * This is where the per-token detail went when the answer's own marks were
+ * quietened (council review, 2026-10-19). Under an answer, a mis-citation is
+ * one faint line; here it is the sentence, the tokens the cited chunk lacked,
+ * and the chunks that do hold them — the same check, read out in full for the
+ * visitor who wants to audit it.
+ */
+function CitationTrace({ answers }: { answers: string[] }) {
+  const checks = useMemo(
+    () => answers.map((text) => verifyAnswer(text, ALL_CHUNKS_BY_ID)),
+    [answers],
+  );
+  if (!checks.some((c) => c.claims.length)) {
+    return (
+      <p className="t-meta text-text-faint">
+        Nothing checked yet. Every sentence that names a number or a proper noun is
+        checked against the source it cites, and lands here.
+      </p>
+    );
+  }
+  return (
+    <div className="space-y-3">
+      {checks.map((check, i) =>
+        check.claims.length ? (
+          <div key={i} className="space-y-1 border border-line px-2 py-2">
+            <Row
+              label={`answer ${i + 1}`}
+              value={`${check.verified}/${check.claims.length} verified`}
+            />
+            {check.claims
+              .filter((c) => c.verdict !== "verified")
+              .map((claim, j) => (
+                <div key={j} className="border-t border-line pt-1.5 text-[12px] leading-[1.5]">
+                  <div className={claim.verdict === "unverified" ? "text-accent" : "text-text-soft"}>
+                    {VERDICT_LABEL[claim.verdict]}
+                  </div>
+                  <p className="t-meta text-text-faint">{claim.text}</p>
+                  {claim.missing.length > 0 && (
+                    <Row label="not in the cited chunk" value={claim.missing.join(", ")} />
+                  )}
+                  {claim.ids.length > 0 && <Row label="cited" value={claim.ids.join(", ")} />}
+                  {claim.elsewhere.length > 0 && (
+                    <Row label="found in" value={claim.elsewhere.slice(0, 3).join(", ")} />
+                  )}
+                  {claim.absent.length > 0 && (
+                    <Row label="in no source" value={claim.absent.join(", ")} emphasis />
+                  )}
+                  {claim.unknownIds.length > 0 && (
+                    <Row label="no such source" value={claim.unknownIds.join(", ")} emphasis />
+                  )}
+                </div>
+              ))}
+          </div>
+        ) : null,
+      )}
     </div>
   );
 }

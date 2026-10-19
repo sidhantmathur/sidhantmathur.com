@@ -8,10 +8,23 @@ No taglines beyond what's written here. [TODO] items are placeholders for Sidhan
 ## Meta
 
 Site title: Sidhant Mathur
-Meta description: Sales operations specialist and builder. I make internal tools
-and revenue systems at Nokia, and I'm co-founder and CTO of A Darle 20, a
-marketplace for tabletop game sessions in Latin America — 2,100+ bookings in
-its first four months.
+Homepage title (tab, search result, share card): Sidhant Mathur — RevOps and
+sales operations
+Meta description: Revenue and sales operations: I build the tools sales and
+finance teams run on. Sales operations specialist at Nokia, co-founder and CTO
+of A Darle 20, based in Toronto. Looking for a RevOps / GTM systems role.
+
+[DRAFT 2026-10-19, wave 2 of the council plan. The previous description
+("Sales operations specialist and builder. I make internal tools and revenue
+systems at Nokia, and I'm co-founder and CTO of A Darle 20, a marketplace for
+tabletop game sessions in Latin America — 2,100+ bookings in its first four
+months.") led with neither role and spent half its length on tabletop games.
+The same description is the Person JSON-LD's, and `llms.txt` opens with the
+role line.]
+
+Share card (OG image): the headshot beside "Sidhant Mathur" and "Revenue and
+sales operations", then "I build the tools sales and finance teams run on." —
+replacing the hero heading, which says nothing about the job.
 
 ---
 
@@ -23,6 +36,16 @@ Chosen 2026-07-27 from docs/hero-options.md. The previous heading ("I build
 internal tools, revenue systems, and the occasional whole product") entered
 Sidhant into a comparison with career software engineers, which is not the
 contest he wants to be judged in.
+
+Name and role line (above the heading, beside a small square headshot):
+Sidhant Mathur
+Revenue and sales operations: I build the tools sales and finance teams run on.
+
+[DRAFT 2026-10-19, wave 2. The council's finding: the front door named neither
+him nor his role. The heading stays Sidhant's; this sits over it in the words a
+recruiter searches for. `ROLE_LINE` in `content/recruiter.ts`, checked against
+`resume.md` by the eval suite ("AI-native revenue operations builder"; "sales
+and finance teams at Nokia").]
 
 Heading:
 I learn what the problem needs, then I build the thing.
@@ -40,7 +63,15 @@ the `looking for` and `where` TL;DR rows fused into one sentence
 every row.]
 
 CTA row (under the subline):
-View resume · Email me · Interview this site ↓
+Download resume (PDF) · hello@sidhantmathur.com [copy] · LinkedIn ↗
+Text links under it: Resume as a web page · Interview this site ↓
+
+[DRAFT 2026-10-19, wave 2. Was "View resume · Email me · Interview this site
+↓". The PDF is primary because it is what a recruiter attaches to an ATS; the
+HTML resume is a text link. That is an open question ("resume target") until
+PostHog says which one visitors take — both are tracked. The address is on
+screen with a copy button because a bare mailto: does nothing on a desktop with
+no mail client. "Interview this site" is a text link now, not a third button.]
 
 [Same pass. This reverses the 2026-07-27 note below, deliberately: a
 chat-first page failed the five-second scan, and "the input is the only call
@@ -51,6 +82,25 @@ permanent rail is gone (the index is a sheet behind the ☰ control at every
 width, with Resume / Projects / Colophon / Contact in the header until a
 conversation starts).]
 
+Header (wave 2, 2026-10-19): Sidhant Mathur · Toronto, ON (lg and up) ·
+Resume · Projects · Contact — at every width, before and after the first
+turn. After the first turn, at lg and up, one receipt beside the nav:
+"{n}/10 turns · last answer ${cost}", which opens the instruments. The
+readouts, the rate needle and the model picker that used to replace the nav
+live in the instruments panel; the picker lists models by name ("GPT-6 Luna
+(default)", "DeepSeek V4 Flash", "Claude Haiku 5.5", "GPT-5 mini", "Gemini
+3.5 Flash-Lite"). "Colophon" left the header for the index.
+
+Index (behind ☰), three groups:
+- Work: Resume · Resume PDF · Nokia · A Darle 20 · Dell · Paste a job
+  description
+- Contact: the address with a copy button · LinkedIn ↗ · GitHub ↗
+- How this site works: How it's built · The instructions · What it won't do ·
+  Measurements · Instruments
+
+"Why this site is a chatbot" is no longer an index entry; its text is a
+section of the colophon.
+
 Composer fine print (empty state only, replaces the disclaimer there):
 Answers cite their sources — this chat publishes its system prompt and eval
 results, and shows what each answer costs. It can make mistakes; the resume is
@@ -59,6 +109,17 @@ the authoritative version.
 [Four claims, all about the site, all checkable in this repo: citations ship
 since Sprint 3, /prompt since Sprint 7, /measurements since Sprint 6, the cost
 meter since Sprint 2. The old disclaimer sentence survives inside it.]
+
+[Wave 2, 2026-10-19: replaced by one line plus a link, at every width. The
+four-line version took about a fifth of a phone's viewport and pushed the
+tl;dr below the fold. The claims it carried are on the colophon, which the
+link opens.]
+
+Composer fine print (empty state only, wave 2):
+- Below lg: AI answers can be wrong. How it works
+- lg and up: Answers cite their sources and can be wrong — the resume is the
+  authoritative version. How it works
+("How it works" links to /colophon.)
 
 ### Recruiter TL;DR (#25)
 
@@ -75,20 +136,49 @@ All six rows stay canonical here and stay checked by the suite.
 
 Label: tl;dr
 
+[Wave 2, 2026-10-19: reordered. Nokia — the current job and the sales-ops
+evidence — was labelled "before that" and sat under A Darle 20. It now leads,
+labelled "now", with its outcomes in the rows; A Darle 20 follows as "also".
+The old rows were: now — "Sales operations specialist at Nokia, in Toronto.
+Co-founder and CTO of A Darle 20." (`bio.md`); shipped — "A Darle 20 — a
+two-sided marketplace, architected and shipped solo. 1,400+ registered users,
+127 hosts and 2,100+ bookings in its first four months."; before that — "At
+Nokia: a self-serve Power App used by 80+ stakeholders across seven regions,
+and a Salesforce Analytics to Power BI migration for 150+ users."]
+
 | Row label | Value | From |
 | --- | --- | --- |
-| now | Sales operations specialist at Nokia, in Toronto. Co-founder and CTO of A Darle 20. | `bio.md` |
-| shipped | A Darle 20 — a two-sided marketplace, architected and shipped solo. 1,400+ registered users, 127 hosts and 2,100+ bookings in its first four months. | `resume.md` |
-| before that | At Nokia: a self-serve Power App used by 80+ stakeholders across seven regions, and a Salesforce Analytics to Power BI migration for 150+ users. | `projects-nokia.md` |
+| now | Sales operations specialist at Nokia since Jun 2024, building internal tools and automation for global sales and finance teams. | `resume.md` |
+| shipped | A self-serve Power App used by 80+ stakeholders across 7 regions, which ended a manual process that took one finance analyst's entire workday, every day of quarter-end close — and the migration of all sales reporting from Salesforce Analytics to Power BI for 150+ users. | `resume.md` |
+| also | Co-founder and CTO of A Darle 20, a two-sided marketplace he architected and shipped solo: 1,400+ registered users, 127 hosts and 2,100+ bookings in its first four months. | `resume.md` |
 | how he builds | An AI-agent-heavy workflow in Claude Code — agents write most of the code, he keeps architecture, code review and release. | `projects-adarle20.md` |
 | looking for | A RevOps / GTM systems role at an AI-forward company. | `faq.md`, `resume.md` |
 | where | Toronto, ON. Canadian citizen, no visa sponsorship needed. | `faq.md` |
 
 Footer link (to /resume): The resume has the rest, and so does the box below.
 
+### Case-study cards (under the tl;dr)
+
+[DRAFT 2026-10-19, wave 2. One number each, a link to the long version. Dell
+stays off the homepage. `CASE_CARDS` in `content/recruiter.ts`, checked
+against the file each names.]
+
+Label: case studies
+
+| Card | Number | Under it | From |
+| --- | --- | --- | --- |
+| Reporting tools at Nokia | 150+ | users on the sales reporting he moved from Salesforce Analytics to Power BI | `projects-nokia.md` |
+| A Darle 20 | 2,100+ | bookings in the marketplace's first four months | `projects-adarle20.md` |
+
+Link on each: Read the case study →
+
 ### Projects section
 
 Section heading: Selected work
+
+[Wave 2, 2026-10-19: on `/projects`, in the projects panel and in the index,
+Nokia is now listed first (01) and A Darle 20 second (02). The card copy below
+is unchanged.]
 
 **Card 1 — A Darle 20**
 A marketplace connecting tabletop game hosts with paying players across Latin
@@ -146,7 +236,10 @@ recruiter/engineer toggle, per decisions #26.]
 - Give me the 30-second version
 - What has he shipped end to end?
 - Is he a fit for a RevOps role at an AI-forward company?
-- Does he need visa sponsorship?
+- What did he build at Nokia?
+
+[Wave 2, 2026-10-19: the fourth chip was "Does he need visa sponsorship?",
+which the hero subline already answers. The Nokia work had no chip.]
 
 The `/fit` slash command sends the third one verbatim, so the two can't drift
 into different questions.
@@ -444,9 +537,35 @@ Outside work: basketball, chess, cooking, and slowly learning three languages.
 
 ---
 
+## Document pages — shared chrome (wave 2, 2026-10-19)
+
+[DRAFT 2026-10-19. Replaces the lone "← Back to the conversation", which told
+a reader the chat was home and offered someone arriving from LinkedIn a
+conversation they never had.]
+
+Header: Sidhant Mathur (links home) · Resume · Projects · Contact (jumps to
+the contact block at the end of the page)
+
+Contact block, at the end of every document page:
+Label: Contact
+Body: Open to new roles — the resume, an email or LinkedIn, whichever is
+quickest.
+Then: Download resume (PDF) · hello@sidhantmathur.com [copy] · LinkedIn ↗
+
+Case studies end instead on:
+Label: Contact
+Body: If this is the kind of work you're hiring for, the resume has the rest.
+Then the same three controls, and a bordered link: "Next case study" ·
+{next title} → · {its status line}. Order: Nokia → A Darle 20 → Dell → Nokia.
+
+---
+
 ## Resume page
 
-Heading: Resume
+Label: Resume
+Heading: Sidhant Mathur
+[Wave 2: the heading was "Resume", so the page carried no name above the
+contact line.]
 Body: The current version, last updated July 2026. A plain-text
 version lives at /resume.md if you'd rather feed it to an AI — I won't take
 it personally.
@@ -516,7 +635,13 @@ everything in the meantime.
 own voice. v1 was scrapped: it framed the site as something to verify rather
 than something to use, and put false modesty in the author's mouth.]
 
-Panel heading: Why this site is a chatbot
+[Wave 2, 2026-10-19: folded into the colophon, page and panel, under the
+heading "Why there's a chat on a portfolio". It is no longer its own entry in
+the index — it argues for the chat-first premise the front-door policy
+reversed, so it sits with how the site works rather than beside the resume.
+The body below is unchanged.]
+
+Panel heading (until wave 2): Why this site is a chatbot
 
 Body:
 Most software is turning into a conversation. I don't build my own PostHog

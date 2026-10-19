@@ -1,10 +1,10 @@
 {
-  "publishedAt": "2026-10-19T21:58:45.937Z",
+  "publishedAt": "2026-10-19T23:12:12.142Z",
   "static": {
-    "ranAt": "2026-10-19T21:58:45.809Z",
+    "ranAt": "2026-10-19T23:03:59.464Z",
     "totals": {
-      "tests": 403,
-      "passed": 403,
+      "tests": 417,
+      "passed": 417,
       "failed": 0
     },
     "files": [
@@ -103,8 +103,8 @@
       },
       {
         "file": "evals/bakeoff.test.mjs",
-        "total": 31,
-        "passed": 31,
+        "total": 33,
+        "passed": 33,
         "suites": [
           {
             "name": "publishing archives runs instead of replacing them",
@@ -132,12 +132,14 @@
           },
           {
             "name": "what the comparison page derives",
-            "total": 12,
-            "passed": 12,
+            "total": 14,
+            "passed": 14,
             "tests": [
               "shows the most recent run per model and never counts one twice",
               "scores a model on what it answered, not on what broke in transport",
               "lists every run in the archive, newest first",
+              "names a replaced model as no longer offered instead of handing its runs to the successor",
+              "finds no gap when the catalogue is what was measured",
               "puts a model on the frontier only when nothing beats it on both axes",
               "does not plot a model that is missing an axis, and reports it",
               "ranks best-first and emphasises exactly one bar",
@@ -183,8 +185,8 @@
       },
       {
         "file": "evals/chat-transport.test.mjs",
-        "total": 27,
-        "passed": 27,
+        "total": 28,
+        "passed": 28,
         "suites": [
           {
             "name": "the idle clock on a stream",
@@ -228,10 +230,11 @@
           },
           {
             "name": "the budget lifted out of the response headers",
-            "total": 3,
-            "passed": 3,
+            "total": 4,
+            "passed": 4,
             "tests": [
-              "a complete tier triple fires onBudget with parsed numbers",
+              "a complete budget pair fires onBudget with parsed numbers",
+              "a missing count is not read as zero",
               "missing headers fire nothing",
               "a non-numeric count fires nothing rather than a NaN budget"
             ]
@@ -273,8 +276,8 @@
       },
       {
         "file": "evals/citations.test.mjs",
-        "total": 48,
-        "passed": 48,
+        "total": 55,
+        "passed": 55,
         "suites": [
           {
             "name": "the id space",
@@ -351,6 +354,20 @@
               "a month spelled out matches a dateline that abbreviates it",
               "leniency stops well short of accepting anything",
               "the source label is part of what a chunk can evidence"
+            ]
+          },
+          {
+            "name": "a sentence that spans two chunks and cites one",
+            "total": 7,
+            "passed": 7,
+            "tests": [
+              "is miscited, not unverified, when the rest of the record holds the facts",
+              "verifies once both chunks are cited",
+              "a token the record has nowhere keeps the strong verdict, even beside miscited ones",
+              "a citation to a chunk that does not exist stays unverified beside a real one",
+              "the site's own source cannot excuse a claim about the record",
+              "a number inside a longer number is not a match",
+              "the council's sentence, against the real corpus"
             ]
           },
           {
@@ -885,10 +902,10 @@
             "total": 4,
             "passed": 4,
             "tests": [
-              "every model has a tier with a rate-limit bucket",
+              "the hourly budget is a whole number of turns",
               "the default model is in the catalogue",
               "the default model is the one the dropdown selects on load",
-              "exactly one model is premium"
+              "after the default, the dropdown runs cheapest first"
             ]
           },
           {
@@ -917,8 +934,8 @@
       },
       {
         "file": "evals/track-b.test.mjs",
-        "total": 28,
-        "passed": 28,
+        "total": 32,
+        "passed": 32,
         "suites": [
           {
             "name": "#25 — the recruiter TL;DR",
@@ -932,6 +949,17 @@
               "every canon row reaches the homepage through one of the two surfaces",
               "renders in the empty state only",
               "is in docs/site-copy.md"
+            ]
+          },
+          {
+            "name": "the front door's case-study cards",
+            "total": 4,
+            "passed": 4,
+            "tests": [
+              "each card's number is in the corpus file it names",
+              "each card names its case study as the case study names itself, and links to it",
+              "Nokia leads, A Darle 20 follows, and Dell stays off the homepage",
+              "the card copy is in docs/site-copy.md"
             ]
           },
           {

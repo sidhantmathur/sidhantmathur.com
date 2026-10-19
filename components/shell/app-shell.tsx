@@ -2,22 +2,25 @@
 
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
+import Image from "next/image";
 import Link from "next/link";
 import {
   HEADER_NAV,
   IDLE_LINES,
   JD_COPY,
-  RAIL_ITEMS,
+  RAIL_CONTACT_LABEL,
+  RAIL_HOW,
+  RAIL_WORK,
   SLASH_COMMANDS,
   SLUG_TO_RESUME,
   SOCIAL_LINKS,
+  type RailGroup,
   type RailItem,
 } from "./shell-data";
 import { Answer } from "./answer";
 import { usePanelUrl } from "./use-panel-url";
 import { panelTitle } from "./panel-title";
 import { CopyButton } from "./copy-button";
-import { Seismograph, lastSettledRate } from "./instruments";
 import { useTokenRate } from "./use-token-rate";
 import { useTeletype } from "./use-teletype";
 import { useHydrated } from "./use-hydrated";
@@ -33,17 +36,23 @@ import {
   DISCLAIMER,
   downloadAs,
   RESUME_PDF,
+  HEADSHOT,
   RESUME_PDF_FILENAME,
   SITE_NAME,
   SITE_URL,
 } from "@/lib/site";
 import { track } from "@/lib/analytics";
-import { RecruiterTldr } from "./recruiter-tldr";
-import { POSITIONING, SUGGESTED_QUESTIONS as SUGGESTED } from "@/content/recruiter";
+import { CaseCards, RecruiterTldr } from "./recruiter-tldr";
+import {
+  POSITIONING,
+  ROLE_LINE,
+  SUGGESTED_QUESTIONS as SUGGESTED,
+} from "@/content/recruiter";
+import { EmailCopy, LinkedInButton, ResumePdfButton } from "@/components/contact-actions";
 import { costOfTurn, sumCosts } from "@/lib/pricing";
 import { MODEL_IDS } from "@/lib/models";
 import { isShellPanel, type ShellPanelKind } from "./panels";
-import { readoutValues, type ReadoutState } from "./readouts";
+import { receiptText, type ReadoutState } from "./readouts";
 import {
   textOf,
   toolOutputs,
@@ -125,6 +134,11 @@ const HERO = "I learn what the problem needs, then I build the thing.";
 // placeholder now. The subline's job — say what he wants — is done by
 // POSITIONING from content/recruiter.ts, where the citation checker covers it.
 const HERO_SUB = "Ask what you'd ask on a call";
+// The composer's fine print, one line at each width (wave 2). Logged in
+// docs/copy-ledger.md; DISCLAIMER in lib/site.ts still travels with exports.
+const DISCLAIMER_SHORT = "AI answers can be wrong.";
+const DISCLAIMER_LONG =
+  "Answers cite their sources and can be wrong — the resume is the authoritative version.";
 // DISCLAIMER, SITE_NAME and SITE_URL used to sit here and be threaded into the
 // export deck, the print document and the transcript serializer as props. They
 // are in `lib/site.ts` now: the deck and the document import them, and the two
@@ -193,7 +207,6 @@ export function AppShell() {
   const lastMessage = messages[messages.length - 1];
   const streamingText = lastMessage?.role === "assistant" ? textOf(lastMessage) : "";
   const rate = useTokenRate(streamingText, isBusy);
-  const settledRate = lastSettledRate(turnLog);
   const { teletype, toggleTeletype } = useTeletype(streamingText, isBusy);
   // The fourth reading of the same event. Unlike the three above it survives
   // the turn ending, because the finished duration is the interesting number.
@@ -205,11 +218,19 @@ export function AppShell() {
     () => sumCosts(turnLog.map((t) => (t.error ? null : costOfTurn(t.model, t.usage)))),
     [turnLog],
   );
-  // The four session numbers, as numbers. The status strip below and the rail
-  // sheet on a phone both show them, and both format them the same way because
-  // neither one does — see readouts.ts.
+  // The four session numbers, as numbers, for the rail sheet on a phone — see
+  // readouts.ts. The desktop status strip shows only the receipt now (wave 2).
   const readouts: ReadoutState = { turns, ttft, cost: sessionCost.total, model };
-  const reading = readoutValues(readouts);
+  // What the last answer cost: the newest turn that finished and was priced.
+  // A failed turn is skipped rather than reported as free.
+  const lastAnswerCost = useMemo(() => {
+    for (let i = turnLog.length - 1; i >= 0; i -= 1) {
+      const t = turnLog[i]!;
+      if (t.error || t.usage == null) continue;
+      return costOfTurn(t.model, t.usage)?.total ?? null;
+    }
+    return null;
+  }, [turnLog]);
 
   // Idle mode. Suspended while a turn is in flight — an answer arriving is not
   // an idle screen — and it never blocks anything: the input keeps focus and
@@ -524,8 +545,18 @@ export function AppShell() {
   const panelOpen = panel.kind !== "none";
   const lastId = messages[messages.length - 1]?.id;
 
-  // One address, already in shell-data — the Email CTA must not retype it.
-  const emailHref = SOCIAL_LINKS.find((s) => s.label === "Email")!.href;
+  // What the instruments' citation trace checks: every answer that has
+  // finished arriving. The streaming one is left out — its last sentence is
+  // half a sentence, and checking it would flash verdicts that change a token
+  // later.
+  const settledAnswers = useMemo(
+    () =>
+      messages
+        .filter((m) => m.role === "assistant" && (!isBusy || m.id !== lastId))
+        .map((m) => textOf(m))
+        .filter(Boolean),
+    [messages, isBusy, lastId],
+  );
 
   // The four recruiter chips (#26), built once and rendered in two places by
   // width: in the dock above the composer from md up — grouped with the
@@ -570,10 +601,13 @@ export function AppShell() {
         turnLog={turnLog}
         budget={budget}
         model={model}
+        onModelChange={setModel}
+        hydrated={hydrated}
         rate={rate}
         teletype={teletype}
         onToggleTeletype={toggleTeletype}
         errorCopy={{ rateLimited: RATE_LIMIT_STATE }}
+        answers={settledAnswers}
       />
     ),
   };
@@ -677,89 +711,57 @@ export function AppShell() {
         >
           {SITE_NAME}
         </Link>
-        <span className="hidden text-text-faint sm:inline">Toronto, ON</span>
+        <span className="hidden text-text-faint lg:inline">Toronto, ON</span>
 
-        <div className="ml-auto flex items-center gap-4 text-text-faint">
-          {/* The front-door swap: before a conversation exists, this side of
-              the strip is destinations; after, it is telemetry. A visitor who
-              has not engaged has no numbers worth reading — every readout is a
-              dash or a zero — and a row of dashes plus a model select is the
-              "tech demo" signal ahead of the "person you can hire" one. The
-              model select goes with the readouts, which costs choosing a model
-              for the very first turn: switching after any turn still works,
-              and the select is live from the first answer on. */}
-          {hasMessages ? (
-            <>
-              {/* The always-visible half of the instruments. One click opens
-                  the rest in the context panel — the readouts are the
-                  affordance, so nothing new has to be added to the page to
-                  advertise them. Hidden below md, where the index sheet is the
-                  way in instead. */}
-              <button
-                type="button"
-                onClick={() => openPanel({ kind: "instruments" })}
-                title="Open the instruments"
-                aria-label="Open the instruments"
-                disabled={!hydrated}
-                data-js-control
-                className="hidden items-center gap-4 transition-colors hover:text-accent md:flex"
+        <div className="ml-auto flex items-center gap-2 text-text-faint sm:gap-4">
+          {/* Wave 2: the nav no longer gives way to telemetry. The front-door
+              pass swapped destinations for readouts the moment a conversation
+              started, which took the resume and the contact links off the
+              header at exactly the point a visitor had shown interest — the
+              council review's "nav replaced by telemetry after the first
+              turn". So the nav is permanent, at every width (a phone gets it
+              in tighter type, and drops Projects below 380px, where the ☰
+              index still carries it), and what the strip used to show — time
+              to first token, the rate needle, the session total, the hourly
+              budget and the model picker — lives in the instruments panel.
+              The header keeps one line of it: the receipt below. */}
+          <nav aria-label="Site" className="flex items-center">
+            {HEADER_NAV.map((n) => (
+              <Link
+                key={n.label}
+                href={n.href}
+                className={`h-11 touch-manipulation items-center px-1.5 text-[12px] no-underline transition-colors hover:text-accent sm:px-2.5 sm:text-[13px] ${
+                  n.label === "Projects" ? "hidden min-[380px]:flex" : "flex"
+                }`}
               >
-                <Stat label="turns" value={reading.turns} />
-                <Stat label="ttft" value={reading.ttft} />
-                <span className="hidden lg:flex">
-                  <Seismograph rate={rate} settled={settledRate} />
-                </span>
-                <Stat label="est." value={reading.cost} />
-                {budget && (
-                  <Stat label="hourly" value={`${budget.remaining}/${budget.limit}`} />
-                )}
-              </button>
-              <label className="hidden items-center gap-1.5 xl:flex">
-                <span>model</span>
-                <select
-                  value={model}
-                  onChange={(e) => setModel(e.target.value)}
-                  // A native select is the one control that "works" before
-                  // hydration in the worst way: it opens, it takes a choice,
-                  // and the choice reaches nothing.
-                  disabled={!hydrated}
-                  className="min-h-[36px] disabled:cursor-progress disabled:border-line disabled:text-text-dim cursor-pointer border border-line-strong bg-raised px-1.5 py-0.5 text-[13px] text-text-soft outline-none focus:border-accent"
-                >
-                  {/* Catalogue order, and the ids as written: the default
-                      first, then cheapest first. Every model spends from the
-                      same hourly budget, so switching changes the meter's
-                      price and nothing else in the strip. */}
-                  {MODEL_IDS.map((m) => (
-                    <option key={m} value={m}>
-                      {m}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            </>
-          ) : (
-            // Hidden below sm — the ☰ control carries the same destinations
-            // there, and a phone header has room for the name and the dot.
-            <nav aria-label="Site" className="hidden items-center sm:flex">
-              {HEADER_NAV.map((n) => (
-                <Link
-                  key={n.label}
-                  href={n.href}
-                  className="flex h-11 touch-manipulation items-center px-2.5 text-[13px] no-underline transition-colors hover:text-accent"
-                >
-                  {n.label}
-                </Link>
-              ))}
-              <button
-                type="button"
-                onClick={() => openPanel({ kind: "contact" })}
-                disabled={!hydrated}
-                data-js-control
-                className="flex h-11 touch-manipulation items-center px-2.5 text-[13px] transition-colors hover:text-accent"
-              >
-                Contact
-              </button>
-            </nav>
+                {n.label}
+              </Link>
+            ))}
+            <button
+              type="button"
+              onClick={() => openPanel({ kind: "contact" })}
+              disabled={!hydrated}
+              data-js-control
+              className="flex h-11 touch-manipulation items-center px-1.5 text-[12px] transition-colors hover:text-accent sm:px-2.5 sm:text-[13px]"
+            >
+              Contact
+            </button>
+          </nav>
+          {/* The receipt: turns used and what the last answer cost, and the
+              way into everything else. lg and up, where it fits beside the
+              nav; below that the ☰ index carries the same numbers and the
+              Instruments entry. */}
+          {hasMessages && (
+            <button
+              type="button"
+              onClick={() => openPanel({ kind: "instruments" })}
+              title="Open the instruments"
+              disabled={!hydrated}
+              data-js-control
+              className="hidden h-11 items-center tabular-nums transition-colors hover:text-accent lg:flex"
+            >
+              {receiptText(turns, lastAnswerCost)}
+            </button>
           )}
           <span className="flex items-center gap-1.5">
             {/* The strip said "ready" from the first paint, which on a slow
@@ -857,6 +859,32 @@ export function AppShell() {
                 // it. The old fold arithmetic (chip order swaps, disclaimer
                 // trims) went with the layout it measured.
                 <div className="flex flex-col gap-4">
+                  {/* Who and what, above his headline (wave 2). The name was
+                      a 13px label in the header and the role was nowhere on
+                      the first screen; this line says both in the words a
+                      recruiter searches for. The photo is small on purpose —
+                      a marker of a person beside his name, not a portrait —
+                      and slightly settled into the dark ground (see the
+                      headshot rule in app/globals.css). */}
+                  <div className="flex items-center gap-3">
+                    <Image
+                      src={HEADSHOT}
+                      alt="Sidhant Mathur"
+                      width={56}
+                      height={56}
+                      sizes="56px"
+                      loading="eager"
+                      className="headshot h-12 w-12 shrink-0 border border-line-strong object-cover md:h-14 md:w-14"
+                    />
+                    <p className="min-w-0 [font-family:var(--font-geist-sans)]">
+                      <span className="block text-[16px] font-medium leading-snug text-text">
+                        {SITE_NAME}
+                      </span>
+                      <span className="block text-[15px] leading-snug text-text-soft">
+                        {ROLE_LINE.value}
+                      </span>
+                    </p>
+                  </div>
                   <h1 className="t-hero max-w-[24ch] font-semibold text-text [font-family:var(--font-geist-sans)]">
                     {HERO}
                   </h1>
@@ -866,39 +894,49 @@ export function AppShell() {
                   <p className="t-body max-w-[52ch] text-text-soft [font-family:var(--font-geist-sans)]">
                     {POSITIONING.value}
                   </p>
-                  {/* The three CTAs, resume first — the one thing every
-                      visitor type needs a path to. "Interview this site" is a
-                      CTA doing a competence claim's work; it only focuses the
-                      composer, so it needs hydration and is gated like every
-                      control that does. */}
-                  <div className="flex flex-col gap-2.5 pt-2 sm:flex-row">
+                  {/* The ways to act (wave 2). The resume PDF is primary —
+                      it is the file a recruiter attaches to an ATS record —
+                      with the HTML resume a text link beside the chat's.
+                      That choice is one the council left open until PostHog
+                      can say which one visitors take; both are tracked. The
+                      email is on screen and copyable, because a bare mailto:
+                      is a dead end on a desktop with no mail client. */}
+                  <div className="flex flex-col gap-2.5 pt-2 sm:flex-row sm:flex-wrap">
+                    <ResumePdfButton surface="front-door" primary />
+                    <EmailCopy surface="front-door" />
+                    <LinkedInButton surface="front-door" />
+                  </div>
+                  {/* Two text links. "Interview this site" was a third equal
+                      button; it only focuses the composer, so it is demoted
+                      to the register of a link and still gated on hydration
+                      like every control that needs JavaScript. */}
+                  <div className="-mt-1.5 flex flex-wrap items-center gap-x-5 text-[14px] md:text-[13px]">
                     <Link
                       href="/resume"
-                      className="flex h-11 touch-manipulation items-center justify-center border border-accent bg-accent px-5 text-[13px] font-medium text-bg no-underline transition-opacity hover:opacity-90"
+                      onClick={() => track("resume_open", { surface: "front-door" })}
+                      className="flex min-h-[44px] touch-manipulation items-center text-text-soft underline decoration-line-strong underline-offset-4 transition-colors hover:text-accent hover:decoration-accent"
                     >
-                      View resume
+                      Resume as a web page
                     </Link>
-                    <a
-                      href={emailHref}
-                      className="flex h-11 touch-manipulation items-center justify-center border border-line-strong px-5 text-[13px] text-text no-underline transition-colors hover:border-accent hover:text-accent"
-                    >
-                      Email me
-                    </a>
                     <button
                       type="button"
                       onClick={() => inputRef.current?.focus()}
                       disabled={!hydrated}
                       data-js-control
-                      className="flex h-11 touch-manipulation items-center justify-center border border-line-strong px-5 text-[13px] text-text transition-colors hover:border-accent hover:text-accent disabled:border-line disabled:text-text-dim"
+                      className="flex min-h-[44px] touch-manipulation items-center text-text-soft underline decoration-line-strong underline-offset-4 transition-colors hover:text-accent hover:decoration-accent disabled:text-text-dim disabled:no-underline"
                     >
                       Interview this site ↓
                     </button>
                   </div>
                   {/* #25 — the six-second scan, at body scale. See the notes
                       in recruiter-tldr.tsx. */}
-                  <div className="pt-3">
+                  <div>
                     <RecruiterTldr />
                   </div>
+                  {/* Two case studies, one number each (wave 2). Before this
+                      no project was linked from the front door's body at any
+                      width. */}
+                  <CaseCards />
                   {/* Below md the chips live here, after the facts; from md
                       up they sit in the dock, grouped with the composer they
                       feed. See chipButtons above. */}
@@ -1229,24 +1267,23 @@ export function AppShell() {
                 since Sprint 6, the cost meter since Sprint 2. Gone once a
                 conversation starts: answers then carry their own sources,
                 and the strip takes this row. Logged in docs/copy-ledger.md. */}
+            {/* Wave 2: one line plus a link, at every width. The four-line
+                version took about a fifth of a phone's viewport, permanently,
+                and pushed the tl;dr below the fold. The honesty survives (the
+                answers can be wrong); the credibility claims it carried —
+                published prompt, published evals, the cost meter — are on the
+                colophon, which the link opens. A phone gets the short
+                sentence because the long one is two lines at 390px. */}
             {!hasMessages && (
               <p className="t-meta px-4 pb-3 text-text-faint md:px-10">
-                Answers cite their sources — this chat publishes its{" "}
+                <span className="lg:hidden">{DISCLAIMER_SHORT}</span>
+                <span className="hidden lg:inline">{DISCLAIMER_LONG}</span>{" "}
                 <Link
-                  href="/prompt"
-                  className="text-text-soft underline decoration-line-strong underline-offset-2 hover:text-accent"
+                  href="/colophon"
+                  className="-my-2 py-2 text-text-soft underline decoration-line-strong underline-offset-2 hover:text-accent"
                 >
-                  system prompt
-                </Link>{" "}
-                and{" "}
-                <Link
-                  href="/measurements"
-                  className="text-text-soft underline decoration-line-strong underline-offset-2 hover:text-accent"
-                >
-                  eval results
+                  How it works
                 </Link>
-                , and shows what each answer costs. It can make mistakes; the
-                resume is the authoritative version.
               </p>
             )}
 
@@ -1443,31 +1480,41 @@ function RailContent({
   /** Rail entries with no href need JavaScript; see RailLink. */
   hydrated: boolean;
 }) {
+  const group = (g: RailGroup) => (
+    <section key={g.label} aria-label={g.label} className="mt-5 first:mt-2">
+      <h2 className="t-label text-text-faint">{g.label}</h2>
+      <div className="mt-1 flex flex-col">
+        {g.items.map((item) => (
+          <RailLink key={item.label} item={item} onOpenPanel={onOpenPanel} hydrated={hydrated} />
+        ))}
+      </div>
+    </section>
+  );
   return (
     <>
-      <div className="mt-2 flex flex-col">
-        {RAIL_ITEMS.map((item) => (
-          <RailLink
-            key={item.label}
-            item={item}
-            onOpenPanel={onOpenPanel}
-            hydrated={hydrated}
-          />
-        ))}
-      </div>
-      <div className="mt-auto flex flex-wrap gap-x-3 gap-y-1 pt-6">
-        {SOCIAL_LINKS.map((s) => (
-          <a
-            key={s.label}
-            href={s.href}
-            target="_blank"
-            rel="noreferrer"
-            className="-mx-1 flex min-h-[44px] touch-manipulation items-center px-1 text-[13px] text-text-faint no-underline hover:text-accent"
-          >
-            {s.label}
-          </a>
-        ))}
-      </div>
+      {group(RAIL_WORK)}
+      {/* Contact is the shell's to draw rather than a list of links: the
+          address is on screen and copyable here too, for the same reason it
+          is on the front door. GitHub sits with LinkedIn rather than in a
+          footer row of its own. */}
+      <section aria-label={RAIL_CONTACT_LABEL} className="mt-5">
+        <h2 className="t-label text-text-faint">{RAIL_CONTACT_LABEL}</h2>
+        <div className="mt-2 flex flex-col">
+          <EmailCopy surface="index" />
+          {SOCIAL_LINKS.filter((s) => s.label !== "Email").map((s) => (
+            <a
+              key={s.label}
+              href={s.href}
+              target="_blank"
+              rel="noreferrer"
+              className="flex min-h-[44px] items-center border-b border-line py-2 text-text-soft no-underline transition-colors hover:text-accent"
+            >
+              {s.label} ↗
+            </a>
+          ))}
+        </div>
+      </section>
+      {group(RAIL_HOW)}
     </>
   );
 }
@@ -1582,15 +1629,6 @@ function StripButton({
     >
       {label}
     </button>
-  );
-}
-
-function Stat({ label, value }: { label: string; value: string }) {
-  return (
-    <span className="flex items-center gap-1.5">
-      <span>{label}</span>
-      <span className="tabular-nums text-text-soft">{value}</span>
-    </span>
   );
 }
 

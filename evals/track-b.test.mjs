@@ -38,14 +38,17 @@ import { checkClaim, checkableTokens } from "../lib/verify.ts";
 import { looksLikeJobPosting } from "../lib/job-posting.ts";
 import { looksLikeSiteQuestion } from "../lib/site-question.ts";
 import {
+  CASE_CARDS,
   FIT_QUESTION,
   HERO_TLDR,
   POSITIONING,
   RECRUITER_TLDR,
+  ROLE_LINE,
   SUGGESTED_QUESTIONS,
   TLDR_FOOTER,
   TLDR_LABEL,
 } from "../content/recruiter.ts";
+import { PROJECTS } from "../content/projects.ts";
 
 import {
   ADARLE_MEDIA,
@@ -56,8 +59,9 @@ import {
 // Every fact-carrying row the empty state renders: the six-row canon plus the
 // hero subline the front-door pass fused out of two of them. POSITIONING is a
 // recombination, not a new claim — but a recombined sentence can still drift,
-// so it goes through every check the rows do.
-const TLDR_ROWS = [...RECRUITER_TLDR, POSITIONING];
+// so it goes through every check the rows do. ROLE_LINE (wave 2) is the name
+// and role line above the H1, and is a claim about his job like any row.
+const TLDR_ROWS = [...RECRUITER_TLDR, POSITIONING, ROLE_LINE];
 
 /** One synthetic chunk per corpus file, so checkClaim can be pointed at it. */
 function corpusLookup(relativePath) {
@@ -143,6 +147,53 @@ describe("#25 — the recruiter TL;DR", () => {
         copy.includes(row.value.replace(/\s+/g, " ")),
         `TL;DR row "${row.label}" is on the site but not in docs/site-copy.md`,
       );
+    }
+  });
+});
+
+// --- Wave 2: the case-study cards under the tl;dr ---------------------------
+
+describe("the front door's case-study cards", () => {
+  test("each card's number is in the corpus file it names", () => {
+    for (const card of CASE_CARDS) {
+      const claim = `${card.stat} ${card.statLabel}`;
+      const check = checkClaim(claim, [card.source], corpusLookup(card.source));
+      assert.equal(
+        check.verdict,
+        "verified",
+        `the ${card.slug} card is not supported by ${card.source} — missing: ${check.missing.join(", ")}`,
+      );
+      assert.ok(/\d/.test(card.stat), `the ${card.slug} card has no headline number`);
+    }
+  });
+
+  test("each card names its case study as the case study names itself, and links to it", () => {
+    for (const card of CASE_CARDS) {
+      const project = PROJECTS[card.slug];
+      assert.ok(project, `no project "${card.slug}"`);
+      assert.equal(card.title, project.title, `the ${card.slug} card's title drifted from content/projects.ts`);
+      assert.equal(card.href, project.caseStudyHref, `the ${card.slug} card links somewhere else`);
+    }
+  });
+
+  test("Nokia leads, A Darle 20 follows, and Dell stays off the homepage", () => {
+    assert.deepEqual(
+      CASE_CARDS.map((c) => c.slug),
+      ["nokia", "adarle20"],
+    );
+    assert.ok(
+      HERO_TLDR[0].value.includes("Nokia"),
+      "the tl;dr's first row is no longer the Nokia work",
+    );
+    const shell = read("components/shell/app-shell.tsx");
+    const emptyState = shell.slice(shell.indexOf("{!hasMessages && ("));
+    assert.ok(emptyState.includes("<CaseCards />"), "the cards are not in the empty state");
+  });
+
+  test("the card copy is in docs/site-copy.md", () => {
+    const copy = read("docs/site-copy.md").replace(/\s+/g, " ");
+    for (const card of CASE_CARDS) {
+      assert.ok(copy.includes(card.statLabel), `the ${card.slug} card is not in docs/site-copy.md`);
     }
   });
 });

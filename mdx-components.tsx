@@ -14,13 +14,16 @@ const components: MDXComponents = {
       {children}
     </h2>
   ),
+  // `mdx-prose` is the hook for the document pages' long-form rule in
+  // app/globals.css (wave 2): on a page, sans at the body tier; in the shell's
+  // narrow panel, the 13px mono below.
   p: ({ children }) => (
-    <p className="mt-3 max-w-[68ch] text-[13px] leading-[1.7] text-text-soft">
+    <p className="mdx-prose mt-3 max-w-[68ch] text-[13px] leading-[1.7] text-text-soft">
       {children}
     </p>
   ),
   ul: ({ children }) => (
-    <ul className="mt-3 max-w-[68ch] list-disc space-y-1.5 pl-4 text-[13px] leading-[1.7] text-text-soft marker:text-text-faint">
+    <ul className="mdx-prose mt-3 max-w-[68ch] list-disc space-y-1.5 pl-4 text-[13px] leading-[1.7] text-text-soft marker:text-text-faint">
       {children}
     </ul>
   ),

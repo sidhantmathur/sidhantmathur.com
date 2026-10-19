@@ -150,14 +150,8 @@ export const PANELS = {
     stealable: true,
     surface: "content",
   },
-  why: {
-    title: "Why this site is a chatbot",
-    path: null,
-    slash: null,
-    fromTool: null,
-    stealable: true,
-    surface: "content",
-  },
+  // `why` ("Why this site is a chatbot") was a panel of its own until wave 2.
+  // Its text is a section of the colophon now; see WHY_CHATBOT.
   colophon: {
     title: "How this site was built",
     path: "/colophon",
