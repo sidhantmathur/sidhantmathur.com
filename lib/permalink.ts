@@ -154,9 +154,18 @@ export async function permalinkFor(
   return `${base}${PERMALINK_PREFIX}${payload}`;
 }
 
-/** The payload in a `location.hash`, if there is one. */
+/**
+ * The payload in a `location.hash`, if there is one.
+ *
+ * Anything from the first `?` or `&` on is not payload. base64url never
+ * contains either, so the cut is unambiguous, and it is what makes the most
+ * likely mistake with an application link harmless: `?ref=acme` pasted onto
+ * the END of a copied permalink lands inside the fragment, and used to turn a
+ * working link into the site's empty state. lib/analytics.ts reads the ref from
+ * there; this ignores it. docs/application-links.md has the right order.
+ */
 export function payloadFromHash(hash: string): string | null {
   if (!hash.startsWith(PERMALINK_PREFIX)) return null;
-  const payload = hash.slice(PERMALINK_PREFIX.length);
+  const payload = hash.slice(PERMALINK_PREFIX.length).split(/[?&]/, 1)[0];
   return payload || null;
 }

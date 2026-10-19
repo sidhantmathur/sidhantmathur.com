@@ -259,6 +259,14 @@ describe("permalink", () => {
     assert.equal(payloadFromHash(""), null);
     assert.equal(payloadFromHash("#c="), null);
   });
+
+  test("payloadFromHash ignores a query pasted onto the end of the fragment", () => {
+    // base64url has no `?` or `&`, so anything from one on was appended —
+    // most likely `?ref=` added to a copied permalink (application links).
+    assert.equal(payloadFromHash("#c=abc?ref=acme"), "abc");
+    assert.equal(payloadFromHash("#c=abc&ref=acme"), "abc");
+    assert.equal(payloadFromHash("#c=?ref=acme"), null);
+  });
 });
 
 // --- the scorecard --------------------------------------------------------
@@ -489,6 +497,13 @@ describe("shell wiring", () => {
     assert.ok(
       src.includes("window.location.hash"),
       "usePanelUrl no longer reads the fragment before pushing a path",
+    );
+    // And the query, for the same reason: an application link's `?ref=` is
+    // who sent the link, and a replayed fit check opens its panel on load.
+    assert.match(src, /function panelHref\(panel: PanelView, hash: string, search = ""\)/);
+    assert.ok(
+      src.includes("window.location.search"),
+      "usePanelUrl no longer reads the query before pushing a path",
     );
   });
 

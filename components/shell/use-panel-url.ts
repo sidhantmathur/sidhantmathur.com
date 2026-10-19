@@ -40,22 +40,28 @@ function pathForPanel(panel: PanelView): string | null {
 }
 
 /**
- * The address a panel state should show, keeping any fragment.
+ * The address a panel state should show, keeping any query and fragment.
  *
  * THE FRAGMENT IS THE CONVERSATION (Sprint 5, #18). `pushState(null, "", "/")`
  * drops the hash, so opening a panel while reading a permalink used to erase
  * the very thing being read — invisibly, and only discoverable by reloading.
- * The panel owns the path; it has no opinion about the fragment.
+ *
+ * THE QUERY IS WHO SENT THE LINK. It used to be dropped the same way, and a
+ * replayed fit check opens its panel the moment it loads, so an application
+ * link's `?ref=` (lib/analytics.ts) was gone from the address within
+ * milliseconds — before analytics had read it. The panel owns the path; it has
+ * no opinion about the query or the fragment.
  */
-export function panelHref(panel: PanelView, hash: string): string {
-  return (pathForPanel(panel) ?? "/") + hash;
+export function panelHref(panel: PanelView, hash: string, search = ""): string {
+  return (pathForPanel(panel) ?? "/") + search + hash;
 }
 
 export function usePanelUrl(panel: PanelView, setPanel: (v: PanelView) => void) {
   // Panel → URL.
   useEffect(() => {
-    const target = panelHref(panel, window.location.hash);
-    if (window.location.pathname + window.location.hash === target) return;
+    const search = window.location.search;
+    const target = panelHref(panel, window.location.hash, search);
+    if (window.location.pathname + search + window.location.hash === target) return;
     window.history.pushState(null, "", target);
   }, [panel]);
 
