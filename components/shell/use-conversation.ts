@@ -299,6 +299,7 @@ export function useConversation(model: string) {
         input_tokens: data.usage?.inputTokens ?? null,
         cached_input_tokens: data.usage?.cachedInputTokens ?? null,
         output_tokens: data.usage?.outputTokens ?? null,
+        reasoning_tokens: data.usage?.reasoningTokens ?? null,
         cache_hit: cached > 0,
         cache_hit_ratio: input > 0 ? Math.round((cached / input) * 100) / 100 : null,
         steps: data.steps,

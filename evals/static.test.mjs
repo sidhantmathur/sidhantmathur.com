@@ -25,7 +25,7 @@ import {
   readToolNames,
 } from "./lib/artifacts.mjs";
 import { GROUNDED, ROLE_FIT } from "./cases.mjs";
-import { DEFAULT_MODEL, HOURLY_LIMIT, MODELS, MODEL_IDS } from "../lib/models.ts";
+import { DEFAULT_MODEL, HOURLY_LIMIT, MODELS, MODEL_IDS, reasoningFor } from "../lib/models.ts";
 import {
   JD_PREFIX,
   MAX_POSTING_TEXT,
@@ -222,6 +222,83 @@ describe("model catalogue", () => {
       (a, b) => MODELS[a].input - MODELS[b].input || MODELS[a].output - MODELS[b].output,
     );
     assert.deepEqual(rest, sorted, "the non-default models are not in ascending price order");
+  });
+
+  // --- Reasoning, per model and per kind of turn (2026-10-19) -------------
+  //
+  // The catalogue row says how hard a model thinks; the route sends it. Both
+  // halves are asserted, because either one alone fails silently: a level the
+  // Gateway doesn't know is a provider error on every turn, and a route that
+  // stopped passing it would put the default back on the slowest turn the site
+  // has, with nothing on the page to say so.
+
+  // AI SDK 7's own list (LanguageModelV4CallOptions['reasoning']).
+  const LEVELS = ["provider-default", "none", "minimal", "low", "medium", "high", "xhigh", "max"];
+
+  test("every reasoning setting in the catalogue is a level the SDK accepts", () => {
+    for (const id of MODEL_IDS) {
+      const setting = MODELS[id].reasoning;
+      if (setting === undefined) continue;
+      for (const [kind, level] of Object.entries(setting)) {
+        assert.ok(
+          kind === "chat" || kind === "jobPosting",
+          `${id} has a reasoning setting for "${kind}" — the route only reads chat and jobPosting`,
+        );
+        assert.ok(LEVELS.includes(level), `${id} asks for reasoning "${level}", which is not an SDK level`);
+      }
+    }
+  });
+
+  test("a row without a reasoning key sends none, on either kind of turn", () => {
+    // Undefined is what keeps every unconfigured model on its provider default,
+    // exactly as before the key existed. An empty string or "provider-default"
+    // here would be a change in what the route sends.
+    for (const id of MODEL_IDS) {
+      if (MODELS[id].reasoning !== undefined) continue;
+      assert.equal(reasoningFor(id, { jobPosting: false }), undefined, `${id}, ordinary turn`);
+      assert.equal(reasoningFor(id, { jobPosting: true }), undefined, `${id}, posting turn`);
+    }
+  });
+
+  test("the kind of turn picks the setting", () => {
+    for (const id of MODEL_IDS) {
+      const setting = MODELS[id].reasoning;
+      if (!setting) continue;
+      assert.equal(reasoningFor(id, { jobPosting: true }), setting.jobPosting, `${id}, posting turn`);
+      assert.equal(reasoningFor(id, { jobPosting: false }), setting.chat, `${id}, ordinary turn`);
+    }
+  });
+
+  test("the default runs low reasoning on posting turns and its default on the rest", () => {
+    // Measured, not chosen: docs/followups.md §2, "Reasoning on posting turns".
+    // At the provider default the card took 28–33 s on a 2,500-character
+    // posting; at low, 13–14 s, with the same requirements extracted. Ordinary
+    // turns were not re-measured, so they are deliberately left alone. Change
+    // either half with a new measurement, not instead of one.
+    assert.equal(reasoningFor(DEFAULT_MODEL, { jobPosting: true }), "low");
+    assert.equal(reasoningFor(DEFAULT_MODEL, { jobPosting: false }), undefined);
+  });
+
+  test("the route sends the catalogue's setting, for this turn's kind", () => {
+    const route = read("app/api/chat/route.ts");
+    assert.match(
+      route,
+      /reasoning: reasoningFor\(model, \{ jobPosting \}\)/,
+      "streamText no longer receives reasoningFor(model, { jobPosting }) — the catalogue's reasoning setting is being ignored",
+    );
+    // And nothing else picks a level behind the catalogue's back: one source.
+    assert.equal(
+      (route.match(/\breasoning:/g) ?? []).length,
+      1,
+      "the route sets `reasoning` in more than one place",
+    );
+  });
+
+  test("the turn record keeps the reasoning tokens", () => {
+    // They are the hidden part of the output, and on a posting turn they were
+    // most of the wait. The record is where the next measurement reads them.
+    const route = read("app/api/chat/route.ts");
+    assert.match(route, /reasoningTokens: usage\.outputTokenDetails\?\.reasoningTokens \?\? null/);
   });
 });
 

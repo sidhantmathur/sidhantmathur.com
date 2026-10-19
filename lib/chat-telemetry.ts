@@ -277,6 +277,13 @@ export type TurnUsage = {
   /** Input tokens written INTO the cache. Priced above a normal input token. */
   cacheWriteTokens: number | null;
   outputTokens: number | null;
+  /**
+   * The part of `outputTokens` the model spent thinking, which never reaches
+   * the page. Optional because records written before it existed don't carry
+   * it, and null when the provider doesn't report it. On a job-posting turn it
+   * is most of the wait before the card appears, which is why it is recorded.
+   */
+  reasoningTokens?: number | null;
   totalTokens: number | null;
 };
 

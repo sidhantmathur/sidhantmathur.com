@@ -31,6 +31,7 @@ import {
   DEFAULT_MODEL,
   HOURLY_LIMIT,
   MAX_USER_MESSAGES,
+  reasoningFor,
   type ModelId,
 } from "@/lib/models";
 
@@ -731,6 +732,12 @@ export async function POST(req: Request): Promise<Response> {
         // stalled stream. Each of those used to leave a turn running.
         abortSignal: req.signal,
         maxOutputTokens: jobPosting ? MAX_OUTPUT_TOKENS_JD : MAX_OUTPUT_TOKENS,
+        // Per model and per kind of turn, from the catalogue. Undefined sends
+        // nothing, which leaves the provider on its default — every row
+        // without a `reasoning` key behaves exactly as it did before the key
+        // existed. GPT-6 Luna runs `low` on posting turns, where its hidden
+        // reasoning was most of the wait before the card (lib/models.ts).
+        reasoning: reasoningFor(model, { jobPosting }),
         tools: chatTools,
         // The SDK's default stop condition is stepCountIs(1), which ends the
         // stream at the tool call before the model can answer. Allow a second
@@ -796,6 +803,7 @@ export async function POST(req: Request): Promise<Response> {
           cachedInputTokens: usage.inputTokenDetails?.cacheReadTokens ?? null,
           cacheWriteTokens: usage.inputTokenDetails?.cacheWriteTokens ?? null,
           outputTokens,
+          reasoningTokens: usage.outputTokenDetails?.reasoningTokens ?? null,
           totalTokens: usage.totalTokens ?? null,
         };
         // Rounded: the SDK reports fractional milliseconds, and sub-millisecond
