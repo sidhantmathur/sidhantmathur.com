@@ -1004,22 +1004,29 @@ export function AppShell() {
                     string swapping under a continuous animation reads as a
                     glitch. The elapsed count is NOT keyed, so it measures the
                     whole turn rather than restarting at each step. */}
-                {phase && (
+                {(phase || stallable) && (
                   <div className="flex items-center gap-3">
-                    <PhaseLine key={phase} phase={phase} elapsed={elapsed} />
+                    {phase && <PhaseLine key={phase} phase={phase} elapsed={elapsed} />}
                     {/* A way out of a turn that is taking too long, and only
                         then: offering "stop" against a two-second answer is
                         noise, and the reader has nothing to decide yet. Eight
                         seconds is roughly double a normal turn's wait, so it
                         appears when the wait has become a question. Quiet by
                         construction — same faint-until-hover vocabulary as the
-                        actions strip, no border, no box. */}
+                        actions strip, no border, no box.
+
+                        It outlives the phase line. That line goes away the
+                        moment prose arrives, and the button used to go with it,
+                        so it only existed between eight seconds and the first
+                        token — a window a healthy turn never opens. A
+                        job-description answer streams for most of a minute, and
+                        that is when a reader wants out (followups #3). */}
                     {stallable && (
                       <button
                         type="button"
                         onClick={stop}
                         data-js-control
-                        className="shrink-0 text-[13px] text-text-faint transition-colors hover:text-accent"
+                        className="flex min-h-[44px] shrink-0 touch-manipulation items-center text-[13px] text-text-faint transition-colors hover:text-accent"
                       >
                         stop
                       </button>
@@ -1030,7 +1037,15 @@ export function AppShell() {
                     class has always been measured; this is the first thing to
                     render it, and to offer the turn back. */}
                 {errorKind === "error" && (
-                  <TurnError errorClass={errorClass} onRetry={retry} />
+                  <TurnError
+                    errorClass={errorClass}
+                    onRetry={retry}
+                    model={model}
+                    onSwitchModel={(next) => {
+                      setModel(next);
+                      retry(next);
+                    }}
+                  />
                 )}
                 {/* Out of turns is the one state where the thing this page is
                     for stops working, and it used to be one grey sentence.

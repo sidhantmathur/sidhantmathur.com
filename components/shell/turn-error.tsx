@@ -2,10 +2,32 @@
 
 import {
   isRetryableClass,
+  offersModelSwitch,
   turnErrorCopy,
   turnErrorLabel,
   type TurnErrorClass,
 } from "@/lib/chat-telemetry";
+import { MODEL_IDS, MODELS } from "@/lib/models";
+
+/**
+ * The model a "different model" button offers: the next one after the current
+ * selection in catalogue order, standard tier only. Standard because the
+ * premium bucket is a quarter the size, and a rescue that spends the scarce one
+ * by default would turn one failure into a rate limit two turns later. Read off
+ * the catalogue rather than named, so it follows whatever the default becomes.
+ */
+export function alternativeModel(current: string): string | null {
+  const ids: readonly string[] = MODEL_IDS;
+  const start = Math.max(0, ids.indexOf(current));
+  for (let step = 1; step < MODEL_IDS.length; step += 1) {
+    const id = MODEL_IDS[(start + step) % MODEL_IDS.length]!;
+    if (id !== current && MODELS[id].tier === "standard") return id;
+  }
+  return null;
+}
+
+const BUTTON =
+  "flex min-h-[44px] items-center border border-line-strong px-3 py-2.5 text-[13px] text-text-soft transition-colors hover:border-accent hover:text-accent";
 
 // What a failed turn looks like.
 //
@@ -30,12 +52,20 @@ import {
 export function TurnError({
   errorClass,
   onRetry,
+  model,
+  onSwitchModel,
 }: {
   /** Null only if a failure arrived with no class at all; treated as unknown. */
   errorClass: TurnErrorClass | null;
   onRetry: () => void;
+  /** The model the turn ran on. Only read where the class offers a switch. */
+  model?: string;
+  /** Resend the turn on another model, selecting it in the same tap. */
+  onSwitchModel?: (model: string) => void;
 }) {
   const cls = errorClass ?? "unknown";
+  const alternative =
+    onSwitchModel && model && offersModelSwitch(cls) ? alternativeModel(model) : null;
   return (
     <div className="border-l-2 border-accent bg-raised px-3 py-2" role="alert">
       <p className="text-[12px] tracking-widest text-text-faint [font-family:var(--font-geist-mono)]">
@@ -51,14 +81,30 @@ export function TurnError({
           into the identical rejection — so it gets the sentence and no button,
           and the visitor rewrites the turn in the composer. See
           isRetryableClass. */}
-      {isRetryableClass(cls) && (
-        <button
-          type="button"
-          onClick={onRetry}
-          className="mt-2 flex min-h-[44px] items-center border border-line-strong px-3 py-2.5 text-[13px] text-text-soft transition-colors hover:border-accent hover:text-accent"
-        >
-          try again
-        </button>
+      {/* A second way out for the one class where the model itself is the
+          problem — see `switchModel` in the failure table. It resends the same
+          question and changes the selection, so the header's picker agrees
+          with what answered. Named by its model id, which is how the picker
+          names it too. */}
+      {(isRetryableClass(cls) || alternative) && (
+        <div className="mt-2 flex flex-wrap gap-2">
+          {isRetryableClass(cls) && (
+            <button
+              type="button"
+              // Wrapped: a bare handler would pass the click event through as
+              // the retry's model.
+              onClick={() => onRetry()}
+              className={BUTTON}
+            >
+              try again
+            </button>
+          )}
+          {alternative && onSwitchModel && (
+            <button type="button" onClick={() => onSwitchModel(alternative)} className={BUTTON}>
+              ask {alternative.split("/").pop()} instead
+            </button>
+          )}
+        </div>
       )}
     </div>
   );

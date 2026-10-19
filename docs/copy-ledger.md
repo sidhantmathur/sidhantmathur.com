@@ -319,6 +319,16 @@ tl;dr rows and the chips are unchanged and already logged.
 | draft | `components/shell/app-shell.tsx` → composer fine print (empty state) | "Answers cite their sources — this chat publishes its system prompt and eval results, and shows what each answer costs. It can make mistakes; the resume is the authoritative version." | four, all about the site, none about Sidhant | Citations since Sprint 3, `/prompt` since Sprint 7, `/measurements` since Sprint 6, the cost meter since Sprint 2. Replaces the empty state's `DISCLAIMER` render and carries its sentence; `DISCLAIMER` itself still ships in exports and print. |
 | draft | `components/shell/app-shell.tsx` → composer placeholder (empty state, md up) | "Ask what you'd ask on a call" | none | The 2026-07-27 hero subline, moved surfaces — trailing period dropped for a placeholder. Phones keep "Ask a question" (the long version clips at 320px). |
 
+**Wave 1 of the council plan, 2026-10-19** (branch `claude/wave-1-fixes`). Fixes
+for what the two council reviews found broken: a turn that ends blank, markers
+on public pages, and sentences that were no longer true.
+
+| Status | Where | What it says | Claims | Grounding |
+| --- | --- | --- | --- | --- |
+| draft | `lib/chat-telemetry.ts` → `TURN_FAILURES.empty_answer` | Label "turn failed · no answer", then "The model ran out of room before it got to an answer. That's a limit on my end, not a problem with your question." | none | The state the transport now detects: a complete turn with no text and no tool output, which on the default model is a reasoning model stopping on `finishReason: "length"`. The output ceiling is the site's own setting (`route.ts`), so the sentence takes the blame. |
+| draft | `components/shell/turn-error.tsx` → second button | "ask {model} instead", with the next standard-tier model id from the catalogue, e.g. "ask gpt-5.6-luna instead". Shown only on the empty-answer state, beside "try again". | none | UI chrome. The id is read from `lib/models.ts`, so it follows the catalogue. |
+| draft | `lib/chat-telemetry.ts` → failure theatre `cause` and `wire` for `empty_answer` | "A reasoning model spent its whole output budget thinking and finished with no text and no tool output." · "200, finishes empty" | none | Instrument-deck prose, like the other eight `cause` rows. |
+
 ## Pending `[VERIFY]` markers
 
 Sentences drafted with a fact-shaped hole in them, waiting on Sidhant. Listing them

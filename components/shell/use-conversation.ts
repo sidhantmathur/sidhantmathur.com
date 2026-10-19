@@ -20,7 +20,7 @@ import {
   type TurnErrorClass,
   type TurnTelemetry,
 } from "@/lib/chat-telemetry";
-import { guardedFetch, TurnFailure, type Budget } from "@/lib/chat-transport";
+import { guardedFetch, INTERNAL_TOOLS, TurnFailure, type Budget } from "@/lib/chat-transport";
 
 /** Re-exported from lib/chat-transport, where the fetch that reads it lives. */
 export type { Budget };
@@ -75,8 +75,10 @@ export function textOf(message: UIMessage): string {
 // Tool calls with no surface of their own. `extractRequirements` is the first
 // half of a job-description turn (Sprint 4): its output is the input to the
 // assessment that follows and is rendered inside it, so surfacing it separately
-// would put a chip on the page that opens the same table twice.
-const INTERNAL_TOOLS = new Set(["tool-extractRequirements"]);
+// would put a chip on the page that opens the same table twice. The set lives
+// in the transport, which reads it to tell a turn that said nothing from one
+// that showed a card.
+const INTERNAL_PARTS = new Set([...INTERNAL_TOOLS].map((name) => `tool-${name}`));
 
 export function toolOutputs(message: UIMessage): ToolOut[] {
   return message.parts
@@ -85,7 +87,7 @@ export function toolOutputs(message: UIMessage): ToolOut[] {
       (p) =>
         typeof p.type === "string" &&
         p.type.startsWith("tool-") &&
-        !INTERNAL_TOOLS.has(p.type) &&
+        !INTERNAL_PARTS.has(p.type) &&
         p.state === "output-available" &&
         p.output != null,
     );
@@ -326,6 +328,18 @@ export function useConversation(model: string) {
         track("chat_error", { error_class: cls, model: modelRef.current });
         return;
       }
+      // A turn that finished empty was measured by the route as a turn with
+      // usage, and the route marks its record with the class. If that record
+      // somehow arrived unmarked, the transport's reading wins: it is the one
+      // that knows nothing reached the page, and an unmarked record is priced
+      // and logged as an answer.
+      if (cls === "empty_answer") {
+        setTurnLog((prev) => {
+          const last = prev[prev.length - 1];
+          if (!last || last.error) return prev;
+          return [...prev.slice(0, -1), { ...last, error: { class: cls, detail: "no text" } }];
+        });
+      }
       const kind = isRateLimitClass(cls) ? "rate_limited" : "error";
       setErrorKind(kind);
       setErrorClass(cls);
@@ -484,17 +498,23 @@ export function useConversation(model: string) {
    * The stopwatch is restarted exactly as `submit` does it, because from the
    * reader's side this IS a send — the ttft it produces should measure the wait
    * they're actually sitting through, not the one that failed.
+   *
+   * `withModel` is the other way out of a turn that finished empty: the same
+   * question to a different model. It is passed in rather than read from the
+   * ref because the caller changes the selection in the same tap, and the ref
+   * only catches up after the next render.
    */
-  function retry() {
+  function retry(withModel?: string) {
     if (isBusy) return;
+    const model = withModel ?? modelRef.current;
     setErrorKind("none");
     setErrorClass(null);
     clearError();
     sentAt.current = nowMs();
     clientTtft.current = null;
     setTtft(null);
-    track("chat_retry", { model: modelRef.current });
-    void regenerate({ body: { model: modelRef.current } });
+    track("chat_retry", { model, switched: withModel != null });
+    void regenerate({ body: { model } });
   }
 
   function reset() {
