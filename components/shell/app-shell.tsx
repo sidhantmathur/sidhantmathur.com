@@ -30,7 +30,8 @@ import { useElapsed } from "./use-elapsed";
 import { PhaseLine } from "./phase-line";
 import { AmbientBackdrop } from "./ambient-backdrop";
 import { TurnError } from "./turn-error";
-import { conversationToMarkdown, messageToMarkdown } from "@/lib/transcript";
+import { conversationToMarkdown, latestRoleFit, messageToMarkdown } from "@/lib/transcript";
+import { JD_PREFIX } from "@/lib/job-posting";
 import { permalinkFor } from "@/lib/permalink";
 import {
   DISCLAIMER,
@@ -156,6 +157,17 @@ const RATE_LIMIT_STATE =
 // made.
 const REPLAY_BANNER =
   "Replayed conversation. It was rebuilt from the link you opened — the site stored nothing, and this is a snapshot of what the model said then, not a live session.";
+// Application links (docs/application-links.md): a fit check is sent to people
+// who have never seen this site, so a replayed one says what it is in a line
+// before anything else. Both claims are enforced by lib/role-fit.ts — a match
+// without a source is downgraded, and gaps can't come out empty while a row is
+// unmet. Logged in docs/copy-ledger.md.
+const REPLAY_FIT_LINE =
+  "A fit check: the assistant on Sidhant Mathur's site read one job posting against his record, citing a source for every match and listing the gaps.";
+// Only when the posting really was left out, which every link built since
+// application links is (lib/transcript.ts → toSnapshot). Older links carry it.
+const REPLAY_POSTING_LEFT_OUT =
+  "The posting itself is left out of the link; the table quotes the requirements it judged.";
 
 // How long a turn runs before the shell offers to abandon it. Roughly double a
 // normal answer's wait — early enough to be a rescue, late enough not to be a
@@ -196,6 +208,12 @@ export function AppShell() {
   } = useConversation(model);
 
   usePanelUrl(panel, setPanel);
+
+  // What the replay banner says (application links). Read off the decoded
+  // conversation rather than off the link, so it is true of whatever arrived.
+  const replayedFit = replayed && latestRoleFit(messages) != null;
+  const postingLeftOut =
+    replayedFit && messages.some((m) => m.role === "user" && textOf(m).trim() === JD_PREFIX);
 
   // ---- Instruments (Sprint 2) ----------------------------------------------
   //
@@ -410,8 +428,15 @@ export function AppShell() {
     // phone, so this fired on first paint and landed the visitor halfway down
     // the tl;dr with the headline scrolled off — the one screen the site gets
     // to make its case, skipped, and only on mobile.
-    if (el && stick.current && messages.length) el.scrollTop = el.scrollHeight;
-  }, [messages]);
+    //
+    // Not onto a replay, either. A replayed conversation is a page someone was
+    // sent (application links), and it opened scrolled to its last line, with
+    // the banner that says what it is — and the contact actions in it — above
+    // the fold. It starts at the top; the first question the reader asks of it
+    // is a new message, and sticking resumes from there.
+    const replaying = replayed && messages[messages.length - 1]?.id.startsWith("replay-");
+    if (el && stick.current && messages.length && !replaying) el.scrollTop = el.scrollHeight;
+  }, [messages, replayed]);
 
   // The composer sizes itself to its content. Measurement, not a CSS trick:
   // reset to auto first, because scrollHeight of an already-tall textarea
@@ -836,9 +861,26 @@ export function AppShell() {
                   thing it is describing (#18). It must never be mistaken for
                   a live session, and the honest version of that is a line the
                   reader passes on the way in — not a badge in the chrome. */}
+              {/* A replay is also a standalone page: application links send
+                  it to someone who has never seen the site. So it says what
+                  it is, and carries the three ways to act that the front door
+                  would have shown them (wave 2's contact actions). */}
               {replayed && (
-                <div className="mb-6 border-l-2 border-accent bg-raised px-3 py-2">
-                  <p className="t-meta text-text-soft">{REPLAY_BANNER}</p>
+                <div className="mb-6 space-y-3 border-l-2 border-accent bg-raised px-3 py-3">
+                  {replayedFit && (
+                    <p className="t-body text-text [font-family:var(--font-geist-sans)]">
+                      {REPLAY_FIT_LINE}
+                    </p>
+                  )}
+                  <p className="t-meta text-text-soft">
+                    {REPLAY_BANNER}
+                    {postingLeftOut && ` ${REPLAY_POSTING_LEFT_OUT}`}
+                  </p>
+                  <div className="flex flex-col gap-2.5 sm:flex-row sm:flex-wrap">
+                    <ResumePdfButton surface="replay" primary={replayedFit} />
+                    <EmailCopy surface="replay" />
+                    <LinkedInButton surface="replay" />
+                  </div>
                   <button
                     type="button"
                     onClick={reset}
@@ -971,9 +1013,14 @@ export function AppShell() {
                         // The right-aligned bubble is the single strongest
                         // "this is a ChatGPT clone" signal, and this site is
                         // an instrument log, not a messaging app.
+                        //
+                        // A replayed turn is not the reader's: "you" over a
+                        // fit check Sidhant sent with an application put his
+                        // request in the recruiter's mouth. So it says "asked".
                         <div className={mi > 0 ? "border-t border-line pt-4" : ""}>
                           <p className="mb-2 text-[12px] tracking-widest text-text-faint [font-family:var(--font-geist-mono)]">
-                            {String(exchange).padStart(2, "0")} · you
+                            {String(exchange).padStart(2, "0")} ·{" "}
+                            {m.id.startsWith("replay-") ? "asked" : "you"}
                           </p>
                           <p className="t-body whitespace-pre-wrap border-l-2 border-accent pl-3 text-text">
                             {text}

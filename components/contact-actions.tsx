@@ -21,7 +21,15 @@ import { EMAIL, LINKEDIN_URL, RESUME_PDF, RESUME_PDF_FILENAME } from "@/lib/site
 // "PDF or HTML resume as the primary button?" open until PostHog could say
 // which one visitors actually take; these events are how it will.
 
-export type ContactSurface = "front-door" | "doc-page" | "case-study" | "contact-panel" | "index";
+// "replay" is the banner over a replayed conversation — in practice, a fit
+// check sent with an application (docs/application-links.md).
+export type ContactSurface =
+  | "front-door"
+  | "doc-page"
+  | "case-study"
+  | "contact-panel"
+  | "index"
+  | "replay";
 
 const QUIET =
   "flex h-11 touch-manipulation items-center justify-center border border-line-strong px-4 text-[13px] text-text no-underline transition-colors hover:border-accent hover:text-accent";
