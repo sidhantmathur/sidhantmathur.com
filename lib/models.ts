@@ -67,6 +67,12 @@
 //
 // Published bake-off costs were computed at the prices on record when each run
 // was published and are not recomputed here — see /measurements/models.
+//
+// DEFAULT, 2026-10-19: gpt-6-luna, approved by Sidhant from that day's smoke
+// test (docs/followups.md §2). It was the only model to render all four
+// homepage chips and a pasted job posting with no per-model settings. DeepSeek
+// 0731, the default before it, spent the whole output cap reasoning on two of
+// those five turns and rendered nothing.
 
 /** When the `input`/`output` prices below were last checked against the Gateway. */
 export const PRICES_CHECKED = "2026-10-19";
@@ -96,7 +102,21 @@ export type ModelSpec = {
 // first entry is what the shell selects on load — so it must be the same model
 // as DEFAULT_MODEL below.
 export const MODELS = {
-  // The default and first workhorse. The Gateway serves this snapshot through
+  // The default (see the header). Successor to gpt-5.6-luna. Short-context
+  // rates; the long-context tier starts at 272k tokens, far past any turn here.
+  // Every provider the Gateway routes to (OpenAI, Azure, Bedrock) bills the
+  // same.
+  "openai/gpt-6-luna": {
+    input: 0.1,
+    output: 0.5,
+    cacheRead: 0.01,
+    cacheWrite: 0.125,
+    confidence: "confirmed",
+  },
+  // The default until 2026-10-19. At its default reasoning level it can spend
+  // a turn's whole output cap thinking and render nothing.
+  //
+  // The Gateway serves this snapshot through
   // fifteen providers whose rates run from $0.02 to $0.44 input and $0.15 to
   // $1.32 output; these figures are its headline, which is the cheapest
   // provider's. The route does not pin a provider and the meter cannot see
@@ -114,16 +134,6 @@ export const MODELS = {
     cacheRead: 0.014,
     cacheWrite: 0,
     confidence: "unconfirmed",
-  },
-  // Successor to gpt-5.6-luna. Short-context rates; the long-context tier
-  // starts at 272k tokens, far past any turn here. Every provider the Gateway
-  // routes to (OpenAI, Azure, Bedrock) bills the same.
-  "openai/gpt-6-luna": {
-    input: 0.1,
-    output: 0.5,
-    cacheRead: 0.01,
-    cacheWrite: 0.125,
-    confidence: "confirmed",
   },
   // Successor to claude-haiku-4.5, at a tenth of its price. These are the
   // rates for prompts up to 100k tokens ($0.50/$2.50 beyond); a turn here is
@@ -164,7 +174,7 @@ export type ModelId = keyof typeof MODELS;
 export const MODEL_IDS = Object.keys(MODELS) as ModelId[];
 
 /** What an unknown or absent id resolves to. Must be `MODEL_IDS[0]`. */
-export const DEFAULT_MODEL: ModelId = "deepseek/deepseek-v4-flash-0731";
+export const DEFAULT_MODEL: ModelId = "openai/gpt-6-luna";
 
 // --- What a visitor is allowed ---------------------------------------------
 //

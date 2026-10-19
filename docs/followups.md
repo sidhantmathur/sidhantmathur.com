@@ -123,6 +123,13 @@ that followed is below the list. What needs Sidhant:
    the call was cut off. Haiku needs thinking off *and* more room on
    tool-calling turns.
 
+**Decided 2026-10-19** (Sidhant's approval, relayed by the site-review
+session): `openai/gpt-6-luna` is the default and the premium tier is gone,
+which was item 1's first option. Every model now spends from one 20/hour
+bucket. Items 2–4 stay open. Still only a recommendation: drop gpt-5-mini or
+give it a reasoning setting. It blanked on two of four chips, and it was the
+slowest and costliest model on the posting.
+
 The bake-off should be re-run once 1–4 are settled. Three of the five models
 on offer have never been measured. At current list prices, with July's token
 counts, it should cost roughly $0.20–$0.50 in total.
