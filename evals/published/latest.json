@@ -1,10 +1,10 @@
 {
-  "publishedAt": "2026-10-19T23:12:12.142Z",
+  "publishedAt": "2026-10-19T23:57:33.201Z",
   "static": {
-    "ranAt": "2026-10-19T23:03:59.464Z",
+    "ranAt": "2026-10-19T23:57:25.816Z",
     "totals": {
-      "tests": 417,
-      "passed": 417,
+      "tests": 442,
+      "passed": 442,
       "failed": 0
     },
     "files": [
@@ -97,6 +97,53 @@
               "an empty answer",
               "prose that mentions backticks",
               "masking never moves a boundary, for any of the above"
+            ]
+          }
+        ]
+      },
+      {
+        "file": "evals/application-links.test.mjs",
+        "total": 12,
+        "passed": 12,
+        "suites": [
+          {
+            "name": "the ref is read",
+            "total": 3,
+            "passed": 3,
+            "tests": [
+              "a company slug is accepted, and lowercased",
+              "anything that isn't a slug is dropped, not cleaned up",
+              "a ref pasted after the fragment is found, and the query wins when both exist"
+            ]
+          },
+          {
+            "name": "the ref combines with a permalink",
+            "total": 2,
+            "passed": 2,
+            "tests": [
+              "?ref= before the fragment: the browser splits them, both are read",
+              "?ref= pasted on the end lands inside the fragment, and still works"
+            ]
+          },
+          {
+            "name": "the ref is never rendered",
+            "total": 3,
+            "passed": 3,
+            "tests": [
+              "only lib/analytics.ts reads the ref parameter",
+              "the value goes to a PostHog session property and nowhere else",
+              "no page or component interpolates anything from the address bar"
+            ]
+          },
+          {
+            "name": "the fragment stays in the browser",
+            "total": 4,
+            "passed": 4,
+            "tests": [
+              "PostHog is told not to record URL fragments",
+              "events fired before the SDK arrives are held, not dropped",
+              "a replay opens at its top, where the banner and the contact actions are",
+              "the landing address is read on mount, before the idle init"
             ]
           }
         ]
@@ -415,8 +462,8 @@
       },
       {
         "file": "evals/export.test.mjs",
-        "total": 36,
-        "passed": 36,
+        "total": 46,
+        "passed": 46,
         "suites": [
           {
             "name": "snapshot",
@@ -433,16 +480,33 @@
           },
           {
             "name": "permalink",
-            "total": 7,
-            "passed": 7,
+            "total": 12,
+            "passed": 12,
             "tests": [
               "round-trips a conversation through the fragment",
               "the payload is URL-safe base64 — nothing needing escaping",
               "an ordinary 10-turn conversation stays under the safe length",
-              "a conversation carrying a posting and an assessment still round-trips exactly",
+              "a conversation carrying a posting round-trips its assessment exactly, without the posting",
+              "the extraction step never travels — it renders nowhere and every line of it is a row",
+              "the snapshot's internal-tool list agrees with the transport's",
+              "a question that produced an assessment keeps its question",
+              "a real fit check: the posting was a quarter of the link, the table is the rest",
               "a truncated link decodes to null rather than to half a conversation",
               "garbage, empty and oversized payloads all answer null",
-              "payloadFromHash only reads its own key"
+              "payloadFromHash only reads its own key",
+              "payloadFromHash ignores a query pasted onto the end of the fragment"
+            ]
+          },
+          {
+            "name": "short fit link",
+            "total": 5,
+            "passed": 5,
+            "tests": [
+              "carries the scorecard: its rows in the posting's order, the whole table's counts, every gap",
+              "an excerpt is detectable from the payload alone — more verdicts counted than rows present",
+              "a real fit check's short link, ref included, fits where the full one doesn't",
+              "no fit check, no short link",
+              "a question-shaped assessment keeps its question in the short link too"
             ]
           },
           {
@@ -934,8 +998,8 @@
       },
       {
         "file": "evals/track-b.test.mjs",
-        "total": 32,
-        "passed": 32,
+        "total": 35,
+        "passed": 35,
         "suites": [
           {
             "name": "#25 — the recruiter TL;DR",
@@ -976,13 +1040,23 @@
           },
           {
             "name": "#20 — plain-language prose",
-            "total": 4,
-            "passed": 4,
+            "total": 5,
+            "passed": 5,
             "tests": [
-              "every case study opens with it",
+              "every case study has it, once",
+              "it follows the results on the two proof pages, and opens the Dell page",
               "it is static, not generated",
               "introduces no figures of its own",
               "is in docs/site-copy.md"
+            ]
+          },
+          {
+            "name": "the case studies make no claim the record lacks",
+            "total": 2,
+            "passed": 2,
+            "tests": [
+              "every paragraph of content/nokia.mdx is supported by its corpus files",
+              "every paragraph of content/adarle20.mdx is supported by its corpus files"
             ]
           },
           {
