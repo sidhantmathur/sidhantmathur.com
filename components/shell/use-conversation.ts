@@ -259,7 +259,7 @@ export function useConversation(model: string) {
   } = useChat<UIMessage>({
     transport,
     // F1's channel. The route writes ONE `data-turn` part per turn under a
-    // fixed id: an opening write with the model, tier and budget, then a
+    // fixed id: an opening write with the model and budget, then a
     // closing write with the measurements. The SDK reconciles them into a
     // single part, but fires this for both — so the opening write (no usage,
     // no error) appends a record and the closing one replaces it.
@@ -281,7 +281,6 @@ export function useConversation(model: string) {
         track("chat_turn_failed", {
           error_class: data.error.class,
           model: data.model,
-          tier: data.tier,
           jd: data.jobPosting,
         });
         return;
@@ -290,7 +289,6 @@ export function useConversation(model: string) {
       const input = data.usage?.inputTokens ?? 0;
       track("chat_turn_complete", {
         model: data.model,
-        tier: data.tier,
         jd: data.jobPosting,
         ttft_ms: data.timing?.ttftMs ?? null,
         client_ttft_ms: clientTtft.current,

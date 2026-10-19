@@ -6,7 +6,7 @@
 // encoded as the message. Mid-stream failures already arrive as a class string,
 // because the route's stream `onError` returns one.
 //
-// Also lifts the per-tier budget out of the response headers, which is where it
+// Also lifts the hourly budget out of the response headers, which is where it
 // lands before a single token has streamed.
 //
 // AND IT PUTS A CLOCK ON THE WHOLE THING, which is the reason this file was
@@ -39,7 +39,7 @@ export const CONNECT_TIMEOUT_MS = 15_000;
 /** And once they have, a chunk must arrive at least this often. */
 export const STREAM_IDLE_TIMEOUT_MS = 20_000;
 
-export type Budget = { tier: string; remaining: number; limit: number };
+export type Budget = { remaining: number; limit: number };
 
 /**
  * A failure this module has already classified.
@@ -235,11 +235,14 @@ export function guardedFetch(deps: TransportDeps = {}): typeof fetch {
       }
       throw new TurnFailure(code);
     }
-    const tier = res.headers.get("x-tier");
-    const remaining = Number(res.headers.get("x-tier-remaining"));
-    const limit = Number(res.headers.get("x-tier-limit"));
-    if (tier && Number.isFinite(remaining) && Number.isFinite(limit)) {
-      onBudget?.({ tier, remaining, limit });
+    // Checked for presence first: Number(null) is 0, which is finite, so a
+    // response without the headers would otherwise report an empty budget.
+    const remainingHeader = res.headers.get("x-budget-remaining");
+    const limitHeader = res.headers.get("x-budget-limit");
+    const remaining = Number(remainingHeader);
+    const limit = Number(limitHeader);
+    if (remainingHeader && limitHeader && Number.isFinite(remaining) && Number.isFinite(limit)) {
+      onBudget?.({ remaining, limit });
     }
     if (!res.body) return res;
     // Rebuilt from the original response so status, statusText and every header

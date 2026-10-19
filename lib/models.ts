@@ -18,23 +18,18 @@
 // from the request is never passed through to the Gateway, only used to look up
 // an entry here.
 //
-// Each tier has its own rate-limit bucket — `TIER_LIMITS`, below. It lived in
-// the route while the route was its only reader; the chat's own prompt now
-// states the allowance too, so it lives here with the tier it describes and
-// both files read it. The point is that the budget is visible in the UI,
-// showing the cost engineering rather than hiding it. `standard` is cheap-tier models only; `premium` is one substantially more
-// expensive model on a small bucket. Turning the tier off is more than
-// deleting its row: the static suite expects exactly one premium model, and
-// the system prompt tells visitors the premium allowance in words.
+// Every model spends from one hourly bucket per visitor — `HOURLY_LIMIT`,
+// below — and the budget is visible in the UI, showing the cost engineering
+// rather than hiding it.
 //
-// This workload is input-dominated — the bake-off measured a median of 6k to
-// 12k input tokens a turn against a few hundred of answer — so input price is
-// what actually bills. Sonnet was the first premium entry at $3/$15 and was not
-// worth 3x Luna here; Luna held the slot until its price dropped, then haiku
-// 4.5 at $1/1M input held it until its successor came in at a tenth of that.
-// The premium tier is a cost boundary, not a quality badge: it holds whichever
-// model bills most per turn — which, since 2026-10-19, is not by much. See the
-// last row.
+// There used to be two buckets: `standard` for the cheap workhorses and a
+// 5/hour `premium` one for whichever model billed most per turn (Sonnet, then
+// Luna, then Haiku 4.5). The 2026-10-19 refresh made every row cheap: the
+// priciest bills about 1.2x the next, and no turn in that day's smoke test
+// cost two cents. A small bucket on a model that costs what the others cost
+// rations nothing, so the tier was removed rather than kept as ceremony. If a
+// genuinely expensive model is ever offered again, the tier comes back with
+// it.
 //
 // --- The prices ------------------------------------------------------------
 //
@@ -77,13 +72,6 @@
 export const PRICES_CHECKED = "2026-10-19";
 
 /**
- * Which tier's hourly budget a turn spends from. Declared rather than derived
- * from the table so that emptying a tier out is a one-line edit that still
- * compiles.
- */
-export type Tier = "standard" | "premium";
-
-/**
  *   confirmed — input and output checked against a published rate on PRICES_CHECKED
  *   derived   — input/output confirmed; the cache rate is a published multiplier
  *               applied to input rather than a separately published figure
@@ -95,7 +83,6 @@ export type PriceConfidence = "confirmed" | "derived" | "unconfirmed";
 
 /** One model. Prices are dollars per 1M tokens. */
 export type ModelSpec = {
-  tier: Tier;
   input: number;
   output: number;
   /** Input tokens served from the provider's prompt cache. */
@@ -105,23 +92,23 @@ export type ModelSpec = {
   confidence: PriceConfidence;
 };
 
-// Order is the dropdown order, cheapest first, and the first entry is what the
-// shell selects on load — so it must be the same model as DEFAULT_MODEL below.
+// Order is the dropdown order: the default first, then cheapest first. The
+// first entry is what the shell selects on load — so it must be the same model
+// as DEFAULT_MODEL below.
 export const MODELS = {
   // The default and first workhorse. The Gateway serves this snapshot through
   // fifteen providers whose rates run from $0.02 to $0.44 input and $0.15 to
   // $1.32 output; these figures are its headline, which is the cheapest
   // provider's. The route does not pin a provider and the meter cannot see
   // which one a turn billed at, so the price is UNCONFIRMED for any given
-  // turn, and could be several times low.
+  // turn, and could be several times low. (All ten of its smoke-test turns did
+  // go to the headline provider; nothing makes that routing a rule.)
   //
   // deepseek-v4.1-flash is the newer version, and DeepSeek's own endpoint on
   // the Gateway serves that rather than this snapshot. It is not swapped in
   // because its first-party rate doubles in weekday peak windows, which a
-  // list-price meter cannot state honestly either — and because this is the
-  // default, so the swap is a decision rather than a refresh.
+  // list-price meter cannot state honestly either.
   "deepseek/deepseek-v4-flash-0731": {
-    tier: "standard",
     input: 0.076,
     output: 0.153,
     cacheRead: 0.014,
@@ -132,7 +119,6 @@ export const MODELS = {
   // starts at 272k tokens, far past any turn here. Every provider the Gateway
   // routes to (OpenAI, Azure, Bedrock) bills the same.
   "openai/gpt-6-luna": {
-    tier: "standard",
     input: 0.1,
     output: 0.5,
     cacheRead: 0.01,
@@ -142,9 +128,9 @@ export const MODELS = {
   // Successor to claude-haiku-4.5, at a tenth of its price. These are the
   // rates for prompts up to 100k tokens ($0.50/$2.50 beyond); a turn here is
   // nowhere near. Cache writes are the 5-minute rate. Unlike 4.5 it thinks by
-  // default, and thinking bills as output.
+  // default, and thinking bills as output — on the smoke test's RevOps chip it
+  // spent 599 of a 600-token turn thinking and rendered nothing.
   "anthropic/claude-haiku-5.5": {
-    tier: "standard",
     input: 0.1,
     output: 0.5,
     cacheRead: 0.01,
@@ -152,9 +138,9 @@ export const MODELS = {
     confidence: "confirmed",
   },
   // OpenAI doesn't bill cache writes. Azure's cached rate is $0.03 against
-  // OpenAI's $0.025; the meter uses OpenAI's.
+  // OpenAI's $0.025; the meter uses OpenAI's. A reasoning model: in the
+  // smoke test it spent the whole cap reasoning on two of the four chips.
   "openai/gpt-5-mini": {
-    tier: "standard",
     input: 0.25,
     output: 2.0,
     cacheRead: 0.025,
@@ -163,14 +149,7 @@ export const MODELS = {
   },
   // Google bills cache storage by time, not by token, and this workload never
   // holds an explicit cache, so cache writes are zero.
-  //
-  // Premium because the rule above says the priciest row takes the small
-  // bucket, and at $0.30/$2.50 this is it — by 1.2x over gpt-5-mini, where
-  // Haiku 4.5's input price was more than 3x the next row's. A 5/hour bucket
-  // on a model that costs what the 20/hour ones cost is the rule outliving its
-  // reason; whether the tier stays is open in docs/followups.md §2.
   "google/gemini-3.5-flash-lite": {
-    tier: "premium",
     input: 0.3,
     output: 2.5,
     cacheRead: 0.03,
@@ -192,16 +171,17 @@ export const DEFAULT_MODEL: ModelId = "deepseek/deepseek-v4-flash-0731";
 // Endpoint policy rather than a fact about any model, but it has three readers
 // now — the route enforces it, the status strip renders it, and the system
 // prompt tells the visitor about it in words — so it is stated once, here,
-// beside the tiers it is indexed by.
+// beside the catalogue it applies to.
 //
 // Anything that phrases these for a human must read them from here. A number
 // retyped into prose is a number that goes stale silently.
 
-/** Turns an hour each tier's bucket buys, on a sliding one-hour window. */
-export const TIER_LIMITS: Record<Tier, number> = {
-  standard: 20,
-  premium: 5,
-};
+/**
+ * Turns an hour each visitor's bucket buys, on a sliding one-hour window. One
+ * bucket for every model — see "The allowlist" above for why there is no
+ * longer a second.
+ */
+export const HOURLY_LIMIT = 20;
 
 /**
  * Visitor messages one conversation allows before the route returns its

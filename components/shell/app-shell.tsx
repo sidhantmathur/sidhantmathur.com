@@ -704,7 +704,7 @@ export function AppShell() {
                 </span>
                 <Stat label="est." value={reading.cost} />
                 {budget && (
-                  <Stat label={budget.tier} value={`${budget.remaining}/${budget.limit}`} />
+                  <Stat label="hourly" value={`${budget.remaining}/${budget.limit}`} />
                 )}
               </button>
               <label className="hidden items-center gap-1.5 xl:flex">
@@ -718,10 +718,10 @@ export function AppShell() {
                   disabled={!hydrated}
                   className="min-h-[36px] disabled:cursor-progress disabled:border-line disabled:text-text-dim cursor-pointer border border-line-strong bg-raised px-1.5 py-0.5 text-[13px] text-text-soft outline-none focus:border-accent"
                 >
-                  {/* Catalogue order, and the ids as written — the last entry
-                      is the `premium` tier, and selecting it switches the
-                      header budget strip from "standard n/20" to
-                      "premium n/5", which is the point of showing it. */}
+                  {/* Catalogue order, and the ids as written: the default
+                      first, then cheapest first. Every model spends from the
+                      same hourly budget, so switching changes the meter's
+                      price and nothing else in the strip. */}
                   {MODEL_IDS.map((m) => (
                     <option key={m} value={m}>
                       {m}

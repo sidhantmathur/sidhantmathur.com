@@ -28,10 +28,9 @@ import { PROJECTS } from "@/content/projects";
 import {
   MODELS,
   DEFAULT_MODEL,
-  TIER_LIMITS,
+  HOURLY_LIMIT,
   MAX_USER_MESSAGES,
   type ModelId,
-  type Tier,
 } from "@/lib/models";
 
 // Node runtime: both @upstash/ratelimit and the in-memory fallback work fine on
@@ -75,7 +74,7 @@ const messageSchema = z
         .reduce((sum, p) => sum + p.text.length, 0);
       // 4000 for user turns: the JD-paste flow sends a whole job description
       // as one message, and 500 truncated every real posting. Abuse is bounded
-      // by the per-tier hourly budget, not by this cap.
+      // by the hourly budget, not by this cap.
       return textLength <= (msg.role === "user" ? 4000 : 8000);
     },
     { message: "Message text exceeds the allowed length." },
@@ -89,8 +88,8 @@ const messageSchema = z
 //
 // WHICH models exist, what they cost, and why the allowlist is what it is: all
 // of that is `lib/models.ts`, imported above, and this route is one of its four
-// readers. The per-tier hourly budget and the conversation cap live there too
-// (`TIER_LIMITS`, `MAX_USER_MESSAGES`) — this route enforces them, the status
+// readers. The hourly budget and the conversation cap live there too
+// (`HOURLY_LIMIT`, `MAX_USER_MESSAGES`) — this route enforces them, the status
 // strip renders them, and the chat's own prompt states them in words, so they
 // stopped being one endpoint's private policy. What lives here is enforcement,
 // and what to do with an id that isn't on the list.
@@ -128,19 +127,16 @@ const hasUpstash =
   !!process.env.UPSTASH_REDIS_REST_URL &&
   !!process.env.UPSTASH_REDIS_REST_TOKEN;
 
-// One limiter per tier, so spending the premium budget leaves the standard
-// budget intact.
-const upstashLimiters = hasUpstash
-  ? (Object.fromEntries(
-      (Object.keys(TIER_LIMITS) as Tier[]).map((tier) => [
-        tier,
-        new Ratelimit({
-          redis: Redis.fromEnv(),
-          limiter: Ratelimit.slidingWindow(TIER_LIMITS[tier], "1 h"),
-          prefix: `chat:${tier}`,
-        }),
-      ]),
-    ) as Record<Tier, Ratelimit>)
+// One limiter for every model. There were two, one per tier, until the
+// premium tier was removed on 2026-10-19 (see lib/models.ts). The prefix is
+// new rather than the old `chat:standard`, so the first deploy starts every
+// visitor on a full bucket.
+const upstashLimiter = hasUpstash
+  ? new Ratelimit({
+      redis: Redis.fromEnv(),
+      limiter: Ratelimit.slidingWindow(HOURLY_LIMIT, "1 h"),
+      prefix: "chat:hourly",
+    })
   : null;
 
 // Module-scope in-memory store for the fallback (per-instance, dev-only).
@@ -158,16 +154,12 @@ function inMemoryConsume(key: string, limit: number): { ok: boolean; remaining: 
   return { ok: true, remaining: Math.max(0, limit - entry.count) };
 }
 
-async function consumeBudget(
-  ip: string,
-  tier: Tier,
-): Promise<{ ok: boolean; remaining: number }> {
-  const limit = TIER_LIMITS[tier];
-  if (upstashLimiters) {
-    const { success, remaining } = await upstashLimiters[tier].limit(ip);
+async function consumeBudget(ip: string): Promise<{ ok: boolean; remaining: number }> {
+  if (upstashLimiter) {
+    const { success, remaining } = await upstashLimiter.limit(ip);
     return { ok: success, remaining: Math.max(0, remaining) };
   }
-  return inMemoryConsume(`${tier}:${ip}`, limit);
+  return inMemoryConsume(ip, HOURLY_LIMIT);
 }
 
 function getClientIp(req: Request): string {
@@ -522,9 +514,8 @@ function simulateStreamFailure(cls: TurnErrorClass, model: ModelId): Response {
   const startedAt = Date.now();
   const telemetry: TurnTelemetry = {
     model,
-    tier: MODELS[model].tier,
-    budgetRemaining: TIER_LIMITS[MODELS[model].tier],
-    budgetLimit: TIER_LIMITS[MODELS[model].tier],
+    budgetRemaining: HOURLY_LIMIT,
+    budgetLimit: HOURLY_LIMIT,
     jobPosting: false,
     siteQuestion: false,
     usage: null,
@@ -595,7 +586,6 @@ export async function POST(req: Request): Promise<Response> {
 
   const { messages } = parsed;
   const model = resolveModel(parsed.model);
-  const tier = MODELS[model].tier;
 
   // (b) Conversation cap: past MAX_USER_MESSAGES visitor messages → rate-limit state.
   const userMessageCount = messages.filter((m) => m.role === "user").length;
@@ -603,9 +593,9 @@ export async function POST(req: Request): Promise<Response> {
     return jsonError("rate_limited", 429);
   }
 
-  // (c) Per-IP, per-tier sliding-window budget.
+  // (c) Per-IP sliding-window budget, one bucket for every model.
   const ip = getClientIp(req);
-  const budget = await consumeBudget(ip, tier);
+  const budget = await consumeBudget(ip);
   if (!budget.ok) {
     return jsonError("rate_limited", 429);
   }
@@ -660,9 +650,8 @@ export async function POST(req: Request): Promise<Response> {
   // lib/chat-telemetry.ts for why it's a data part and not a header.
   const telemetry: TurnTelemetry = {
     model,
-    tier,
     budgetRemaining: budget.remaining,
-    budgetLimit: TIER_LIMITS[tier],
+    budgetLimit: HOURLY_LIMIT,
     jobPosting,
     siteQuestion,
     usage: null,
@@ -809,9 +798,8 @@ export async function POST(req: Request): Promise<Response> {
     stream,
     headers: {
       "x-model": model,
-      "x-tier": tier,
-      "x-tier-remaining": String(budget.remaining),
-      "x-tier-limit": String(TIER_LIMITS[tier]),
+      "x-budget-remaining": String(budget.remaining),
+      "x-budget-limit": String(HOURLY_LIMIT),
     },
   });
 }

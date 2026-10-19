@@ -25,7 +25,7 @@ import {
   readToolNames,
 } from "./lib/artifacts.mjs";
 import { GROUNDED, ROLE_FIT } from "./cases.mjs";
-import { DEFAULT_MODEL, MODELS, MODEL_IDS, TIER_LIMITS } from "../lib/models.ts";
+import { DEFAULT_MODEL, HOURLY_LIMIT, MODELS, MODEL_IDS } from "../lib/models.ts";
 import { JD_PREFIX, looksLikeJobPosting } from "../lib/job-posting.ts";
 
 describe("knowledge base", () => {
@@ -102,7 +102,7 @@ describe("system prompt", () => {
     assert.ok(start > 0, "system prompt lost the paragraph stating its own rate limits");
     const paragraph = src.slice(start, src.indexOf("\n\n", start));
 
-    for (const ref of ["${MAX_USER_MESSAGES}", "${TIER_LIMITS.standard}", "${TIER_LIMITS.premium}"]) {
+    for (const ref of ["${MAX_USER_MESSAGES}", "${HOURLY_LIMIT}"]) {
       assert.ok(paragraph.includes(ref), `the rate-limit paragraph stopped reading ${ref}`);
     }
 
@@ -145,15 +145,14 @@ describe("model catalogue", () => {
   // so what is worth asserting is no longer that the copies agree — it is that
   // the single table says everything its four readers need.
 
-  test("every model has a tier with a rate-limit bucket", () => {
-    // TIER_LIMITS used to be scraped out of the route's source text; it lives
-    // in the catalogue beside the tiers now, so this imports it like MODELS.
-    for (const [id, spec] of Object.entries(MODELS)) {
-      assert.ok(
-        spec.tier in TIER_LIMITS,
-        `"${id}" has tier "${spec.tier}", which has no entry in TIER_LIMITS — consumeBudget would read undefined`,
-      );
-    }
+  test("the hourly budget is a whole number of turns", () => {
+    // One bucket for every model since the premium tier went (2026-10-19). A
+    // zero, a fraction or a NaN here would not fail anywhere else: the route
+    // would simply rate-limit every visitor on their first message.
+    assert.ok(
+      Number.isInteger(HOURLY_LIMIT) && HOURLY_LIMIT > 0,
+      `HOURLY_LIMIT is ${HOURLY_LIMIT} — consumeBudget needs a positive whole number`,
+    );
   });
 
   test("the default model is in the catalogue", () => {
@@ -172,13 +171,15 @@ describe("model catalogue", () => {
     );
   });
 
-  test("exactly one model is premium", () => {
-    // The budget strip's whole point is that picking the last entry switches it
-    // from "standard n/20" to "premium n/5". Two premium models would make the
-    // dropdown's ordering comment wrong; none would make the tier vestigial.
-    const premium = MODEL_IDS.filter((id) => MODELS[id].tier === "premium");
-    assert.equal(premium.length, 1, `expected one premium model, found ${premium.length}`);
-    assert.equal(premium[0], MODEL_IDS.at(-1), "the premium model is not the last dropdown entry");
+  test("after the default, the dropdown runs cheapest first", () => {
+    // lib/models.ts and the dropdown both say so. With every model on one
+    // budget, price is the only thing that differs between entries, so it is
+    // the order a visitor can read something from.
+    const rest = MODEL_IDS.slice(1);
+    const sorted = [...rest].sort(
+      (a, b) => MODELS[a].input - MODELS[b].input || MODELS[a].output - MODELS[b].output,
+    );
+    assert.deepEqual(rest, sorted, "the non-default models are not in ascending price order");
   });
 });
 

@@ -336,6 +336,19 @@ corresponding ones in the Sprint 8 rows above.
 | draft | `app/measurements/models/page.tsx` → "Costs are list prices, not an invoice" | Body rewritten: costs are the run's tokens at the list rates on record when it was published, not recomputed on a price change, and "Two of those rates have since been corrected": gpt-5.6-luna costed at an unconfirmed $1.00 in / $6.00 out per million, five times what the Gateway later published; gemini-3.5-flash-lite's cache reads at a derived rate two and a half times the published one. | none about Sidhant; two price facts | Luna: `git show 2150a80:lib/pricing.ts` ($1.00/$6.00, marked unconfirmed) against the $0.20/$1.20 published by 2026-08-12. Gemini: $0.075 derived in the same file against $0.03 on the Gateway's `/v1/models`, checked 2026-10-19. |
 | draft | `app/llms.txt/route.ts` | "/measurements/models — Five models this site has run, compared on one corpus: pass rate, latency, tokens and cost per task." Was "Every model this site can run…". | none about Sidhant; one about the site | Same as the metadata row. |
 
+**One hourly budget for every model, 2026-10-19** (same branch). The premium
+tier was removed and GPT-6 Luna made the default, both following the smoke
+test in `docs/followups.md` §2. Every string that named a tier now names the
+single budget. No page names the default model in prose; the colophon's "runs
+on Claude" belongs to the copy session's wave 1 and is not touched here.
+
+| Status | Where | What it says | Claims | Grounding |
+| --- | --- | --- | --- | --- |
+| draft | `lib/system-prompt.ts` → Scope | **Model-facing, and published verbatim at `/prompt`.** The rate-limit paragraph now reads: a conversation allows at most 10 visitor messages, "and each visitor also has an hourly allowance of 20 messages, shared across every model, on a sliding one-hour window. Past either limit the chat returns its rate-limited state until the window passes…" Replaces the two-tier sentence (20 standard, 5 premium, separate buckets). | none about Sidhant; two factual claims about the site | Both numbers are interpolated from `HOURLY_LIMIT` and `MAX_USER_MESSAGES` in `lib/models.ts`, the constants the route enforces. `evals/static.test.mjs` still fails on a retyped literal. |
+| draft | `components/shell/app-shell.tsx` → header strip | The budget readout's label is "hourly", as in "hourly 17/20". It used to print the tier name, "standard" or "premium". | none | `x-budget-remaining` / `x-budget-limit` from the route. |
+| draft | `components/shell/instruments.tsx` → cost meter | Row label "hourly budget", as in "17/20 left". Was "{tier} budget". The trace's per-turn "tier" row is removed. | none | Same headers; there is no tier left to report. |
+| draft | `lib/chat-telemetry.ts` → failure theatre, `rate_limited` | "The hourly budget is spent, or the conversation passed ten turns." Was "The hourly per-tier budget is spent…". | one about the site | The route's two 429 exits. |
+
 ## Pending `[VERIFY]` markers
 
 Sentences drafted with a fact-shaped hole in them, waiting on Sidhant. Listing them

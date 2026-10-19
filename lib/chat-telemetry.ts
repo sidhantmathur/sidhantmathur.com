@@ -104,7 +104,7 @@ export const TURN_FAILURES = {
     rateLimit: true,
     label: null,
     copy: null,
-    cause: "The hourly per-tier budget is spent, or the conversation passed ten turns.",
+    cause: "The hourly budget is spent, or the conversation passed ten turns.",
     wire: "429, JSON body",
   },
   upstream_unconfigured: {
@@ -249,7 +249,6 @@ export type TurnTiming = {
 export type TurnTelemetry = {
   /** Which allowlisted model actually ran — not what the client asked for. */
   model: string;
-  tier: string;
   budgetRemaining: number;
   budgetLimit: number;
   /** Whether the route classified this turn as a pasted job posting. */

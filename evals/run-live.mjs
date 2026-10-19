@@ -15,7 +15,7 @@
 //   npm run eval:live -- --model openai/gpt-5-mini
 //   npm run eval:live -- --base http://localhost:3001
 //
-// RATE LIMIT NOTE: the standard tier allows 20 requests/hour per IP, and the
+// RATE LIMIT NOTE: the hourly budget allows 20 requests per IP, and the
 // full corpus is 22 cases — two over. A full run WILL be cut short. Run one
 // group at a time; the runner reports where it stopped. With
 // no Upstash env vars the limiter falls back to an in-memory store scoped to
@@ -154,8 +154,7 @@ async function ask(text, bucket) {
     toolNames,
     toolOutputs,
     model: res.headers.get("x-model"),
-    tier: res.headers.get("x-tier"),
-    remaining: Number(res.headers.get("x-tier-remaining")),
+    remaining: Number(res.headers.get("x-budget-remaining")),
   };
 }
 

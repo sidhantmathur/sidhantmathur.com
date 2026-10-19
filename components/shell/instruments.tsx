@@ -224,7 +224,7 @@ function Row({
 
 /**
  * The single home for everything budget-related, which is what the decisions
- * doc asked for: the turn counter, the per-tier allowance, the dollars, and the
+ * doc asked for: the turn counter, the hourly allowance, the dollars, and the
  * privacy framing all land here rather than becoming four separate surfaces.
  */
 function CostMeter({
@@ -258,7 +258,7 @@ function CostMeter({
     <div className="space-y-3">
       <div className="space-y-1">
         {budget && (
-          <Row label={`${budget.tier} budget`} value={`${budget.remaining}/${budget.limit} left`} />
+          <Row label="hourly budget" value={`${budget.remaining}/${budget.limit} left`} />
         )}
         <Row label="answers this session" value={String(completed.length)} />
         <Row label="input tokens" value={formatTokens(tokens.input)} />
@@ -376,7 +376,6 @@ function TraceInspector({ turnLog }: { turnLog: TurnRecord[] }) {
                 <div className="overflow-hidden">
                 <div className="space-y-1 border-t border-line px-2 py-2">
                   <Row label="model" value={turn.model} />
-                  <Row label="tier" value={turn.tier} />
                   <Row label="job posting" value={turn.jobPosting ? "yes" : "no"} />
                   {/* The only per-turn change to the system prompt on this
                       site, and therefore the only honest explanation for an

@@ -1,6 +1,6 @@
 import { KNOWLEDGE_BASE } from "./knowledge.generated";
 import { REPO_CORPUS } from "./repo.generated";
-import { TIER_LIMITS, MAX_USER_MESSAGES } from "./models";
+import { HOURLY_LIMIT, MAX_USER_MESSAGES } from "./models";
 
 // Assembles the chat system prompt. Intentionally free of any dynamic content
 // (no timestamps, no per-request IDs) so the string is byte-identical across
@@ -65,10 +65,9 @@ endpoint you are answering through. When someone asks about it:
 
 One fact about this chat you know without the source in front of you: it is
 rate limited, deliberately. A conversation allows at most ${MAX_USER_MESSAGES} visitor
-messages, and each visitor also has an hourly allowance per model tier —
-${TIER_LIMITS.standard} messages an hour on the standard models, ${TIER_LIMITS.premium} an hour on the
-premium one, in separate buckets on a sliding one-hour window. Past either
-limit the chat returns its rate-limited state until the window passes; the
+messages, and each visitor also has an hourly allowance of ${HOURLY_LIMIT} messages,
+shared across every model, on a sliding one-hour window. Past either limit
+the chat returns its rate-limited state until the window passes; the
 status strip beside the chat shows the remaining allowance. Never tell a
 visitor this chat is unlimited or has no rate limits.
 

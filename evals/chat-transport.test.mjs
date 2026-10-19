@@ -283,17 +283,30 @@ describe("the budget lifted out of the response headers", () => {
   const withHeaders = (headers) =>
     scriptedBody({ status: 200, headers }).response;
 
-  test("a complete tier triple fires onBudget with parsed numbers", async () => {
+  test("a complete budget pair fires onBudget with parsed numbers", async () => {
     const seen = [];
     const gf = guardedFetch({
-      fetch: async () =>
-        withHeaders({ "x-tier": "flagship", "x-tier-remaining": "3", "x-tier-limit": "10" }),
+      fetch: async () => withHeaders({ "x-budget-remaining": "3", "x-budget-limit": "10" }),
       onBudget: (b) => seen.push(b),
       idleTimeoutMs: 500,
     });
 
     await gf("/api/chat");
-    assert.deepEqual(seen, [{ tier: "flagship", remaining: 3, limit: 10 }]);
+    assert.deepEqual(seen, [{ remaining: 3, limit: 10 }]);
+  });
+
+  test("a missing count is not read as zero", async () => {
+    // Number(null) is 0, and 0 is finite. Without the presence check this
+    // reported "0/10 left" for a response that said nothing about the count.
+    const seen = [];
+    const gf = guardedFetch({
+      fetch: async () => withHeaders({ "x-budget-limit": "10" }),
+      onBudget: (b) => seen.push(b),
+      idleTimeoutMs: 500,
+    });
+
+    await gf("/api/chat");
+    assert.deepEqual(seen, []);
   });
 
   test("missing headers fire nothing", async () => {
@@ -312,7 +325,7 @@ describe("the budget lifted out of the response headers", () => {
     const seen = [];
     const gf = guardedFetch({
       fetch: async () =>
-        withHeaders({ "x-tier": "flagship", "x-tier-remaining": "lots", "x-tier-limit": "10" }),
+        withHeaders({ "x-budget-remaining": "lots", "x-budget-limit": "10" }),
       onBudget: (b) => seen.push(b),
       idleTimeoutMs: 500,
     });
