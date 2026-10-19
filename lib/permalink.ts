@@ -18,6 +18,7 @@
 // reads the conversation, and the surface that generates one has to say so.
 
 import {
+  fitSnapshot,
   fromSnapshot,
   toSnapshot,
   type TranscriptMessage,
@@ -152,6 +153,20 @@ export async function permalinkFor(
 ): Promise<string> {
   const payload = await encodeSnapshot(toSnapshot(messages));
   return `${base}${PERMALINK_PREFIX}${payload}`;
+}
+
+/**
+ * The short fit link: the latest fit check in scorecard shape (see
+ * `fitSnapshot`), for the places a whole conversation won't fit — an ATS field,
+ * a plain-text email. Null when there is no fit check to make one from.
+ */
+export async function fitPermalinkFor(
+  base: string,
+  messages: TranscriptMessage[],
+): Promise<string | null> {
+  const snapshot = fitSnapshot(messages);
+  if (!snapshot) return null;
+  return `${base}${PERMALINK_PREFIX}${await encodeSnapshot(snapshot)}`;
 }
 
 /**

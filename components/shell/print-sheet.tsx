@@ -5,7 +5,7 @@ import { textOf, toolOutputs, type ChatMessage, type RoleFit } from "./use-conve
 import { stripCitations, citationIds } from "@/lib/verify";
 import { DISCLAIMER, SITE_NAME, SITE_URL } from "@/lib/site";
 import { Markdown } from "./markdown";
-import { FIT_LABELS } from "./shell-data";
+import { FIT_LABELS, fitExcerptNote } from "./shell-data";
 
 // The typeset document (roadmap Sprint 5, #17 — Fable #13's flagship
 // rendering). This is what "save as PDF" actually saves.
@@ -99,11 +99,16 @@ function PrintedFit({ fit }: { fit: RoleFit }) {
   const counts = COUNT_ORDER.filter((v) => (fit.counts?.[v] ?? 0) > 0)
     .map((v) => `${fit.counts[v]} ${v}`)
     .join(" · ");
+  // The short fit link's excerpt prints as one too — see the table's note.
+  const total = COUNT_ORDER.reduce((sum, v) => sum + (fit.counts?.[v] ?? 0), 0);
 
   return (
     <div className="doc-rule mt-3 pt-3">
       <p className="text-[12px] font-medium">{fit.role}</p>
       {counts && <p className="mt-0.5 text-[10px]">{counts}</p>}
+      {total > fit.rows.length && (
+        <p className="mt-0.5 text-[10px]">{fitExcerptNote(fit.rows.length, total)}</p>
+      )}
 
       <table className="mt-2 w-full border-collapse text-left text-[11px]">
         <tbody>

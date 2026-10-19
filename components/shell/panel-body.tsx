@@ -14,6 +14,7 @@ import { ENFORCEMENT_LABEL, REFUSALS } from "@/lib/refusals";
 import type { RequirementVerdict } from "@/lib/role-fit";
 import {
   FIT_LABELS,
+  fitExcerptNote,
   JD_COPY,
   PROJECT_LINKS,
   SOCIAL_LINKS,
@@ -329,6 +330,9 @@ function RequirementTable({
   }
 
   const { rows, counts, gaps, noGapsRationale, verdict } = partial as RoleFit;
+  // More verdicts counted than rows present: this is the short fit link's
+  // excerpt, and it says so before the first row (see fitExcerptNote).
+  const total = COUNT_ORDER.reduce((sum, v) => sum + (counts[v] ?? 0), 0);
 
   return (
     <div className="space-y-4">
@@ -338,6 +342,9 @@ function RequirementTable({
             <span className="tabular-nums text-text-soft">{counts[v]}</span> {v}
           </span>
         ))}
+        {total > rows.length && (
+          <p className="w-full pt-1 text-text-soft">{fitExcerptNote(rows.length, total)}</p>
+        )}
       </div>
 
       <div>

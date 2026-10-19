@@ -19,7 +19,11 @@
 //
 // NO SITE COPY LIVES HERE. Every human-readable string in the output is either
 // a field name from the roleFit tool schema, a label that already exists in the
-// shell UI, or passed in by the caller. See CLAUDE.md.
+// shell UI, or passed in by the caller. See CLAUDE.md. (JD_PREFIX is the one
+// import: it is the request the paste panel already sends, owned by
+// lib/job-posting.ts, which imports nothing.)
+
+import { JD_PREFIX } from "./job-posting.ts";
 
 export type TranscriptPart = {
   type: string;
@@ -278,6 +282,22 @@ export function conversationToMarkdown(
 // server round-trip and nothing here is trusted on the way back in: the decoder
 // caps every length and drops anything it doesn't recognise, because a snapshot
 // arrives from whoever pasted the link.
+//
+// TWO THINGS NEVER TRAVEL, measured on a real 3,891-character posting and its
+// 14-row table (docs/application-links.md has the numbers). Together they took
+// the link from 4,523 characters to 3,271, with nothing on the replayed page
+// lost but the posting's own text:
+//
+//   · The posting. It was a quarter of the link, and the reader a fit check is
+//     sent to is the one person guaranteed to have it already; the table quotes
+//     every requirement it judged in the posting's own words. The turn replays
+//     as the paste panel's request line, and the replay banner says the posting
+//     was left out.
+//   · `extractRequirements`. Internal by definition (lib/chat-transport.ts): it
+//     never renders, and every line of it reappears as a row of the table.
+//
+// The table alone is still ~2,900 characters, past the length mail clients and
+// ATS fields cut. That is what `fitSnapshot` below is for.
 
 export const SNAPSHOT_VERSION = 1;
 
@@ -293,13 +313,39 @@ const MAX_SNAPSHOT_MESSAGES = 40;
 const MAX_SNAPSHOT_TEXT = 8000;
 const MAX_SNAPSHOT_TOOLS = 4;
 
+/**
+ * Tool parts that never render. A local copy of lib/chat-transport.ts's
+ * INTERNAL_TOOLS, for the same reason CITATION_MARKER is local: this module
+ * stays free of the transport's imports. evals/export.test.mjs asserts the two
+ * agree.
+ */
+export const INTERNAL_TOOL_PARTS: ReadonlySet<string> = new Set(["tool-extractRequirements"]);
+
+/**
+ * A user turn the route treated as a pasted posting: the next message carries
+ * the extraction step, which the route forces on posting turns and only on
+ * them. Reading the reply rather than re-running the posting heuristic means a
+ * short question that happened to produce a `roleFit` ("is he a fit for an SE
+ * role?") is never mistaken for a posting and blanked.
+ */
+function isPostingTurn(message: TranscriptMessage, next: TranscriptMessage | undefined): boolean {
+  if (message.role !== "user" || next?.role !== "assistant") return false;
+  return next.parts.some((p) => p.type === "tool-extractRequirements");
+}
+
 /** A conversation reduced to what a permalink needs to replay it. */
 export function toSnapshot(messages: TranscriptMessage[]): TranscriptSnapshot {
   const m: SnapshotMessage[] = [];
-  for (const message of messages.slice(-MAX_SNAPSHOT_MESSAGES)) {
+  const kept = messages.slice(-MAX_SNAPSHOT_MESSAGES);
+  for (const [i, message] of kept.entries()) {
     const role = message.role === "user" ? "u" : "a";
-    const text = textOf(message).slice(0, MAX_SNAPSHOT_TEXT);
+    // A posting replays as the request the paste panel sends ahead of one,
+    // whether or not this turn came through the panel — it is the same request.
+    const text = isPostingTurn(message, kept[i + 1])
+      ? JD_PREFIX
+      : textOf(message).slice(0, MAX_SNAPSHOT_TEXT);
     const tools = toolPartsOf(message)
+      .filter((p) => !INTERNAL_TOOL_PARTS.has(p.type))
       .slice(0, MAX_SNAPSHOT_TOOLS)
       .map((p) => ({ y: p.type, o: p.output }));
     if (!text && !tools.length) continue;
@@ -395,6 +441,15 @@ function evidenceRank(row: RoleFitRow): number {
   return score;
 }
 
+/** The scorecard's evidence rows, strongest first, with their table positions. */
+function strongestRows(rows: RoleFitRow[]): { row: RoleFitRow; i: number }[] {
+  return rows
+    .map((row, i) => ({ row, i }))
+    .sort((a, b) => evidenceRank(a.row) - evidenceRank(b.row) || a.i - b.i)
+    .filter(({ row }) => row.sources?.length && row.evidence)
+    .slice(0, MAX_SCORECARD_EVIDENCE);
+}
+
 /** Counts rendered as `6 met · 3 partial · 2 unmet` — a count, never a score. */
 export function verdictCounts(fit: RoleFitOutput): string {
   const order = ["met", "partial", "unmet", "unclear"];
@@ -434,11 +489,7 @@ export function scorecardMarkdown(
   if (counts) blocks.push(labels.counts ? `${labels.counts}: ${counts}` : counts);
 
   const rows = (fit.rows ?? []).filter((r) => r?.requirement);
-  const strongest = [...rows]
-    .map((row, i) => ({ row, i }))
-    .sort((a, b) => evidenceRank(a.row) - evidenceRank(b.row) || a.i - b.i)
-    .filter(({ row }) => row.sources?.length && row.evidence)
-    .slice(0, MAX_SCORECARD_EVIDENCE);
+  const strongest = strongestRows(rows);
   if (strongest.length) {
     const lines: string[] = [];
     if (labels.evidence) lines.push(`**${labels.evidence}**`, "");
@@ -479,6 +530,61 @@ export function latestRoleFit(messages: TranscriptMessage[]): RoleFitOutput | nu
         return part.output as RoleFitOutput;
       }
     }
+  }
+  return null;
+}
+
+// ---------------------------------------------------------------------------
+// The short fit link (application links, docs/application-links.md)
+// ---------------------------------------------------------------------------
+//
+// A fit check's whole table does not fit in a link that survives an ATS field
+// or a plain-text email: measured on a 3,891-character posting, the table alone
+// encodes to ~2,900 characters, and no lossless trim gets it near 2,000. So the
+// short link carries what the scorecard above already decided a condensed
+// assessment keeps — the verdict, the counts, the strongest cited rows and
+// EVERY gap — plus the answer's own prose, as a snapshot rather than as text.
+// Same measurement: 1,635 characters.
+//
+// Nothing new is decided here. The rows are the scorecard's rows, put back in
+// the posting's order because that is the table's rule. The counts stay the
+// counts of the WHOLE table, which is how the replayed table knows it is an
+// excerpt and says so (panel-body.tsx) — three rows under "3 met · 11 partial"
+// must never read as the complete assessment.
+
+/** The latest fit check as a short permalink's snapshot, or null if there is none. */
+export function fitSnapshot(messages: TranscriptMessage[]): TranscriptSnapshot | null {
+  for (let i = messages.length - 1; i >= 0; i -= 1) {
+    const message = messages[i]!;
+    if (message.role !== "assistant") continue;
+    const part = toolPartsOf(message).find((p) => p.type === "tool-roleFit");
+    if (!part || typeof part.output !== "object") continue;
+
+    const fit = part.output as RoleFitOutput;
+    const rows = (Array.isArray(fit.rows) ? fit.rows : []).filter((r) => r?.requirement);
+    const counts: Record<string, number> = {};
+    if (fit.counts && typeof fit.counts === "object") Object.assign(counts, fit.counts);
+    else for (const row of rows) counts[row.verdict ?? "unclear"] = (counts[row.verdict ?? "unclear"] ?? 0) + 1;
+    const excerpt = {
+      ...fit,
+      rows: strongestRows(rows)
+        .sort((a, b) => a.i - b.i)
+        .map(({ row }) => row),
+      counts,
+      gaps: Array.isArray(fit.gaps) ? fit.gaps : [],
+    };
+
+    // The request that produced it: the paste panel's line for a posting, or
+    // the question itself when the assessment answered one.
+    const prev = messages[i - 1];
+    const ask = prev?.role === "user" ? (isPostingTurn(prev, message) ? JD_PREFIX : textOf(prev)) : "";
+    const answer: SnapshotMessage = { r: "a", p: [{ y: part.type, o: excerpt }] };
+    const prose = textOf(message).slice(0, MAX_SNAPSHOT_TEXT);
+    if (prose) answer.t = prose;
+    const m: SnapshotMessage[] = [];
+    if (ask) m.push({ r: "u", t: ask.slice(0, MAX_SNAPSHOT_TEXT) });
+    m.push(answer);
+    return { v: SNAPSHOT_VERSION, m };
   }
   return null;
 }

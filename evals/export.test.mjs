@@ -21,11 +21,14 @@ import { test, describe } from "node:test";
 import assert from "node:assert/strict";
 
 import { read } from "./lib/artifacts.mjs";
+import { JD_PREFIX } from "../lib/job-posting.ts";
 import {
+  INTERNAL_TOOL_PARTS,
   MAILTO_MAX_BODY,
   SNAPSHOT_VERSION,
   condense,
   conversationToMarkdown,
+  fitSnapshot,
   fromSnapshot,
   latestRoleFit,
   mailtoHref,
@@ -38,6 +41,7 @@ import {
   PERMALINK_SAFE_CHARS,
   decodeSnapshot,
   encodeSnapshot,
+  fitPermalinkFor,
   payloadFromHash,
   permalinkFor,
 } from "../lib/permalink.ts";
@@ -131,7 +135,17 @@ const POSTING =
       `- Requirement ${i + 1}: own the ${i % 2 ? "reporting" : "pipeline"} surface for a team of ${i + 3}, working across Salesforce, Snowflake and dbt, and report to the VP of revenue operations.`,
   ).join("\n");
 
-/** The largest conversation the site can produce: 10 user turns, one a posting. */
+/** What the extraction step returns: the posting's requirements, verbatim. */
+const EXTRACTION = {
+  role: "GTM engineer",
+  requirements: FIT.rows.map((r) => r.requirement),
+};
+
+/**
+ * The largest conversation the site can produce: 10 user turns, one a posting.
+ * The posting turn's answer carries both steps, as a real one does — the
+ * extraction and then the assessment.
+ */
 function tenTurnConversation() {
   const messages = [];
   for (let i = 0; i < 9; i += 1) {
@@ -146,11 +160,20 @@ function tenTurnConversation() {
   messages.push(
     assistantMsg(
       "Here is how the posting maps onto the record [resume:nokia].",
+      toolPart("tool-extractRequirements", EXTRACTION),
       toolPart("tool-roleFit", FIT),
     ),
   );
   return messages;
 }
+
+/**
+ * One real fit check, recorded through the site against a 3,891-character
+ * posting (evals/fixtures/recorded-fit-check.json). The synthetic fixture above
+ * is shaped to exercise every code path; this one is here so the length
+ * assertions measure a table a model actually wrote.
+ */
+const RECORDED = JSON.parse(read("evals/fixtures/recorded-fit-check.json")).messages;
 
 // --- the snapshot ---------------------------------------------------------
 
@@ -229,16 +252,62 @@ describe("permalink", () => {
     );
   });
 
-  test("a conversation carrying a posting and an assessment still round-trips exactly", async () => {
-    // It does NOT have to be short — a 3.5 kB posting cannot compress into a
-    // tweet. It has to survive, and the surface has to be able to tell the
-    // reader how long it is, which is why PERMALINK_SAFE_CHARS is exported.
+  test("a conversation carrying a posting round-trips its assessment exactly, without the posting", async () => {
+    // The posting never travels (lib/transcript.ts): the reader a fit check is
+    // sent to already has it, and the table quotes every requirement it
+    // judged. Everything that renders survives; the posting turn replays as
+    // the paste panel's request line.
     const messages = tenTurnConversation();
     const link = await permalinkFor("https://sidhantmathur.com/", messages);
     const back = await decodeSnapshot(payloadFromHash(link.slice(link.indexOf("#"))));
     assert.equal(back.length, messages.length);
     assert.deepEqual(latestRoleFit(back), FIT);
-    assert.equal(back[18].parts[0].text, POSTING);
+    assert.equal(back[18].parts[0].text, JD_PREFIX);
+    assert.equal(back[19].parts[0].text, "Here is how the posting maps onto the record [resume:nokia].");
+  });
+
+  test("the extraction step never travels — it renders nowhere and every line of it is a row", () => {
+    const snap = toSnapshot(tenTurnConversation());
+    const types = snap.m.flatMap((m) => (m.p ?? []).map((p) => p.y));
+    assert.ok(types.includes("tool-roleFit"));
+    assert.ok(!types.includes("tool-extractRequirements"));
+  });
+
+  test("the snapshot's internal-tool list agrees with the transport's", () => {
+    // A local copy, like CITATION_MARKER: lib/transcript.ts stays free of the
+    // transport's imports, so the two lists are held equal here instead.
+    const transport = read("lib/chat-transport.ts");
+    const declared = transport.match(/INTERNAL_TOOLS[^=]*=\s*new Set\(\[([^\]]*)\]\)/);
+    assert.ok(declared, "INTERNAL_TOOLS is no longer declared as a literal set");
+    const names = [...declared[1].matchAll(/"([^"]+)"/g)].map((m) => `tool-${m[1]}`);
+    assert.deepEqual([...INTERNAL_TOOL_PARTS].sort(), names.sort());
+  });
+
+  test("a question that produced an assessment keeps its question", () => {
+    // Only a turn the route treated as a posting — the extraction step ran —
+    // is blanked. "Is he a fit for an SE role?" is not a posting.
+    const q = "Would he be a fit for a solutions engineer role?";
+    const snap = toSnapshot([userMsg(q), assistantMsg("Partly.", toolPart("tool-roleFit", FIT))]);
+    assert.equal(snap.m[0].t, q);
+  });
+
+  test("a real fit check: the posting was a quarter of the link, the table is the rest", async () => {
+    // Measured, not estimated. The full link is still past the safe length —
+    // that is the point of the short link below — but leaving the posting out
+    // takes a real one from ~4,500 characters to ~3,300.
+    const link = await permalinkFor("https://sidhantmathur.com/", RECORDED);
+    const posting = RECORDED[0].parts[0].text;
+    const withPosting = `https://sidhantmathur.com/#c=${await encodeSnapshot({
+      v: SNAPSHOT_VERSION,
+      m: [{ r: "u", t: posting }, ...toSnapshot(RECORDED).m.slice(1)],
+    })}`;
+    assert.ok(posting.length > 3800, "the recorded posting is no longer a near-cap one");
+    assert.ok(
+      withPosting.length - link.length > 1000,
+      `leaving the posting out saved only ${withPosting.length - link.length} characters`,
+    );
+    const back = await decodeSnapshot(payloadFromHash(link.slice(link.indexOf("#"))));
+    assert.equal(latestRoleFit(back).rows.length, latestRoleFit(RECORDED).rows.length);
   });
 
   test("a truncated link decodes to null rather than to half a conversation", async () => {
@@ -266,6 +335,66 @@ describe("permalink", () => {
     assert.equal(payloadFromHash("#c=abc?ref=acme"), "abc");
     assert.equal(payloadFromHash("#c=abc&ref=acme"), "abc");
     assert.equal(payloadFromHash("#c=?ref=acme"), null);
+  });
+});
+
+// --- the short fit link (application links) ---------------------------------
+
+describe("short fit link", () => {
+  test("carries the scorecard: its rows in the posting's order, the whole table's counts, every gap", () => {
+    const snap = fitSnapshot(tenTurnConversation());
+    assert.equal(snap.m.length, 2, "the request and the answer, nothing else");
+    assert.equal(snap.m[0].r, "u");
+    assert.equal(snap.m[0].t, JD_PREFIX, "the posting stays out of this link too");
+    const fit = snap.m[1].p[0].o;
+    // The scorecard's rule: cited rows with evidence, at most three. In this
+    // fixture that is the met and the partial row, in table order.
+    assert.deepEqual(
+      fit.rows.map((r) => r.requirement),
+      ["3+ years in revenue or sales operations", "SQL against a warehouse"],
+    );
+    assert.deepEqual(fit.counts, FIT.counts, "the counts must stay the whole table's");
+    assert.deepEqual(fit.gaps, FIT.gaps, "every gap travels");
+    assert.equal(fit.verdict, FIT.verdict);
+    assert.equal(snap.m[1].t, "Here is how the posting maps onto the record [resume:nokia].");
+  });
+
+  test("an excerpt is detectable from the payload alone — more verdicts counted than rows present", () => {
+    // That inequality is how the replayed table knows to say it is an excerpt
+    // (panel-body.tsx, print-sheet.tsx). A full table never satisfies it.
+    const fit = fitSnapshot(tenTurnConversation()).m[1].p[0].o;
+    const total = Object.values(fit.counts).reduce((a, b) => a + b, 0);
+    assert.ok(total > fit.rows.length);
+    assert.equal(Object.values(FIT.counts).reduce((a, b) => a + b, 0), FIT.rows.length);
+    const panel = read("components/shell/panel-body.tsx");
+    assert.match(panel, /total > rows\.length && \(/);
+    assert.match(read("components/shell/print-sheet.tsx"), /total > fit\.rows\.length/);
+  });
+
+  test("a real fit check's short link, ref included, fits where the full one doesn't", async () => {
+    const ref = "?ref=a-forty-character-company-slug-123456";
+    const full = await permalinkFor(`https://sidhantmathur.com/${ref}`, RECORDED);
+    const short = await fitPermalinkFor(`https://sidhantmathur.com/${ref}`, RECORDED);
+    assert.ok(full.length > PERMALINK_SAFE_CHARS, "the full link got short enough to retire the short one");
+    assert.ok(
+      short.length < PERMALINK_SAFE_CHARS,
+      `the short fit link is ${short.length} characters`,
+    );
+    const back = await decodeSnapshot(payloadFromHash(short.slice(short.indexOf("#"))));
+    const fit = latestRoleFit(back);
+    assert.deepEqual(fit.gaps, latestRoleFit(RECORDED).gaps);
+    assert.ok(fit.rows.length > 0 && fit.rows.length <= 3);
+  });
+
+  test("no fit check, no short link", async () => {
+    assert.equal(fitSnapshot([userMsg("Hi"), assistantMsg("Hello.")]), null);
+    assert.equal(await fitPermalinkFor("https://sidhantmathur.com/", []), null);
+  });
+
+  test("a question-shaped assessment keeps its question in the short link too", () => {
+    const q = "Would he be a fit for a solutions engineer role?";
+    const snap = fitSnapshot([userMsg(q), assistantMsg("Partly.", toolPart("tool-roleFit", FIT))]);
+    assert.equal(snap.m[0].t, q);
   });
 });
 
