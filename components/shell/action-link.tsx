@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { downloadAs } from "@/lib/site";
 
 // The bordered "here is the thing to do next" control, in its one form.
 //
@@ -40,7 +41,7 @@ export function ActionLink({ href, external, onClick, children }: ActionLinkProp
   }
   if (external) {
     return (
-      <a href={href} target="_blank" rel="noreferrer" className={CLASS}>
+      <a href={href} target="_blank" rel="noreferrer" {...downloadAs(href)} className={CLASS}>
         {children} ↗
       </a>
     );

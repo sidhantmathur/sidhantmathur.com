@@ -41,3 +41,22 @@ export const DISCLAIMER =
  * the sentence is true whichever model is the default the day it is read.
  */
 export const COLOPHON_STACK = `Next.js, TypeScript, and Tailwind, deployed on Vercel. Type is Geist Sans and Geist Mono. The chat assistant runs through Vercel's AI Gateway on ${DEFAULT_MODEL} by default, with the knowledge base injected directly into the prompt — at this scale, a vector database would be complexity for its own sake, so there isn't one.`;
+
+/** The resume PDF, as every link on the site writes it. */
+export const RESUME_PDF = "/resume.pdf";
+
+/**
+ * What the resume saves as. The file is served as `resume.pdf`, which lands in
+ * a recruiter's downloads folder, and then in an ATS, as one more resume.pdf
+ * among hundreds. The name is the person's, so it says whose it is.
+ */
+export const RESUME_PDF_FILENAME = "Sidhant_Mathur_Resume.pdf";
+
+/**
+ * The `download` attribute for an anchor, when it points at the resume PDF —
+ * spread into every anchor that can, so a link the model wrote in an answer
+ * saves under the same name as the button on /resume.
+ */
+export function downloadAs(href: string | undefined): { download?: string } {
+  return href === RESUME_PDF ? { download: RESUME_PDF_FILENAME } : {};
+}

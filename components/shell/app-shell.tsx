@@ -29,7 +29,14 @@ import { AmbientBackdrop } from "./ambient-backdrop";
 import { TurnError } from "./turn-error";
 import { conversationToMarkdown, messageToMarkdown } from "@/lib/transcript";
 import { permalinkFor } from "@/lib/permalink";
-import { DISCLAIMER, SITE_NAME, SITE_URL } from "@/lib/site";
+import {
+  DISCLAIMER,
+  downloadAs,
+  RESUME_PDF,
+  RESUME_PDF_FILENAME,
+  SITE_NAME,
+  SITE_URL,
+} from "@/lib/site";
 import { track } from "@/lib/analytics";
 import { RecruiterTldr } from "./recruiter-tldr";
 import { POSITIONING, SUGGESTED_QUESTIONS as SUGGESTED } from "@/content/recruiter";
@@ -966,9 +973,10 @@ export function AppShell() {
                                     write a link in its sentence. */}
                                 {o.type === "tool-showResume" && (
                                   <a
-                                    href="/resume.pdf"
+                                    href={RESUME_PDF}
                                     target="_blank"
                                     rel="noreferrer"
+                                    download={RESUME_PDF_FILENAME}
                                     className={`border px-3 py-2.5 text-[13px] no-underline transition-colors hover:border-accent hover:text-accent ${
                                       m.id === lastId
                                         ? "border-line-strong text-text-soft"
@@ -1485,7 +1493,13 @@ function RailLink({
 
   if (item.external && item.href) {
     return (
-      <a href={item.href} target="_blank" rel="noreferrer" className={cls}>
+      <a
+        href={item.href}
+        target="_blank"
+        rel="noreferrer"
+        {...downloadAs(item.href)}
+        className={cls}
+      >
         {item.label} ↗
       </a>
     );

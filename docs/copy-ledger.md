@@ -336,6 +336,7 @@ on public pages, and sentences that were no longer true.
 | draft | `lib/site.ts` → `COLOPHON_STACK`, on `/colophon` and in the colophon panel | "…The chat assistant runs through Vercel's AI Gateway on {DEFAULT_MODEL} by default, with the knowledge base injected directly into the prompt…" — was "runs on Claude through Vercel's AI Gateway". The rest of the paragraph is unchanged. | one, about the site | The id is interpolated from `DEFAULT_MODEL` in `lib/models.ts`, the same constant the route falls back to, so it can't go stale. |
 | draft | `content/projects.ts` → Dell card `stack` | "Azure ML" — was "Azure ML, Python". | **factual** | `content/knowledge/projects-dell.md` names Azure ML and no language. "Python" comes back if Sidhant confirms it (pending below). |
 | draft | `components/shell/panel-body.tsx` → job-description form | The character counter and cap now read 3,903; was 3,500. | none | UI chrome. It is the route's 4,000-character limit on a user turn (`MAX_USER_TEXT` in `lib/job-posting.ts`) less the 97-character prefix the panel sends ahead of the posting, so a full paste lands exactly on the server's limit. |
+| draft | `lib/site.ts` → `RESUME_PDF_FILENAME`, on every resume PDF link | The resume saves as "Sidhant_Mathur_Resume.pdf" (the `download` attribute) rather than "resume.pdf". | none | The file is unchanged; only the name it saves under. |
 
 ## Pending `[VERIFY]` markers
 
