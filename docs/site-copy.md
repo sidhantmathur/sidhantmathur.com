@@ -163,11 +163,70 @@ It can make mistakes — the resume is the authoritative version.
 Title: A Darle 20
 Subtitle: A marketplace for tabletop game sessions in Latin America.
 
-### In plain terms
+[DRAFT 2026-10-19 — restructured by Claude after the council review: the unit
+economics and the funnel instrumentation each get a section, the plain-language
+explainer (#20, drafted 2026-07-27) moves below the results, and the rest is
+kept. Every number and name is in content/knowledge/projects-adarle20.md or
+resume.md, and evals/track-b.test.mjs checks each paragraph against them. The
+text below is content/adarle20.mdx verbatim. Rewrite in your own voice.]
 
-[DRAFT 2026-07-27 — written by Claude for Track B (#20). Explanation only: it
-restates facts already in the sections below in plain language and introduces
-none of its own. Rewrite in your own voice.]
+### The problem
+
+Tabletop roleplaying games are big in Latin America, but finding a good game
+master — and paying one — was informal and unreliable. Hosts had no clean way to
+take bookings or get paid, especially in a market where many players prefer cash.
+Two friends and I decided to build the marketplace ourselves.
+
+### What I built
+
+I architected and shipped the product end to end: host profiles, session
+listings, bookings and reservations, real-time chat, email notifications,
+refunds, and authentication. Payments run on Stripe Connect, handling host
+payouts and platform fees — including OXXO integration so players in Mexico
+can pay in cash at a convenience store, which matters in a market where card
+penetration is low.
+
+The build itself is part of the story. I run an AI-agent-heavy development
+workflow in Claude Code — agents write most of the code, while I keep hands-on
+ownership of architecture, product decisions, code review, and release. Later I
+set up a multi-agent workflow that reviews, refactors, and regression-tests the
+codebase on its own.
+
+### The unit economics
+
+Payment runs through the site rather than around it: Stripe Connect handles the
+host payouts and the platform fee, OXXO lets a player with no card pay in cash
+at a convenience store, and refunds are automated rather than handled by hand.
+
+Running it has taught me as much about unit economics as about code: we've
+tested a commission model against direct event ticket sales and made real
+decisions about where the margin actually is — and the unglamorous parts,
+refunds, payment edge cases and infrastructure costs, are part of that
+arithmetic.
+
+### The funnel, instrumented
+
+The funnel is instrumented end to end — bookings, conversion, cancellations,
+refunds, host activation — so there is a number for every stage on both sides
+of the marketplace: players who visit, register and book, and hosts who
+activate. That data steers product and monetization decisions, which is how
+the question above gets answered with evidence rather than instinct.
+
+### What it runs on
+
+TypeScript, React and Next.js, Supabase (PostgreSQL) with Prisma, Stripe Connect,
+Resend for transactional email, deployed on Vercel.
+
+### Where it stands
+
+Development started in August 2025; the platform launched in March 2026. Four
+months in, it has 1,400+ registered users, 127 hosts, and 2,100+ bookings, with
+200–400 unique visitors a day. The biggest single test so far was a flagship
+251-player event at a 19,000-attendee convention — I built the technology
+behind it; my co-founder ran the event on the ground — rated 4.96/5 by
+attendees.
+
+### In plain terms
 
 Tabletop roleplaying games are played in groups, and somebody has to run the
 game for everyone else. Finding a good one — and paying them — was word of
@@ -178,46 +237,11 @@ through the site, and both sides get an email about it.
 The booking form is the easy part. The hard part is money. It has to reach the
 host rather than sit with the company, some players have no card at all and pay
 cash at a convenience store instead, and any of it can be cancelled or refunded
-by someone who isn't you. Most of what's described below is the machinery for
+by someone who isn't you. Most of what's described above is the machinery for
 handling that without a person in the middle.
 
-### The problem
-Tabletop roleplaying games are big in Latin America, but finding a good game
-master — and paying one — was informal and unreliable. Hosts had no clean way to
-take bookings or get paid, especially in a market where many players prefer cash.
-Two friends and I decided to build the marketplace ourselves.
-
-### What I built
-I architected and shipped the product end to end: host profiles, session
-listings, bookings and reservations, real-time chat, email notifications,
-refunds, and authentication. Payments run on Stripe Connect, handling host
-payouts and platform fees — including OXXO integration so players in Mexico
-can pay in cash at a convenience store, which matters in a market where card
-penetration is low. The funnel is instrumented end to end — bookings,
-conversion, cancellations, refunds, host activation — and that data steers
-product and monetization decisions.
-
-The build itself is part of the story. I run an AI-agent-heavy development
-workflow in Claude Code — agents write most of the code, while I keep
-hands-on ownership of architecture, product decisions, code review, and
-release. Later I set up a multi-agent workflow that reviews, refactors, and
-regression-tests the codebase on its own.
-
-### What it runs on
-TypeScript, React and Next.js, Supabase (PostgreSQL) with Prisma, Stripe Connect,
-Resend for transactional email, deployed on Vercel.
-
-### Where it stands
-Development started in August 2025; the platform launched in March 2026. Four
-months in, it has 1,400+ registered users, 127 hosts, and 2,100+ bookings, with
-200–400 unique visitors a day. The biggest single test so far was a flagship
-251-player event at a 19,000-attendee convention — I built the technology
-behind it; my co-founder ran the event on the ground — rated 4.96/5 by
-attendees. Running it has taught me as much about unit economics as about code:
-we've tested a commission model against direct event ticket sales and made real
-decisions about where the margin actually is.
-
 ### What I'd tell a hiring manager
+
 This is the project that proves I can take an ambiguous idea to a revenue-
 generating product — including the unglamorous parts like refunds, payment
 edge cases, and infrastructure costs.
@@ -286,10 +310,68 @@ open.
 Title: Reporting tools at Nokia
 Subtitle: Internal tools for a global sales organization.
 
-### In plain terms
+[DRAFT 2026-10-19 — restructured by Claude after the council review as a
+business-outcome page: results first, before and after, how it was run, the
+earlier Nokia role, and the plain-language explainer (#20, drafted 2026-07-27)
+moved below the results. Every number and name is in
+content/knowledge/projects-nokia.md, resume.md or bio.md, and
+evals/track-b.test.mjs checks each paragraph against them. The text below is
+content/nokia.mdx verbatim. Rewrite in your own voice.]
 
-[DRAFT 2026-07-27 — written by Claude for Track B (#20). Explanation only.
-Rewrite in your own voice.]
+### At a glance
+
+- **Role** — Sales operations specialist (internal tools and automation) at
+  Nokia, Toronto. June 2024 to present; the tools below have been in production
+  since 2024.
+- **Systems** — Power Apps, Power BI, SQL and DAX. Salesforce Analytics was the
+  system being retired.
+- **Quarterly executive reporting** — a self-serve Power App used by 80+
+  stakeholders across seven regions. It replaced the manual collection process
+  entirely.
+- **Time given back** — one finance analyst's entire workday, every day of
+  quarter-end close.
+- **Sales reporting** — all of it migrated from Salesforce Analytics to Power BI
+  for 150+ users, with the data model and the SQL and DAX transformation logic
+  owned end to end.
+
+### Before and after
+
+**Before.** Quarterly executive reporting ran on manual data collection. Every
+day of quarter-end close, one finance analyst spent their entire workday chasing
+inputs across regions and formats. At the same time, sales reporting lived in
+Salesforce Analytics, which the organization was moving away from.
+
+**After.** The 80+ stakeholders across seven regions report through a
+self-serve Power App, and the manual collection process is gone. Sales
+reporting runs on Power BI for 150+ users, on a data model and transformation
+logic I built and own.
+
+### How I ran it
+
+For both tools I was the whole team.
+
+- **Requirements** — vague requests from sales and finance leadership,
+  translated into scoped requirements.
+- **Build** — the Power App; the Power BI data model and its transformation
+  logic in SQL and DAX.
+- **Rollout** — executive demos, then a global rollout to the stakeholders.
+- **Support** — user support, bug triage and rapid iteration, across time
+  zones.
+
+More recently I've been bringing LLMs and Python into these workflows where
+they earn their place.
+
+Note: this work is internal to Nokia, so screenshots and specifics are limited
+by confidentiality. The numbers above are ones I can stand behind.
+
+### Before this role
+
+I joined Nokia in October 2022 as a workforce management specialist, owning
+headcount reporting and forecasting for a 3,000–4,000-person organization.
+Analyzing lab and facility utilization data in that role identified $1.2M in
+real-estate cost savings.
+
+### In plain terms
 
 A large company sells in a lot of places, and every quarter its executives need
 one picture of how that went. Getting to that picture meant asking people across
@@ -299,31 +381,12 @@ took their entire workday, every day of the quarter-end close.
 
 The fix isn't clever, it's just the whole job: build something the regions can
 fill in themselves, get it in front of the people who have to use it, and keep
-it working when they run into trouble. The second half of this page is the same
-job wearing different clothes — the company was moving off one reporting system,
-and every report and every user had to come out the other side.
-
-### The problem
-Quarterly executive reporting ran on manual data collection — a process that
-consumed one finance analyst's entire workday, every day of quarter-end close,
-chasing inputs across regions and formats. At the same time, sales reporting
-lived in Salesforce Analytics, which the organization was moving away from.
-
-### What I built
-Two main things. First, a self-serve Power App for quarterly executive reporting,
-now used by 80+ stakeholders across seven regions — it replaced the manual
-collection process entirely. Second, I owned the migration of all sales reporting
-from Salesforce Analytics to Power BI for 150+ users: data modeling,
-transformation logic in SQL and DAX, and the global rollout.
-
-For both, I was the whole team: requirements, build, executive demos, user
-support, bug triage, and iteration across time zones. More recently I've been
-bringing LLMs and Python into these workflows where they earn their place.
-
-Note: this work is internal to Nokia, so screenshots and specifics are limited
-by confidentiality. The numbers above are ones I can stand behind.
+it working when they run into trouble. The migration is the same job wearing
+different clothes — the company was moving off one reporting system, and every
+report and every user had to come out the other side.
 
 ### What I'd tell a hiring manager
+
 This is what I mean by operator: I sit between the business and the tooling,
 and I close that gap myself rather than filing a ticket.
 

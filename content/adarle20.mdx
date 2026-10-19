@@ -1,17 +1,3 @@
-### In plain terms
-
-Tabletop roleplaying games are played in groups, and somebody has to run the
-game for everyone else. Finding a good one — and paying them — was word of
-mouth and a private arrangement. A Darle 20 is where that arrangement happens
-instead: a host lists a session, a player books a seat, the payment goes
-through the site, and both sides get an email about it.
-
-The booking form is the easy part. The hard part is money. It has to reach the
-host rather than sit with the company, some players have no card at all and pay
-cash at a convenience store instead, and any of it can be cancelled or refunded
-by someone who isn't you. Most of what's described below is the machinery for
-handling that without a person in the middle.
-
 ### The problem
 
 Tabletop roleplaying games are big in Latin America, but finding a good game
@@ -26,15 +12,33 @@ listings, bookings and reservations, real-time chat, email notifications,
 refunds, and authentication. Payments run on Stripe Connect, handling host
 payouts and platform fees — including OXXO integration so players in Mexico
 can pay in cash at a convenience store, which matters in a market where card
-penetration is low. The funnel is instrumented end to end — bookings,
-conversion, cancellations, refunds, host activation — and that data steers
-product and monetization decisions.
+penetration is low.
 
 The build itself is part of the story. I run an AI-agent-heavy development
 workflow in Claude Code — agents write most of the code, while I keep hands-on
 ownership of architecture, product decisions, code review, and release. Later I
 set up a multi-agent workflow that reviews, refactors, and regression-tests the
 codebase on its own.
+
+### The unit economics
+
+Payment runs through the site rather than around it: Stripe Connect handles the
+host payouts and the platform fee, OXXO lets a player with no card pay in cash
+at a convenience store, and refunds are automated rather than handled by hand.
+
+Running it has taught me as much about unit economics as about code: we've
+tested a commission model against direct event ticket sales and made real
+decisions about where the margin actually is — and the unglamorous parts,
+refunds, payment edge cases and infrastructure costs, are part of that
+arithmetic.
+
+### The funnel, instrumented
+
+The funnel is instrumented end to end — bookings, conversion, cancellations,
+refunds, host activation — so there is a number for every stage on both sides
+of the marketplace: players who visit, register and book, and hosts who
+activate. That data steers product and monetization decisions, which is how
+the question above gets answered with evidence rather than instinct.
 
 ### What it runs on
 
@@ -48,9 +52,21 @@ months in, it has 1,400+ registered users, 127 hosts, and 2,100+ bookings, with
 200–400 unique visitors a day. The biggest single test so far was a flagship
 251-player event at a 19,000-attendee convention — I built the technology
 behind it; my co-founder ran the event on the ground — rated 4.96/5 by
-attendees. Running it has taught me as much about unit economics as about code:
-we've tested a commission model against direct event ticket sales and made real
-decisions about where the margin actually is.
+attendees.
+
+### In plain terms
+
+Tabletop roleplaying games are played in groups, and somebody has to run the
+game for everyone else. Finding a good one — and paying them — was word of
+mouth and a private arrangement. A Darle 20 is where that arrangement happens
+instead: a host lists a session, a player books a seat, the payment goes
+through the site, and both sides get an email about it.
+
+The booking form is the easy part. The hard part is money. It has to reach the
+host rather than sit with the company, some players have no card at all and pay
+cash at a convenience store instead, and any of it can be cancelled or refunded
+by someone who isn't you. Most of what's described above is the machinery for
+handling that without a person in the middle.
 
 ### What I'd tell a hiring manager
 

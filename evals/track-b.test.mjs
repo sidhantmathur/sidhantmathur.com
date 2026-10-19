@@ -196,16 +196,51 @@ describe("#26 — the recruiter chips", () => {
 // --- #20: plain-language prose ---------------------------------------------
 
 const CASE_STUDIES = ["adarle20", "nokia", "dell-ml"];
+const PLAIN_HEADING = "### In plain terms";
+
+/**
+ * The plain-language section of a case study: its heading through to the next
+ * `###` heading, or the end of the file. It used to be found by position,
+ * because it opened every page. Since the 2026-10-19 council review it sits
+ * below the results on the two RevOps proof pages, so it is found by name.
+ */
+function plainTerms(mdx) {
+  const start = mdx.indexOf(PLAIN_HEADING);
+  if (start === -1) return null;
+  const next = mdx.indexOf("\n###", start + PLAIN_HEADING.length);
+  return mdx.slice(start, next === -1 ? mdx.length : next);
+}
 
 describe("#20 — plain-language prose", () => {
-  test("every case study opens with it", () => {
+  test("every case study has it, once", () => {
     for (const slug of CASE_STUDIES) {
       const mdx = read(`content/${slug}.mdx`);
+      const count = mdx.split(PLAIN_HEADING).length - 1;
+      assert.equal(count, 1, `content/${slug}.mdx has ${count} plain-language sections, not one`);
+    }
+  });
+
+  test("it follows the results on the two proof pages, and opens the Dell page", () => {
+    // Council review, 2026-10-19: a RevOps hiring manager opening
+    // /projects/nokia met a paragraph explaining what a quarter is before any
+    // number. The explainer stays, below the outcomes. Dell keeps it first —
+    // the caveats it carries are the point of that page.
+    for (const [slug, results] of [
+      ["nokia", "### At a glance"],
+      ["adarle20", "### Where it stands"],
+    ]) {
+      const mdx = read(`content/${slug}.mdx`);
+      const resultsAt = mdx.indexOf(results);
+      assert.notEqual(resultsAt, -1, `content/${slug}.mdx has no "${results}" section`);
       assert.ok(
-        mdx.trimStart().startsWith("### In plain terms"),
-        `content/${slug}.mdx does not open with the plain-language section`,
+        mdx.indexOf(PLAIN_HEADING) > resultsAt,
+        `content/${slug}.mdx puts the plain-language section above "${results}"`,
       );
     }
+    assert.ok(
+      read("content/dell-ml.mdx").trimStart().startsWith(PLAIN_HEADING),
+      "content/dell-ml.mdx does not open with the plain-language section",
+    );
   });
 
   test("it is static, not generated", () => {
@@ -229,7 +264,7 @@ describe("#20 — plain-language prose", () => {
       const mdx = read(`content/${slug}.mdx`);
       // "A Darle 20" is a product name, not a figure. It is the one string
       // allowed to carry a digit through this check.
-      const section = mdx.slice(0, mdx.indexOf("###", 4)).replaceAll("A Darle 20", "");
+      const section = plainTerms(mdx).replaceAll("A Darle 20", "");
       const digits = section.match(/\d/g) ?? [];
       assert.deepEqual(
         digits,
@@ -242,8 +277,7 @@ describe("#20 — plain-language prose", () => {
   test("is in docs/site-copy.md", () => {
     const copy = read("docs/site-copy.md");
     for (const slug of CASE_STUDIES) {
-      const mdx = read(`content/${slug}.mdx`);
-      const section = mdx.slice(0, mdx.indexOf("###", 4));
+      const section = plainTerms(read(`content/${slug}.mdx`));
       const firstSentence = section.split("\n\n")[1].replace(/\s+/g, " ").trim();
       assert.ok(
         copy.replace(/\s+/g, " ").includes(firstSentence),
@@ -251,6 +285,52 @@ describe("#20 — plain-language prose", () => {
       );
     }
   });
+});
+
+// --- The case studies and the record ----------------------------------------
+
+describe("the case studies make no claim the record lacks", () => {
+  // The check the TL;DR rows get, run over every paragraph and list item of the
+  // two pages reworked after the 2026-10-19 council review. A number, employer,
+  // tool or date that is not in the knowledge base fails here rather than
+  // reaching a hiring manager. The plain-language section is skipped: it
+  // carries no figures by the rule above, and its only proper noun is the
+  // product's name.
+  const SOURCES = {
+    nokia: [
+      "content/knowledge/projects-nokia.md",
+      "content/knowledge/resume.md",
+      "content/knowledge/bio.md",
+    ],
+    adarle20: ["content/knowledge/projects-adarle20.md", "content/knowledge/resume.md"],
+  };
+
+  /** Paragraphs and list items outside the plain-language section; headings excluded. */
+  function claims(mdx) {
+    const plain = plainTerms(mdx) ?? "";
+    return mdx
+      .replace(plain, "")
+      .split(/\n\s*\n/)
+      .flatMap((block) => (block.trimStart().startsWith("- ") ? block.split(/\n(?=- )/) : [block]))
+      .map((s) => s.replace(/\s+/g, " ").trim())
+      .filter((s) => s && !s.startsWith("###"));
+  }
+
+  for (const [slug, files] of Object.entries(SOURCES)) {
+    test(`every paragraph of content/${slug}.mdx is supported by its corpus files`, () => {
+      const lookup = { corpus: { id: "corpus", text: files.map((f) => read(f)).join("\n") } };
+      const sentences = claims(read(`content/${slug}.mdx`));
+      assert.ok(sentences.length > 5, `content/${slug}.mdx yielded only ${sentences.length} paragraphs`);
+      for (const sentence of sentences) {
+        const check = checkClaim(sentence, ["corpus"], lookup);
+        assert.equal(
+          check.verdict,
+          "verified",
+          `"${sentence.slice(0, 70)}…" is not supported by the record — missing: ${check.missing.join(", ")}`,
+        );
+      }
+    });
+  }
 });
 
 // --- #19: the A Darle 20 surface -------------------------------------------
