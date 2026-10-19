@@ -1,22 +1,23 @@
 import Image from "next/image";
-import {
-  ADARLE_MEDIA,
-  FEATURE_SURFACE,
-  FEATURE_SURFACE_NOTE,
-  MEDIA_SURFACE_NOTE,
-  type MediaSlot,
-} from "@/content/adarle20-media";
+import { ADARLE_MEDIA, FEATURE_SURFACE, type MediaSlot } from "@/content/adarle20-media";
 
 // The A Darle 20 media and feature surface (#19, Track B).
 //
 // Two sections appended below the case study. Both are pre-rendered — nothing
-// here fetches, and an empty slot is a static frame, not a loading state.
+// here fetches.
 //
-// The empty frame is the whole point of this component. It is drawn as a
-// dashed outline at the shape the real asset will be, carrying the brief for
-// whoever has to capture it, and it says "nothing here yet" in words. It must
-// never be mistaken for a screenshot: no blurred mock, no grey rectangle that
-// reads as a broken image, no caption in the past tense.
+// ONLY SLOTS WITH A FILE RENDER. This component used to draw every slot in the
+// manifest, an empty one as a dashed frame carrying its capture brief and the
+// words "nothing here yet". That was honest, and on the flagship case study it
+// was also five empty boxes and a note to the editor, live, in front of every
+// recruiter who clicked through (council review, 2026-10-19). The briefs are
+// still the brief: they live in content/adarle20-media.ts and the copy ledger,
+// and a slot appears here the day its `asset` is filled in.
+//
+// The same goes for FEATURE_SURFACE_NOTE, which carries a `[VERIFY]` marker
+// and is not rendered until the missing features are written down. Markers
+// live in drafts and the ledger, never on a page — evals/static.test.mjs fails
+// the build if one renders.
 
 export function AdarleFeatureSurface() {
   return (
@@ -42,24 +43,22 @@ export function AdarleFeatureSurface() {
           </div>
         ))}
       </dl>
-      <p className="t-meta mt-6 max-w-[68ch] text-text-faint">
-        {FEATURE_SURFACE_NOTE}
-      </p>
     </section>
   );
 }
 
+type CapturedSlot = MediaSlot & { asset: NonNullable<MediaSlot["asset"]> };
+
 export function AdarleMediaSurface() {
+  const captured = ADARLE_MEDIA.filter((slot): slot is CapturedSlot => slot.asset != null);
+  if (!captured.length) return null;
   return (
     <section className="mt-12 border-t border-line pt-8">
       <h2 className="t-head font-medium text-text">
         What it looks like
       </h2>
-      <p className="t-body mt-3 max-w-[68ch] text-text-soft">
-        {MEDIA_SURFACE_NOTE}
-      </p>
       <div className="mt-6 space-y-8">
-        {ADARLE_MEDIA.map((slot) => (
+        {captured.map((slot) => (
           <MediaFrame key={slot.id} slot={slot} />
         ))}
       </div>
@@ -67,7 +66,7 @@ export function AdarleMediaSurface() {
   );
 }
 
-function MediaFrame({ slot }: { slot: MediaSlot }) {
+function MediaFrame({ slot }: { slot: CapturedSlot }) {
   const width = slot.width === "narrow" ? "max-w-[300px]" : "max-w-[68ch]";
   return (
     <figure className={width}>
@@ -77,35 +76,17 @@ function MediaFrame({ slot }: { slot: MediaSlot }) {
           {slot.kind} · {slot.aspect}
         </span>
       </div>
-
-      {slot.asset ? (
-        <div className={`relative mt-2 border border-line ${slot.aspectClass}`}>
-          <Image
-            src={slot.asset.src}
-            alt={slot.asset.alt}
-            fill
-            sizes="(max-width: 768px) 100vw, 68ch"
-            className="object-cover object-top"
-          />
-        </div>
-      ) : (
-        // Dashed, empty, and labelled. Deliberately NOT a filled rectangle:
-        // a solid grey block at a screenshot's shape reads as an image that
-        // failed to load, which is a worse lie than an obvious hole.
-        <div
-          className={`mt-2 flex flex-col justify-center gap-2 border border-dashed border-line-strong px-4 py-4 ${slot.aspectClass}`}
-        >
-          <span className="t-meta text-text-faint">
-            Nothing here yet — waiting on a {slot.kind}.
-          </span>
-          <p className="t-meta max-w-[52ch] text-text-soft">
-            {slot.brief}
-          </p>
-        </div>
-      )}
-
+      <div className={`relative mt-2 border border-line ${slot.aspectClass}`}>
+        <Image
+          src={slot.asset.src}
+          alt={slot.asset.alt}
+          fill
+          sizes="(max-width: 768px) 100vw, 68ch"
+          className="object-cover object-top"
+        />
+      </div>
       <figcaption className="t-meta mt-2 max-w-[62ch] text-text-faint">
-        {slot.asset ? slot.asset.caption : `${slot.title} — not captured yet.`}
+        {slot.asset.caption}
       </figcaption>
     </figure>
   );

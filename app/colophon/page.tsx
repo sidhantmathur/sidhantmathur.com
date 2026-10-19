@@ -22,13 +22,13 @@ export default function ColophonPage() {
           into the prompt — at this scale, a vector database would be
           complexity for its own sake, so there isn&apos;t one.
         </p>
+        {/* The sentence that pointed at the source on GitHub is gone, marker
+            and all. The repo is public and so is docs/, so whether to link it
+            is Sidhant's decision, logged in the copy ledger; until then the
+            page doesn't half-make the offer. */}
         <p className="t-body mt-4 max-w-[58ch] text-text-soft">
           Most of the code was written by AI agents working from a build
-          spec; the decisions, copy, and mistakes are mine. The spec, design
-          brief, and source are on GitHub.{" "}
-          <span className="font-mono text-text-faint">
-            [TODO: confirm repo is public before linking]
-          </span>
+          spec; the decisions, copy, and mistakes are mine.
         </p>
         <p className="t-body mt-4 max-w-[58ch] text-text-soft">
           The assistant is tested against a fixed corpus, and what it scores is

@@ -27,6 +27,7 @@ import {
 import { GROUNDED, ROLE_FIT } from "./cases.mjs";
 import { DEFAULT_MODEL, MODELS, MODEL_IDS, TIER_LIMITS } from "../lib/models.ts";
 import { JD_PREFIX, looksLikeJobPosting } from "../lib/job-posting.ts";
+import { findRenderedMarkers, hasBuild, MARKERS } from "../scripts/check-rendered-markers.mjs";
 
 describe("knowledge base", () => {
   test("builds and is non-empty", () => {
@@ -54,10 +55,44 @@ describe("knowledge base", () => {
     assert.ok(tokens < 8000, `knowledge base is ~${tokens} tokens, over the 8k target`);
   });
 
-  test("has no unresolved TODO markers", () => {
+  test("has no unresolved TODO or VERIFY markers", () => {
+    // This used to look for the literal "[TODO]". The marker in faq.md is
+    // "[TODO: Sidhant — stated nowhere; do not guess]", which that string never
+    // matches, so it rode into the system prompt and onto /prompt for months
+    // with this test green. A marker is the opening bracket and the word.
     const kb = readKnowledgeBase();
-    assert.ok(!kb.includes("[TODO]"), "knowledge base contains a [TODO] marker");
+    const marker = kb.match(/\[(TODO|VERIFY)\b[^\]]*\]?/);
+    assert.equal(marker, null, `knowledge base contains a marker: ${marker?.[0]}`);
   });
+
+  test("a chunk with a marker is held back from the chunk index too", () => {
+    // Held back from both artifacts, not one, so the ids the model is shown
+    // and the ids the panel can open stay the same set.
+    const chunks = read("lib/chunks.generated.ts");
+    assert.ok(!/\[(TODO|VERIFY)\b/.test(chunks), "lib/chunks.generated.ts carries a marker");
+  });
+});
+
+// --- Nothing unfinished on a page ------------------------------------------
+//
+// Markers live in drafts and docs/copy-ledger.md, never in a rendered page
+// (CLAUDE.md, Copy). The check reads the build output, because the source holds
+// these strings legitimately; `postbuild` runs the same function and fails the
+// build, so this test is the suite's view of the last build on disk.
+
+describe("rendered pages", () => {
+  test(
+    `no served file contains ${MARKERS.map((m) => `"${m}"`).join(", ")}`,
+    { skip: hasBuild() ? false : "no build output — `npm run build` runs this check as postbuild" },
+    () => {
+      const found = findRenderedMarkers();
+      assert.deepEqual(
+        found.map((f) => `${f.file}: ${f.marker} …${f.context}…`),
+        [],
+        "an unfinished-work marker reached the served output",
+      );
+    },
+  );
 });
 
 // The chunk index and the citation machinery it feeds are tested in
