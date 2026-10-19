@@ -460,6 +460,23 @@ was taken and the row says so.
 | draft | `components/shell/app-shell.tsx` → composer fine print (empty state) | Below lg: "AI answers can be wrong." · lg up: "Answers cite their sources and can be wrong — the resume is the authoritative version." Both followed by the link "How it works" (to `/colophon`). | one, about the site | Replaces the four-claim proof line logged under the front-door rows; its claims (published prompt, published evals, the cost meter) are on the colophon. `DISCLAIMER` in `lib/site.ts` still ships with exports and print, unchanged. |
 | removed | `components/shell/app-shell.tsx` → composer fine print (empty state) | "Answers cite their sources — this chat publishes its system prompt and eval results, and shows what each answer costs. It can make mistakes; the resume is the authoritative version." | — | Four lines on a phone; see the row above. |
 
+**Application links, 2026-10-19** (branch `worktree-agent-aa8fedc2a0a6a9df2`).
+One `?ref=<company>` link per application, counted in PostHog and never shown on
+the page, plus a short fit link that replays as a standalone page. The routine
+is `docs/application-links.md`. No string here renders the ref.
+
+| Status | Where | What it says | Claims | Grounding |
+| --- | --- | --- | --- | --- |
+| draft | `components/shell/app-shell.tsx` → `REPLAY_FIT_LINE`, first line of the replay banner when the replay holds a fit check | "A fit check: the assistant on Sidhant Mathur's site read one job posting against his record, citing a source for every match and listing the gaps." | one, about the site | `lib/role-fit.ts`: a `met`/`partial` row with no valid source is downgraded to `unclear`, and gaps can't come out empty while a row is `unmet`. Says nothing about his experience. |
+| draft | `components/shell/app-shell.tsx` → `REPLAY_POSTING_LEFT_OUT`, appended to `REPLAY_BANNER` when the posting turn is the bare request line | "The posting itself is left out of the link; the table quotes the requirements it judged." | none | `lib/transcript.ts` → `toSnapshot` leaves the posting out; rows carry the posting's words (`role-fit.ts`, "The posting's words, not the site's"). |
+| draft | `components/shell/app-shell.tsx` → replay banner | The three contact controls, "Download resume (PDF)" (filled, on a fit check) · "hello@sidhantmathur.com" + "copy" · "LinkedIn ↗", under the banner text and above "start a fresh one". New surface `replay` in `contact-actions.tsx`. | none | Wave 2's strings, unchanged; a new placement. |
+| draft | `components/shell/app-shell.tsx` → ledger turn labels | A replayed turn reads "NN · asked"; a live turn is still "NN · you". | none | UI chrome. "you" over a fit check Sidhant sent put his request in the recruiter's mouth. |
+| draft | `lib/transcript.ts` → `toSnapshot` / `fitSnapshot`, the replayed posting turn | A posting turn replays as the existing request line, "Here's a job description. Map my experience onto it, and be straight about where I don't match." | none | `JD_PREFIX` in `lib/job-posting.ts`, already sent ahead of every pasted posting. New placement, not a new string. |
+| draft | `components/shell/shell-data.ts` → `fitExcerptNote`, over the requirement table (panel and print) when the counts cover more rows than are present | "Showing {n} of {total} requirements: the strongest cited ones. The counts cover all {total}, and every gap is listed below." With no rows: "This link carries the counts for all {total} requirements and every gap, but none of the rows." | none | Describes `fitSnapshot`'s selection, which is the scorecard's (`strongestRows`). |
+| draft | `components/shell/export-deck.tsx` → "Short link" section (shown with a fit check) | Label "Short link". Note: "The same scorecard as a link, with the answer's summary — short enough for an application form or a plain-text email. The posting itself stays out of it." Buttons "build a short link" / "rebuild the short link", "copy the short link" / "copied"; then the link, "{n} characters", and the existing too-long warning past 2,000. | none | `fitPermalinkFor` in `lib/permalink.ts`; 1,635 characters on the recorded 3,891-character posting. |
+| draft | `app/not-found.tsx` | "Read the resume →" (to `/resume`), beside "Head back home →". | none | UI chrome. Wave 2 leftover. |
+| removed | `app/llms.txt/route.ts` | "/chat — Ask a question about my work directly." | — | `/chat` permanently redirects to `/` (`next.config.ts`); the `/` line already describes the chat. |
+
 ## Pending `[VERIFY]` markers
 
 Sentences drafted with a fact-shaped hole in them, waiting on Sidhant. Listing them

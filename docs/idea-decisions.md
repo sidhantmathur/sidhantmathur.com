@@ -98,6 +98,14 @@ so anyone holding the link reads the conversation; and a replayed URL must carry
 visible "replayed conversation — nothing was stored" banner so it is never mistaken
 for a live session. Fable #14's joke — printing the byte count — still works.
 
+*Addendum, 2026-10-19 (application links):* the estimate above held for chat
+turns and not for postings. A real fit check (a 3,891-character posting and a
+14-row table) produced a 4,523-character link. Leaving out the posting and the
+internal extraction step brings it to 3,271, and the table alone is about
+2,900. So a fit check now also has a **short link** in scorecard shape, at
+1,635 characters. The measurements and the routine are in
+`docs/application-links.md`.
+
 ### Off the chat surface
 
 | # | Idea | Sources | Note |

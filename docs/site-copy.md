@@ -600,7 +600,7 @@ Sidhant's call.]
 
 ## Small pieces
 
-404 page: There's nothing at this address. Head back home.
+404 page: There's nothing at this address. Head back home. · Read the resume.
 Footer: © 2026 Sidhant Mathur · Toronto, ON · GitHub · LinkedIn · Email
 Chat empty state: Ask me about my work at Nokia, A Darle 20, or anything on my
 resume.
@@ -678,3 +678,25 @@ Submit button: Check the fit
 Message sent to the assistant (prefix before the pasted text):
 Here's a job description. Map my experience onto it, and be straight about
 where I don't match.
+
+### Replayed fit check and the short link (application links, 2026-10-19)
+
+[DRAFT — written by Claude. See docs/application-links.md for what these are
+for.]
+
+Banner line, over a replayed fit check: A fit check: the assistant on Sidhant
+Mathur's site read one job posting against his record, citing a source for
+every match and listing the gaps.
+Added to the replay banner when the posting was left out: The posting itself is
+left out of the link; the table quotes the requirements it judged.
+Then, in the banner: Download resume (PDF) · hello@sidhantmathur.com [copy] ·
+LinkedIn ↗
+Replayed turn label: 01 · asked (a live turn is still "01 · you")
+Over an excerpt table: Showing 3 of 14 requirements: the strongest cited ones.
+The counts cover all 14, and every gap is listed below.
+(With no rows: This link carries the counts for all 14 requirements and every
+gap, but none of the rows.)
+Export panel, "Short link": The same scorecard as a link, with the answer's
+summary — short enough for an application form or a plain-text email. The
+posting itself stays out of it. Buttons: build a short link · rebuild the short
+link · copy the short link.
