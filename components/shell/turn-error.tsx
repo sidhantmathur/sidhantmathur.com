@@ -7,7 +7,7 @@ import {
   turnErrorLabel,
   type TurnErrorClass,
 } from "@/lib/chat-telemetry";
-import { MODEL_IDS } from "@/lib/models";
+import { MODEL_IDS, modelName } from "@/lib/models";
 
 /**
  * The model a "different model" button offers: the next one after the current
@@ -80,8 +80,8 @@ export function TurnError({
       {/* A second way out for the one class where the model itself is the
           problem — see `switchModel` in the failure table. It resends the same
           question and changes the selection, so the header's picker agrees
-          with what answered. Named by its model id, which is how the picker
-          names it too. */}
+          with what answered. Named the way the picker in the instruments
+          panel names it — "GPT-6 Luna", not the Gateway id (wave 2). */}
       {(isRetryableClass(cls) || alternative) && (
         <div className="mt-2 flex flex-wrap gap-2">
           {isRetryableClass(cls) && (
@@ -97,7 +97,7 @@ export function TurnError({
           )}
           {alternative && onSwitchModel && (
             <button type="button" onClick={() => onSwitchModel(alternative)} className={BUTTON}>
-              ask {alternative.split("/").pop()} instead
+              ask {modelName(alternative)} instead
             </button>
           )}
         </div>

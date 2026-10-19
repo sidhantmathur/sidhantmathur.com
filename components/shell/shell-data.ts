@@ -26,7 +26,12 @@ export const SLUG_TO_RESUME: Record<string, string> = {
 };
 
 // docs/site-copy.md → "Why this site is a chatbot". Marked DRAFT there pending
-// Sidhant's rewrite; this array follows that file.
+// Sidhant's rewrite; this array follows that file. Since wave 2 it is no
+// longer a panel of its own in the index — it argued for a chat-first site,
+// which the front-door policy reversed — and is read as one section of the
+// colophon (the page and the panel), where the site explains itself.
+export const WHY_CHATBOT_HEADING = "Why there's a chat on a portfolio";
+
 export const WHY_CHATBOT = [
   "Most software is turning into a conversation. I don't build my own PostHog dashboards anymore — I describe what I want and the product's assistant builds it, because it knows the platform better than I do. That pattern is going to take over a lot of interfaces, and I don't see why a portfolio would be the exception.",
   "A portfolio is a list standing in for a conversation you can't have. The better version is talking to me — about what I built, why, what it took, whether any of it maps to what you need. You can't do that at eleven at night while you're going through a stack of candidates. You can do this.",
@@ -45,40 +50,58 @@ export type RailItem = {
   view?: PanelView;
 };
 
-// The front door's header nav (2026-08-23). The empty state shows these three
-// links plus a Contact button where the telemetry readouts will later sit —
-// a visitor who has not engaged yet gets destinations, not instrumentation.
-// Real routes on purpose: they work before hydration. The full index is behind
-// the ☰ control at every width, and once a conversation starts the readouts
-// take this spot back.
+// The header nav — Resume, Projects, and a Contact button beside them. Since
+// wave 2 it is permanent: the front-door pass swapped it for telemetry once a
+// conversation started, which took the resume off the header at the moment a
+// visitor had shown interest. Real routes on purpose: they work before
+// hydration. "Colophon" left the header in the same pass; it is the first
+// entry under "How this site works" in the index, and the composer's fine
+// print links to it.
 export const HEADER_NAV = [
   { label: "Resume", href: "/resume" },
   { label: "Projects", href: "/projects" },
-  { label: "Colophon", href: "/colophon" },
 ] as const;
 
-export const RAIL_ITEMS: RailItem[] = [
-  { label: "Resume", href: "/resume", view: { kind: "resume" } },
-  { label: "Resume PDF", href: "/resume.pdf", external: true },
-  {
-    label: "A Darle 20",
-    href: "/projects/adarle20",
-    view: { kind: "project", slug: "adarle20" },
-  },
-  { label: "Nokia", href: "/projects/nokia", view: { kind: "project", slug: "nokia" } },
-  { label: "Dell", href: "/projects/dell-ml", view: { kind: "project", slug: "dell-ml" } },
-  { label: "Colophon", href: "/colophon", view: { kind: "colophon" } },
-  // Sprint 7's two published documents (#7, #10). Both have a real page and
-  // open in the panel on a plain click, like everything else in this rail.
-  { label: "The instructions", href: "/prompt", view: { kind: "prompt" } },
-  { label: "What it won't do", href: "/refusals", view: { kind: "refusals" } },
-  { label: "Why this site is a chatbot", view: { kind: "why" } },
-  { label: "Paste a job description", view: { kind: "jd" } },
-  // The header readouts are the desktop way in. Below md they're hidden, so the
-  // rail is the only route to the instruments — see the note in instruments.tsx.
-  { label: "Instruments", view: { kind: "instruments" } },
-  { label: "Contact", view: { kind: "contact" } },
-];
+// The index behind ☰, regrouped in wave 2. It was one flat list of twelve, in
+// which the system prompt sat at the same level as the resume and a recruiter
+// had to read all of it to find the two things they came for. Now: the work
+// first, then how to reach him (rendered by the shell, because it carries the
+// copyable address), then everything about how the site itself works — the
+// machinery, one heading down rather than gone.
+export type RailGroup = { label: string; items: RailItem[] };
+
+export const RAIL_WORK: RailGroup = {
+  label: "Work",
+  items: [
+    { label: "Resume", href: "/resume", view: { kind: "resume" } },
+    { label: "Resume PDF", href: "/resume.pdf", external: true },
+    { label: "Nokia", href: "/projects/nokia", view: { kind: "project", slug: "nokia" } },
+    {
+      label: "A Darle 20",
+      href: "/projects/adarle20",
+      view: { kind: "project", slug: "adarle20" },
+    },
+    { label: "Dell", href: "/projects/dell-ml", view: { kind: "project", slug: "dell-ml" } },
+    { label: "Paste a job description", view: { kind: "jd" } },
+  ],
+};
+
+export const RAIL_CONTACT_LABEL = "Contact";
+
+export const RAIL_HOW: RailGroup = {
+  label: "How this site works",
+  items: [
+    { label: "How it's built", href: "/colophon", view: { kind: "colophon" } },
+    // Sprint 7's two published documents (#7, #10). Both have a real page and
+    // open in the panel on a plain click, like everything else in this index.
+    { label: "The instructions", href: "/prompt", view: { kind: "prompt" } },
+    { label: "What it won't do", href: "/refusals", view: { kind: "refusals" } },
+    { label: "Measurements", href: "/measurements" },
+    // The header's receipt is the desktop way in; below lg it is hidden, so
+    // this is the route to the instruments — and the model picker — there.
+    { label: "Instruments", view: { kind: "instruments" } },
+  ],
+};
 
 // Idle mode (#14). Build-time constants, deliberately: an idle tab must cost
 // nothing, so these can never become a generated line.

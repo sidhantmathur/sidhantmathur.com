@@ -82,6 +82,25 @@ permanent rail is gone (the index is a sheet behind the ☰ control at every
 width, with Resume / Projects / Colophon / Contact in the header until a
 conversation starts).]
 
+Header (wave 2, 2026-10-19): Sidhant Mathur · Toronto, ON (lg and up) ·
+Resume · Projects · Contact — at every width, before and after the first
+turn. After the first turn, at lg and up, one receipt beside the nav:
+"{n}/10 turns · last answer ${cost}", which opens the instruments. The
+readouts, the rate needle and the model picker that used to replace the nav
+live in the instruments panel; the picker lists models by name ("GPT-6 Luna
+(default)", "DeepSeek V4 Flash", "Claude Haiku 5.5", "GPT-5 mini", "Gemini
+3.5 Flash-Lite"). "Colophon" left the header for the index.
+
+Index (behind ☰), three groups:
+- Work: Resume · Resume PDF · Nokia · A Darle 20 · Dell · Paste a job
+  description
+- Contact: the address with a copy button · LinkedIn ↗ · GitHub ↗
+- How this site works: How it's built · The instructions · What it won't do ·
+  Measurements · Instruments
+
+"Why this site is a chatbot" is no longer an index entry; its text is a
+section of the colophon.
+
 Composer fine print (empty state only, replaces the disclaimer there):
 Answers cite their sources — this chat publishes its system prompt and eval
 results, and shows what each answer costs. It can make mistakes; the resume is
@@ -512,7 +531,13 @@ everything in the meantime.
 own voice. v1 was scrapped: it framed the site as something to verify rather
 than something to use, and put false modesty in the author's mouth.]
 
-Panel heading: Why this site is a chatbot
+[Wave 2, 2026-10-19: folded into the colophon, page and panel, under the
+heading "Why there's a chat on a portfolio". It is no longer its own entry in
+the index — it argues for the chat-first premise the front-door policy
+reversed, so it sits with how the site works rather than beside the resume.
+The body below is unchanged.]
+
+Panel heading (until wave 2): Why this site is a chatbot
 
 Body:
 Most software is turning into a conversation. I don't build my own PostHog

@@ -12,7 +12,15 @@ import { locateMissing, stripCitations } from "@/lib/verify";
 import { buildSystemPrompt } from "@/lib/system-prompt";
 import { ENFORCEMENT_LABEL, REFUSALS } from "@/lib/refusals";
 import type { RequirementVerdict } from "@/lib/role-fit";
-import { FIT_LABELS, JD_COPY, PROJECT_LINKS, SOCIAL_LINKS, WHY_CHATBOT } from "./shell-data";
+import {
+  FIT_LABELS,
+  JD_COPY,
+  PROJECT_LINKS,
+  SOCIAL_LINKS,
+  WHY_CHATBOT,
+  WHY_CHATBOT_HEADING,
+} from "./shell-data";
+import { EmailCopy, ResumePdfButton } from "@/components/contact-actions";
 import type { PanelView, RoleFit } from "./use-conversation";
 import { MAX_POSTING_TEXT } from "@/lib/job-posting";
 import { COLOPHON_STACK } from "@/lib/site";
@@ -146,9 +154,14 @@ export function PanelBody({
   }
 
   if (panel.kind === "contact") {
+    // Wave 2: the address on screen and copyable, as on the front door — the
+    // panel was three bordered links, one of them a bare mailto that does
+    // nothing on a desktop with no mail client.
     return (
       <div className="space-y-2">
-        {SOCIAL_LINKS.map((s) => (
+        <EmailCopy surface="contact-panel" />
+        <ResumePdfButton surface="contact-panel" />
+        {SOCIAL_LINKS.filter((s) => s.label !== "Email").map((s) => (
           <a
             key={s.label}
             href={s.href}
@@ -195,6 +208,13 @@ export function PanelBody({
           <ActionLink href="/prompt">Its instructions</ActionLink>
           <ActionLink href="/refusals">What it won&apos;t do</ActionLink>
         </div>
+        {/* Folded in from its own panel in wave 2 — see WHY_CHATBOT. */}
+        <h3 className="t-label pt-3 text-text-faint">{WHY_CHATBOT_HEADING}</h3>
+        {WHY_CHATBOT.map((para, i) => (
+          <p key={i} className="t-meta text-text-soft">
+            {para}
+          </p>
+        ))}
       </div>
     );
   }
@@ -244,19 +264,6 @@ export function PanelBody({
           ))}
         </div>
         <ActionLink href="/refusals">Why each one exists</ActionLink>
-      </div>
-    );
-  }
-
-  if (panel.kind === "why") {
-    return (
-      <div className="space-y-4">
-        {WHY_CHATBOT.map((para, i) => (
-          <p key={i} className="t-meta text-text-soft">
-            {para}
-          </p>
-        ))}
-        <ActionLink href="/colophon">How it&apos;s built</ActionLink>
       </div>
     );
   }

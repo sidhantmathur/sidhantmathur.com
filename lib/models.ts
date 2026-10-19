@@ -173,6 +173,27 @@ export type ModelId = keyof typeof MODELS;
 /** Every id, in dropdown order. */
 export const MODEL_IDS = Object.keys(MODELS) as ModelId[];
 
+/**
+ * What a person calls each model — the picker's option text and the
+ * "ask … instead" button. The council review's line: a recruiter should never
+ * meet `deepseek/deepseek-v4-flash-0731` in a header. The ids stay where they
+ * are the point (the trace, the measurements). Keyed by ModelId, so a model
+ * added to the catalogue without a name is a type error rather than a blank
+ * option.
+ */
+export const MODEL_NAMES: Record<ModelId, string> = {
+  "openai/gpt-6-luna": "GPT-6 Luna",
+  "deepseek/deepseek-v4-flash-0731": "DeepSeek V4 Flash",
+  "anthropic/claude-haiku-5.5": "Claude Haiku 5.5",
+  "openai/gpt-5-mini": "GPT-5 mini",
+  "google/gemini-3.5-flash-lite": "Gemini 3.5 Flash-Lite",
+};
+
+/** A model's name, or its id when it isn't one this catalogue knows. */
+export function modelName(id: string): string {
+  return (MODEL_NAMES as Record<string, string>)[id] ?? id;
+}
+
 /** What an unknown or absent id resolves to. Must be `MODEL_IDS[0]`. */
 export const DEFAULT_MODEL: ModelId = "openai/gpt-6-luna";
 

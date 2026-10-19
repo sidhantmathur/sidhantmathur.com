@@ -16,6 +16,7 @@ import {
   type TurnErrorClass,
 } from "@/lib/chat-telemetry";
 import { ALL_CHUNKS_BY_ID } from "@/lib/corpus";
+import { DEFAULT_MODEL, MODEL_IDS, modelName } from "@/lib/models";
 import { verifyAnswer, type Claim } from "@/lib/verify";
 import type { Budget, TurnRecord } from "./use-conversation";
 import type { TokenRate } from "./use-token-rate";
@@ -29,9 +30,11 @@ import type { TokenRate } from "./use-token-rate";
 // conversation and never in front of it, and a visitor who ignores every
 // readout still has a working chatbot. So:
 //
-//   * The always-visible half is four numbers in the status strip that was
-//     already there — turns, latency, rate, dollars. Nothing new appears in the
-//     message column, and nothing pushes the answer down the page.
+//   * The always-visible half is one line in the status strip — turns used
+//     and what the last answer cost (wave 2; it was four readouts, a rate
+//     needle and the model picker, which pushed the nav out of the header).
+//     Nothing new appears in the message column, and nothing pushes the
+//     answer down the page.
 //   * The dense half opens in the existing context panel, on a deliberate
 //     click, next to the conversation rather than over it. It is the same
 //     surface the resume and the role-fit breakdown already use.
@@ -125,6 +128,8 @@ export function InstrumentDeck({
   turnLog,
   budget,
   model,
+  onModelChange,
+  hydrated,
   rate,
   teletype,
   onToggleTeletype,
@@ -134,6 +139,9 @@ export function InstrumentDeck({
   turnLog: TurnRecord[];
   budget: Budget | null;
   model: string;
+  /** Selects who answers the next question. The picker lives here since wave 2. */
+  onModelChange: (model: string) => void;
+  hydrated: boolean;
   rate: TokenRate;
   teletype: boolean;
   onToggleTeletype: () => void;
@@ -144,6 +152,38 @@ export function InstrumentDeck({
   const settled = lastSettledRate(turnLog);
   return (
     <div className="space-y-6">
+      {/* The model picker, moved out of the header in wave 2. It sat in the
+          status strip as a select of raw Gateway ids, which is the first
+          thing a recruiter met after asking a question and the thing that
+          pushed the nav out. Here it is beside the meter it changes, under
+          the names people call these models. */}
+      <Section title="Model" hint="for the next question">
+        <label className="flex flex-col gap-1.5">
+          <span className="sr-only">Model</span>
+          <select
+            value={model}
+            onChange={(e) => onModelChange(e.target.value)}
+            // A native select is the one control that "works" before
+            // hydration in the worst way: it opens, it takes a choice, and
+            // the choice reaches nothing.
+            disabled={!hydrated}
+            className="min-h-[44px] w-full cursor-pointer border border-line-strong bg-raised px-2 text-[13px] text-text-soft outline-none focus:border-accent disabled:cursor-progress disabled:border-line disabled:text-text-dim"
+          >
+            {/* Catalogue order: the default first, then cheapest first. */}
+            {MODEL_IDS.map((m) => (
+              <option key={m} value={m}>
+                {m === DEFAULT_MODEL ? `${modelName(m)} (default)` : modelName(m)}
+              </option>
+            ))}
+          </select>
+        </label>
+        <p className="t-meta mt-2 text-text-faint">
+          Every model spends from the same hourly budget, so switching changes what the
+          meter below charges and nothing else. The id it runs under is{" "}
+          <span className="text-text-soft">{model}</span>.
+        </p>
+      </Section>
+
       <Section title="Cost" hint={`est. at list price · checked ${PRICES_CHECKED}`}>
         <CostMeter turnLog={turnLog} budget={budget} model={model} />
       </Section>
