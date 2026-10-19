@@ -401,6 +401,11 @@ was taken and the row says so.
 | draft | `components/shell/instruments.tsx` → "Model" section | Hint "for the next question". "Every model spends from the same hourly budget, so switching changes what the meter below charges and nothing else. The id it runs under is {id}." | none | Describes `HOURLY_LIMIT` (one budget for every model) and the pricing table. |
 | draft | `components/shell/shell-data.ts` → `WHY_CHATBOT_HEADING`, on `/colophon` and in the colophon panel | "Why there's a chat on a portfolio" — heading over the four "Why this site is a chatbot" paragraphs, which are unchanged and still draft. | none | The panel it replaces was titled "Why this site is a chatbot". |
 | draft | `components/shell/panel-body.tsx` → contact panel | The copyable address and "Download resume (PDF)" above "GitHub ↗" and "LinkedIn ↗". Was three links, one a bare mailto. | none | UI chrome. |
+| draft | `components/layout/doc-page.tsx` → header on every document page | "Sidhant Mathur" (home) · "Resume" · "Projects" · "Contact" (to `#contact`). Was "← Back to the conversation". | none | UI chrome. |
+| draft | `components/layout/doc-page.tsx` → `DocContact`, the end of every document page | Label "Contact"; "Open to new roles — the resume, an email or LinkedIn, whichever is quickest."; then the three contact controls. | **factual** — that he is open to new roles | `faq.md`: "Is he open to new roles? Yes — open to new roles." |
+| draft | `components/case-study-layout.tsx` → the end of each case study | Label "Contact"; "If this is the kind of work you're hiring for, the resume has the rest."; the three contact controls; then "Next case study" · "{title} →" · "{status}" (Nokia → A Darle 20 → Dell → Nokia). | none | UI chrome; titles and status lines from `content/projects.ts`. In the shared layout, not the `.mdx` files. |
+| draft | `app/resume/page.tsx` → heading | Label "Resume" over the heading "Sidhant Mathur". Was the heading "Resume". | none | His name, as `resume.md` opens. |
+| draft | `content/projects.ts` → order and index numbers | Nokia "01", A Darle 20 "02" (were 02 and 01), on `/projects`, the projects panel and the index. | none | Order only; no card copy changed. |
 
 ## Pending `[VERIFY]` markers
 

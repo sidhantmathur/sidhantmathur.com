@@ -165,6 +165,10 @@ Link on each: Read the case study →
 
 Section heading: Selected work
 
+[Wave 2, 2026-10-19: on `/projects`, in the projects panel and in the index,
+Nokia is now listed first (01) and A Darle 20 second (02). The card copy below
+is unchanged.]
+
 **Card 1 — A Darle 20**
 A marketplace connecting tabletop game hosts with paying players across Latin
 America. I designed and shipped the whole product solo — bookings, payments,
@@ -459,9 +463,35 @@ Outside work: basketball, chess, cooking, and slowly learning three languages.
 
 ---
 
+## Document pages — shared chrome (wave 2, 2026-10-19)
+
+[DRAFT 2026-10-19. Replaces the lone "← Back to the conversation", which told
+a reader the chat was home and offered someone arriving from LinkedIn a
+conversation they never had.]
+
+Header: Sidhant Mathur (links home) · Resume · Projects · Contact (jumps to
+the contact block at the end of the page)
+
+Contact block, at the end of every document page:
+Label: Contact
+Body: Open to new roles — the resume, an email or LinkedIn, whichever is
+quickest.
+Then: Download resume (PDF) · hello@sidhantmathur.com [copy] · LinkedIn ↗
+
+Case studies end instead on:
+Label: Contact
+Body: If this is the kind of work you're hiring for, the resume has the rest.
+Then the same three controls, and a bordered link: "Next case study" ·
+{next title} → · {its status line}. Order: Nokia → A Darle 20 → Dell → Nokia.
+
+---
+
 ## Resume page
 
-Heading: Resume
+Label: Resume
+Heading: Sidhant Mathur
+[Wave 2: the heading was "Resume", so the page carried no name above the
+contact line.]
 Body: The current version, last updated July 2026. A plain-text
 version lives at /resume.md if you'd rather feed it to an AI — I won't take
 it personally.

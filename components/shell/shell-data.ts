@@ -153,9 +153,10 @@ export const FIT_LABELS = {
     "Each row is a judgment against the record, not a score, and the four tags don't add up to one. A row claiming a fit has to name the part of the record it stands on; where it didn't, the site downgraded it rather than the model.",
 };
 
+// Nokia first, as everywhere since wave 2.
 export const PROJECT_LINKS = [
-  { label: "A Darle 20", href: "/projects/adarle20" },
   { label: "Nokia", href: "/projects/nokia" },
+  { label: "A Darle 20", href: "/projects/adarle20" },
   { label: "Dell", href: "/projects/dell-ml" },
 ];
 

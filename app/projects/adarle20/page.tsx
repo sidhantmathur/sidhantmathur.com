@@ -16,6 +16,7 @@ export const metadata: Metadata = {
 export default function AdarleTwentyPage() {
   return (
     <CaseStudyLayout
+      slug="adarle20"
       title="A Darle 20"
       subtitle="A marketplace for tabletop game sessions in Latin America."
     >

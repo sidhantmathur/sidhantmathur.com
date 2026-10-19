@@ -12,6 +12,7 @@ export const metadata: Metadata = {
 export default function DellMlPage() {
   return (
     <CaseStudyLayout
+      slug="dell-ml"
       title="Sales prediction at Dell"
       subtitle="A propensity model for cross-sell targeting, built as an intern."
     >
