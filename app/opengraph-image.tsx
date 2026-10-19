@@ -63,8 +63,8 @@ export default async function Image() {
         />
         <div style={{ display: "flex", alignItems: "center" }}>
           {/* Satori has no CSS filter, so the front door's saturation step is
-              approximated with opacity over the dark ground. */}
-          {/* eslint-disable-next-line @next/next/no-img-element -- Satori renders <img>, not next/image */}
+              approximated with opacity over the dark ground. A plain <img>:
+              Satori renders it, and next/image means nothing here. */}
           <img
             src={headshotSrc}
             width={176}
