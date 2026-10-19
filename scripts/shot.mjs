@@ -13,14 +13,15 @@
 //   node scripts/shot.mjs / --full             # grow the viewport to the content
 //   BASE=https://<preview>.vercel.app node scripts/shot.mjs /
 //
-// Output lands in .screenshots/ (git-ignored). Requires a one-time
+// Output lands in .screenshots/ (git-ignored; OUT=<dir> to put it elsewhere,
+// so two sessions sharing a checkout don't wipe each other's). Requires a one-time
 // `npx playwright install chromium` per environment.
 
 import { mkdirSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { chromium } from "playwright";
 
-const OUT = ".screenshots";
+const OUT = process.env.OUT ?? ".screenshots";
 const BASE = (process.env.BASE ?? "http://localhost:3000").replace(/\/$/, "");
 
 const args = process.argv.slice(2);
