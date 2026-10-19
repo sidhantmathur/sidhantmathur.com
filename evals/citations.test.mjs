@@ -442,6 +442,24 @@ describe("a sentence that spans two chunks and cites one", () => {
     assert.deepEqual(result.claims[0].absent, ["900"]);
   });
 
+  test("a number inside a longer number is not a match", () => {
+    // Found by looking at the wave-2 screenshots: "900 dashboards" earned the
+    // neutral mark because the record contains "19,000-attendee". Digits are
+    // matched as whole numbers now, both for the cited chunk and for the
+    // search across the rest of the record.
+    const lookup = {
+      ...FIXTURE,
+      "adarle20:convention": { id: "adarle20:convention", text: "A 19,000-attendee convention in 2024." },
+    };
+    const result = verifyAnswer("The migration moved 900 dashboards. [resume:nokia]", lookup);
+    assert.equal(result.claims[0].verdict, "unverified");
+    assert.deepEqual(result.claims[0].absent, ["900"]);
+    const inside = verifyAnswer("It has 20 hosts. [adarle20:convention]", lookup);
+    assert.deepEqual(inside.claims[0].absent, ["20"], '"20" matched inside "2024"');
+    const whole = verifyAnswer("It drew 19,000 people in 2024. [adarle20:convention]", lookup);
+    assert.equal(whole.claims[0].verdict, "verified", `flagged: ${whole.claims[0].missing}`);
+  });
+
   test("the council's sentence, against the real corpus", () => {
     // Its shape exactly: A Darle 20's figures and launch month, cited to the
     // Nokia resume block.

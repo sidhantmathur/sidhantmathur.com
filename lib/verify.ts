@@ -386,6 +386,16 @@ const MONTHS = [
  */
 function present(token: string, haystack: string): boolean {
   const needle = normalize(token);
+  // A number is found as a number, not as a run of digits inside a longer
+  // one. Substring matching let "900" pass against "19,000-attendee" and "20"
+  // against "2024", which was a leniency nobody chose — and since wave 2 it
+  // decides whether a fabricated figure gets the strong mark at all, so it
+  // has to be exact. Thousands separators are already closed up by
+  // `normalize` on both sides.
+  if (/^\d/.test(needle)) {
+    const escaped = needle.replace(/\./g, "\\.");
+    return new RegExp(`(?<![\\d.])${escaped}(?!\\.?\\d)`).test(haystack);
+  }
   if (haystack.includes(needle)) return true;
   if (MONTHS.includes(needle) && haystack.includes(needle.slice(0, 3))) return true;
   for (const suffix of SUFFIXES) {
