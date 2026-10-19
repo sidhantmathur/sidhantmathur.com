@@ -44,6 +44,31 @@ export function runHistory(runs: PublishedRun[]): { model: string; runs: Publish
     .sort((a, b) => a.model.localeCompare(b.model));
 }
 
+/**
+ * Where the measured models and the chat's current catalogue part ways.
+ *
+ * The archive is keyed by the id that was measured, and stays that way: a run
+ * of claude-haiku-4.5 is a measurement of claude-haiku-4.5, and nothing here
+ * hands it to the model that replaced it. What the page owes a reader instead
+ * is the difference, said out loud — which measured models the chat no longer
+ * offers, and which models it offers that nothing here has measured.
+ *
+ * `offered` is passed in rather than imported so that `node --test` can load
+ * this module without the catalogue.
+ */
+export function catalogueDrift(
+  measured: readonly string[],
+  offered: readonly string[],
+): { noLongerOffered: string[]; notMeasured: string[] } {
+  const isMeasured = new Set(measured);
+  const isOffered = new Set(offered);
+  return {
+    noLongerOffered: [...isMeasured].filter((id) => !isOffered.has(id)).sort(),
+    // Catalogue order, which is the order the dropdown shows them in.
+    notMeasured: offered.filter((id) => !isMeasured.has(id)),
+  };
+}
+
 /** One model's row in the comparison. Every number here is nullable on purpose. */
 export type ModelRow = {
   model: string;

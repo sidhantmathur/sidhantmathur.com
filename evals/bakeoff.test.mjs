@@ -27,6 +27,7 @@ import { MODEL_PRICES, PRICE_CONFIDENCE } from "../lib/pricing.ts";
 import {
   allGroups,
   bakeoffSummary,
+  catalogueDrift,
   formatTurnCost,
   frontier,
   latestRunPerModel,
@@ -283,6 +284,23 @@ describe("what the comparison page derives", () => {
       history[0].runs.map((r) => r.ranAt),
       ["2026-07-20T00:00:00.000Z", "2026-07-01T00:00:00.000Z"],
     );
+  });
+
+  it("names a replaced model as no longer offered instead of handing its runs to the successor", () => {
+    // The 2026-10-19 refresh, in miniature: haiku 4.5 was measured and then
+    // replaced by 5.5, which never was. The old figures stay 4.5's; the page
+    // names both sides of the gap rather than letting one id stand for the other.
+    const drift = catalogueDrift(
+      ["anthropic/claude-haiku-4.5", "openai/gpt-5-mini"],
+      ["openai/gpt-5-mini", "anthropic/claude-haiku-5.5"],
+    );
+    assert.deepEqual(drift.noLongerOffered, ["anthropic/claude-haiku-4.5"]);
+    assert.deepEqual(drift.notMeasured, ["anthropic/claude-haiku-5.5"]);
+  });
+
+  it("finds no gap when the catalogue is what was measured", () => {
+    const drift = catalogueDrift(["a/x", "b/y"], ["b/y", "a/x"]);
+    assert.deepEqual(drift, { noLongerOffered: [], notMeasured: [] });
   });
 
   it("puts a model on the frontier only when nothing beats it on both axes", () => {

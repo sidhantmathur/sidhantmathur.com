@@ -11,6 +11,7 @@ import { MIN_TURNS_FOR_P50, formatDate, formatPercent } from "@/lib/measurements
 import {
   allGroups,
   bakeoffSummary,
+  catalogueDrift,
   formatCost,
   formatCount,
   formatSeconds,
@@ -22,6 +23,7 @@ import {
   runHistory,
   toRow,
 } from "@/lib/model-comparison";
+import { MODEL_IDS } from "@/lib/models";
 import { PRICES_CHECKED, PRICE_CONFIDENCE } from "@/lib/pricing";
 
 // /measurements/models — the model bake-off (roadmap Sprint 8).
@@ -40,17 +42,25 @@ import { PRICES_CHECKED, PRICE_CONFIDENCE } from "@/lib/pricing";
 // THIS IS A RUN-ONCE ARTIFACT, NOT A DASHBOARD. It was measured deliberately on
 // a date, it is committed, and it goes stale. The page says the date rather than
 // implying freshness it does not have.
+//
+// The chat's catalogue moves on without it. A measured model the chat has since
+// dropped keeps its row under its own id — the figures are about that model and
+// no other — and the page says, from the catalogue rather than from prose, which
+// measured models are no longer offered and which offered ones were never
+// measured.
 
 export const metadata: Metadata = {
   alternates: { canonical: "/measurements/models" },
   title: "Five models, one corpus",
   description:
-    "Every model this site can run, measured against the same eval corpus: pass rate, time to first token, output speed, tokens and cost per task.",
+    "Five models this site has run, measured against the same eval corpus: pass rate, time to first token, output speed, tokens and cost per task.",
 };
 
 const COPY = {
   intro:
-    "This site can run five models behind one chat endpoint. This page is what happened when all five answered the same 22 questions, in the same order, against the same server, on the same afternoon — graded by the same checker, and costed at list price.",
+    "This site runs a handful of models behind one chat endpoint. This page is what happened when the five it ran at the time answered the same 22 questions, in the same order, against the same server, on the same afternoon — graded by the same checker, and costed at list price.",
+  driftLead:
+    "The chat has changed models since this was measured. Every figure below belongs to the model it names, and none of it carries over to a successor.",
   why: "The point is not to crown a winner. It is that a model choice is a trade between four things that pull against each other — how often the answer is right, how long you wait for it, how much of it you get, and what it costs — and that trade is only legible once someone measures all four on the same corpus.",
   empty:
     "No live run has been published, so there is nothing to compare. The bake-off exists and runs locally; publishing it is a deliberate step, and this page stays empty until someone takes it.",
@@ -98,7 +108,7 @@ const LIMITS = [
   },
   {
     title: "Costs are list prices, not an invoice",
-    body: "Every dollar figure is computed from published per-token rates on the date below and the tokens the run actually used. It is an estimate at list price. Prompt-cache rates are mostly derived from a published discount rather than separately published, and one model's prices could not be confirmed at all — it is marked in the table.",
+    body: "Every dollar figure is the tokens the run actually used, priced at the list rates on record when the run was published. It is an estimate at list price, and it is not recomputed when a price changes. Two of those rates have since been corrected: gpt-5.6-luna was costed at an unconfirmed $1.00 in and $6.00 out per million tokens, five times what the Gateway later published, and gemini-3.5-flash-lite's cache reads at a derived rate two and a half times the published one.",
   },
   {
     title: "A broken turn is counted, but it is not counted as a wrong answer",
@@ -133,6 +143,10 @@ export default function ModelComparisonPage() {
   }
 
   const summary = bakeoffSummary(rows);
+  const drift = catalogueDrift(
+    rows.map((r) => r.model),
+    MODEL_IDS,
+  );
   const cost = frontier(rows, (r) => r.costPerTaskUsd, (r) => r.passRate);
   const latency = frontier(rows, (r) => median(r.ttftMs), (r) => r.passRate);
 
@@ -150,6 +164,23 @@ export default function ModelComparisonPage() {
         {formatDate(BUILT_AT)}. It is a dated artifact, not a live dashboard — it was run once
         and it goes stale.
       </p>
+      {(drift.noLongerOffered.length > 0 || drift.notMeasured.length > 0) && (
+        <div className="t-body mt-4 max-w-[62ch] border-l-2 border-line-strong pl-3 text-text-soft">
+          <p>{COPY.driftLead}</p>
+          {drift.noLongerOffered.length > 0 && (
+            <p className="mt-2">
+              Measured here, no longer offered:{" "}
+              <ModelList ids={drift.noLongerOffered} />.
+            </p>
+          )}
+          {drift.notMeasured.length > 0 && (
+            <p className="mt-2">
+              Offered now, not measured yet:{" "}
+              <ModelList ids={drift.notMeasured} />.
+            </p>
+          )}
+        </div>
+      )}
 
       {/* --- the sample everything below rests on ----------------------- */}
       <div className="mt-8 border-t border-line pt-6">
@@ -280,7 +311,7 @@ export default function ModelComparisonPage() {
                   "$ / turn",
                   "$ run",
                   "claims verified",
-                  "price",
+                  "price now",
                 ].map((h) => (
                   <th key={h} scope="col" className="py-1.5 pr-3 font-normal">
                     {h}
@@ -332,7 +363,10 @@ export default function ModelComparisonPage() {
           </table>
         </ScrollFade>
         <Note>
-          Prices checked {PRICES_CHECKED}. A median is withheld and shown as an em dash under{" "}
+          Costs are at the list prices on record when each run was published, and are not
+          recomputed when a price changes; &ldquo;price now&rdquo; describes the chat&apos;s
+          current prices, checked {PRICES_CHECKED}. A median is withheld and shown as an em dash
+          under{" "}
           {MIN_TURNS_FOR_P50}{" "}
           measured turns, and a 95th percentile is not computed at all — one
           sample per case cannot support one. &ldquo;claims verified&rdquo; is the site&apos;s own
@@ -399,13 +433,33 @@ function Header() {
   );
 }
 
-/** Names the confidence in a model's published prices, from lib/pricing.ts. */
+/**
+ * Names the confidence in a model's CURRENT prices, from lib/pricing.ts.
+ *
+ * Every model the chat offers has a price, so a measured model with no entry is
+ * one the chat has dropped. It used to read "no price on record" — beside a
+ * dollar figure that was, in fact, priced, at the rates of the day it ran.
+ */
 function PriceFlag({ model }: { model: string }) {
   const confidence = PRICE_CONFIDENCE[model];
   if (confidence === "confirmed") return <span className="text-text-faint">confirmed</span>;
   if (confidence === "derived") return <span className="text-text-faint">cache rate derived</span>;
   if (confidence === "unconfirmed") return <span className="text-accent">unconfirmed</span>;
-  return <span className="text-text-faint">no price on record</span>;
+  return <span className="text-text-faint">no longer offered</span>;
+}
+
+/**
+ * Ids as a sentence's list, each on one line. A browser breaks at a hyphen, and
+ * "claude-haiku-" at the end of one line with "4.5" at the start of the next
+ * reads as two things.
+ */
+function ModelList({ ids }: { ids: string[] }) {
+  return ids.map((id, i) => (
+    <span key={id}>
+      {i > 0 && ", "}
+      <span className="whitespace-nowrap text-text">{id}</span>
+    </span>
+  ));
 }
 
 function Section({
