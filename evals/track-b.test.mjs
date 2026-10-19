@@ -372,7 +372,9 @@ describe("#19 — the feature surface", () => {
 // --- The ledger ------------------------------------------------------------
 
 describe("the copy ledger", () => {
-  test("every [VERIFY] marker in shipped copy is listed in the ledger", () => {
+  // Named "VERIFY", not "[VERIFY]": test names are published on /measurements,
+  // and a bracketed marker there is exactly what the postbuild check forbids.
+  test("every VERIFY marker in shipped copy is listed in the ledger", () => {
     // docs/copy-ledger.md's pending table exists so a [VERIFY] left in a file
     // can't quietly ship. This is the half that makes that true.
     const ledger = read("docs/copy-ledger.md");

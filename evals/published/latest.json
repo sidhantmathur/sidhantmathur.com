@@ -1,17 +1,110 @@
 {
-  "publishedAt": "2026-07-31T20:55:14.493Z",
+  "publishedAt": "2026-10-19T21:58:45.937Z",
   "static": {
-    "ranAt": "2026-07-31T20:49:34.582Z",
+    "ranAt": "2026-10-19T21:58:45.809Z",
     "totals": {
-      "tests": 297,
-      "passed": 297,
+      "tests": 403,
+      "passed": 403,
       "failed": 0
     },
     "files": [
       {
+        "file": "evals/answer-blocks.test.mjs",
+        "total": 44,
+        "passed": 44,
+        "suites": [
+          {
+            "name": "splitBlocks — paragraphs",
+            "total": 5,
+            "passed": 5,
+            "tests": [
+              "splits on a blank line",
+              "a soft-wrapped paragraph is one block",
+              "two or more blank lines behave exactly like one",
+              "an index is a position, contiguous from zero",
+              "prose is untouched by the mask"
+            ]
+          },
+          {
+            "name": "splitBlocks — fences",
+            "total": 9,
+            "passed": 9,
+            "tests": [
+              "a fence with no blank line inside it is one block",
+              "the mask blanks the fence and its contents, and nothing else",
+              "a fence containing a blank line spans two indices, identically on both sides",
+              "it is still ONE fence: opened once, closed once, all code between",
+              "the blank line inside the fence is code, not a boundary the mask invented",
+              "indentation inside a fence never reaches the checker",
+              "a whitespace-only code line stays non-blank so it cannot move a boundary",
+              "tildes fence too, and a fence line may be indented up to three spaces",
+              "a marker-shaped token inside a fence is code, not a citation"
+            ]
+          },
+          {
+            "name": "splitBlocks — streaming",
+            "total": 4,
+            "passed": 4,
+            "tests": [
+              "an unterminated fence does not crash and swallows nothing",
+              "a bare opening fence on its own is a fence, not a paragraph",
+              "half an opening fence is prose until the third backtick lands",
+              "every prefix of an answer splits without throwing"
+            ]
+          },
+          {
+            "name": "splitBlocks — tables and lists",
+            "total": 3,
+            "passed": 3,
+            "tests": [
+              "a pipe table is one block, every line intact",
+              "a table's delimiter row is not mistaken for a fence",
+              "a list is one block"
+            ]
+          },
+          {
+            "name": "splitBlocks — edges",
+            "total": 5,
+            "passed": 5,
+            "tests": [
+              "an empty answer is one empty block",
+              "leading blank lines produce a leading empty block, on both sides",
+              "a trailing blank line produces a trailing empty block, on both sides",
+              "surrounding spaces are content, not a boundary",
+              "an answer of only blank lines is empty blocks, not zero blocks"
+            ]
+          },
+          {
+            "name": "the block index means the same thing on both sides",
+            "total": 18,
+            "passed": 18,
+            "tests": [
+              "plain prose",
+              "one paragraph",
+              "a list after a paragraph",
+              "a pipe table",
+              "a fence with no blank line",
+              "a fence containing a blank line",
+              "a fence containing two blank lines",
+              "an indented fence",
+              "a tilde fence",
+              "an unterminated fence",
+              "an unterminated fence with a blank line",
+              "two fences",
+              "a heading and a table",
+              "wide gaps",
+              "leading and trailing blanks",
+              "an empty answer",
+              "prose that mentions backticks",
+              "masking never moves a boundary, for any of the above"
+            ]
+          }
+        ]
+      },
+      {
         "file": "evals/bakeoff.test.mjs",
-        "total": 21,
-        "passed": 21,
+        "total": 31,
+        "passed": 31,
         "suites": [
           {
             "name": "publishing archives runs instead of replacing them",
@@ -39,8 +132,8 @@
           },
           {
             "name": "what the comparison page derives",
-            "total": 10,
-            "passed": 10,
+            "total": 12,
+            "passed": 12,
             "tests": [
               "shows the most recent run per model and never counts one twice",
               "scores a model on what it answered, not on what broke in transport",
@@ -51,7 +144,31 @@
               "emphasises nothing on a metric with no better direction",
               "emphasises nothing when models tie for best",
               "withholds a median the sample cannot support",
-              "collects every group across models for the scorecard"
+              "collects every group across models for the scorecard",
+              "reads a median only through the gate",
+              "holds a token median to the same floor as a timing median"
+            ]
+          },
+          {
+            "name": "what the whole bake-off adds up to",
+            "total": 6,
+            "passed": 6,
+            "tests": [
+              "counts turns and breaks across every compared run",
+              "says the corpus is the same one only when it is",
+              "totals the cost of the comparison",
+              "has no total at all when one model's cost is unknown",
+              "dates the artifact, and says so as a span when it was not one sitting",
+              "keeps an undated run out of the span rather than dating it"
+            ]
+          },
+          {
+            "name": "cost precision follows the cost",
+            "total": 2,
+            "passed": 2,
+            "tests": [
+              "spends a fifth decimal only where four would read as free",
+              "prints an em dash rather than a cost for an unpriced turn"
             ]
           },
           {
@@ -60,6 +177,96 @@
             "passed": 1,
             "tests": [
               "names a confidence for every priced model"
+            ]
+          }
+        ]
+      },
+      {
+        "file": "evals/chat-transport.test.mjs",
+        "total": 27,
+        "passed": 27,
+        "suites": [
+          {
+            "name": "the idle clock on a stream",
+            "total": 3,
+            "passed": 3,
+            "tests": [
+              "a stream that goes quiet fails with upstream_timeout instead of hanging",
+              "chunks inside the window keep the stream alive and arrive in order",
+              "the clock is per-chunk, not per-stream"
+            ]
+          },
+          {
+            "name": "the connect clock",
+            "total": 2,
+            "passed": 2,
+            "tests": [
+              "headers that never arrive produce upstream_timeout",
+              "a dead network is `network`, not `unknown`"
+            ]
+          },
+          {
+            "name": "an aborted turn renders nothing",
+            "total": 3,
+            "passed": 3,
+            "tests": [
+              "a signal that is already aborted surfaces an AbortError",
+              "aborting mid-stream surfaces an AbortError, not a network failure",
+              "a TypeError with no abort behind it is still a network failure"
+            ]
+          },
+          {
+            "name": "an error response becomes a class",
+            "total": 4,
+            "passed": 4,
+            "tests": [
+              "429 is rate_limited",
+              "any other error status is upstream_unavailable",
+              "a JSON body naming a class wins over the status",
+              "a class the vocabulary doesn't know falls back to unknown"
+            ]
+          },
+          {
+            "name": "the budget lifted out of the response headers",
+            "total": 3,
+            "passed": 3,
+            "tests": [
+              "a complete tier triple fires onBudget with parsed numbers",
+              "missing headers fire nothing",
+              "a non-numeric count fires nothing rather than a NaN budget"
+            ]
+          },
+          {
+            "name": "rewrapping the stream keeps the response intact",
+            "total": 2,
+            "passed": 2,
+            "tests": [
+              "status, statusText and headers all survive",
+              "a response with no body is passed straight through"
+            ]
+          },
+          {
+            "name": "a turn that finished having said nothing",
+            "total": 9,
+            "passed": 9,
+            "tests": [
+              "reasoning, then finish, ends in an empty_answer error chunk",
+              "it holds when the reads cut frames in half",
+              "whitespace is not an answer",
+              "a job-description turn that extracted and then stopped is empty",
+              "a turn with text is left alone",
+              "a card with no prose is still something on the page",
+              "a turn that already failed is not failed twice",
+              "a stream that never finished is not called empty",
+              "an aborted turn gets no failure appended"
+            ]
+          },
+          {
+            "name": "the empty turn through the SDK's chat loop",
+            "total": 1,
+            "passed": 1,
+            "tests": [
+              "the turn fails with empty_answer instead of settling on ready"
             ]
           }
         ]
@@ -191,8 +398,8 @@
       },
       {
         "file": "evals/export.test.mjs",
-        "total": 32,
-        "passed": 32,
+        "total": 36,
+        "passed": 36,
         "suites": [
           {
             "name": "snapshot",
@@ -257,11 +464,15 @@
           },
           {
             "name": "shell wiring",
-            "total": 6,
-            "passed": 6,
+            "total": 10,
+            "passed": 10,
             "tests": [
-              "every slash command opens a panel view that exists",
+              "every slash command names a panel in the registry",
               "the three commands Sprint 5 owes are registered",
+              "every panel that has a path has a unique, absolute one",
+              "every panel opened by a tool names a tool the route defines",
+              "only the two panels that build a payload open from a tool",
+              "every panel that renders has a title",
               "the panel URL keeps the fragment",
               "a replayed conversation is never written to local storage",
               "print swaps the shell for the document rather than styling the app",
@@ -272,8 +483,8 @@
       },
       {
         "file": "evals/instruments.test.mjs",
-        "total": 13,
-        "passed": 13,
+        "total": 17,
+        "passed": 17,
         "suites": [
           {
             "name": "cost arithmetic",
@@ -291,22 +502,26 @@
           },
           {
             "name": "the price table covers what the site can actually run",
-            "total": 3,
-            "passed": 3,
+            "total": 4,
+            "passed": 4,
             "tests": [
               "every allowlisted model has a list price",
+              "every model says how far its prices are to be trusted",
               "no price is zero or negative",
               "a cache read never costs more than fresh input"
             ]
           },
           {
-            "name": "failure theatre covers the whole error vocabulary",
-            "total": 3,
-            "passed": 3,
+            "name": "the failure table describes every class it declares",
+            "total": 6,
+            "passed": 6,
             "tests": [
-              "every error class can be simulated by the route",
-              "every error class has a button in the panel",
-              "the panel offers nothing the route won't produce"
+              "every class resolves to a sentence and a label",
+              "the two classes with no sentence of their own are the two that render none",
+              "every class the route can simulate says how it reaches the client",
+              "a client-only class is never offered as something the route can produce",
+              "an early exit's simulated status is a real error status",
+              "an unrecognised value narrows to unknown, and every real one to itself"
             ]
           }
         ]
@@ -487,13 +702,45 @@
             "passed": 8,
             "tests": [
               "the rail and the slash registry both point at the new documents",
-              "every slash command still opens a panel view that exists",
+              "every slash command opens a panel that something renders",
               "the panel renders both new views",
               "the corpus index shows both corpora",
               "the citation checker reads both corpora",
               "the role-fit reconciler still reads only the knowledge base",
               "both pages are in the sitemap",
               "the corpus is rebuilt by every entry point that needs it"
+            ]
+          }
+        ]
+      },
+      {
+        "file": "evals/resume.test.mjs",
+        "total": 11,
+        "passed": 11,
+        "suites": [
+          {
+            "name": "the resume page cannot contradict the resume source",
+            "total": 5,
+            "passed": 5,
+            "tests": [
+              "every checkable fact in the body is supported by resume.md",
+              "the body actually contains facts to check",
+              "every employer is named as resume.md names it",
+              "every dateline field is written as resume.md writes it",
+              "every date range is written as resume.md writes it"
+            ]
+          },
+          {
+            "name": "drift the page could plausibly acquire",
+            "total": 6,
+            "passed": 6,
+            "tests": [
+              "a wrong employer is caught",
+              "a wrong year is caught",
+              "a wrong figure is caught",
+              "a reshuffled date range is caught, though every token in it is real",
+              "a job title the record does not give him is caught",
+              "ordinary page prose is not mistaken for a claim"
             ]
           }
         ]
@@ -597,47 +844,57 @@
       },
       {
         "file": "evals/static.test.mjs",
-        "total": 27,
-        "passed": 27,
+        "total": 31,
+        "passed": 31,
         "suites": [
           {
             "name": "knowledge base",
-            "total": 4,
-            "passed": 4,
+            "total": 5,
+            "passed": 5,
             "tests": [
               "builds and is non-empty",
               "contains all six source files",
               "stays within the ~8k token budget",
-              "has no unresolved TODO markers"
+              "has no unresolved TODO or VERIFY markers",
+              "a chunk with a marker is held back from the chunk index too"
+            ]
+          },
+          {
+            "name": "rendered pages",
+            "total": 1,
+            "passed": 1,
+            "tests": [
+              "no served file carries an unfinished-work marker"
             ]
           },
           {
             "name": "system prompt",
-            "total": 5,
-            "passed": 5,
+            "total": 6,
+            "passed": 6,
             "tests": [
               "keeps every guard section",
               "keeps the specific injection defenses",
+              "the rate-limit paragraph derives its numbers instead of retyping them",
               "documents every tool the route defines",
               "is free of per-request dynamic content",
               "assembled prompt stays within budget"
             ]
           },
           {
-            "name": "model allowlist",
+            "name": "model catalogue",
             "total": 4,
             "passed": 4,
             "tests": [
-              "every client model exists on the server allowlist",
-              "every tier in use has a rate-limit bucket",
-              "the default model is on the allowlist",
-              "the client's default selection is on the allowlist"
+              "every model has a tier with a rate-limit bucket",
+              "the default model is in the catalogue",
+              "the default model is the one the dropdown selects on load",
+              "exactly one model is premium"
             ]
           },
           {
             "name": "live-eval assertions are still grounded",
-            "total": 14,
-            "passed": 14,
+            "total": 15,
+            "passed": 15,
             "tests": [
               "nokia-powerbi: expectation set 1 appears in the corpus",
               "nokia-powerbi: expectation set 2 appears in the corpus",
@@ -652,6 +909,7 @@
               "the posting reaches the model fenced and re-asserted",
               "ordinary questions are not detected as job postings",
               "the JD panel prefix is the one the server matches on",
+              "the paste panel's cap is the route's cap, less the prefix",
               "the unqualified postings really are unqualified"
             ]
           }
@@ -659,18 +917,19 @@
       },
       {
         "file": "evals/track-b.test.mjs",
-        "total": 26,
-        "passed": 26,
+        "total": 28,
+        "passed": 28,
         "suites": [
           {
             "name": "#25 — the recruiter TL;DR",
-            "total": 6,
-            "passed": 6,
+            "total": 7,
+            "passed": 7,
             "tests": [
               "every row's facts are in the corpus file it names",
               "every row's source file exists",
               "every row actually asserts something checkable",
               "carries no unresolved markers",
+              "every canon row reaches the homepage through one of the two surfaces",
               "renders in the empty state only",
               "is in docs/site-copy.md"
             ]
@@ -705,18 +964,19 @@
             "tests": [
               "no slot describes an asset that does not exist",
               "every empty slot briefs the person who has to capture it",
-              "at least one slot is still empty, and the page says so",
+              "only slots with a file render",
               "slot ids are unique",
               "every slot is one of the three named kinds"
             ]
           },
           {
             "name": "#19 — the feature surface",
-            "total": 4,
-            "passed": 4,
+            "total": 5,
+            "passed": 5,
             "tests": [
               "every feature is named in the corpus",
               "the gap between the list and the product is marked, not filled",
+              "the marked note is not rendered while it carries its marker",
               "is in docs/site-copy.md",
               "the page renders both surfaces"
             ]
@@ -726,7 +986,7 @@
             "total": 2,
             "passed": 2,
             "tests": [
-              "every [VERIFY] marker in shipped copy is listed in the ledger",
+              "every VERIFY marker in shipped copy is listed in the ledger",
               "Track B's surfaces all have a ledger row"
             ]
           }

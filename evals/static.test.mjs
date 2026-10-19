@@ -32,7 +32,7 @@ import {
   MAX_USER_TEXT,
   looksLikeJobPosting,
 } from "../lib/job-posting.ts";
-import { findRenderedMarkers, hasBuild, MARKERS } from "../scripts/check-rendered-markers.mjs";
+import { findRenderedMarkers, hasBuild } from "../scripts/check-rendered-markers.mjs";
 
 describe("knowledge base", () => {
   test("builds and is non-empty", () => {
@@ -87,7 +87,9 @@ describe("knowledge base", () => {
 
 describe("rendered pages", () => {
   test(
-    `no served file contains ${MARKERS.map((m) => `"${m}"`).join(", ")}`,
+    // Named without the markers themselves: test names are published on
+    // /measurements, and this one used to fail its own check there.
+    "no served file carries an unfinished-work marker",
     { skip: hasBuild() ? false : "no build output — `npm run build` runs this check as postbuild" },
     () => {
       const found = findRenderedMarkers();

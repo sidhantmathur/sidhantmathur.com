@@ -30,13 +30,21 @@ import { fileURLToPath } from "node:url";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
-/** Matched case-insensitively. */
+/** What a page must never carry. Matched case-insensitively. */
 export const MARKERS = ["[TODO", "[VERIFY", "Nothing here yet"];
 
+// A bundle is code as well as text, and code can name a marker without being
+// one — manual mode filters chunks on `includes("[TODO")`, which is the guard,
+// not a leak. So in a bundle only a COMPLETE marker counts: the bracket, the
+// word, and then the colon or the closing bracket every real marker in this
+// repo has. Rendered pages and public files get the bare prefixes above.
+const BUNDLE_MARKERS = [/\[TODO[:\]]/i, /\[VERIFY[:\]]/i, /Nothing here yet/i];
+const PAGE_MARKERS = MARKERS.map((m) => new RegExp(m.replace(/[[\]]/g, "\\$&"), "i"));
+
 const SCAN = [
-  { dir: ".next/server/app", ext: [".html", ".rsc", ".body"] },
-  { dir: ".next/static", ext: [".js"] },
-  { dir: "public", ext: [".txt", ".md", ".html", ".xml", ".json", ".svg"] },
+  { dir: ".next/server/app", ext: [".html", ".rsc", ".body"], patterns: PAGE_MARKERS },
+  { dir: ".next/static", ext: [".js"], patterns: BUNDLE_MARKERS },
+  { dir: "public", ext: [".txt", ".md", ".html", ".xml", ".json", ".svg"], patterns: PAGE_MARKERS },
 ];
 
 function* walk(dir) {
@@ -59,21 +67,19 @@ export function hasBuild(base = root) {
  */
 export function findRenderedMarkers(base = root) {
   const found = [];
-  const needles = MARKERS.map((m) => m.toLowerCase());
-  for (const { dir, ext } of SCAN) {
+  for (const { dir, ext, patterns } of SCAN) {
     const abs = join(base, dir);
     if (!existsSync(abs)) continue;
     for (const file of walk(abs)) {
       if (!ext.some((e) => file.endsWith(e))) continue;
       const text = readFileSync(file, "utf8");
-      const lower = text.toLowerCase();
-      needles.forEach((needle, i) => {
-        const at = lower.indexOf(needle);
-        if (at === -1) return;
+      patterns.forEach((pattern, i) => {
+        const match = pattern.exec(text);
+        if (!match) return;
         found.push({
           file: relative(base, file),
           marker: MARKERS[i],
-          context: text.slice(Math.max(0, at - 40), at + 80).replace(/\s+/g, " "),
+          context: text.slice(Math.max(0, match.index - 40), match.index + 80).replace(/\s+/g, " "),
         });
       });
     }
