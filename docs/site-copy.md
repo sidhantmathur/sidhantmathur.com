@@ -121,7 +121,9 @@ surfaced about 20,000 qualified accounts representing an estimated $129M in
 pipeline.
 
 Role: Marketing intern
-Stack: Python, Azure ML
+Stack: Azure ML
+[Wave 1, 2026-10-19: "Python" removed — the Dell record names Azure ML and no
+language. It comes back if Sidhant confirms it.]
 Status: 2018
 Link: Read the case study
 Stat column (display numeral): $129M / estimated pipeline

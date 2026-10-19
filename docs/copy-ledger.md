@@ -334,6 +334,7 @@ on public pages, and sentences that were no longer true.
 | removed | `components/project-media.tsx` → `FEATURE_SURFACE_NOTE` | Not rendered while it carries its `[VERIFY]` marker. The draft stays in `content/adarle20-media.ts`. | none | Pending below. |
 | removed | `app/colophon/page.tsx` | "The spec, design brief, and source are on GitHub. [TODO: confirm repo is public before linking]" | none | The repo is public and so is `docs/`, so linking it is an open decision, pending below. |
 | draft | `lib/site.ts` → `COLOPHON_STACK`, on `/colophon` and in the colophon panel | "…The chat assistant runs through Vercel's AI Gateway on {DEFAULT_MODEL} by default, with the knowledge base injected directly into the prompt…" — was "runs on Claude through Vercel's AI Gateway". The rest of the paragraph is unchanged. | one, about the site | The id is interpolated from `DEFAULT_MODEL` in `lib/models.ts`, the same constant the route falls back to, so it can't go stale. |
+| draft | `content/projects.ts` → Dell card `stack` | "Azure ML" — was "Azure ML, Python". | **factual** | `content/knowledge/projects-dell.md` names Azure ML and no language. "Python" comes back if Sidhant confirms it (pending below). |
 
 ## Pending `[VERIFY]` markers
 
@@ -346,3 +347,4 @@ here means a `[VERIFY]` left in a file can't quietly ship.
 | `content/knowledge/faq.md` → "What is he not looking for?" | Held out of the system prompt, `/prompt` and the chunk index by `scripts/build-knowledge.mjs` since wave 1 (2026-10-19), until it has an answer; the chat now has nothing on the question rather than a marker. Pre-existing, untouched by Track B, and now more visible than it was: the recruiter chips and the TL;DR both point a reader at what he *is* looking for, and the corpus has nothing for the other half of that question. |
 | `docs/site-copy.md` → Colophon | "[TODO: confirm repo is public before linking]". Cut from `/colophon` with its sentence in wave 1. The repo IS public, and so is `docs/` (the ledger, the decisions doc, dictated notes). Decision for Sidhant: link it, or move `docs/` out first. |
 | `content/adarle20-media.ts` → `ADARLE_MEDIA`, the six slots with no `asset` | Not rendered since wave 1. Each slot's brief says what file it needs; a slot appears on `/projects/adarle20` the day its `asset` is filled in. |
+| `content/projects.ts` → Dell card stack | Did the Dell work use Python? The card said so; `content/knowledge/projects-dell.md` doesn't. Removed in wave 1 until confirmed. |
