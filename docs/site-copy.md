@@ -242,9 +242,9 @@ handling that without a person in the middle.
 
 ### What I'd tell a hiring manager
 
-This is the project that proves I can take an ambiguous idea to a revenue-
-generating product — including the unglamorous parts like refunds, payment
-edge cases, and infrastructure costs.
+This is the project that proves I can take an ambiguous idea to a
+revenue-generating product — including the unglamorous parts like refunds,
+payment edge cases, and infrastructure costs.
 
 ### Everything in it (#19 — the feature surface)
 
