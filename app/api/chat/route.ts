@@ -520,9 +520,9 @@ function simulatedClass(req: Request): TurnErrorClass | null {
  * `onError` classifies it exactly as it would a Gateway failure, so the client
  * receives the same error chunk and the same closing telemetry record.
  */
-function simulateStreamFailure(cls: TurnErrorClass, model: ModelId): Response {
-  const startedAt = Date.now();
-  const telemetry: TurnTelemetry = {
+/** The opening record of a simulated turn: full budget, nothing measured yet. */
+function simulatedTelemetry(model: ModelId): TurnTelemetry {
+  return {
     model,
     tier: MODELS[model].tier,
     budgetRemaining: TIER_LIMITS[MODELS[model].tier],
@@ -536,6 +536,11 @@ function simulateStreamFailure(cls: TurnErrorClass, model: ModelId): Response {
     finishReason: null,
     error: null,
   };
+}
+
+function simulateStreamFailure(cls: TurnErrorClass, model: ModelId): Response {
+  const startedAt = Date.now();
+  const telemetry = simulatedTelemetry(model);
 
   const stream = createUIMessageStream<ChatUIMessage>({
     // Returned verbatim rather than run through `classifyTurnError`. The
@@ -582,20 +587,7 @@ function simulateStreamFailure(cls: TurnErrorClass, model: ModelId): Response {
  */
 function simulateEmptyTurn(model: ModelId): Response {
   const startedAt = Date.now();
-  const telemetry: TurnTelemetry = {
-    model,
-    tier: MODELS[model].tier,
-    budgetRemaining: TIER_LIMITS[MODELS[model].tier],
-    budgetLimit: TIER_LIMITS[MODELS[model].tier],
-    jobPosting: false,
-    siteQuestion: false,
-    usage: null,
-    timing: null,
-    steps: null,
-    toolsCalled: null,
-    finishReason: null,
-    error: null,
-  };
+  const telemetry = simulatedTelemetry(model);
 
   const stream = createUIMessageStream<ChatUIMessage>({
     execute: async ({ writer }) => {

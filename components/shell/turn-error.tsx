@@ -7,23 +7,19 @@ import {
   turnErrorLabel,
   type TurnErrorClass,
 } from "@/lib/chat-telemetry";
-import { MODEL_IDS, MODELS } from "@/lib/models";
+import { MODEL_IDS } from "@/lib/models";
 
 /**
  * The model a "different model" button offers: the next one after the current
- * selection in catalogue order, standard tier only. Standard because the
- * premium bucket is a quarter the size, and a rescue that spends the scarce one
- * by default would turn one failure into a rate limit two turns later. Read off
- * the catalogue rather than named, so it follows whatever the default becomes.
+ * selection in catalogue order, wrapping round. Read off the catalogue rather
+ * than named, so it follows whatever the default and the dropdown become —
+ * from the default, it is the dropdown's second entry.
  */
 export function alternativeModel(current: string): string | null {
   const ids: readonly string[] = MODEL_IDS;
-  const start = Math.max(0, ids.indexOf(current));
-  for (let step = 1; step < MODEL_IDS.length; step += 1) {
-    const id = MODEL_IDS[(start + step) % MODEL_IDS.length]!;
-    if (id !== current && MODELS[id].tier === "standard") return id;
-  }
-  return null;
+  if (ids.length < 2) return null;
+  const at = ids.indexOf(current);
+  return ids[(at === -1 ? 0 : at + 1) % ids.length] ?? null;
 }
 
 const BUTTON =
