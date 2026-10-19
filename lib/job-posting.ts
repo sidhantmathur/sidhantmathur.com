@@ -29,6 +29,22 @@ export const JD_PREFIX =
   "Here's a job description. Map my experience onto it, and be straight about where I don't match.";
 
 /**
+ * The longest user turn the chat route accepts, in characters. A whole posting
+ * arrives as one message, and abuse is bounded by the hourly budget rather
+ * than by this cap — but it is still the cost ceiling on a single turn, so it
+ * moves only on purpose.
+ */
+export const MAX_USER_TEXT = 4000;
+
+/**
+ * The longest posting the paste panel takes: the route's limit less the prefix
+ * and the blank line the panel sends ahead of it. The panel used to hard-code
+ * 3,500 against the route's 4,000, so the two disagreed by four hundred
+ * characters nobody chose. Derived now, so they can't.
+ */
+export const MAX_POSTING_TEXT = MAX_USER_TEXT - `${JD_PREFIX}\n\n`.length;
+
+/**
  * Shape signals. Any two, on a long enough message, is a posting.
  *
  * Tuned to be hard to trip by accident: a visitor asking "is he a fit for a

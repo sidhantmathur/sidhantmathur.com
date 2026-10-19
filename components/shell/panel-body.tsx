@@ -14,6 +14,7 @@ import { ENFORCEMENT_LABEL, REFUSALS } from "@/lib/refusals";
 import type { RequirementVerdict } from "@/lib/role-fit";
 import { FIT_LABELS, JD_COPY, PROJECT_LINKS, SOCIAL_LINKS, WHY_CHATBOT } from "./shell-data";
 import type { PanelView, RoleFit } from "./use-conversation";
+import { MAX_POSTING_TEXT } from "@/lib/job-posting";
 import { COLOPHON_STACK } from "@/lib/site";
 import { ActionLink } from "./action-link";
 
@@ -429,9 +430,10 @@ function sourceTitle(id: string): string {
   return chunk ? `${chunk.sourceLabel} — ${chunk.heading}` : id;
 }
 
-// The API caps a user turn at 4000 characters, so the textarea enforces the
-// same limit rather than letting a long posting fail server-side.
-const JD_MAX = 3500;
+// The route's cap on a user turn, less the prefix the shell sends ahead of the
+// posting — so the textarea enforces exactly the limit the server does, rather
+// than letting a long posting fail server-side or cutting it short for nothing.
+const JD_MAX = MAX_POSTING_TEXT;
 
 function JobDescriptionForm({ onSubmit }: { onSubmit?: (text: string) => void }) {
   const [value, setValue] = useState("");

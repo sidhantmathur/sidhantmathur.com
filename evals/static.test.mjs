@@ -26,7 +26,12 @@ import {
 } from "./lib/artifacts.mjs";
 import { GROUNDED, ROLE_FIT } from "./cases.mjs";
 import { DEFAULT_MODEL, MODELS, MODEL_IDS, TIER_LIMITS } from "../lib/models.ts";
-import { JD_PREFIX, looksLikeJobPosting } from "../lib/job-posting.ts";
+import {
+  JD_PREFIX,
+  MAX_POSTING_TEXT,
+  MAX_USER_TEXT,
+  looksLikeJobPosting,
+} from "../lib/job-posting.ts";
 import { findRenderedMarkers, hasBuild, MARKERS } from "../scripts/check-rendered-markers.mjs";
 
 describe("knowledge base", () => {
@@ -317,6 +322,16 @@ describe("live-eval assertions are still grounded", () => {
       shellData.includes("prefix: JD_PREFIX"),
       "the JD panel no longer uses the shared JD_PREFIX — the server's strongest detection signal is broken",
     );
+  });
+
+  test("the paste panel's cap is the route's cap, less the prefix", () => {
+    // They disagreed by 400 characters for months: 3,500 in the panel against
+    // 4,000 in the route, both hand-typed. One constant now, read by both.
+    const longest = `${JD_PREFIX}\n\n${"x".repeat(MAX_POSTING_TEXT)}`;
+    assert.equal(longest.length, MAX_USER_TEXT, "the longest pasteable posting should land exactly on the route's limit");
+    assert.match(read("app/api/chat/route.ts"), /msg\.role === "user" \? MAX_USER_TEXT/);
+    assert.match(read("components/shell/panel-body.tsx"), /const JD_MAX = MAX_POSTING_TEXT;/);
+    assert.match(read("components/shell/app-shell.tsx"), /submit\(`\$\{JD_COPY\.prefix\}\\n\\n\$\{text\}`\)/);
   });
 
   test("the unqualified postings really are unqualified", () => {

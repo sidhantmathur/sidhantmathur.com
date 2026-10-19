@@ -11,7 +11,7 @@ import { z } from "zod";
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 import { buildSystemPrompt } from "@/lib/system-prompt";
-import { looksLikeJobPosting, wrapPosting } from "@/lib/job-posting";
+import { looksLikeJobPosting, MAX_USER_TEXT, wrapPosting } from "@/lib/job-posting";
 import { looksLikeSiteQuestion } from "@/lib/site-question";
 import { reconcileRoleFit } from "@/lib/role-fit";
 import { CHUNK_BY_ID } from "@/lib/chunks.generated";
@@ -74,10 +74,11 @@ const messageSchema = z
             p.type === "text" && typeof p.text === "string",
         )
         .reduce((sum, p) => sum + p.text.length, 0);
-      // 4000 for user turns: the JD-paste flow sends a whole job description
-      // as one message, and 500 truncated every real posting. Abuse is bounded
-      // by the per-tier hourly budget, not by this cap.
-      return textLength <= (msg.role === "user" ? 4000 : 8000);
+      // MAX_USER_TEXT (4000) for user turns: the JD-paste flow sends a whole
+      // job description as one message, and 500 truncated every real posting.
+      // Abuse is bounded by the per-tier hourly budget, not by this cap. The
+      // paste panel reads the same constant, so the two can't disagree.
+      return textLength <= (msg.role === "user" ? MAX_USER_TEXT : 8000);
     },
     { message: "Message text exceeds the allowed length." },
   );
