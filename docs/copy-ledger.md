@@ -419,6 +419,24 @@ the pages would use the answers:
 10. A Darle 20: which tool instruments the funnel, and one or two decisions the
     data changed.
 
+**The fit check: steps you can see, 2026-10-19** (branch
+`worktree-agent-ab22acd4eb6a2a223`). A pasted posting now shows three named
+steps instead of one string, plus a readout of what the stream is doing
+inside the step. All of these strings are read off the live stream and say
+nothing about Sidhant. The labels are short on purpose. At 375px the line
+shares its row with the readout, the timer and the stop button, and
+"checking 14 requirements…" wrapped onto two lines. Measured widths are in
+`lib/turn-phase.ts`.
+
+| Status | Where | What it says | Claims | Grounding |
+| --- | --- | --- | --- | --- |
+| draft | `lib/turn-phase.ts` → `JD_READING_PHASE` (the extraction step's label) | "reading the posting…". Shown from the moment a posting is sent, through the extraction step. It used to read "reading the resume…" until the extraction call began. | none | The route's own `looksLikeJobPosting`, run on the same text, and then the route's `jobPosting` flag on the stream |
+| removed | `lib/turn-phase.ts` (was `use-conversation.ts`) → the extraction step | "reading the job description…". Replaced by "reading the posting…", which fits at 375px beside the readout. | none | — |
+| draft | `lib/turn-phase.ts` → `JD_CHECKING_PHASE` | "checking the fit…". The judging step, from the moment extraction returns until the card is in. Through the reasoning before the rows, it used to say "writing the answer…", which was false. | none | The `roleFit` step, read off the stream |
+| draft | `lib/turn-phase.ts` → `JD_WRITING_PHASE` | "summarizing…". After the card, while the model writes the sentences under it. On posting turns this was "writing the answer…". | none | The step after `roleFit` |
+| draft | `components/shell/phase-line.tsx` → readout (`formatActivity` in `lib/turn-phase.ts`) | "thinking" while a reasoning part is open; "6/14" (rows so far out of requirements extracted) while the assessment streams. Beside the timer, aria-hidden. | none | `reasoning-start`/`reasoning-end` parts; the `roleFit` call's partial input |
+| draft | `lib/turn-phase.ts` → `TOOL_PHASE`, `OPENING_PHASE`, `WRITING_PHASE` | Moved unchanged from `components/shell/use-conversation.ts`: "reading the resume…" · "checking it against the record…" · "pulling up the project…" · "pulling up the resume…" · "finding the contact details…" · "writing the answer…". Logged so the older row's "Where" isn't stale. | none | — |
+
 ## Pending `[VERIFY]` markers
 
 Sentences drafted with a fact-shaped hole in them, waiting on Sidhant. Listing them
