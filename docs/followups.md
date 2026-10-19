@@ -410,6 +410,66 @@ Compensation: $130,000 to $155,000 base plus equity and benefits. This role is r
 
 </details>
 
+### The summary, strengths first, 2026-10-19 — Sidhant's call
+
+**A policy change, in its own commit so it can be dropped.** Opus found the
+summary opening on a grade ("a genuine partial fit, not a strong one") on
+exactly the kind of posting Sidhant wants. GPT-6 Luna does the same: "He is a
+partial fit", "This role is a partial fit", "a credible adjacent fit". The
+roleFit instruction in `lib/system-prompt.ts` now says the summary (the card's
+one-line `verdict` and the sentences after it) leads with the strongest
+matches, then says what the ramp would be. It does not open with a grade. It
+never states a row more strongly than its verdict, and the sentences after
+the card name every unmet requirement. A gap no ramp closes (years, a
+certification, a location) is stated as a gap. When most rows are unmet, the
+word "ramp" is not used, and the summary says the core of the role is outside
+his record. The `verdict` field's description in the route says the same in
+one line. Nothing about the rows changed: no row is upgraded, and every unmet
+requirement is still in the table and in `gaps`.
+
+All runs below are at `low` on the same postings.
+
+| | Before | After |
+| --- | --- | --- |
+| Long posting, `verdict` | "A credible adjacent fit for reporting, forecasting, automation, and ambiguous systems ownership, but the central gaps are hands-on Salesforce administration, lead routing, CPQ/quote-to-cash, and B2B SaaS RevOps tenure." | "Strongest matches are ambiguous-work ownership, forecasting and quarter-end reporting; the role's core Salesforce administration, lead routing and CPQ are outside the record." |
+| Long posting, answer | "Sidhant is a credible adjacent fit on reporting, forecasting, automation, and taking ambiguous systems work from requirements through rollout. The main gaps are hands-on Salesforce administration, lead routing, CPQ and quote-to-cash experience, and the required B2B SaaS RevOps tenure; …" | "His strongest matches are Power BI/SQL reporting, forecasting and quarter-end close support, manual-work automation, and taking ambiguous requests through rollout. The record does not show Salesforce administration or certification, lead routing and territory assignment, CPQ or quote-to-cash, documentation and rep training, four years at a B2B SaaS company, or experience scaling from Series B to Series D." |
+| Short posting, answer | "The assessment indicates a strong match for the core reporting and systems work, with one partial area: …" | "Sidhant matches the role's sales operations tenure, Salesforce-to-Power BI reporting, work translating leadership requests into scoped requirements, forecasting and quarter-end reporting, and hands-on LLM tooling. His SQL strength and experience building executive-facing dashboards are only partly evidenced; …" |
+| ML infrastructure posting (6 of 6 unmet), `verdict` | — | "His background includes Python automation and ETL/data workflows, but distributed ML infrastructure, GPU clusters, and training optimization are outside the record." |
+
+Citations are left out of the quotes. The "before" answers are from the runs
+in the table above.
+
+**How the wording got here.** It took three drafts, all measured. The first
+made `verdict` a paragraph that listed every gap. That field streams inside
+the `roleFit` call, so the card waited for it, at 20.9 and 21.3 s. The second
+capped `verdict` at one line, but on the ML infrastructure posting it called
+"the role's core infrastructure work" "the ramp". The rule against using
+"ramp" when most rows are unmet comes from that run. The third is what's
+committed, plus one later sentence on citing absences (below). It passed
+both checks. The long-posting quotes above come from its two scripted runs,
+which ran before that sentence was added. The short-posting quote comes from
+the second draft. The rows did not get kinder. Every run after the change
+had 6 or 7 unmet, against 4–5 at `low` before it and 5–7 at the default. If
+anything, telling the summary it can't outrun a row made the rows stricter.
+
+**What it costs.** On the long posting the card arrives about 3 s later than
+at `low` without it: 16.6 and 17.2 s scripted, and 12.9–18.3 s in three
+browser runs (one more browser run took 21.6 s after an 11 s extraction
+step). Before the change, the three `low` runs took 13.1–14.2 s. It costs
+nothing on the short posting (6.9 s against 6.5 s). Output and reasoning
+tokens rise slightly, and `gaps` comes back longer (8–13 entries against
+5–6). Before it, the card already arrived twice as fast as the default.
+
+**Open, and not fixable from the prompt.** The answer's gap sentences get
+marked either way. Cited, the checker reports the names of the things he
+doesn't have ("CPQ, B2B, SaaS") as unverified against the chunk, in red.
+Uncited, it marks the sentence "uncited". The prompt now says an absence
+cites nothing, as an unmet row does, but in the two browser runs after it
+was added the model still cited two of its three gap sentences. The fix is
+in `lib/verify.ts`. A sentence whose claim is an absence ("the record does
+not show…", "doesn't establish…") has nothing to check against a chunk, and
+the checker should skip it rather than mark it.
+
 ## 3. Copy — Sidhant is doing this, do not write it
 
 Two blocks on the live site are Claude's drafts, marked `[DRAFT]` in

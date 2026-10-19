@@ -442,7 +442,7 @@ function buildChatTools(extraction: { requirements: string[] }) {
         verdict: z
           .string()
           .describe(
-            "One line a recruiter could read on its own: where he fits, and what the real question is.",
+            "One line, under 25 words, a recruiter could read on its own: what matches first, then what the ramp would be. Never describes a requirement more strongly than its row, never opens with a grade, and when most rows are unmet says the core of the role is outside the record instead of calling it a ramp.",
           ),
         gaps: z
           .array(z.string())
