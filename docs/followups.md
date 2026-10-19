@@ -367,8 +367,8 @@ needs a setting or should be dropped. DeepSeek at `none` must not be used on
 posting turns, because it writes raw DSML markup into the answer. Each of
 these is one key on its catalogue row now.
 
-**Cost.** 21 scripted turns, $0.038 at list price, plus 5 browser turns for
-the screenshots, about $0.012.
+**Cost.** 21 scripted turns, $0.038 at list price, plus 4 browser turns for
+the screenshots, about $0.009.
 
 <details>
 <summary>The long posting, verbatim</summary>
