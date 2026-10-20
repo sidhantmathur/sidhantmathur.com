@@ -175,7 +175,7 @@ function SourceRow({
             onClick={() => onOpenSource({ kind: "instruments" })}
             className="-my-2 py-2 text-text-soft underline decoration-line-strong underline-offset-2 transition-colors hover:text-accent"
           >
-            See the trace
+            See the citation check
           </button>
         </p>
       )}

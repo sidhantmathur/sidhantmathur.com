@@ -97,7 +97,7 @@ export const PANELS = {
     surface: "content",
   },
   instruments: {
-    title: "Instruments",
+    title: "Technical details",
     path: null,
     slash: { name: "/budget", hint: "Turns, tokens and what they cost" },
     fromTool: null,

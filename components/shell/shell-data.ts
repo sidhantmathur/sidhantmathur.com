@@ -30,8 +30,8 @@ export const WHY_CHATBOT_HEADING = "Why there's a chat on a portfolio";
 
 export const WHY_CHATBOT = [
   "Most software is turning into a conversation. I don't build my own PostHog dashboards anymore. I describe what I want and the product's assistant builds it, because it knows the platform better than I do. I think a lot of interfaces will go the same way, portfolios included.",
-  "A portfolio is a list standing in for a conversation you can't have. If you're going through a stack of candidates at eleven at night, you can't call me, but you can ask the assistant whether any of my work maps to what you need.",
-  "So come with a specific question, like how the payments work, what the Nokia rollout involved, or what I'd do in the first ninety days of the role you're hiring for.",
+  "Questions about a portfolio usually have to wait for a call. If you're going through candidates and can't call me, you can ask the assistant whether any of my work maps to what you need.",
+  "It works best with a specific question, such as how the payments work, what the Nokia rollout involved, or what I'd do in the first ninety days of the role you're hiring for.",
   "Every answer is built from the same source files as the resume and shows which ones it drew on, so you can open the file when a paragraph isn't enough.",
 ];
 
@@ -87,7 +87,7 @@ export const RAIL_HOW: RailGroup = {
     { label: "Measurements", href: "/measurements" },
     // The header's receipt is the desktop way in; below lg it is hidden, so
     // this is the route to the instruments — and the model picker — there.
-    { label: "Instruments", view: { kind: "instruments" } },
+    { label: "Technical details", view: { kind: "instruments" } },
   ],
 };
 
@@ -99,12 +99,11 @@ export const RAIL_HOW: RailGroup = {
 // the byte-identical cached prompt is the base `buildSystemPrompt()` returns on
 // every turn that didn't ask about the site. Logged in docs/copy-ledger.md.
 export const IDLE_LINES = [
-  "This line ships with the page, so an idle tab doesn't call the model or cost anything.",
+  "An idle tab doesn't call the model or cost anything.",
   "The knowledge base is the same on every request, so after the first turn the provider usually serves it from cache.",
   "Type / to see the commands.",
-  "The message limit refills on a sliding hour, so you'll rarely have to wait.",
+  "The message limit refills on a sliding hour.",
   "Most entries in the index have their own page. Cmd-click or Ctrl-click one to open it in a new tab.",
-  "Ask the question you'd ask on a call.",
 ];
 
 // docs/site-copy.md → "Job-description fit", marked as a draft there.
@@ -192,7 +191,7 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     message: SITE_REQUEST,
   },
   {
-    name: "/roast",
+    name: "/critique",
     hint: "Ask it what's wrong with this site",
     kind: "send",
     message: ROAST_REQUEST,

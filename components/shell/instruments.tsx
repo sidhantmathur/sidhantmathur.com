@@ -22,8 +22,8 @@ import { verifyAnswer, type Claim } from "@/lib/verify";
 import type { Budget, TurnRecord } from "./use-conversation";
 import type { TokenRate } from "./use-token-rate";
 
-// The instrument deck: model picker, cost meter, tokens-per-second seismograph,
-// per-turn trace, citation trace, failure theatre and teletype toggle.
+// The technical details panel: model picker, cost meter, tokens-per-second
+// rate, per-turn trace, citation check, simulated failures and sound toggle.
 //
 // WHERE THIS LIVES is the constraint every choice here answers to. The
 // instrumentation policy in docs/idea-decisions.md §4 puts density around the
@@ -32,7 +32,7 @@ import type { TokenRate } from "./use-token-rate";
 // status strip (turns used and what the last answer cost). The rest opens in
 // the context panel on a deliberate click, beside the conversation rather than
 // over it. Every control is idempotent and every readout passive; the one
-// control that makes a request, failure theatre, cannot produce an answer or
+// control that makes a request, simulated failures, cannot produce an answer or
 // spend the budget, and reports into its own box.
 
 // ---------------------------------------------------------------------------
@@ -191,7 +191,7 @@ export function InstrumentDeck({
         <CitationTrace answers={answers} />
       </Section>
 
-      <Section title="Failure theatre">
+      <Section title="Simulated failures">
         <FailureTheatre errorCopy={errorCopy} />
       </Section>
 
@@ -202,7 +202,7 @@ export function InstrumentDeck({
           aria-pressed={teletype}
           className="border border-line-strong px-3 py-3 text-[13px] text-text-soft transition-colors hover:border-accent hover:text-accent"
         >
-          teletype {teletype ? "on" : "off"}
+          sound {teletype ? "on" : "off"}
         </button>
         <p className="t-meta mt-2 text-text-faint">
           Plays a tick for each chunk of text, pitched higher when text arrives faster.

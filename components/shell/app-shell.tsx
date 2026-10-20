@@ -684,7 +684,7 @@ export function AppShell() {
             <button
               type="button"
               onClick={() => openPanel({ kind: "instruments" })}
-              title="Open the instruments"
+              title="Open the technical details"
               disabled={!hydrated}
               data-js-control
               className="hidden h-11 items-center tabular-nums transition-colors hover:text-accent lg:flex"
@@ -762,7 +762,7 @@ export function AppShell() {
                     data-js-control
                     className="t-label flex min-h-[44px] touch-manipulation items-center text-text-faint hover:text-accent"
                   >
-                    start a fresh one
+                    start a new conversation
                   </button>
                 </div>
               )}
@@ -833,7 +833,7 @@ export function AppShell() {
                       data-js-control
                       className="flex min-h-[44px] touch-manipulation items-center text-text-soft underline decoration-line-strong underline-offset-4 transition-colors hover:text-accent hover:decoration-accent disabled:text-text-dim disabled:no-underline"
                     >
-                      Interview this site ↓
+                      Ask the AI assistant ↓
                     </button>
                   </div>
                   {/* The six-second scan; see recruiter-tldr.tsx. */}

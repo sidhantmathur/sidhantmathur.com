@@ -19,7 +19,7 @@ const MANUAL_COPY = {
   body:
     "Your conversation is still here. The hourly limit is per IP address and refills on a sliding hour. If this conversation has used all its turns, reset it to start a new one. Meanwhile, these are the source files the answers are built from, quoted word for word.",
   faqHeading: "Common questions",
-  corpusHeading: "The rest of the record",
+  corpusHeading: "Everything else",
   footer:
     "No model was called to show this, so it cost nothing. The resume is the authoritative version.",
 };
@@ -63,7 +63,7 @@ export function ManualMode({
         <div className="t-label text-text-faint">{MANUAL_COPY.corpusHeading}</div>
         <div className="mt-2 flex flex-wrap gap-2">
           <ActionLink onClick={() => onOpenSource({ kind: "corpus" })}>
-            Every source, listed
+            All sources
           </ActionLink>
           <ActionLink href="/resume">Full resume</ActionLink>
           <ActionLink href="/resume.pdf" external>

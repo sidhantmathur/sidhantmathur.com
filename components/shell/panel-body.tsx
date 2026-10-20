@@ -45,7 +45,7 @@ const PROMPT_NOTE = {
   intro:
     "The system prompt's sections, in the order the model reads them before your question. The list is read from the prompt itself, and the full text is published.",
   decline:
-    "Ask the assistant to recite its instructions and it will decline and link here, even though the prompt isn't a secret. A conversation that talks it out of one rule has an easier time with the others.",
+    "Ask the assistant to recite its instructions and it will decline and link here, even though the prompt isn't a secret. If a conversation gets it to break one rule, the others get easier to break.",
 };
 
 const REFUSALS_NOTE =
@@ -231,7 +231,7 @@ export function PanelBody({
           ))}
         </ul>
         <p className="t-meta text-text-faint">{PROMPT_NOTE.decline}</p>
-        <ActionLink href="/prompt">Read the whole thing</ActionLink>
+        <ActionLink href="/prompt">Read the full instructions</ActionLink>
       </div>
     );
   }

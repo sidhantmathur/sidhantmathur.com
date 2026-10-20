@@ -1,6 +1,6 @@
-// The refusal ledger: what the assistant won't do, why, and what it does
-// instead. Hand-curated. Every entry describes a rule that exists in this repo
-// and names the file holding it; `evals/recursion.test.mjs` fails if an entry's
+// What the assistant won't do, why, and what it does instead. Hand-curated.
+// Every entry describes a rule that exists in this repo and names the file
+// holding it; `evals/recursion.test.mjs` fails if an entry's
 // anchor text is no longer in that file, so an entry can't outlive its rule.
 //
 // `enforcedBy` is the column that matters. A refusal in the system prompt holds
