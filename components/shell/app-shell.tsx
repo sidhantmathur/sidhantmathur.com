@@ -51,9 +51,14 @@ import {
 } from "@/content/recruiter";
 import { EmailCopy, LinkedInButton, ResumePdfButton } from "@/components/contact-actions";
 import { costOfTurn, sumCosts } from "@/lib/pricing";
-import { MODEL_IDS } from "@/lib/models";
+import { MAX_USER_MESSAGES, MODEL_IDS } from "@/lib/models";
 import { isShellPanel, type ShellPanelKind } from "./panels";
 import { receiptText, type ReadoutState } from "./readouts";
+import {
+  pushChatEntry,
+  pushHomeEntry,
+  useConversationHistory,
+} from "./conversation-history";
 import {
   textOf,
   toolOutputs,
@@ -143,6 +148,22 @@ const REPLAY_FIT_LINE =
 // lib/transcript.ts (toSnapshot) builds now; older links carry it.
 const REPLAY_POSTING_LEFT_OUT =
   "The link leaves out the posting. Each requirement in the table is quoted from it.";
+// The way out of a conversation, and the way back into one. A conversation
+// left by Home, a reload or the browser's Back is kept, and the front door
+// offers it here.
+const HOME_LABEL = "Home";
+const CONVERSATION_LABEL = "Your conversation";
+const REPLAY_LABEL = "Shared conversation";
+// Short enough to fit beside "clear" on a 375px phone without truncating.
+const CONTINUE_LABEL = "Continue where you left off";
+const CONTINUE_HINT = "or ask something new to start over";
+const CLEAR_LABEL = "clear";
+const questionCount = (n: number) => `${n} ${n === 1 ? "question" : "questions"}`;
+// Said when the per-conversation cap is reached, so it isn't mistaken for the
+// hourly budget (ManualMode), which is a wait. This one is fixed by a tap.
+const CONVERSATION_FULL = `That's ${MAX_USER_MESSAGES} questions, the most one conversation holds. Start a new one to keep asking — this one stays saved on the front page.`;
+const CONVERSATION_FULL_ACTION = "Start a new conversation";
+const CONVERSATION_FULL_PLACEHOLDER = "This conversation is full";
 
 // How long a turn runs before the shell offers to abandon it. Roughly double a
 // normal answer's wait — early enough to be a rescue, late enough not to be a
@@ -167,7 +188,11 @@ export function AppShell() {
     submit,
     retry,
     stop,
-    reset,
+    leave,
+    resume,
+    clearSaved,
+    saved,
+    full,
     isBusy,
     phase,
     errorKind,
@@ -257,8 +282,9 @@ export function AppShell() {
   useEffect(() => {
     if (isBusy) return;
     const answered = messages.filter((m) => m.role === "assistant" && textOf(m)).length;
-    // Fewer than before means the conversation was reset, which is not an
-    // answer and must not leave the counter high enough to swallow the next one.
+    // Fewer than before means the conversation was left or swapped, which is
+    // not an answer and must not leave the counter high enough to swallow the
+    // next one.
     if (answered <= announcedCount.current) {
       announcedCount.current = answered;
       return;
@@ -400,15 +426,57 @@ export function AppShell() {
     el.style.height = `${Math.max(el.scrollHeight, el.offsetHeight)}px`;
   }, [input]);
 
-  const submitJd = useCallback(
-    (text: string) => {
-      stick.current = true;
-      submit(`${JD_COPY.prefix}\n\n${text}`);
-      setSheetOpen(false);
-      setPanel({ kind: "none" });
-    },
-    [submit, setPanel],
-  );
+  // Every way of asking goes through here: the composer, the chips, a slash
+  // command and the job-description panel. The first question from the front
+  // door is where a conversation begins, so it gets its own history entry, and
+  // Back from the conversation returns to the front door instead of leaving
+  // the site.
+  function ask(text: string) {
+    if (!messages.length) pushChatEntry();
+    stick.current = true;
+    submit(text);
+  }
+
+  // The front door, from anywhere: the name, Home, the replay banner, the
+  // conversation-full notice and the browser's Back all land here. Nothing is
+  // lost on the way; see `leave` in use-conversation.ts.
+  const showFrontDoor = useCallback(() => {
+    leave();
+    setSheetOpen(false);
+    setRailOpen(false);
+    // After the front door has rendered into the same scroll area, which was
+    // scrolled to the foot of the conversation.
+    requestAnimationFrame(() => scrollRef.current?.scrollTo({ top: 0 }));
+  }, [leave]);
+
+  function goHome() {
+    if (messages.length) pushHomeEntry();
+    showFrontDoor();
+  }
+
+  // Back into the saved conversation at its latest answer, as it was left.
+  const resumeAtEnd = useCallback(() => {
+    stick.current = true;
+    resume();
+  }, [resume]);
+
+  function continueSaved() {
+    pushChatEntry();
+    resumeAtEnd();
+  }
+
+  useConversationHistory({
+    inConversation: messages.length > 0,
+    canResume: saved != null,
+    leave: showFrontDoor,
+    resume: resumeAtEnd,
+  });
+
+  const submitJd = (text: string) => {
+    ask(`${JD_COPY.prefix}\n\n${text}`);
+    setSheetOpen(false);
+    setPanel({ kind: "none" });
+  };
 
   function onScroll() {
     const el = scrollRef.current;
@@ -425,10 +493,7 @@ export function AppShell() {
     if (!cmd) return;
     setInput("");
     if (cmd.kind === "panel" && cmd.panel) return openPanel({ kind: cmd.panel });
-    if (cmd.message) {
-      stick.current = true;
-      submit(cmd.message);
-    }
+    if (cmd.message) ask(cmd.message);
   }
 
   // One place that says what a copied conversation looks like, so the strip,
@@ -470,9 +535,8 @@ export function AppShell() {
       if (slashMatches.length === 1) return runSlash(slashMatches[0].name);
       return;
     }
-    if (isBusy) return;
-    stick.current = true;
-    submit(q);
+    if (isBusy || full) return;
+    ask(q);
     setInput("");
   }
 
@@ -528,10 +592,7 @@ export function AppShell() {
     <button
       key={q}
       type="button"
-      onClick={() => {
-        stick.current = true;
-        submit(q);
-      }}
+      onClick={() => ask(q)}
       disabled={isBusy || !hydrated}
       // py-2.5 keeps a chip over 44px on a phone, where it is a finger
       // target; md:py-2 matches the header's pointer-sized controls.
@@ -639,9 +700,18 @@ export function AppShell() {
           </svg>
         </button>
         {/* Fills the strip for the same reason the index button does: a line
-            of text isn't a touch target. */}
+            of text isn't a touch target.
+            The name is the way home, and on this route a link to "/" is a
+            link to where the visitor already is, so it did nothing from
+            inside a conversation. A plain click goes to the front door;
+            a modified one still opens the site in a new tab. */}
         <Link
           href="/"
+          onClick={(e) => {
+            if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+            e.preventDefault();
+            goHome();
+          }}
           className="-mx-2 flex h-full touch-manipulation items-center px-2 text-text no-underline hover:text-accent"
         >
           {SITE_NAME}
@@ -721,6 +791,33 @@ export function AppShell() {
               conversation is on screen. Behind the scroll area rather than
               inside it, so it doesn't scroll with the transcript. */}
           <AmbientBackdrop visible={!hasMessages || idle} />
+          {/* ---- Conversation bar ---------------------------------------
+              A conversation is a place, so it gets a title bar like the
+              context panel's, at the same height, with the way out where a
+              visitor looks for one: top left, labelled, bordered so it reads
+              as a button. The count makes the cap visible before it is hit. */}
+          {hasMessages && (
+            <div className="relative z-10 flex h-11 shrink-0 items-center gap-3 border-b border-line bg-panel px-4 text-[13px] md:px-10">
+              <button
+                type="button"
+                onClick={goHome}
+                data-js-control
+                className="group -ml-1 flex h-full shrink-0 touch-manipulation items-center px-1"
+              >
+                <span className="flex h-8 items-center gap-1.5 border border-line-strong bg-raised px-2.5 text-text-soft transition-colors group-hover:border-accent group-hover:text-accent">
+                  <span aria-hidden="true">←</span>
+                  {HOME_LABEL}
+                </span>
+              </button>
+              {/* Below sm the count needs the room more than the label does. */}
+              <span className="hidden min-w-0 truncate text-text-faint sm:inline">
+                {replayed ? REPLAY_LABEL : CONVERSATION_LABEL}
+              </span>
+              <span className="ml-auto shrink-0 tabular-nums text-text-faint">
+                {turns} of {questionCount(MAX_USER_MESSAGES)}
+              </span>
+            </div>
+          )}
           <div
             ref={scrollRef}
             onScroll={onScroll}
@@ -759,7 +856,7 @@ export function AppShell() {
                   </div>
                   <button
                     type="button"
-                    onClick={reset}
+                    onClick={goHome}
                     data-js-control
                     className="t-label flex min-h-[44px] touch-manipulation items-center text-text-faint hover:text-accent"
                   >
@@ -979,6 +1076,24 @@ export function AppShell() {
                 {errorKind === "rate_limited" && (
                   <ManualMode headline={RATE_LIMIT_STATE} onOpenSource={openPanel} />
                 )}
+                {/* The conversation cap, said as itself rather than as the
+                    hourly budget, with the one tap that fixes it. */}
+                {full && !isBusy && (
+                  <div className="space-y-3 border-l-2 border-accent bg-raised px-3 py-3">
+                    <p className="t-body text-text-soft">{CONVERSATION_FULL}</p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        goHome();
+                        if (!isMobile) requestAnimationFrame(() => inputRef.current?.focus());
+                      }}
+                      data-js-control
+                      className="flex min-h-[44px] items-center border border-line-strong px-3 py-2.5 text-[13px] text-text-soft transition-colors hover:border-accent hover:text-accent"
+                    >
+                      {CONVERSATION_FULL_ACTION}
+                    </button>
+                  </div>
+                )}
               </div>
 
               {idle && <IdleLine key={idleIndex} line={IDLE_LINES[idleIndex]!} />}
@@ -1005,6 +1120,43 @@ export function AppShell() {
                     <span className="text-text-faint">{c.hint}</span>
                   </button>
                 ))}
+              </div>
+            )}
+            {/* The conversation a reload, Home or Back left behind, one tap
+                from coming back. In the dock at every width, beside the
+                composer that would otherwise replace it, which the hint says
+                rather than letting a new question discard it unannounced. */}
+            {!hasMessages && saved && (
+              <div className="flex min-h-11 items-center gap-3 border-b border-line px-4 text-[14px] md:px-10 md:text-[13px]">
+                <button
+                  type="button"
+                  onClick={continueSaved}
+                  disabled={!hydrated}
+                  data-js-control
+                  className="flex min-h-[44px] min-w-0 touch-manipulation items-center gap-2 text-left text-text transition-colors hover:text-accent"
+                >
+                  <span aria-hidden="true" className="text-accent">
+                    ↩
+                  </span>
+                  <span className="min-w-0 truncate underline decoration-line-strong underline-offset-4">
+                    {CONTINUE_LABEL}
+                  </span>
+                  <span className="hidden shrink-0 text-text-faint sm:inline">
+                    · {questionCount(saved.messages.filter((m) => m.role === "user").length)}
+                  </span>
+                </button>
+                <span className="hidden min-w-0 truncate text-text-faint lg:inline">
+                  {CONTINUE_HINT}
+                </span>
+                <button
+                  type="button"
+                  onClick={clearSaved}
+                  data-js-control
+                  aria-label="Clear the saved conversation"
+                  className="ml-auto flex min-h-[44px] shrink-0 touch-manipulation items-center text-text-faint transition-colors hover:text-accent"
+                >
+                  {CLEAR_LABEL}
+                </button>
               </div>
             )}
             {/* From md up the chips sit here, over the composer — the whole
@@ -1061,7 +1213,10 @@ export function AppShell() {
                 // Disabled until hydration: the page can't send a question
                 // yet, and a field that can't be typed into can't fire an
                 // implicit submit on Enter.
-                disabled={!hydrated}
+                // Also off at the conversation cap, where the placeholder and
+                // the notice above say why: a field that takes a question it
+                // can't send is a dead end.
+                disabled={!hydrated || full}
                 // Phones and conversations get the short placeholder, which
                 // survives a 320px screen; the empty state on a desktop gets
                 // HERO_SUB. isMobile is settled by the time hydration lifts
@@ -1070,9 +1225,11 @@ export function AppShell() {
                 placeholder={
                   !hydrated
                     ? "Loading the conversation…"
-                    : hasMessages || isMobile
-                      ? "Ask a question"
-                      : HERO_SUB
+                    : full
+                      ? CONVERSATION_FULL_PLACEHOLDER
+                      : hasMessages || isMobile
+                        ? "Ask a question"
+                        : HERO_SUB
                 }
                 aria-label="Ask a question"
                 enterKeyHint="send"
@@ -1084,7 +1241,9 @@ export function AppShell() {
                 // composer is a full 48px tap target. max-h caps growth at
                 // eight lines and scrolls past that, so a long pasted posting
                 // doesn't swallow the conversation.
-                className="ml-2 max-h-[216px] min-h-[48px] min-w-0 flex-1 resize-none bg-transparent py-3 text-[16px] leading-[1.6] text-text outline-none placeholder:text-text-faint disabled:cursor-progress disabled:placeholder:text-text-dim md:text-[15px]"
+                className={`ml-2 max-h-[216px] min-h-[48px] min-w-0 flex-1 resize-none bg-transparent py-3 text-[16px] leading-[1.6] text-text outline-none placeholder:text-text-faint disabled:placeholder:text-text-dim md:text-[15px] ${
+                  full ? "disabled:cursor-not-allowed" : "disabled:cursor-progress"
+                }`}
               />
               {/* One send control at every width: bordered, labelled, 44px
                   tall and legible when disabled. my-1.5 centres it on the
@@ -1094,7 +1253,7 @@ export function AppShell() {
                 // Disabled until hydration, so a press before the JavaScript
                 // arrives shows it can't send yet rather than silently doing
                 // nothing.
-                disabled={!hydrated || !input.trim() || isBusy}
+                disabled={!hydrated || !input.trim() || isBusy || full}
                 className="-mr-1.5 my-1.5 ml-2 disabled:cursor-progress flex h-11 min-w-[44px] shrink-0 touch-manipulation items-center justify-center border border-line-strong bg-raised px-3 t-meta text-text-soft transition-colors hover:border-accent hover:text-accent disabled:border-line disabled:text-text-dim"
               >
                 send ↵
@@ -1180,9 +1339,9 @@ export function AppShell() {
                 // Desktop only; on a phone the index entry is the way in.
                 className="hidden md:flex"
               />
-              {hasMessages && (
-                <StripButton label="reset" emphasis={emphasis} onClick={reset} />
-              )}
+              {/* No "reset" here any more: the way out is Home in the
+                  conversation bar, and it keeps the conversation to continue
+                  rather than deleting it from the bottom corner. */}
             </div>
           </div>
         </main>

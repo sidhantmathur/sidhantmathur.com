@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { track } from "@/lib/analytics";
@@ -23,7 +23,9 @@ import {
 } from "@/lib/chat-telemetry";
 import { guardedFetch, INTERNAL_TOOLS, TurnFailure, type Budget } from "@/lib/chat-transport";
 import { activityOf, phaseOf } from "@/lib/turn-phase";
+import { MAX_USER_MESSAGES } from "@/lib/models";
 import { publishPhaseActivity } from "./phase-activity";
+import { isChatEntry, markEntry } from "./conversation-history";
 
 /** Re-exported from lib/chat-transport, where the fetch that reads it lives. */
 export type { Budget };
@@ -48,6 +50,40 @@ const RETIRED_STORAGE_KEYS = ["conversation.v1"];
 // Reading the clock is impure, and calling it inside a component body trips
 // react-hooks/purity even from an event handler.
 const nowMs = () => performance.now();
+
+// Whether the shell has already been on screen in this document. A reload or a
+// new visit starts false; a client-side return from /resume finds it true,
+// because the module outlives the route change. Set from the restore's
+// microtask rather than the effect body, so React's development double-run of
+// effects (whose first run is cancelled) can't set it early.
+let shownInThisDocument = false;
+
+/** A conversation that isn't on screen but can be brought back. */
+export type SavedConversation = {
+  messages: UIMessage[];
+  /** Whether it came from a link, which is never written to storage. */
+  replayed: boolean;
+};
+
+/**
+ * Ends on a question without a whole answer: nothing after it, nothing that
+ * renders, or an answer cut off mid-stream (left with Home, stopped, or the tab
+ * closed). The last is read off the turn's record, which carries usage or an
+ * error once the route's closing write lands and neither before it. A replay
+ * carries no record, so it is never read as cut off.
+ */
+function endsUnanswered(messages: UIMessage[]): boolean {
+  const last = messages[messages.length - 1];
+  if (!last) return false;
+  if (last.role === "user") return true;
+  if (!textOf(last) && toolOutputs(last).length === 0) return true;
+  const turn = last.parts.find((p) => p.type === "data-turn");
+  return turn != null && turn.data.usage == null && turn.data.error == null;
+}
+
+function userTurns(messages: UIMessage[]): number {
+  return messages.filter((m) => m.role === "user").length;
+}
 
 // Re-exported from ./panels for the components that get panel state from this
 // hook.
@@ -165,6 +201,12 @@ export function useConversation(model: string) {
   // True when this conversation came from a URL fragment rather than from this
   // browser. Drives the banner and switches persistence off.
   const [replayed, setReplayed] = useState(false);
+
+  // The conversation the front door offers to continue: the one in storage
+  // after a reload, or the one just left by Home. Not on screen, so a visitor
+  // who reloads or heads home lands on the front door, and one tap brings it
+  // back.
+  const [saved, setSaved] = useState<SavedConversation | null>(null);
 
   // The client's own stopwatch, kept so the record can carry both latencies.
   const clientTtft = useRef<number | null>(null);
@@ -284,24 +326,54 @@ export function useConversation(model: string) {
   const sentAt = useRef<number | null>(null);
   const sentCount = useRef(0);
 
+  // Put a conversation back on screen. One that ends on an unanswered question
+  // says so and offers to ask again, because the failure that left it there
+  // isn't saved. Past the cap there is nothing to retry; the shell's
+  // conversation-full notice covers it.
+  const show = useCallback(
+    (next: UIMessage[]) => {
+      setMessages(next);
+      if (endsUnanswered(next) && userTurns(next) <= MAX_USER_MESSAGES) {
+        setErrorKind("error");
+        setErrorClass("interrupted");
+      }
+    },
+    [setMessages],
+  );
+
   // Restore once, after mount. A permalink in the fragment wins over local
   // storage: someone who opened a link came to read that conversation.
+  //
+  // A stored conversation is not put back on screen. A reload, a new visit and
+  // a click on the name all land on the front door, which offers it as
+  // "continue". The one exception is coming back with Back from another page of
+  // the site, where the entry still says "chat" and the visitor expects to be
+  // where they left.
   useEffect(() => {
     let cancelled = false;
+    const returning = shownInThisDocument;
 
     function restoreLocal() {
-      let saved: UIMessage[] = [];
+      let stored: UIMessage[] = [];
       try {
         for (const key of RETIRED_STORAGE_KEYS) window.localStorage.removeItem(key);
         const raw = window.localStorage.getItem(STORAGE_KEY);
         const parsed = raw ? JSON.parse(raw) : null;
-        if (Array.isArray(parsed)) saved = parsed as UIMessage[];
+        if (Array.isArray(parsed)) stored = parsed as UIMessage[];
       } catch {
         /* unreadable / private mode — start fresh */
       }
       queueMicrotask(() => {
         if (cancelled) return;
-        if (saved.length) setMessages(saved);
+        shownInThisDocument = true;
+        if (returning && isChatEntry() && stored.length) {
+          show(stored);
+        } else {
+          if (stored.length) setSaved({ messages: stored, replayed: false });
+          // A reload keeps the entry's state, so one that said "chat" is
+          // relabelled to match the front door it now shows.
+          if (isChatEntry()) markEntry("home");
+        }
         setHydrated(true);
       });
     }
@@ -322,6 +394,7 @@ export function useConversation(model: string) {
         restoreLocal();
         return;
       }
+      shownInThisDocument = true;
       setReplayed(true);
       setMessages(
         restored.map((m, i) => ({
@@ -330,6 +403,9 @@ export function useConversation(model: string) {
           parts: m.parts,
         })) as unknown as UIMessage[],
       );
+      // A link opens as a conversation, so its entry says so. Home then pushes
+      // a front door on top of it, and Back returns to the replay.
+      markEntry("chat");
       setHydrated(true);
       track("chat_permalink_opened", { messages: restored.length });
     });
@@ -337,7 +413,7 @@ export function useConversation(model: string) {
     return () => {
       cancelled = true;
     };
-  }, [setMessages]);
+  }, [setMessages, show]);
 
   // Persist only once restore has run, so the empty first render can't wipe
   // the stored conversation before it's read back.
@@ -345,13 +421,14 @@ export function useConversation(model: string) {
   // A replayed conversation is never persisted: the reader may have their own
   // conversation in this browser, and a link they were sent must not overwrite
   // it. The replay lives in memory until the tab closes or they start afresh.
+  //
+  // An empty screen is the front door, not a deletion: leaving a conversation
+  // keeps it to continue. Only `clearSaved` and a new conversation remove it.
   useEffect(() => {
     if (!hydrated || replayed) return;
     try {
       if (messages.length) {
         window.localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
-      } else {
-        window.localStorage.removeItem(STORAGE_KEY);
       }
     } catch {
       /* private mode / quota — persistence is a nicety, never a hard dependency */
@@ -398,9 +475,18 @@ export function useConversation(model: string) {
     if (next) queueMicrotask(() => setPanel(next));
   }, [messages]);
 
+  // The route answers a question past the cap with the same 429 as a spent
+  // hourly budget, and the shell would show the budget's "wait an hour" state
+  // for something a new conversation fixes at once. So the cap is enforced
+  // here, before the request, and the shell says which limit it is.
+  const full = userTurns(messages) >= MAX_USER_MESSAGES;
+
   function submit(text: string) {
     const q = text.trim();
-    if (!q || isBusy) return;
+    if (!q || isBusy || full) return;
+    // A question from the front door starts a new conversation, which takes
+    // the saved one's place in storage. The front door says so beside it.
+    if (messages.length === 0) setSaved(null);
     setErrorKind("none");
     setErrorClass(null);
     sentAt.current = nowMs();
@@ -443,22 +529,51 @@ export function useConversation(model: string) {
     void regenerate({ body: { model } });
   }
 
-  function reset() {
+  /**
+   * Back to the front door. The conversation isn't deleted: it becomes the
+   * saved one the front door offers to continue. A turn in flight is stopped
+   * first, and continuing it later offers to ask that question again.
+   *
+   * Writes no history; the caller does, or the browser already has (Back).
+   * The address loses the panel's path and a permalink's fragment there, so a
+   * reload after leaving a replay opens the site rather than the link again.
+   */
+  const leave = useCallback(() => {
+    if (isBusy) stop();
+    if (messages.length) setSaved({ messages, replayed });
     setMessages([]);
     setPanel({ kind: "none" });
-    // Drops the fragment as well, so a reload after "start a fresh one" opens
-    // the site rather than replaying the link again.
-    if (replayed) {
-      setReplayed(false);
-      // Keeps the query, so a reset doesn't drop an application's ?ref=.
-      window.history.replaceState(null, "", window.location.pathname + window.location.search);
-    }
+    setReplayed(false);
     setErrorKind("none");
     setErrorClass(null);
     setTtft(null);
     setTurnLog([]);
     clientTtft.current = null;
     lastToolKey.current = "";
+  }, [isBusy, stop, messages, replayed, setMessages]);
+
+  /** The saved conversation, back on screen. Writes no history, as `leave`. */
+  const resume = useCallback(() => {
+    if (!saved) return;
+    setReplayed(saved.replayed);
+    show(saved.messages);
+    setSaved(null);
+  }, [saved, show]);
+
+  /**
+   * Forget the saved conversation. A replay was never stored, and the visitor's
+   * own conversation in storage is not the one they're clearing.
+   */
+  function clearSaved() {
+    if (!saved) return;
+    if (!saved.replayed) {
+      try {
+        window.localStorage.removeItem(STORAGE_KEY);
+      } catch {
+        /* nothing stored to remove */
+      }
+    }
+    setSaved(null);
   }
 
   return {
@@ -468,7 +583,13 @@ export function useConversation(model: string) {
     retry,
     /** Abort the turn in flight. Not treated as a failure. */
     stop,
-    reset,
+    leave,
+    resume,
+    clearSaved,
+    /** What the front door offers to continue, if anything. */
+    saved,
+    /** At the per-conversation question cap; `submit` refuses past it. */
+    full,
     isBusy,
     /** One line naming the step in flight, or null once prose is on screen. */
     phase: phaseOf(status, messages),

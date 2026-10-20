@@ -152,15 +152,18 @@ describe("the ref is never rendered", () => {
 
   test("no page or component interpolates anything from the address bar", () => {
     // The broader version of the rule: text taken from the URL is never
-    // rendered. location.search is read in exactly three places, none of
+    // rendered. location.search is read in exactly four places, none of
     // which renders it.
     const readers = SITE_SOURCES.filter((file) => /location\.search/.test(read(file))).sort();
     assert.deepEqual(readers, [
+      "components/shell/conversation-history.ts", // carried into Home's entry untouched
       "components/shell/use-conversation.ts", // ?simulate= → the chat endpoint
       "components/shell/use-panel-url.ts", // carried through pushState untouched
       "lib/analytics.ts", // the ref, to PostHog
     ]);
-    assert.doesNotMatch(read("components/shell/use-panel-url.ts"), /searchParams|URLSearchParams/);
+    for (const carrier of ["components/shell/use-panel-url.ts", "components/shell/conversation-history.ts"]) {
+      assert.doesNotMatch(read(carrier), /searchParams|URLSearchParams/);
+    }
   });
 });
 
@@ -217,8 +220,10 @@ describe("a pasted posting stays out of analytics", () => {
     );
   });
 
-  test("a reset keeps the query string", () => {
-    const src = read("components/shell/use-conversation.ts");
-    assert.match(src, /replaceState\(null, "", window\.location\.pathname \+ window\.location\.search\)/);
+  test("going home keeps the query string", () => {
+    // Home drops the panel's path and a permalink's fragment, and must not drop
+    // an application link's ?ref= with them.
+    const src = read("components/shell/conversation-history.ts");
+    assert.match(src, /pushState\(\{ shell: "home" \}, "", "\/" \+ window\.location\.search\)/);
   });
 });
