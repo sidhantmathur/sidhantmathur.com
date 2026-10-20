@@ -12,6 +12,7 @@ import {
 import {
   SIMULATABLE_CLASSES,
   TURN_FAILURES,
+  isSilentClass,
   turnErrorCopy,
   type TurnErrorClass,
 } from "@/lib/chat-telemetry";
@@ -161,8 +162,8 @@ export function InstrumentDeck({
           </select>
         </label>
         <p className="t-meta mt-2 text-text-faint">
-          Every model spends from the same hourly budget, so switching changes what the
-          meter below charges and nothing else. The id it runs under is{" "}
+          All models share one hourly budget, so switching only changes what the cost
+          meter below charges. The id it runs under is{" "}
           <span className="text-text-soft">{model}</span>.
         </p>
       </Section>
@@ -176,9 +177,9 @@ export function InstrumentDeck({
           <Seismograph rate={rate} settled={settled} width={120} height={22} />
         </div>
         <p className="t-meta mt-2 text-text-faint">
-          The live needle is sampled from the text as it arrives and marked{" "}
-          <span className="text-text-soft">≈</span>. The number without one is the
-          server&apos;s own measurement of the last finished turn.
+          While an answer streams, the rate is estimated from the incoming text and
+          marked <span className="text-text-soft">≈</span>. A number without the mark is
+          the server&apos;s measurement of the last finished turn.
         </p>
       </Section>
 
@@ -204,8 +205,9 @@ export function InstrumentDeck({
           teletype {teletype ? "on" : "off"}
         </button>
         <p className="t-meta mt-2 text-text-faint">
-          A tick per chunk of text, pitched to how fast it&apos;s arriving. Synthesized in
-          the browser, off until you switch it on, and remembered after that.
+          Plays a tick for each chunk of text, pitched higher when text arrives faster.
+          The sound is made in the browser. It&apos;s off by default, and this browser
+          remembers your setting.
         </p>
       </Section>
     </div>
@@ -320,15 +322,14 @@ function CostMeter({
 
       {!priced && (
         <p className="t-meta text-text-faint">
-          No list price on file for {model}, so its turns are left out of the total rather
-          than estimated.
+          No list price on file for {model}, so its turns aren&apos;t included in the total.
         </p>
       )}
 
       <p className="t-meta text-text-faint">
-        Estimated at published list price. The knowledge base is byte-identical on every
-        request, so once it is cached that part of the input bills at a fraction of the
-        fresh rate — the saving is the line above.
+        Estimated at published list prices. The knowledge base is identical on every
+        request, so once it&apos;s cached, that part of the input is billed at a fraction of
+        the normal rate. The difference is the &ldquo;saved by the cache&rdquo; row.
       </p>
       <p className="t-meta text-text-faint">
         Nothing you type is stored on the server. The conversation lives in this browser
@@ -353,7 +354,7 @@ function TraceInspector({ turnLog }: { turnLog: TurnRecord[] }) {
   if (!turnLog.length) {
     return (
       <p className="t-meta text-text-faint">
-        Nothing yet. Ask a question and every number behind the answer lands here.
+        After you ask a question, each turn&apos;s timing, tokens and cost show up here.
       </p>
     );
   }
@@ -463,8 +464,9 @@ function TraceInspector({ turnLog }: { turnLog: TurnRecord[] }) {
           );
         })}
       <p className="t-meta pt-1 text-text-faint">
-        Two latencies on purpose: the server measures the model, the browser measures the
-        wait. The gap between them is the network.
+        The server&apos;s ttft is how long the model took to start its output. The
+        browser&apos;s runs from when you pressed send until the first chunk of the response
+        arrived, which the route sends before the model starts.
       </p>
     </div>
   );
@@ -495,8 +497,8 @@ function CitationTrace({ answers }: { answers: string[] }) {
   if (!checks.some((c) => c.claims.length)) {
     return (
       <p className="t-meta text-text-faint">
-        Nothing checked yet. Every sentence that names a number or a proper noun is
-        checked against the source it cites, and lands here.
+        Nothing checked yet. Each sentence that names a number or a proper noun is
+        checked against the source it cites, and the results show up here.
       </p>
     );
   }
@@ -581,7 +583,14 @@ function FailureTheatre({ errorCopy }: { errorCopy: ErrorCopy }) {
         status: res.status,
         // The same copy the conversation shows. Rate limiting is the exception:
         // the conversation renders ManualMode for it, and this is its headline.
-        shown: cls === "rate_limited" ? errorCopy.rateLimited : turnErrorCopy(cls),
+        // A silent class (`aborted`) shows nothing, so say that rather than
+        // print the generic sentence it would fall back to.
+        shown:
+          cls === "rate_limited"
+            ? errorCopy.rateLimited
+            : isSilentClass(cls)
+              ? "(no message for a stopped turn)"
+              : turnErrorCopy(cls),
         raw: elide(text),
       });
     } catch (err) {
@@ -601,9 +610,9 @@ function FailureTheatre({ errorCopy }: { errorCopy: ErrorCopy }) {
   return (
     <div className="space-y-3">
       <p className="t-meta text-text-faint">
-        Every way this site can fail, on demand. Each button takes the real exit in the
-        chat route — no model is called, no budget is spent, and nothing here can produce
-        an answer.
+        Each button triggers one of the chat route&apos;s failures, using the same exit the
+        real failure takes. No model is called, your hourly budget isn&apos;t used, and the
+        request can&apos;t return an answer.
       </p>
       <div className="space-y-1">
         {FAILURES.map((f) => (
@@ -630,7 +639,7 @@ function FailureTheatre({ errorCopy }: { errorCopy: ErrorCopy }) {
           <Row label="http status" value={String(result.status)} />
           <div className="pt-1 text-[12px] text-text-faint">what you would have seen</div>
           <p className="t-meta text-text-soft">{result.shown}</p>
-          <div className="pt-1 text-[12px] text-text-faint">what came over the wire</div>
+          <div className="pt-1 text-[12px] text-text-faint">what came back</div>
           <pre className="overflow-x-auto bg-raised p-2 text-[12px] leading-relaxed text-text-soft">
             {result.raw || "(empty body)"}
           </pre>

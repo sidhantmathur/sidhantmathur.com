@@ -46,7 +46,7 @@ export function looksLikeSiteQuestion(text: string): boolean {
  * because without them the model produces affectionate nonsense.
  */
 export const ROAST_REQUEST =
-  "Roast this site. Use the repo — name the specific choices, files and trade-offs that are actually weak, not the flattering kind of criticism.";
+  "Roast this site using the repo. Name the specific choices, files and trade-offs that are weak, and don't go easy on it.";
 
 /** The message `/site` sends. */
 export const SITE_REQUEST =

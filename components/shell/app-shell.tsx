@@ -31,7 +31,7 @@ import { PhaseLine } from "./phase-line";
 import { AmbientBackdrop } from "./ambient-backdrop";
 import { TurnError } from "./turn-error";
 import { conversationToMarkdown, latestRoleFit, messageToMarkdown } from "@/lib/transcript";
-import { JD_PREFIX } from "@/lib/job-posting";
+import { isJdPrefix } from "@/lib/job-posting";
 import { permalinkFor } from "@/lib/permalink";
 import {
   DISCLAIMER,
@@ -124,15 +124,15 @@ const HERO_SUB = "Ask what you'd ask on a call";
 // lib/site.ts travels with exports.
 const DISCLAIMER_SHORT = "AI answers can be wrong.";
 const DISCLAIMER_LONG =
-  "Answers cite their sources and can be wrong — the resume is the authoritative version.";
+  "Answers cite their sources but can be wrong. The resume is the authoritative version.";
 // Per-class error copy lives in lib/chat-telemetry.ts, rendered by TurnError.
 const RATE_LIMIT_STATE =
-  "You've hit the message limit for now — the resume has everything in the meantime.";
+  "You've hit the message limit for now. The resume has everything in the meantime.";
 // Says three things, all checkable in this repo: this is a replay, it was
 // rebuilt from the link rather than fetched from a server, and it stopped
 // being live when it was made.
 const REPLAY_BANNER =
-  "Replayed conversation. It was rebuilt from the link you opened — the site stored nothing, and this is a snapshot of what the model said then, not a live session.";
+  "Replayed conversation, rebuilt from the link you opened. The site stored nothing. This is a snapshot of what the model said at the time, not a live session.";
 // A fit check is sent to people who have never seen the site
 // (docs/application-links.md), so a replayed one says what it is first. Both
 // claims are enforced by lib/role-fit.ts: a match without a source is
@@ -142,7 +142,7 @@ const REPLAY_FIT_LINE =
 // Only when the posting really was left out, as it is in every link
 // lib/transcript.ts (toSnapshot) builds now; older links carry it.
 const REPLAY_POSTING_LEFT_OUT =
-  "The posting itself is left out of the link; the table quotes the requirements it judged.";
+  "The link leaves out the posting. Each requirement in the table is quoted from it.";
 
 // How long a turn runs before the shell offers to abandon it. Roughly double a
 // normal answer's wait — early enough to be a rescue, late enough not to be a
@@ -187,7 +187,7 @@ export function AppShell() {
   // the link, so it's true of whatever arrived.
   const replayedFit = replayed && latestRoleFit(messages) != null;
   const postingLeftOut =
-    replayedFit && messages.some((m) => m.role === "user" && textOf(m).trim() === JD_PREFIX);
+    replayedFit && messages.some((m) => m.role === "user" && isJdPrefix(textOf(m)));
 
   // ---- Instruments ---------------------------------------------------------
   //

@@ -83,7 +83,7 @@ export const TURN_FAILURES = {
     rateLimit: false,
     label: "bad request",
     copy: "That message couldn't be sent as written. Try shortening it.",
-    cause: "The request body failed schema validation — a bad client, not a bad model.",
+    cause: "The request body failed schema validation before any model was called.",
     wire: "400, JSON body",
   },
   rate_limited: {
@@ -108,8 +108,8 @@ export const TURN_FAILURES = {
     silent: false,
     rateLimit: false,
     label: "misconfigured",
-    copy: "The chat backend is misconfigured — this one is on me, not you.",
-    cause: "No gateway key on the server. A deploy problem, checked before the model is called.",
+    copy: "The chat server is misconfigured. Your message is fine.",
+    cause: "The server has no gateway key. It's a deploy problem, caught before any model is called.",
     wire: "502, JSON body",
   },
   upstream_auth: {
@@ -121,9 +121,9 @@ export const TURN_FAILURES = {
     silent: false,
     rateLimit: false,
     label: "misconfigured",
-    copy: "The chat backend is misconfigured — this one is on me, not you.",
+    copy: "The chat server is misconfigured. Your message is fine.",
     cause:
-      "The gateway rejected our credentials. It surfaces mid-stream, which is why the key is checked up front.",
+      "The gateway rejected the server's key. That only shows up mid-stream, which is why the route checks for the key up front.",
     wire: "200, error chunk",
   },
   upstream_timeout: {
@@ -135,8 +135,8 @@ export const TURN_FAILURES = {
     silent: false,
     rateLimit: false,
     label: "server timeout",
-    copy: "The server stopped responding partway through. Give it another try.",
-    cause: "The model took too long, or the connection dropped part-way through an answer.",
+    copy: "The server took too long to respond. Give it another try.",
+    cause: "The model took too long to respond, or the answer stopped arriving partway through.",
     wire: "200, error chunk",
   },
   upstream_unavailable: {
@@ -148,8 +148,8 @@ export const TURN_FAILURES = {
     silent: false,
     rateLimit: false,
     label: "upstream",
-    copy: "Something went wrong on my end. Give it another try in a moment.",
-    cause: "The gateway or the model itself failed.",
+    copy: "Something went wrong on the server. Give it another try in a moment.",
+    cause: "The gateway or the model failed.",
     wire: "200, error chunk",
   },
   /**
@@ -170,9 +170,9 @@ export const TURN_FAILURES = {
     silent: false,
     rateLimit: false,
     label: "no answer",
-    copy: "The model ran out of room before it got to an answer. That's a limit on my end, not a problem with your question.",
+    copy: "The model hit the site's output limit before it got to an answer. There's nothing wrong with your question.",
     cause:
-      "A reasoning model spent its whole output budget thinking and finished with no text and no tool output.",
+      "A reasoning model spent its whole output limit thinking and finished with no text and no tool output.",
     wire: "200, finishes empty",
   },
   /**
@@ -204,7 +204,7 @@ export const TURN_FAILURES = {
     rateLimit: false,
     label: null,
     copy: null,
-    cause: "The reader navigated away or hit stop. Not a failure to report as one.",
+    cause: "The visitor left the page or pressed stop, so the chat shows nothing.",
     wire: "200, error chunk",
   },
   unknown: {
@@ -216,8 +216,8 @@ export const TURN_FAILURES = {
     silent: false,
     rateLimit: false,
     label: "unknown",
-    copy: "Something went wrong on my end. Give it another try in a moment.",
-    cause: "Classification fell through. Always worth reading the server log for.",
+    copy: "Something went wrong. Give it another try in a moment.",
+    cause: "The error didn't match any other class. The details are in the server log.",
     wire: "200, error chunk",
   },
 } as const satisfies Record<string, FailureSpec>;

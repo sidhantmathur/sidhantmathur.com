@@ -115,7 +115,7 @@ export const PANELS = {
   export: {
     title: "Export",
     path: null,
-    slash: { name: "/pdf", hint: "Export — markdown, print, link" },
+    slash: { name: "/pdf", hint: "Export as markdown, PDF or a link" },
     fromTool: null,
     stealable: true,
     surface: "shell",

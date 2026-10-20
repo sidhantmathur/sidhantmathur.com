@@ -14,7 +14,22 @@
 
 /** Prepended by the paste-a-JD panel. Shared so the two can't drift. */
 export const JD_PREFIX =
-  "Here's a job description. Map my experience onto it, and be straight about where I don't match.";
+  "Here's a job description. Where does Sidhant match it, and where doesn't he?";
+
+/** Earlier wordings of JD_PREFIX. Fit links already sent (docs/application-links.md) carry them. */
+export const LEGACY_JD_PREFIXES: readonly string[] = [
+  "Here's a job description. Map my experience onto it, and be straight about where I don't match.",
+];
+
+const JD_PREFIXES = [JD_PREFIX, ...LEGACY_JD_PREFIXES];
+
+/**
+ * Whether a turn is the paste panel's request line and nothing else, in any
+ * wording it has had: the shape a posting turn takes in a permalink.
+ */
+export function isJdPrefix(text: string): boolean {
+  return JD_PREFIXES.includes(text.trim());
+}
 
 /**
  * The longest user turn the chat route accepts, in characters. A whole posting
@@ -133,7 +148,7 @@ export function wrapPosting(text: string): string {
 export function looksLikeJobPosting(text: string): boolean {
   const t = text.trim();
   if (!t) return false;
-  if (t.startsWith(JD_PREFIX)) return true;
+  if (JD_PREFIXES.some((p) => t.startsWith(p))) return true;
   if (t.length < MIN_POSTING_CHARS) return false;
   let hits = 0;
   for (const signal of SIGNALS) {
