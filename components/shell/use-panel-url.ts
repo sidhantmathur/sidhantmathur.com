@@ -6,24 +6,17 @@ import { PANEL_BY_PATH, PANELS, type PanelView } from "./panels";
 
 // Keeps the context panel and the address bar in sync.
 //
-// WHY NOT INTERCEPTING ROUTES. The plan called for Next's parallel +
-// intercepting routes (the Instagram photo-modal pattern). They're the right
-// tool when a route is the ONLY thing that opens the surface. Here it isn't:
-// the panel is also opened by tool calls mid-conversation (a citation, a
-// role-fit breakdown) which have no URL and never should. Driving one surface
-// from both a route slot and client state means two sources of truth for
-// "what is the panel showing", and they drift.
-//
-// So the panel stays client state — one owner — and the URL follows it via
-// history.pushState, which the App Router supports without triggering a
-// navigation or unmounting the shell. The result is the same for a visitor:
-// no page load, a shareable address, working back button. And a direct hit or
-// a crawler still gets the real server-rendered page at that URL, because
-// those routes are untouched.
+// Not parallel/intercepting routes: those suit a surface that only a route
+// opens, and this panel is also opened by tool calls mid-conversation, which
+// have no URL. A route slot plus client state would be two sources of truth
+// for what the panel shows. So the panel is client state and the URL follows
+// it via history.pushState, which the App Router allows without a navigation
+// or unmounting the shell. A direct hit still gets the server-rendered page at
+// that URL.
 
-// Both directions read the registry's `path`. The one panel it can't describe
-// is `project`, whose address depends on which project — so the slug's own
-// route is built here, and the registry says `path: null` for that kind.
+// `project` is the one kind with an address the registry can't state, since it
+// depends on the slug. The registry says `path: null` and the route is built
+// here.
 const PROJECT_PATH = /^\/projects\/(adarle20|nokia|dell-ml)$/;
 
 /** The panel view a given path represents, if any. */
@@ -40,17 +33,11 @@ function pathForPanel(panel: PanelView): string | null {
 }
 
 /**
- * The address a panel state should show, keeping any query and fragment.
- *
- * THE FRAGMENT IS THE CONVERSATION (Sprint 5, #18). `pushState(null, "", "/")`
- * drops the hash, so opening a panel while reading a permalink used to erase
- * the very thing being read — invisibly, and only discoverable by reloading.
- *
- * THE QUERY IS WHO SENT THE LINK. It used to be dropped the same way, and a
- * replayed fit check opens its panel the moment it loads, so an application
- * link's `?ref=` (lib/analytics.ts) was gone from the address within
- * milliseconds — before analytics had read it. The panel owns the path; it has
- * no opinion about the query or the fragment.
+ * The address a panel state should show. The panel owns the path only; the
+ * query and fragment are kept. The fragment is a permalinked conversation, and
+ * the query carries an application link's `?ref=` (lib/analytics.ts), which a
+ * replayed fit check would otherwise drop by opening its panel on load, before
+ * analytics has read it.
  */
 export function panelHref(panel: PanelView, hash: string, search = ""): string {
   return (pathForPanel(panel) ?? "/") + search + hash;

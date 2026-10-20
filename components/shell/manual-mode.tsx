@@ -4,30 +4,17 @@ import { CHUNKS } from "@/lib/chunks.generated";
 import type { PanelView } from "./use-conversation";
 import { ActionLink } from "./action-link";
 
-// Manual mode (roadmap Sprint 7, #15 — "meet the cached me on rate limit").
+// Manual mode: what a visitor sees once the hourly budget is spent
+// (docs/idea-decisions.md #15).
 //
-// A visitor who spends the hourly budget used to get one grey sentence and a
-// dead input box. That is the only state on this site where the thing the site
-// is FOR stops working, and it was the least considered screen in the build.
-//
-// WHAT THIS IS NOT: a cached model, a canned personality, or a set of answers
-// written in Sidhant's voice for a moment when he can't be asked. Writing "what
-// he would have said" is exactly the invention the copy rule exists to prevent,
-// and a fake assistant is a worse experience than an honest absence.
-//
-// WHAT IT IS: the corpus, by hand. Every answer below is a chunk of the same
-// knowledge base the model was reading a minute ago, rendered verbatim, with
-// the ids it would have cited. No model runs, no token is spent, and the
-// material is identical — what is missing is the part that picks which piece
-// answers your question, which is the part you now do yourself.
-//
-// Chunks carrying an unresolved [TODO are held back: the knowledge base is
-// allowed to have holes in it, and a hole is not an answer.
+// It is the corpus by hand, not a cached model or canned answers in Sidhant's
+// voice; writing what he would have said is the invention the copy rule
+// forbids. Each answer is a knowledge-base chunk rendered verbatim with the id
+// the model would have cited. No model runs and no token is spent. FAQ chunks
+// still carrying an unresolved to-do marker are held back.
 
-// `headline` is not here: it is the rate-limit line from docs/site-copy.md,
-// passed in by the shell. That sentence already promised the reader the resume
-// has everything in the meantime — this component is that promise kept, so it
-// would be strange for it to say something else first.
+// The headline is the shell's rate-limit line, passed in, which already points
+// the reader at the resume; this component follows through on it.
 const MANUAL_COPY = {
   body:
     "Nothing is broken and nothing is lost — the limit is per IP and refills on a sliding hour, so the assistant comes back on its own. In the meantime, here is the same material it was reading, by hand: these are the source files the answers are built from, quoted rather than summarized.",

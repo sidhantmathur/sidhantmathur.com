@@ -21,33 +21,21 @@ import { verifyAnswer, type Claim } from "@/lib/verify";
 import type { Budget, TurnRecord } from "./use-conversation";
 import type { TokenRate } from "./use-token-rate";
 
-// The instrument deck (roadmap Sprint 2: #1 cost meter, #3 glass-box trace,
-// #5 seismograph, #6 failure theatre, #16 teletype toggle).
+// The instrument deck: model picker, cost meter, tokens-per-second seismograph,
+// per-turn trace, citation trace, failure theatre and teletype toggle.
 //
-// WHERE THIS LIVES, AND WHY IT ISN'T IN THE CONVERSATION. The decisions doc's
-// instrumentation policy is the constraint every choice here answers to:
-// density is a legitimate aesthetic on this site, but it lives AROUND the
-// conversation and never in front of it, and a visitor who ignores every
-// readout still has a working chatbot. So:
-//
-//   * The always-visible half is one line in the status strip — turns used
-//     and what the last answer cost (wave 2; it was four readouts, a rate
-//     needle and the model picker, which pushed the nav out of the header).
-//     Nothing new appears in the message column, and nothing pushes the
-//     answer down the page.
-//   * The dense half opens in the existing context panel, on a deliberate
-//     click, next to the conversation rather than over it. It is the same
-//     surface the resume and the role-fit breakdown already use.
-//   * Nothing in here adds a step, a mode, or a decision to asking a question.
-//     Every control is idempotent and every readout is passive. The one thing
-//     that makes a network request (failure theatre) cannot produce an answer,
-//     cannot spend the budget, and reports into its own box.
-//
-// The numbers are F1's, unchanged. Sprint 1 measured all of this and rendered
-// none of it; this file is the other half of that sentence.
+// WHERE THIS LIVES is the constraint every choice here answers to. The
+// instrumentation policy in docs/idea-decisions.md §4 puts density around the
+// conversation, never in front of it, so a visitor who ignores every readout
+// still has a working chatbot. The always-visible part is one line in the
+// status strip (turns used and what the last answer cost). The rest opens in
+// the context panel on a deliberate click, beside the conversation rather than
+// over it. Every control is idempotent and every readout passive; the one
+// control that makes a request, failure theatre, cannot produce an answer or
+// spend the budget, and reports into its own box.
 
 // ---------------------------------------------------------------------------
-// Seismograph (#5)
+// Seismograph
 // ---------------------------------------------------------------------------
 
 /**
@@ -81,11 +69,10 @@ export function Seismograph({
         .join(" ")
     : `0,${height} ${width},${height}`;
 
-  // The TRACE draws raw samples — the gaps between chunks are the interesting
-  // part and smoothing them away would be a lie about what arrived when. The
-  // READOUT is averaged over the last few samples, because a number that snaps
-  // to zero every time a chunk boundary lands between two samples is unreadable
-  // and says nothing true either.
+  // The trace draws raw samples: the gaps between chunks are the interesting
+  // part, and smoothing them away would misreport what arrived when. The
+  // readout averages the last few samples, because a number that snaps to zero
+  // whenever a chunk boundary falls between two samples is unreadable.
   const recent = samples.slice(-4);
   const smoothed = recent.length ? recent.reduce((a, b) => a + b, 0) / recent.length : 0;
   const reading =
@@ -119,9 +106,8 @@ export function Seismograph({
 // The deck
 // ---------------------------------------------------------------------------
 
-// Only the rate-limit headline travels in from the shell now. Every other class
-// has a sentence of its own in `lib/chat-telemetry.ts`, which the deck reads
-// directly — there is nothing left for a generic `error` string to be.
+// Only the rate-limit headline comes from the shell. Every other class has its
+// own sentence in `lib/chat-telemetry.ts`, which the deck reads directly.
 export type ErrorCopy = { rateLimited: string };
 
 export function InstrumentDeck({
@@ -139,7 +125,7 @@ export function InstrumentDeck({
   turnLog: TurnRecord[];
   budget: Budget | null;
   model: string;
-  /** Selects who answers the next question. The picker lives here since wave 2. */
+  /** Selects who answers the next question. */
   onModelChange: (model: string) => void;
   hydrated: boolean;
   rate: TokenRate;
@@ -152,11 +138,8 @@ export function InstrumentDeck({
   const settled = lastSettledRate(turnLog);
   return (
     <div className="space-y-6">
-      {/* The model picker, moved out of the header in wave 2. It sat in the
-          status strip as a select of raw Gateway ids, which is the first
-          thing a recruiter met after asking a question and the thing that
-          pushed the nav out. Here it is beside the meter it changes, under
-          the names people call these models. */}
+      {/* Beside the meter it changes, under the names people call these
+          models rather than raw Gateway ids. */}
       <Section title="Model" hint="for the next question">
         <label className="flex flex-col gap-1.5">
           <span className="sr-only">Model</span>
@@ -274,13 +257,12 @@ function Row({
 }
 
 // ---------------------------------------------------------------------------
-// Cost meter (#1)
+// Cost meter
 // ---------------------------------------------------------------------------
 
 /**
- * The single home for everything budget-related, which is what the decisions
- * doc asked for: the turn counter, the hourly allowance, the dollars, and the
- * privacy framing all land here rather than becoming four separate surfaces.
+ * The one home for everything budget-related: the hourly allowance, the answer
+ * count, the dollars and the privacy note, rather than four separate surfaces.
  */
 function CostMeter({
   turnLog,
@@ -358,13 +340,12 @@ function CostMeter({
 }
 
 // ---------------------------------------------------------------------------
-// Glass box (#3)
+// Glass box
 // ---------------------------------------------------------------------------
 
 /**
- * Per-turn trace. The status strip asserts that this site is cost- and
- * latency-engineered; this is where that claim is checkable — including the two
- * latencies, which are deliberately not reconciled into one number.
+ * Per-turn trace: every number recorded for each turn, including the two
+ * latencies, which are deliberately not reconciled into one.
  */
 function TraceInspector({ turnLog }: { turnLog: TurnRecord[] }) {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
@@ -405,25 +386,18 @@ function TraceInspector({ turnLog }: { turnLog: TurnRecord[] }) {
                 </span>
                 <span className="shrink-0 text-text-faint">{open ? "−" : "+"}</span>
               </button>
-              {/* Opens by animating grid-template-rows from 0fr to 1fr, the one
-                  structural trick worth taking from beautiful-ui. A row's detail
-                  is twenty-odd lines of variable height, so the alternatives are
-                  a hard mount (what this was — the panel below it jumps by a few
-                  hundred pixels in one frame) or measuring the content and
-                  animating an explicit height, which needs a ref, a
-                  ResizeObserver and a re-measure whenever a number changes
-                  underneath it. This needs none of that and never has a wrong
-                  height, because the browser resolves 1fr against the real
-                  content on every frame.
-                  The inner overflow-hidden is load-bearing: without it the
-                  content spills out of the 0fr row instead of being clipped by
-                  it, and the row never appears to close. */}
+              {/* Opens by animating grid-template-rows from 0fr to 1fr (see
+                  docs/beautiful-ui-port.md). The detail is twenty-odd lines of
+                  variable height; a hard mount makes the panel below jump, and
+                  animating a measured height needs a ref and a ResizeObserver.
+                  The browser resolves 1fr against the real content on every
+                  frame, so the height is never wrong. The inner overflow-hidden
+                  is load-bearing: without it the content spills out of the 0fr
+                  row and the row never appears to close. */}
               <div
-                // The row is clipped, not unmounted, so without this the
-                // collapsed detail is still in the accessibility tree and still
-                // tabbable — a screen reader would read twenty rows of numbers
-                // out of a control reporting aria-expanded="false", and the raw
-                // record's <summary> would take a tab stop inside it.
+                // Clipped, not unmounted, so without `inert` the collapsed
+                // detail would stay in the accessibility tree and the tab order
+                // under a control reporting aria-expanded="false".
                 inert={!open}
                 className="grid transition-[grid-template-rows,opacity] duration-300 ease-(--ease-out-strong)"
                 style={{ gridTemplateRows: open ? "1fr" : "0fr", opacity: open ? 1 : 0 }}
@@ -432,9 +406,9 @@ function TraceInspector({ turnLog }: { turnLog: TurnRecord[] }) {
                 <div className="space-y-1 border-t border-line px-2 py-2">
                   <Row label="model" value={turn.model} />
                   <Row label="job posting" value={turn.jobPosting ? "yes" : "no"} />
-                  {/* The only per-turn change to the system prompt on this
-                      site, and therefore the only honest explanation for an
-                      input count that doesn't match the turn above it. */}
+                  {/* The only per-turn change to the system prompt, so the
+                      only explanation for an input count that differs from
+                      the turn before. */}
                   <Row
                     label="corpus"
                     value={turn.siteQuestion ? "knowledge + repo" : "knowledge"}
@@ -497,7 +471,7 @@ function TraceInspector({ turnLog }: { turnLog: TurnRecord[] }) {
 }
 
 // ---------------------------------------------------------------------------
-// Citation trace (wave 2)
+// Citation trace
 // ---------------------------------------------------------------------------
 
 const VERDICT_LABEL: Record<Claim["verdict"], string> = {
@@ -509,12 +483,9 @@ const VERDICT_LABEL: Record<Claim["verdict"], string> = {
 
 /**
  * Every checked sentence of every answer, with the tokens behind its verdict.
- *
- * This is where the per-token detail went when the answer's own marks were
- * quietened (council review, 2026-10-19). Under an answer, a mis-citation is
- * one faint line; here it is the sentence, the tokens the cited chunk lacked,
- * and the chunks that do hold them — the same check, read out in full for the
- * visitor who wants to audit it.
+ * Under an answer a mis-citation is one faint line; here it is the sentence,
+ * the tokens the cited chunk lacked and the chunks that do hold them, for the
+ * visitor who wants to audit the check.
  */
 function CitationTrace({ answers }: { answers: string[] }) {
   const checks = useMemo(
@@ -569,20 +540,17 @@ function CitationTrace({ answers }: { answers: string[] }) {
 }
 
 // ---------------------------------------------------------------------------
-// Failure theatre (#6)
+// Failure theatre
 // ---------------------------------------------------------------------------
 
-// One button per exit in app/api/chat/route.ts, read straight off the shared
-// table in lib/chat-telemetry.ts rather than mirrored here — the deck used to
-// keep its own prose copy of the route's exits, and the two drifted. The split
-// between the first three and the rest is the interesting part: an early
-// failure is a status code, a late one is an HTTP 200 whose stream ends in an
-// error chunk, and a client that only checked `res.ok` would call the second
-// kind a success.
+// One button per exit in app/api/chat/route.ts, read off the shared table in
+// lib/chat-telemetry.ts rather than restated here. The first three are early
+// failures with a status code; the rest are an HTTP 200 whose stream ends in an
+// error chunk, which a client checking only `res.ok` would call a success.
 //
-// The filter is on `simulatable`, which is how `network` stays out: it is
-// raised in the browser before a request exists, so there is no server exit for
-// a button to take. The catch block in `run` below is where it does appear.
+// The `simulatable` filter leaves out `network`: it is raised in the browser
+// before a request exists, so there is no server exit to take. It appears in
+// the catch block in `run` below instead.
 const FAILURES = SIMULATABLE_CLASSES.map((cls) => ({ cls, ...TURN_FAILURES[cls] }));
 
 type FailureResult = {
@@ -611,10 +579,8 @@ function FailureTheatre({ errorCopy }: { errorCopy: ErrorCopy }) {
       setResult({
         cls,
         status: res.status,
-        // Each class has its own sentence now, so the deck reads the same map
-        // the conversation does rather than showing one string for eight
-        // outcomes. Rate limiting is still the exception: it doesn't render a
-        // sentence at all, it renders ManualMode, and this is the headline.
+        // The same copy the conversation shows. Rate limiting is the exception:
+        // the conversation renders ManualMode for it, and this is its headline.
         shown: cls === "rate_limited" ? errorCopy.rateLimited : turnErrorCopy(cls),
         raw: elide(text),
       });
@@ -622,8 +588,8 @@ function FailureTheatre({ errorCopy }: { errorCopy: ErrorCopy }) {
       setResult({
         cls,
         status: 0,
-        // The button itself couldn't reach the server, which is the one class
-        // the route can never simulate because it happens before the route.
+        // The button itself couldn't reach the server: the one class the route
+        // can't simulate, because it happens before the route.
         shown: turnErrorCopy("network"),
         raw: err instanceof Error ? err.message : "network error",
       });
@@ -678,8 +644,8 @@ function FailureTheatre({ errorCopy }: { errorCopy: ErrorCopy }) {
 
 /**
  * Trims a response body down to something readable in a 380px panel without
- * cutting the interesting end off. A streamed failure puts its error chunk LAST,
- * so a plain head-truncation would show everything except the point.
+ * cutting the interesting end off. A streamed failure puts its error chunk
+ * last, so a plain head-truncation would show everything except the point.
  */
 function elide(body: string, keep = 2): string {
   const lines = body.trim().split("\n").filter(Boolean);
@@ -700,7 +666,7 @@ export function lastSettledRate(turnLog: TurnRecord[]): number | null {
   return null;
 }
 
-/** `anthropic/claude-haiku-4.5` → `claude-haiku-4.5`, for the one-line rows. */
+/** `openai/gpt-6-luna` → `gpt-6-luna`, for the one-line rows. */
 function shortModel(model: string): string {
   return model.split("/").pop() ?? model;
 }

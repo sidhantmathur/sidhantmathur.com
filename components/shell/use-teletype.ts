@@ -2,24 +2,17 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
-// Teletype audio (roadmap Sprint 2, #16) — a soft tick as tokens arrive,
-// pitch-mapped to the arrival rate. Synthesized with Web Audio: no audio files,
-// no dependency, nothing added to the bundle but this file.
+// Teletype audio (docs/idea-decisions.md #16): a soft tick as tokens arrive,
+// pitch-mapped to the arrival rate, synthesized with Web Audio.
 //
-// OFF BY DEFAULT, and that is a hard requirement rather than a preference: a
-// page that makes noise on its own is the single most hostile thing a portfolio
-// can do. The AudioContext is not even constructed until the toggle is switched
-// on, which also happens to be what browsers require — a context created
-// outside a user gesture starts suspended and stays silent anyway.
-//
-// The preference persists, so someone who turned it on doesn't have to keep
-// turning it on. It still starts `false` on the server and on the first client
-// render — restoring it after mount rather than during render is the same
-// hydration rule the rest of the shell follows.
+// Off by default, and the AudioContext isn't constructed until the toggle is
+// switched on; browsers start a context created outside a user gesture
+// suspended anyway. The preference persists, but is restored after mount so
+// the server render and the first client render agree.
 
 const STORAGE_KEY = "teletype.v1";
 
-/** Ticks per second ceiling. Faster than this stops reading as a teletype. */
+/** Minimum gap between ticks. Faster than this stops reading as a teletype. */
 const MIN_TICK_MS = 45;
 const VOLUME = 0.035;
 
@@ -66,9 +59,9 @@ export function useTeletype(text: string, isBusy: boolean) {
         /* persistence is a nicety */
       }
       if (next && !ctxRef.current) {
-        // Constructed inside the click handler, which is the gesture browsers
-        // want. A single confirming tick doubles as proof it works — otherwise
-        // switching it on between turns appears to do nothing.
+        // Constructed inside the click handler, the gesture browsers require.
+        // The confirming tick below shows it works when switched on between
+        // turns.
         const Ctor =
           window.AudioContext ??
           (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
@@ -79,8 +72,8 @@ export function useTeletype(text: string, isBusy: boolean) {
     });
   }, [tick]);
 
-  // The ticker itself. Driven by text length rather than by a timer, so the
-  // sound tracks actual chunk arrival — including the gaps.
+  // Driven by text length rather than a timer, so the sound tracks actual
+  // chunk arrival, gaps included.
   useEffect(() => {
     if (!enabled || !isBusy) {
       lastLengthRef.current = text.length;
@@ -95,7 +88,6 @@ export function useTeletype(text: string, isBusy: boolean) {
     tick(delta);
   }, [text, enabled, isBusy, tick]);
 
-  // Release the audio hardware when the shell unmounts.
   useEffect(() => {
     return () => {
       void ctxRef.current?.close();

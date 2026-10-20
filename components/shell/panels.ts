@@ -1,24 +1,13 @@
-// What a panel is, said once.
+// The panel registry: one record per kind of context panel, carrying its
+// title, address, slash command, the tool that opens it and who draws it.
+// `PanelKind` is the table's keys, so every map derived from it is exhaustive
+// and a kind that isn't in the table can't be named anywhere.
 //
-// "A panel" used to be nine separate facts kept in agreement by hand: the
-// discriminated union in use-conversation.ts, a structural mirror of half of it
-// in shell-data.ts, a third copy of the kind names inside SLASH_COMMANDS, a
-// title switch, a path map plus its inverse, a tool-output map, a dispatch in
-// app-shell.tsx, and a carve-out naming `instruments` as the one panel a tool
-// may not steal. Adding a tool to the chat touched eight files, five of them
-// only to re-enumerate the kinds — and a typo in the slash registry opened
-// nothing, silently, because nothing type-checked the string.
-//
-// PANELS below is now the table. `PanelKind` is its keys, so every downstream
-// map is exhaustive by construction and a kind that isn't in the table cannot
-// be named anywhere.
-//
-// NO REACT, NO `.tsx`, AND NO RUNTIME `@/` IMPORTS IN THIS FILE. evals/ loads
-// it directly under `node --test --experimental-strip-types`, which resolves
-// neither JSX nor the tsconfig path alias. The two imports here are `import
-// type`, which strip-types erases entirely. The rendering half of the registry
-// — which lazy component draws which panel — deliberately stays in
-// app-shell.tsx: see `surface` below.
+// No React, no `.tsx` and no runtime `@/` imports in this file: evals/ loads it
+// directly under `node --test --experimental-strip-types`, which resolves
+// neither JSX nor the tsconfig path alias. The two imports here are
+// `import type`, which strip-types erases. Which lazy component draws which
+// panel stays in app-shell.tsx; see `surface` below.
 
 import type { ProjectSlug } from "@/content/projects";
 import type { RoleFitResult } from "@/lib/role-fit";
@@ -42,9 +31,8 @@ export type PanelSpec = {
   fromTool: string | null;
   /**
    * False when a tool call may not replace this panel while it is open. Only
-   * the instrument deck says false: it is opened deliberately, and having an
-   * answer yank it away mid-reading would make the instruments feel like they
-   * belong to the model rather than the reader.
+   * the instrument deck says false: the reader opened it deliberately, and an
+   * answer shouldn't yank it away mid-reading.
    */
   stealable: boolean;
   /**
@@ -132,8 +120,8 @@ export const PANELS = {
     stealable: true,
     surface: "shell",
   },
-  // Sprint 7's two published documents (#7, #10). Both are real pages as well;
-  // the panel view is the version that opens beside the conversation.
+  // The two published documents. Both are also real pages (/prompt and
+  // /refusals); the panel is the version that opens beside the conversation.
   prompt: {
     title: "The instructions",
     path: null,
@@ -150,8 +138,6 @@ export const PANELS = {
     stealable: true,
     surface: "content",
   },
-  // `why` ("Why this site is a chatbot") was a panel of its own until wave 2.
-  // Its text is a section of the colophon now; see WHY_CHATBOT.
   colophon: {
     title: "How this site was built",
     path: "/colophon",
@@ -195,11 +181,10 @@ export const PANEL_KINDS = Object.keys(PANELS) as PanelKind[];
 
 // --- payloads ---------------------------------------------------------------
 //
-// The one thing the table can't describe. Four kinds carry data alongside their
-// name, and the data is different in each case — a slug union, a chunk id, a
-// whole assessment. Flattening them into a bag of optional fields would make
-// the derivation below tidier and every read of it a lie, so they stay a
-// hand-written map and the union is derived from the table plus this.
+// Four kinds carry data alongside their name, and it differs in each case: a
+// resume focus, a project slug, a chunk id, a whole assessment. They stay a
+// hand-written map rather than a bag of optional fields so each payload is
+// typed exactly; the union is derived from the table plus this map.
 
 type PanelPayload = {
   resume: { focus?: string };

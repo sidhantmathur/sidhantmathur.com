@@ -2,23 +2,16 @@
 
 import { useEffect, useRef, useState } from "react";
 
-// Ambient backdrop — the wave of tiny glyphs behind the conversation column.
+// Ambient backdrop: the wave of tiny glyphs behind the conversation column.
 //
-// One committed image (public/ambient-wave.avif, generated once with an image
-// model in the site's own palette), animated by a small fragment shader: the
-// glow sweeps slowly across the texture and the field breathes by a fraction
-// of a glyph, but every pixel comes from that image. Image-to-video models
-// were tried and redrew the texture into something else, which missed the
-// point — the shader is the only way to animate *this exact image*, it loops
-// seamlessly forever, and it costs no extra bytes.
+// One committed image (public/ambient-wave.avif) animated by a small fragment
+// shader: every pixel comes from the image, the shader only displaces and
+// lights it, so it loops seamlessly at no extra bytes.
 //
-// It extends idle mode (#14): under the empty state, back during idle, faded
-// out while a conversation is on screen. The instrumentation policy line
-// holds — ambient around the conversation, never in front of it — via the
-// legibility scrim over the centre column and pointer-events-none throughout.
-//
-// Fallback order: reduced motion, narrow screen, or no WebGL → the plain
-// <img>, static.
+// Shown under the empty state and during idle mode (docs/idea-decisions.md
+// #14), faded out while a conversation is on screen. It stays behind the
+// conversation via the legibility scrim and pointer-events-none. Reduced
+// motion, a narrow screen or no WebGL falls back to the static <img>.
 
 const IMAGE_ASPECT = 1792 / 1024;
 const FRAME_MS = 33; // ~30fps — a slow sweep gains nothing from 60
@@ -32,11 +25,9 @@ attribute vec2 p;
 void main() { gl_Position = vec4(p, 0.0, 1.0); }
 `;
 
-// Swell + tide, the winner of the motion-lab comparison (2026-07-28): long
-// waves travel across the field displacing it like water, and a soft crest
-// of light rides each wave in phase. The crest is multiplicative, so dark
-// stays dark. One motion, nothing else — the pointer parallax was cut with
-// the same decision, because two motions fight and neither reads.
+// Long waves travel across the field displacing it like water, and a soft
+// crest of light rides each wave in phase. The crest is multiplicative, so
+// dark stays dark. One motion only: two would fight and neither would read.
 const FRAG = `
 precision mediump float;
 uniform sampler2D t;
@@ -78,10 +69,9 @@ export function AmbientBackdrop({ visible }: { visible: boolean }) {
     return () => clearTimeout(t);
   }, [visible]);
 
-  // Below md the column is the full width, so the scrim sits at 78% over the
-  // whole thing and the motion is barely perceptible — not worth a canvas
-  // redrawing at 1.5× DPR on a phone battery. The static img is the honest
-  // mobile version.
+  // Below md the 78% scrim covers the whole width and the motion is barely
+  // perceptible, so phones get the static img rather than a canvas redrawing
+  // on battery.
   const [wide, setWide] = useState(false);
   useEffect(() => {
     const mq = window.matchMedia("(min-width: 768px)");
@@ -91,9 +81,8 @@ export function AmbientBackdrop({ visible }: { visible: boolean }) {
     return () => mq.removeEventListener("change", sync);
   }, []);
 
-  // The shader. Torn down once the backdrop has finished fading out so a
-  // hidden homepage tab spends nothing; the img underneath covers the gap on
-  // the way back in while the first frame compiles.
+  // Torn down once the backdrop has faded out, so a hidden backdrop spends
+  // nothing; the img underneath covers the gap while the shader recompiles.
   useEffect(() => {
     if (!running || !wide) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
@@ -182,22 +171,14 @@ export function AmbientBackdrop({ visible }: { visible: boolean }) {
     };
   }, [running, wide]);
 
-  // The texture is decoded a beat after the markup lands, so the wrapper fades
-  // in rather than snapping on: mount at zero, flip on the next commit, let the
-  // 1000ms transition it already uses for every other state change carry it.
-  //
-  // This also keeps a decorative backdrop from being reported as the page's
-  // LARGEST CONTENTFUL PAINT, which is what it was — an aria-hidden texture
-  // behind a 78% scrim, credited as the main content of the page at 3.9
-  // seconds, while the headline it sits behind had painted at 0.8. Reduced
-  // motion collapses the fade to a single frame via the global rule in
-  // globals.css, which is the correct behaviour: the backdrop simply is there.
+  // Mount at opacity 0 and fade in on the next frame. Besides avoiding a snap,
+  // this keeps the decorative texture from being reported as the page's
+  // largest contentful paint in place of the headline. Reduced motion
+  // collapses the fade via the global rule in globals.css.
   const [entered, setEntered] = useState(false);
   useEffect(() => {
-    // A frame, not a microtask. The transition only runs if the browser has
-    // painted the opacity-0 state first, and a microtask lands before that
-    // paint — which would set the class in the same frame and produce no fade
-    // at all.
+    // A frame, not a microtask: the transition only runs if the opacity-0
+    // state has painted, and a microtask lands before that paint.
     const raf = requestAnimationFrame(() => setEntered(true));
     return () => cancelAnimationFrame(raf);
   }, []);
@@ -210,23 +191,12 @@ export function AmbientBackdrop({ visible }: { visible: boolean }) {
       }`}
     >
       <div className="absolute inset-0">
-        {/* Two encodings, not one. Downscaling this texture wrecks it — the
-            glyphs are the point and they turn to noise below ~1400px — so
-            desktop keeps the full 242 KB file the shader samples. Phones
-            never run the shader and sit under a 78% scrim, where a 900px
-            crop at 68 KB is indistinguishable and a quarter of the bytes.
-
-            THAT WAS THE INTENT AND IT WAS NOT WHAT HAPPENED. `sizes` told the
-            browser the slot was 900 CSS px wide below 768px; on a 390px phone
-            at DPR 2 that asks for 1800 device pixels, so the picker skipped
-            the 900w crop and fetched the 1792w original every time. Phones
-            were downloading 242 KB to display it at 390px — the exact
-            opposite of what the comment above claimed, and 170 KB of a
-            bandwidth-bound first load spent on a texture behind a scrim.
-
-            The slot is the viewport at every width, because that is what this
-            element actually is: `100vw`, and the browser picks the crop on a
-            390px phone and the original on a desktop. */}
+        {/* Two encodings. Downscaling turns the glyphs to noise below
+            ~1400px, so desktop keeps the full 242 KB file the shader samples;
+            phones sit under a 78% scrim, where the 900px crop (68 KB) looks
+            the same. `sizes` is the true slot, 100vw: a narrower value makes a
+            DPR-2 phone ask for more pixels than the crop has and fetch the
+            original. */}
         {/* eslint-disable-next-line @next/next/no-img-element -- a fixed
             decorative backdrop; next/image adds nothing here */}
         <img
@@ -235,10 +205,8 @@ export function AmbientBackdrop({ visible }: { visible: boolean }) {
           sizes="100vw"
           alt=""
           decoding="async"
-          // Nothing on this page should queue behind the backdrop, and the
-          // browser has no way to know that from markup alone — it is a large
-          // image near the top of the viewport, which is its heuristic for the
-          // most important thing on the page.
+          // A large image near the top of the viewport looks important to the
+          // browser's heuristic; nothing should queue behind this one.
           fetchPriority="low"
           className={`ambient-drift h-full w-full object-cover opacity-35 md:opacity-50 ${
             live ? "hidden" : ""

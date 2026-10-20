@@ -20,23 +20,14 @@ import { CopyButton } from "./copy-button";
 import { FIT_LABELS } from "./shell-data";
 import type { ChatMessage } from "./use-conversation";
 
-// The one export surface (roadmap Sprint 5, #17 + #24 + bank §6 Stage 3).
+// The export panel (docs/idea-decisions.md #17 and #24): markdown, print, a
+// permalink and, when the conversation holds an assessment, the scorecard and
+// the short fit link. Several handles on one conversation in one panel view,
+// opened deliberately like the instrument deck rather than as a modal.
 //
-// Sidhant's own consolidation of five ideas: "export this chat and maybe a
-// bunch of different options — markdown, PDF, print, all that stuff. Maybe
-// that's one way to simplify all these ideas." So this is ONE panel view with
-// four handles on the same conversation, not four features.
-//
-// It renders like the instrument deck rather than like a dialog, for the same
-// reason: a modal in front of the conversation would break the standing
-// instrumentation policy, and this is a surface a reader opens deliberately.
-//
-// The honest bits, which are the point:
-//   · the link's real character count is printed, and flagged when it passes
-//     the length mail clients mangle;
-//   · nothing here claims the link is private — it isn't, it's base64;
-//   · the scorecard only appears when there is an assessment to make one from,
-//     and it is the assessment, not a summary of it.
+// The link's real character count is printed and flagged past the length mail
+// clients mangle. Nothing here may claim the link is private: it is encoding,
+// not encryption. The scorecard is the assessment itself, not a summary.
 
 const EXPORT_COPY = {
   empty: "Ask something first — there's nothing to export yet.",
@@ -76,8 +67,7 @@ export function ExportDeck({
 }) {
   const [busy, setBusy] = useState(false);
   const [supported, setSupported] = useState(true);
-  // Deferred so the effect body doesn't setState synchronously; the same
-  // pattern the shell uses for every after-mount capability check.
+  // Deferred so the effect body doesn't setState synchronously.
   useEffect(() => queueMicrotask(() => setSupported(permalinkSupported())), []);
 
   const markdown = useCallback(
@@ -93,8 +83,8 @@ export function ExportDeck({
 
   const fit = latestRoleFit(messages);
 
-  // The short fit link. Local rather than hoisted like `permalink`: nothing
-  // else on the page carries it, and it is rebuilt from the same conversation.
+  // Local rather than hoisted like `permalink`: nothing else on the page
+  // carries the short link.
   const [shortLink, setShortLink] = useState<string | null>(null);
   const makeShortLink = useCallback(async () => {
     setBusy(true);
@@ -120,8 +110,8 @@ export function ExportDeck({
       track("chat_permalink_created", { chars: link.length });
       onAction();
     } catch {
-      // Compression unavailable or the conversation is somehow unserializable.
-      // Saying nothing is better than a link that doesn't open.
+      // Compression unavailable or the conversation unserializable. No link is
+      // better than one that doesn't open.
       onPermalink(null);
       setSupported(false);
     } finally {
@@ -198,8 +188,6 @@ export function ExportDeck({
         {permalink && (
           <div className="w-full space-y-1">
             <p className="t-meta break-all text-text-soft">{permalink}</p>
-            {/* Fable #14's byte count, kept because it is also the honest
-                reading of whether this link will survive an email. */}
             <p className="t-meta text-text-faint">
               <span className="tabular-nums text-text-soft">{permalink.length}</span> characters
               {permalink.length > PERMALINK_SAFE_CHARS && (

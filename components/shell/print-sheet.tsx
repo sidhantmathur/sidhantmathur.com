@@ -7,20 +7,14 @@ import { DISCLAIMER, SITE_NAME, SITE_URL } from "@/lib/site";
 import { Markdown } from "./markdown";
 import { FIT_LABELS, fitExcerptNote } from "./shell-data";
 
-// The typeset document (roadmap Sprint 5, #17 — Fable #13's flagship
-// rendering). This is what "save as PDF" actually saves.
+// The typeset document (docs/idea-decisions.md #17): what "save as PDF" saves.
+// Not the chat window on paper: no application chrome, citation ids printed
+// under their paragraph instead of in a hover margin, and the assessment as a
+// table. It has to read like a document a recruiter can attach to an email.
 //
-// It is NOT the chat window on paper. The application chrome is gone, the
-// question/answer rhythm becomes a document rhythm, the citation ids that live
-// in a hover margin on screen are printed under the paragraph they belong to
-// (paper has no hover), and the assessment becomes a table rather than a panel.
-// A recruiter attaches this to an email; it has to read like a document that
-// happens to have come from a conversation.
-//
-// It sits in the DOM at all times and is display:none until print — see the
-// print block in app/globals.css. Rendering it only on demand would mean a
-// print dialog opening over a page that hadn't laid out yet, and Cmd-P (which
-// nothing can intercept reliably) would print the app.
+// Always in the DOM and display:none until print (the print block in
+// app/globals.css): nothing can reliably intercept Cmd-P, and rendering on
+// demand would open the dialog over a page that hasn't laid out yet.
 
 export function PrintSheet({
   messages,
@@ -30,8 +24,8 @@ export function PrintSheet({
   /** Present only once the reader has generated one. */
   permalink?: string | null;
 }) {
-  // Set after mount: the server has no reader's locale and no "today", and
-  // rendering either during SSR is a hydration mismatch waiting to happen.
+  // Set after mount: the server has neither the reader's locale nor their
+  // "today", so rendering either during SSR would mismatch on hydration.
   const [printedOn, setPrintedOn] = useState("");
   useEffect(() => {
     const stamp = new Date().toLocaleDateString(undefined, {
@@ -70,9 +64,6 @@ export function PrintSheet({
           return (
             <div key={m.id} className="doc-block space-y-2">
               <Markdown text={stripCitations(text)} />
-              {/* On screen these ids are a margin next to the paragraph. Paper
-                  has no margin column and no hover, so they print as a line —
-                  same information, one place further down. */}
               {ids.length > 0 && (
                 <p className="text-[10px]">Sources: {ids.join(", ")}</p>
               )}
@@ -99,7 +90,7 @@ function PrintedFit({ fit }: { fit: RoleFit }) {
   const counts = COUNT_ORDER.filter((v) => (fit.counts?.[v] ?? 0) > 0)
     .map((v) => `${fit.counts[v]} ${v}`)
     .join(" · ");
-  // The short fit link's excerpt prints as one too — see the table's note.
+  // A short fit link carries an excerpt of the rows; see fitExcerptNote.
   const total = COUNT_ORDER.reduce((sum, v) => sum + (fit.counts?.[v] ?? 0), 0);
 
   return (
@@ -150,7 +141,7 @@ function PrintedFit({ fit }: { fit: RoleFit }) {
       {fit.verdict && (
         <p className="doc-block mt-3 text-[11px]">{stripCitations(fit.verdict)}</p>
       )}
-      {/* Travels with the table on purpose — see the note in shell-data.ts. */}
+      {/* Travels with the table on purpose; see FIT_LABELS in shell-data.ts. */}
       <p className="mt-2 text-[10px] leading-relaxed">{FIT_LABELS.notAScore}</p>
     </div>
   );

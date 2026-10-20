@@ -2,17 +2,11 @@
 
 import { useEffect, useRef, useState } from "react";
 
-// Idle mode (roadmap Sprint 2, #14) — after a long enough pause the instruments
-// keep humming: the conversation column settles back and a build-time one-liner
-// types itself out underneath it.
-//
-// ZERO API CALLS, which is the entire design constraint. The lines are a
-// constant in shell-data.ts, shipped with the bundle. An idle tab costs nothing
-// and calls nothing, forever.
-//
-// Any real input — a key, a pointer, a scroll, coming back to the tab — ends it
-// immediately, and a turn in flight never starts it. It's an ambient state, not
-// a mode: nothing about what a visitor can do changes while it's on.
+// Idle mode (docs/idea-decisions.md #14): after a long pause the conversation
+// column dims, the ambient backdrop returns and a one-liner from IDLE_LINES in
+// shell-data.ts fades in beneath it. It makes no API calls; the lines ship with
+// the bundle. Any real input or a return to the tab ends it, and a turn in
+// flight never starts it. Nothing a visitor can do changes while it is on.
 
 /** Long enough that it never fires on someone who is simply reading an answer. */
 export const IDLE_AFTER_MS = 90_000;
@@ -23,8 +17,7 @@ export function useIdle(enabled: boolean, afterMs: number = IDLE_AFTER_MS): bool
 
   useEffect(() => {
     if (!enabled) {
-      // Deferred, like every other setState-from-an-effect in the shell: doing
-      // it synchronously in the effect body cascades a second render.
+      // Deferred: a synchronous setState in the effect body cascades a render.
       queueMicrotask(() => setIdle(false));
       return;
     }
@@ -62,9 +55,7 @@ export function useIdle(enabled: boolean, afterMs: number = IDLE_AFTER_MS): bool
 
 /**
  * Types a string out one character at a time, then holds it. Returns the whole
- * string at once when the reader has asked for reduced motion — the point is
- * the words, and a teleprinter effect is exactly the kind of thing that setting
- * exists to switch off.
+ * string at once under prefers-reduced-motion.
  */
 export function useTypedText(text: string, msPerChar = 45): string {
   const [shown, setShown] = useState("");

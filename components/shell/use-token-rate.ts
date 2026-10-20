@@ -2,22 +2,13 @@
 
 import { useEffect, useRef, useState } from "react";
 
-// Live token-arrival rate for the seismograph (roadmap Sprint 2, #5).
+// Live token-arrival rate for the seismograph (docs/idea-decisions.md #5).
 //
-// WHY THIS IS AN ESTIMATE, AND WHY THAT'S FINE. The server measures the real
-// figure and F1 already delivers it — `telemetry.timing.tokensPerSecond`, exact,
-// computed from the provider's own usage numbers. But it arrives once, at the
-// end of the turn, and a needle that only moves after the answer has finished
-// is not an instrument.
-//
-// So there are two numbers, and the UI shows both: this one, sampled from the
-// growth of the streamed text while it streams, marked with a `≈`; and the
-// server's, shown without one as soon as the turn settles. Anything else would
-// be dressing a guess up as a measurement, on a site whose whole argument is
-// that it doesn't do that.
-//
-// Four characters per token is the usual English rule of thumb. It is wrong in
-// both directions on code and on names, which is exactly why it renders as `≈`.
+// An estimate from the growth of the streamed text, at four characters per
+// token. The exact figure (`telemetry.timing.tokensPerSecond`, from the
+// provider's usage numbers) arrives only when the turn ends, so the UI shows
+// this one with a `≈` while streaming and the server's without one once the
+// turn settles.
 
 const SAMPLE_MS = 150;
 /** Roughly seven seconds of history at the sample interval. */
@@ -45,8 +36,8 @@ export function useTokenRate(text: string, isBusy: boolean): TokenRate {
 
   useEffect(() => {
     if (!isBusy) {
-      // The trace is left on screen after the turn ends — a flatline that
-      // vanishes teaches nothing — but the readout stops claiming a rate.
+      // The trace stays on screen after the turn ends, but the readout stops
+      // claiming a rate.
       queueMicrotask(() => setLive(null));
       return;
     }
@@ -60,7 +51,7 @@ export function useTokenRate(text: string, isBusy: boolean): TokenRate {
       const now = performance.now();
       const length = textRef.current.length;
       const elapsed = (now - lastAt) / 1000;
-      // Length can go DOWN between turns, when the streamed message is replaced.
+      // Length can go down between turns, when the streamed message is replaced.
       const delta = Math.max(0, length - lastLength);
       lastLength = length;
       lastAt = now;
