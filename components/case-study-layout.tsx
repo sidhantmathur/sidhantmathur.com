@@ -11,12 +11,9 @@ type CaseStudyLayoutProps = {
   children: React.ReactNode;
 };
 
-// The case study, after the end of what it has to say (wave 2). The council
-// review found every case study ended in a dead end: no next step, no way to
-// act, the reader left to find the header. So each one ends on the same three
-// things — the resume, an email, the next case study — and it is said here, in
-// the shared layout, rather than in each .mdx: the prose is Sidhant's copy and
-// is edited on its own schedule.
+// How every case study ends: the contact actions and a link to the next one.
+// It lives here in the shared layout rather than in each .mdx because the
+// prose is Sidhant's copy and is edited on its own schedule.
 export const CASE_END_LABEL = "Contact";
 export const CASE_END_LINE =
   "If this is the kind of work you're hiring for, the resume has the rest.";

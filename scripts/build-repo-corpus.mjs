@@ -1,38 +1,30 @@
-// Builds the SECOND corpus (roadmap Sprint 7, #8) — the site's own source,
-// chunked and addressable exactly like the knowledge base.
+// Builds the SECOND corpus: the site's own source, chunked and addressable like
+// the knowledge base. Writes one git-ignored file, lib/repo.generated.ts:
 //
-// Writes one git-ignored artifact, lib/repo.generated.ts:
+//   REPO_CHUNKS   the chunks as data, under `repo:<slug>` ids, in the same
+//                 shape as lib/chunks.generated.ts so lib/corpus.ts can merge
+//                 both into one citation lookup.
+//   REPO_CORPUS   the same chunks as prompt text, appended to the system prompt
+//                 only on a turn that asked about the site.
+//   REPO_STATS    counts, so the numbers the site publishes about itself come
+//                 from the tree.
 //
-//   REPO_CHUNKS   the chunks as data, under `repo:<slug>` ids — the same shape
-//                 as lib/chunks.generated.ts, so lib/verify.ts, the citation
-//                 margin and the panel all read them without a special case.
-//   REPO_CORPUS   the same chunks rendered as prompt text, appended to the
-//                 system prompt ONLY on a turn that asked about the site.
-//   REPO_STATS    counts, so the numbers this site publishes about itself come
-//                 from the tree rather than from someone's memory.
+// Apart from the two chunks assembled from package.json and the app/ tree,
+// nothing is authored here: every line is lifted verbatim from a file in the
+// repo (a comment block, the roadmap's "not done" paragraphs), so the corpus
+// can be checked against the tree rather than kept true by hand.
+// evals/recursion.test.mjs checks each line against the file it names.
 //
-// TWO RULES, AND THEY ARE THE WHOLE DESIGN.
+// It never touches an ordinary turn's prompt. The knowledge base is the same
+// bytes in every system prompt so the provider's cache hits; this corpus is a
+// separate string appended only on site turns, and evals/recursion.test.mjs
+// asserts the base prompt carries none of it.
 //
-// 1. NOTHING HERE IS WRITTEN. Every line of every chunk is lifted verbatim out
-//    of a file that already exists — a comment block, package.json, the
-//    roadmap's own "not done" paragraphs, a line count. A second corpus of
-//    freshly authored prose about the site would be a second thing to keep
-//    true, and the reader would have no way to check it. This one can be
-//    diffed against the tree.
+// Each file's comment block is the run of consecutive `//` lines containing
+// `anchor` if one is given, otherwise the longest run in the file. Chunk ids
+// are hand-assigned below, so editing a comment never moves one.
 //
-// 2. IT NEVER TOUCHES AN ORDINARY TURN'S PROMPT. The knowledge base is
-//    concatenated byte-identically into every system prompt so the provider's
-//    cache hits, and Sprint 2's meter would show the damage if it stopped. So
-//    this corpus is a separate string, appended after the base prompt on the
-//    turns that need it and absent otherwise. `evals/recursion.test.mjs`
-//    asserts the base prompt is unchanged by its existence.
-//
-// The comment block for each file is chosen deterministically: the run of
-// consecutive `//` lines containing `anchor` if one is given, otherwise the
-// longest such run in the file. Both are stable under editing in the way that
-// matters — a chunk id never moves, because the ids are hand-assigned here.
-//
-// Run as `predev` and `prebuild`, after build-knowledge.
+// Runs as `predev` and `prebuild`, after build-knowledge.
 
 import { readFileSync, writeFileSync, readdirSync, statSync } from "node:fs";
 import { dirname, join, relative } from "node:path";
@@ -41,13 +33,15 @@ import { fileURLToPath } from "node:url";
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const read = (p) => readFileSync(join(root, p), "utf8");
 
-// Ids are hand-assigned and permanent: they are what the model cites and what
-// the checker looks up, so they must not be derived from a filename that could
-// be renamed. `heading` is what a reader sees on a chip.
+// Ids are hand-assigned and permanent: the model cites them, so they must not
+// derive from a filename that could be renamed. `heading` is the chip text.
+// An `anchor` is matched against comment text in the named file, so editing
+// that comment can break the build. Each file's quoted block is also read by
+// visitors (the chat cites it and the panel renders it), so comments in these
+// files are copy as well as documentation.
 //
-// Curated, not swept. A corpus is the set of things a claim can be checked
-// against; a directory listing of every file in the repo would add bulk that
-// evidences nothing and would put generated bundles in the citation vocabulary.
+// Curated rather than swept: every file in the repo would add bulk that
+// evidences nothing and put generated bundles in the citation vocabulary.
 const FILES = [
   {
     slug: "chat-route",
@@ -69,8 +63,8 @@ const FILES = [
   { slug: "job-posting", path: "lib/job-posting.ts", heading: "Job postings as untrusted input", anchor: "Treating the posting as hostile input" },
   { slug: "site-question", path: "lib/site-question.ts", heading: "Recognising a question about the site" },
   { slug: "telemetry", path: "lib/chat-telemetry.ts", heading: "Per-turn telemetry" },
-  // The prices, the allowlist and the reasoning behind both are one table now;
-  // pricing.ts is the arithmetic over it and carries little prose of its own.
+  // lib/models.ts holds the prices and the allowlist; lib/pricing.ts is only
+  // the arithmetic over them.
   { slug: "pricing", path: "lib/models.ts", heading: "The model catalogue and its prices" },
   { slug: "permalink", path: "lib/permalink.ts", heading: "Permalinks" },
   { slug: "transcript", path: "lib/transcript.ts", heading: "Transcript serialization" },
@@ -134,9 +128,8 @@ function clip(lines, max) {
   return out;
 }
 
-// Per-chunk ceiling. The whole corpus only loads on a turn that asked about the
-// site, but it still bills as input on that turn, so it is a budget rather than
-// an afterthought — the total is asserted in evals/recursion.test.mjs.
+// Per-chunk ceiling. The corpus still bills as input on a site turn; the total
+// is asserted in evals/recursion.test.mjs.
 const MAX_CHARS = 520;
 
 const chunks = [];
@@ -150,8 +143,8 @@ const add = ({ slug, heading, meta, lines, max = MAX_CHARS }) => {
     heading,
     meta,
     lines: clipped,
-    // Same contract as the knowledge base: the haystack a claim is checked
-    // against is EXACTLY what the model read, minus the id.
+    // As in the knowledge base: the text a claim is checked against is what
+    // the model read, minus the id.
     text: [`This site — ${heading}`, meta, ...clipped].filter(Boolean).join("\n"),
   });
 };
@@ -192,8 +185,7 @@ add({
   ],
 });
 
-// Every page that exists, read off the tree rather than listed by hand — a
-// route that gets added and not mentioned here would be a corpus that lies.
+// Read off the tree rather than listed by hand, so a new route can't be missed.
 function routesUnder(dir) {
   const out = [];
   for (const name of readdirSync(join(root, dir))) {
@@ -222,10 +214,9 @@ add({
   ],
 });
 
-// The site's own list of what is wrong with it, in its own words. This is the
-// single most useful chunk in the corpus and the reason a roast can be specific:
-// each sprint's write-up ends with a paragraph naming what it did not do, and
-// those paragraphs are the honest version of "what's wrong with this site".
+// The site's own list of what it hasn't done: each sprint in docs/roadmap.md
+// ends with a "Not done" paragraph, and the last four become one chunk. This is
+// what lets a roast be specific.
 const roadmap = read("docs/roadmap.md");
 const notDone = [...roadmap.matchAll(/\*\*Not done, and out of scope by design:\*\*([\s\S]*?)\n\n/g)].map(
   (m) => m[1].replace(/\s*\n\s*/g, " ").replace(/\*\*/g, "").trim(),
@@ -238,10 +229,8 @@ add({
   heading: "What the build knows is missing",
   meta: "docs/roadmap.md — each sprint's closing paragraph",
   lines: notDone.slice(-4).map((p) => clip([p], 340)[0]),
-  // Four times the usual ceiling, and the only chunk that gets one. This is
-  // the site's own account of what it hasn't done — the difference between a
-  // criticism someone could act on and an affectionate one — and clipping it
-  // to the length of a comment block would leave a roast with one example.
+  // The only chunk with a raised ceiling: at the usual one a roast would get a
+  // single example.
   max: 4 * MAX_CHARS,
 });
 

@@ -1,30 +1,27 @@
-// What a keyboard and a screen reader hit, reported the same way `npm run shot`
-// reports what eyes hit.
+// Keyboard and screen-reader audit. Tabs through each route in Chromium and
+// reports, per stop:
 //
-// This drives a real Chromium, tabs through a route the way a keyboard user
-// does, and answers three questions per stop:
+//   name     whether the control has an accessible name
+//   focus    whether anything visible changes on focus, by diffing the
+//            element's computed style against the same element unfocused, and
+//            whether the indicator uses the site's accent
+//   order    the tab sequence itself, printed
 //
-//   name     does the control say what it is? An icon-only button with no
-//            accessible name is a button announced as "button".
-//   focus    does anything on screen CHANGE when it receives focus? Measured by
-//            diffing the element's computed style against the same element
-//            unfocused — outline, box-shadow, border, colours, background. A
-//            control whose style is byte-identical focused and unfocused is
-//            invisible to a keyboard, whatever it looks like under a mouse.
-//   order    the sequence itself, printed, so a reader can see whether tabbing
-//            through the shell follows the page or wanders.
+// Real Tab presses rather than element.focus(), because Chrome matches
+// `:focus-visible` only for keyboard-driven focus.
 //
-// WHY REAL TAB PRESSES rather than element.focus(): `:focus-visible` is the
-// selector a well-behaved focus style uses, and Chrome only matches it for
-// keyboard-driven focus. A JS focus() call would report every such style as
-// missing. So the walk is Tab, Tab, Tab, and the styles are read off
-// document.activeElement.
+// When / is audited it also checks, with /api/chat mocked, what a failed turn
+// and a completed turn announce; with --mobile it checks focus management in
+// the navigation sheet.
 //
 // Usage:
 //   node scripts/a11y-audit.mjs                 # / at desktop
 //   node scripts/a11y-audit.mjs / --mobile
 //   node scripts/a11y-audit.mjs /resume /colophon
 //   BASE=https://<preview>.vercel.app node scripts/a11y-audit.mjs
+//
+// Without BASE it runs `next start` on a free port from 3300 (PORT to change),
+// so it needs a production build. Exits 1 if any stop or check fails.
 
 import { spawn } from "node:child_process";
 import { connect } from "node:net";
@@ -61,8 +58,8 @@ const FOCUS_PROPS = [
 ];
 
 
-// --accent, the site's one accent colour (app/globals.css). A focus style that
-// is not this is either a browser default or a second design.
+// --accent in app/globals.css. A focus style in any other colour is either a
+// browser default or a second design.
 const ACCENT_RGB = "rgb(228, 82, 43)";
 const ACCENT_PROPS = [
   "borderTopColor",
@@ -105,12 +102,10 @@ async function freePort(from) {
   throw new Error("no free port");
 }
 
-// `npx` runs next through a shell, so killing the process spawned here used to
-// leave the server it started running on its port — every run of this script
-// left one behind (seven of them by the end of wave 1's verification). The
-// server is started as its own process group and the whole group is stopped.
-// A separate group no longer receives the terminal's Ctrl-C, so that is
-// forwarded by hand.
+// `npx` runs next through a shell, so killing only the spawned process leaves
+// the server holding its port. The server gets its own process group and the
+// whole group is stopped. A separate group doesn't receive the terminal's
+// Ctrl-C, so that is forwarded by hand.
 function stopServer(proc) {
   try {
     process.kill(-proc.pid, "SIGKILL");
@@ -172,7 +167,7 @@ for (const route of routes) {
   await page.goto(url, { waitUntil: "networkidle", timeout: 60_000 });
   await page.waitForTimeout(700);
 
-  // Pass one: tag every focusable element and record it UNFOCUSED.
+  // Pass one: tag every focusable element and record its unfocused style.
   const baseline = await page.evaluate((props) => {
     const sel = [
       "a[href]",
@@ -180,10 +175,8 @@ for (const route of routes) {
       "input",
       "select",
       "textarea",
-      // <summary> is focusable and this site uses it — the measurements page is
-      // eleven collapsible eval groups. Leaving it off the baseline list meant
-      // every one of them reported "no focus indicator" while wearing a
-      // perfectly good accent ring, because there was nothing to diff against.
+      // Focusable, and the measurements page uses it for its collapsible
+      // groups; without a baseline there is nothing to diff against.
       "summary",
       '[tabindex]:not([tabindex="-1"])',
     ].join(",");
@@ -203,9 +196,7 @@ for (const route of routes) {
   // Pass two: walk it with the keyboard.
   await page.evaluate(() => document.body.focus());
   await page.keyboard.press("Tab");
-  // The same settle the loop gives every other stop. Without it the FIRST stop
-  // was read mid-transition and reported its half-mixed ring as the wrong
-  // colour — the audit accusing the site of a bug the audit had.
+  // The same settle the loop gives every other stop (see below).
   await page.waitForTimeout(400);
 
   const stops = [];
@@ -219,8 +210,7 @@ for (const route of routes) {
       for (const p of props) style[p] = cs[p];
       const rect = el.getBoundingClientRect();
 
-      // The accessible name, computed the way a screen reader would reach for
-      // it, in precedence order.
+      // An approximation of the accessible name, in precedence order.
       const labelledby = el.getAttribute("aria-labelledby");
       const fromLabelledby = labelledby
         ? labelledby
@@ -232,16 +222,10 @@ for (const route of routes) {
       const wrappingLabel = el.closest("label")?.textContent?.trim() ?? "";
       const tag = el.tagName.toLowerCase();
 
-      // NAME FROM CONTENT IS NOT UNIVERSAL, and treating it as though it were
-      // was this script's last blind spot. Only some roles take their name
-      // from their own text — a button, a link, a summary. A generic container
-      // does not, so falling back to textContent meant a focusable scroll
-      // region could never be reported as unnamed: it would borrow the name of
-      // everything inside it and pass. That is exactly how two <pre> blocks and
-      // a twelve-column table wrapper sat as anonymous tab stops through a
-      // clean audit run. Form controls are the same story from the other end —
-      // a <select> "named" by its concatenated option text is not a name, it is
-      // the browser reading the menu out.
+      // Only some roles take their name from their content. A focusable scroll
+      // region (a <pre>, a table wrapper) would otherwise borrow the text inside
+      // it and never be reported as unnamed, and a <select>'s option text is
+      // not its name.
       const namesFromContent = ["a", "button", "summary", "th", "td"].includes(tag);
       const isFormControl = ["input", "select", "textarea"].includes(tag);
       const name =
@@ -260,8 +244,8 @@ for (const route of routes) {
         type: el.getAttribute("type") ?? "",
         name,
         style,
-        // Off-screen is not the same as invisible: the skip link is meant to be
-        // off-screen until focused, and that IS its focus indicator.
+        // Off-screen is not invisible: the skip link is off-screen until
+        // focused, and appearing is its focus indicator.
         offscreen: rect.width === 0 || rect.height === 0 || rect.bottom < 0 || rect.top > innerHeight,
         matchesFocusVisible: el.matches(":focus-visible"),
       };
@@ -273,9 +257,8 @@ for (const route of routes) {
     if (stop.idx != null) seen.add(key);
     stops.push(stop);
     await page.keyboard.press("Tab");
-    // Long enough for `transition-colors` to finish. At 60ms the audit was
-    // sampling the ring mid-fade and reporting a half-mixed accent as "not the
-    // site's accent" — a measurement bug that looked exactly like a design bug.
+    // Long enough for `transition-colors` to finish; sampled mid-fade, the
+    // ring reads as a colour that isn't the accent.
     await page.waitForTimeout(400);
   }
 
@@ -285,32 +268,23 @@ for (const route of routes) {
     const before = s.idx != null ? baseline[s.idx] : null;
     const changed = before ? FOCUS_PROPS.filter((p) => before[p] !== s.style[p]) : [];
 
-    // A CHANGED PROPERTY IS NOT AN INDICATOR. The first version of this script
-    // passed every control on the site, including the composer, whose class
-    // list contains `outline-none` — which in Tailwind v4 is a 2px TRANSPARENT
-    // outline. Focusing it changes `outlineColor` and `outlineWidth`, so a
-    // naive diff reports a focus style, and there is nothing on screen at all.
-    // So the outline has to be shown to be visible before it counts.
+    // A changed property is not an indicator: an outline's colour or width can
+    // change on focus while its style is `none` or its colour transparent, and
+    // nothing shows. So the outline must be visible before it counts.
     const visibleOutline =
       s.style.outlineStyle !== "none" &&
       parseFloat(s.style.outlineWidth) > 0 &&
       !isTransparent(s.style.outlineColor);
     const nonOutline = changed.filter((p) => !p.startsWith("outline"));
-    // `before` is null for a stop the baseline pass never tagged — Chrome makes
-    // scrollable regions and some <pre> blocks focusable so the arrow keys can
-    // scroll them, and those are plain elements no focusable-selector list
-    // predicts. With nothing to diff against, judge the focused state on its own
-    // terms: a visible, accented outline is a focus indicator whether or not
-    // this script saw the element beforehand. (Reporting those as "no focus
-    // indicator" while they wore a perfectly good accent ring was this file
-    // accusing the site of its own blind spot for the third time.)
+    // `before` is null for a stop the baseline pass never tagged: Chrome makes
+    // scrollable regions focusable so the arrow keys can scroll them, and no
+    // selector list predicts those. With nothing to diff against, a visible
+    // outline counts on its own.
     const hasIndicator = before
       ? nonOutline.length > 0 || (changed.length > 0 && visibleOutline)
       : visibleOutline;
 
-    // And an indicator is not the same as the site's indicator. This site has
-    // one accent and a policy of using it; a browser-default ring is a
-    // different design arriving uninvited on a dark amber palette.
+    // Focus indicators should use the accent; a browser-default ring is flagged.
     const accented =
       isAccent(s.style.outlineColor) ||
       ACCENT_PROPS.some((p) => changed.includes(p) && isAccent(s.style[p])) ||
@@ -337,14 +311,12 @@ for (const route of routes) {
 }
 
 // ---------------------------------------------------------------------------
-// The sheets, which are the one place focus can be lost outright
+// Sheet focus management
 // ---------------------------------------------------------------------------
-// Below lg the rail and the context panel become Radix dialogs. A dialog owes
-// its user three things, and none of them can be settled by reading the markup:
-// focus has to MOVE into it when it opens, has to STAY inside it while it is
-// open, and has to COME BACK to whatever opened it when it closes. The third is
-// the one that gets dropped, and dropping it strands a keyboard user at the top
-// of the document with no idea where they are.
+// Below lg the rail and the context panel become Radix dialogs. Focus has to
+// move into a dialog when it opens, stay inside while it is open, and return to
+// whatever opened it when it closes; none of that can be read off the markup.
+// Only the navigation sheet is exercised.
 if (mobile && routes.includes("/")) {
   console.log("\n── sheet focus management (390x844)\n");
   const url = `${base}/`;
@@ -375,11 +347,9 @@ if (mobile && routes.includes("/")) {
       open: Boolean(dialog),
       focusInside: Boolean(dialog && dialog.contains(document.activeElement)),
       role: dialog?.getAttribute("role") ?? "",
-      // Modality is what matters, not the attribute that usually expresses it.
-      // Radix hides the rest of the page by marking the dialog's siblings
-      // aria-hidden rather than by setting aria-modal, which is equivalent for
-      // a screen reader and stricter for everything else. So the check is: can
-      // assistive tech still reach the shell behind this sheet?
+      // Radix makes a dialog modal by setting aria-hidden on its siblings
+      // rather than aria-modal on itself, so either counts: the question is
+      // whether assistive tech can still reach the shell behind the sheet.
       modal:
         dialog?.getAttribute("aria-modal") === "true" ||
         document.querySelector(".screen-only")?.getAttribute("aria-hidden") === "true",
@@ -433,37 +403,23 @@ if (mobile && routes.includes("/")) {
 // ---------------------------------------------------------------------------
 // What a failed turn announces
 // ---------------------------------------------------------------------------
-// The error block carries role="alert", which is an assertive live region and
-// should interrupt whatever a screen reader is saying. Carrying the attribute
-// and actually announcing are not the same thing: an alert only fires when the
-// element ENTERS the accessibility tree or its text changes, so an alert that
-// was always in the DOM and merely revealed would say nothing at all.
+// The error block carries role="alert", but an alert only announces when the
+// element enters the accessibility tree or its text changes. One that was
+// always in the DOM and merely revealed says nothing, so this checks that none
+// exists before the failure.
 //
-// THE FAILURE IS STUBBED, NOT HOPED FOR. This check used to just send a
-// question and rely on the route falling over — true only where
-// AI_GATEWAY_API_KEY is absent. Against production, or any preview with a key,
-// the turn succeeded, no alert was ever raised, and the audit reported two
-// failures against a site that was behaving perfectly. Line 27 advertises
-// `BASE=https://<preview>` as a supported mode, so that was reachable through
-// the script's own documented usage.
+// /api/chat is mocked so the failure happens whether or not the server has
+// AI_GATEWAY_API_KEY, including against a BASE deploy. The cases take
+// different client paths:
 //
-// So the response is intercepted, the same way the completed-turn section
-// below intercepts it. Three shapes rather than one, because they are not the
-// same test:
-//
-//   upstream_unconfigured  an HTTP error with a class in the body — the
-//                          keyless deploy, the state the old version happened
-//                          to exercise, kept so nothing is lost
-//   network                the request never completes at all. A different
-//                          branch of makeChatFetch entirely (the fetch throws,
-//                          rather than returning a !ok response), and the most
-//                          likely real failure: a phone on a train
-//   invalid_request        the one class that renders NO retry button, by
-//                          policy. Its alert has to announce and then leave
-//                          the reader with the composer, and the assertion is
-//                          inverted to say so — otherwise "every alert has a
-//                          way out" is a claim this audit never actually made
-//                          about the one case where it isn't true
+//   upstream_unconfigured  an HTTP error with a class in the body, as a keyless
+//                          deploy returns
+//   network                the request never completes, so the fetch in
+//                          guardedFetch (lib/chat-transport.ts) throws rather
+//                          than returning a non-ok response
+//   invalid_request        the one class with no retry button, by policy; the
+//                          check is inverted to assert that
+//   empty_answer           see below
 const FAILURE_CASES = [
   {
     label: "upstream_unconfigured",
@@ -490,10 +446,9 @@ const FAILURE_CASES = [
       }),
     wayOut: false,
   },
-  // The one with no error anywhere on the wire: a clean HTTP 200 whose turn
-  // reasons and finishes without a word, as the default model did on the
-  // RevOps chip in production. The alert has to come from the browser's own
-  // transport noticing, which is the path this case exists to walk.
+  // No error on the wire: an HTTP 200 whose turn reasons and finishes without
+  // any text, as a reasoning model can when it spends the output cap thinking.
+  // The alert has to come from the client transport noticing the empty turn.
   {
     label: "empty_answer",
     handle: (route) =>
@@ -529,8 +484,7 @@ if (routes.includes("/")) {
     await page.route("**/api/chat", failure.handle);
 
     await page.goto(`${base}/`, { waitUntil: "domcontentloaded", timeout: 60_000 });
-    // The composer is disabled until hydration, and typing into it before then
-    // sends nothing. Same gate the completed-turn section waits on.
+    // The composer is disabled until hydration.
     await page.waitForSelector("#ask:not([disabled])", { timeout: 60_000 });
 
     const alertBefore = await page.evaluate(
@@ -544,7 +498,6 @@ if (routes.includes("/")) {
 
     await page.fill("#ask", "What has he shipped?");
     await page.keyboard.press("Enter");
-    // Deterministic now, so this no longer needs the 45s the live route did.
     await page.waitForSelector("[role=alert]", { timeout: 20_000 }).catch(() => {});
     await page.waitForTimeout(500);
 
@@ -558,8 +511,8 @@ if (routes.includes("/")) {
           [...(alert?.querySelectorAll("button") ?? [])].some((b) => (b.textContent ?? "").trim()),
         ),
         statusExists: Boolean(status),
-        // The polite region must stay EMPTY on a failure: the alert is the
-        // announcement, and saying both is saying it twice.
+        // The polite region stays empty on a failure, or the failure is
+        // announced twice.
         statusText: (status?.textContent ?? "").trim(),
       };
     });
@@ -586,18 +539,13 @@ if (routes.includes("/")) {
 }
 
 // ---------------------------------------------------------------------------
-// What a COMPLETED turn announces
+// What a completed turn announces
 // ---------------------------------------------------------------------------
-// A streamed answer appears silently: the prose arrives a token at a time in
-// the transcript, and a blind visitor had no way to know a turn had finished
-// except by tabbing away and back to check.
-//
-// The answer stream is mocked rather than requested, for two reasons. It runs
-// without AI_GATEWAY_API_KEY, and — more usefully — a mocked response arrives
-// all at once, which is the FAST turn: the case where the whole answer lands
-// inside a single render batch. An announcement keyed to a busy→idle
-// transition has no intermediate commit to observe there and silently does
-// nothing, which is precisely the bug this check found.
+// A streamed answer arrives silently, so a finished turn needs a polite
+// announcement. The stream is mocked: it runs without AI_GATEWAY_API_KEY, and
+// it arrives all at once, the fast turn where the whole answer lands in one
+// render batch. An announcement keyed to a busy-to-idle transition sees no
+// intermediate commit there and says nothing.
 if (routes.includes("/")) {
   console.log("\n── what a completed turn announces\n");
   const note = (name, pass, detail = "") => {
@@ -641,8 +589,7 @@ if (routes.includes("/")) {
     ).trim(),
     answerShown: document.body.innerText.includes("A Darle 20 end to end"),
     alerts: document.querySelectorAll("[role=alert]").length,
-    // The answer must not itself sit inside a live region, or it is read once
-    // per token as it streams.
+    // An answer inside a live region would be read again on every token.
     answerInLiveRegion: [...document.querySelectorAll("[aria-live]")].some((r) =>
       (r.textContent ?? "").includes("A Darle 20 end to end"),
     ),

@@ -3,9 +3,8 @@
 import { track } from "@/lib/analytics";
 import { RESUME_PDF, RESUME_PDF_FILENAME } from "@/lib/site";
 
-// Bordered, not filled. The light system had this as a solid ink block, which
-// the token migration turned into a slab of accent orange — far too loud for a
-// system where the accent marks one thing at a time.
+// Bordered, not filled: the accent marks one thing at a time, and a filled
+// button here would be a slab of it.
 export function ResumeDownloadButton() {
   return (
     <a

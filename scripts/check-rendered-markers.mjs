@@ -1,18 +1,11 @@
-// Fails if anything the site serves carries an unfinished-work marker.
+// Fails if anything the site serves carries an unfinished-work marker:
+// `[TODO: …]` for a missing answer, `[VERIFY: …]` for an unchecked fact, or
+// "Nothing here yet", the placeholder text of an empty media frame. Markers
+// belong in drafts and docs/copy-ledger.md, never on a page.
 //
-// Markers are how a draft holds a question for Sidhant — `[TODO: …]` for a
-// missing answer, `[VERIFY: …]` for a fact nobody has checked, and the empty
-// media frames' "Nothing here yet". They belong in drafts and in
-// docs/copy-ledger.md. On 2026-10-19 both council reviewers found them live
-// instead: five empty frames and a `[VERIFY]` aside on the flagship case study,
-// a `[TODO]` on /colophon, and the FAQ's `[TODO]` published verbatim on
-// /prompt. The eval suite checked that every marker was LOGGED; nothing checked
-// that none RENDERED. This is that check.
-//
-// It reads the build output, not the source, because the source is full of
-// these strings legitimately — in comments, in the ledger, in the knowledge
-// markdown where a held-back question lives. What matters is what a visitor
-// can be sent:
+// It reads the build output, not the source, because the source carries these
+// strings legitimately (comments, the ledger, held-back knowledge chunks).
+// What it scans is what a visitor can be sent:
 //
 //   .next/server/app   every prerendered route: its HTML, its RSC payload, and
 //                      the body of any prerendered route handler (llms.txt)
@@ -20,9 +13,10 @@
 //                      components render after hydration (panels, manual mode)
 //   public             files served as they are
 //
-// Run as `postbuild`, so a marker fails `npm run build` — and with it a Vercel
-// deploy — rather than shipping. evals/static.test.mjs calls the same function
-// over whatever build is on disk.
+// Runs as `postbuild`, so a marker fails `npm run build` and the Vercel deploy
+// with it. Exits 1 on any marker or when there is no build to read.
+// evals/static.test.mjs calls findRenderedMarkers over whatever build is on
+// disk.
 
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { dirname, join, relative } from "node:path";
@@ -34,10 +28,10 @@ const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 export const MARKERS = ["[TODO", "[VERIFY", "Nothing here yet"];
 
 // A bundle is code as well as text, and code can name a marker without being
-// one — manual mode filters chunks on `includes("[TODO")`, which is the guard,
-// not a leak. So in a bundle only a COMPLETE marker counts: the bracket, the
-// word, and then the colon or the closing bracket every real marker in this
-// repo has. Rendered pages and public files get the bare prefixes above.
+// one: manual mode filters chunks on `includes("[TODO")`, which is the guard,
+// not a leak. So in a bundle only a complete marker counts, with the colon or
+// closing bracket every real marker has. Rendered pages and public files get
+// the bare prefixes above.
 const BUNDLE_MARKERS = [/\[TODO[:\]]/i, /\[VERIFY[:\]]/i, /Nothing here yet/i];
 const PAGE_MARKERS = MARKERS.map((m) => new RegExp(m.replace(/[[\]]/g, "\\$&"), "i"));
 
@@ -61,9 +55,10 @@ export function hasBuild(base = root) {
 }
 
 /**
- * Every marker in the served output, as `{ file, marker, context }`, where
- * `context` is the forty-odd characters either side so a failure says what to
- * go and fix without opening a minified bundle.
+ * The first match of each marker in each served file, as
+ * `{ file, marker, context }`. `context` runs from 40 characters before the
+ * match to 80 after its start, so a failure says what to fix without opening
+ * a minified bundle.
  */
 export function findRenderedMarkers(base = root) {
   const found = [];

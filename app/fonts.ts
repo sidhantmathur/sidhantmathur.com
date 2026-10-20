@@ -1,17 +1,9 @@
-// Geist, self-hosted from the `geist` npm package rather than next/font/google.
+// Geist from the `geist` npm package rather than next/font/google, which
+// fetches the font from Google at build time and so fails `npm run build` in
+// any sandbox without egress to fonts.googleapis.com. Visitors see no
+// difference: both serve the file from this origin.
 //
-// WHY NOT next/font/google: it fetches the font from Google at BUILD time. The
-// runtime is identical either way — Next serves the file from our own origin in
-// both cases, no visitor ever hits Google — but the build-time fetch makes
-// `npm run build` fail in any sandbox whose egress allowlist doesn't include
-// fonts.googleapis.com. Cloud dev environments are exactly that. Sourcing the
-// same typeface from the npm registry, which is reachable anywhere `npm ci`
-// works, makes the build network-independent.
-//
-// The package is Vercel's own and ships the variable font (100–900) in place of
-// the four static weights we used to request, so this is also fewer bytes and
-// every intermediate weight. Variable names are unchanged — `--font-geist-sans`
-// and `--font-geist-mono`, consumed by app/globals.css — as is `display: swap`,
-// which is next/font's default.
+// The package ships the variable font (100–900) and keeps the variable names
+// app/globals.css reads, `--font-geist-sans` and `--font-geist-mono`.
 export { GeistSans as geistSans } from "geist/font/sans";
 export { GeistMono as geistMono } from "geist/font/mono";

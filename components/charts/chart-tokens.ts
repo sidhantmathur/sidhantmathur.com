@@ -1,25 +1,20 @@
-// The data-viz parameters for this site, decided once (Sprint 8).
+// The data-viz parameters for this site.
 //
-// The site has ONE accent and a monochrome ink scale. Two consequences settled
-// the palette before a single chart was drawn:
+// The site has one accent and a monochrome ink scale, so there is no
+// categorical palette: five hues would break the design system and can't be
+// told apart pairwise under simulated protanopia. Identity travels by direct
+// label and by the table under every chart. Colour does two jobs only:
+// emphasis (this one is the point) and magnitude (this cell is hot).
 //
-//   1. A five-hue categorical palette would break the design system, and would
-//      also fail the all-pairs colour-blindness gate that scatter plots are held
-//      to — five hues cannot be told apart pairwise under simulated protanopia.
-//      So there is NO categorical palette here. Identity travels by direct
-//      label and by the table underneath every chart; colour does two jobs
-//      only: emphasis (this one is the point) and magnitude (this cell is hot).
-//
-//   2. Every value below was checked with the data-viz validator rather than
-//      eyeballed. The marks clear the 3:1 contrast floor against `--bg`
-//      (#0B0A09), and the ramp passes monotone lightness, adjacent ΔL ≥ 0.06,
-//      light-end contrast ≥ 2:1, and single-hue as an ordinal ramp on a dark
-//      surface.
+// Every value was checked with the data-viz validator. The marks clear the 3:1
+// contrast floor against `--bg` (#0B0A09), and the ramp passes monotone
+// lightness, adjacent ΔL ≥ 0.06, light-end contrast ≥ 2:1, and single-hue as
+// an ordinal ramp on a dark surface.
 //
 // Contrast against --bg, measured:
 //   MARK      #E4522B  5.22:1
 //   CONTEXT   #97918A  6.34:1
-//   GRID      #2C2825  1.35:1  — recessive by intent, never carries a value
+//   GRID      #2C2825  1.35:1  (recessive by intent, never carries a value)
 
 /** The measured value; the emphasised model; the best bar in a panel. */
 export const MARK = "var(--accent)";
@@ -28,12 +23,10 @@ export const MARK = "var(--accent)";
 export const CONTEXT = "var(--text-faint)";
 
 /**
- * Hairline, solid, one step off the surface. Never dashed — dashing reads as a
- * threshold. Sits on `--line`, not `--line-strong`: the contrast pass lifted
- * `--line-strong` to 3.31:1 on `--bg` so control borders clear the non-text
- * floor on every surface they sit on, and a gridline at that weight competes
- * with the marks it is supposed to sit behind. The new `--line` is roughly
- * where `--line-strong` used to be.
+ * Hairline, solid, one step off the surface. Never dashed: dashing reads as a
+ * threshold. `--line` rather than `--line-strong`, which is 3.31:1 on `--bg`
+ * so control borders clear the non-text floor; a gridline at that weight
+ * competes with the marks it sits behind.
  */
 export const GRID = "var(--line)";
 
@@ -41,22 +34,14 @@ export const GRID = "var(--line)";
 export const SURFACE = "var(--bg)";
 
 /**
- * Magnitude ramp — five ordinal steps on the accent hue, for the scorecard
- * heatmap and nothing else. Light-to-dark runs the other way on a dark surface:
- * more is BRIGHTER.
+ * Magnitude ramp: five ordinal steps on the accent hue, for the scorecard
+ * heatmap only. On a dark surface, more is brighter.
  *
- * The middle two steps moved in the contrast pass. The old step 3 (#bf4625) was
- * a dead zone: light ink reached 4.29:1 on it and dark ink 3.88, so NEITHER
- * cleared 4.5 and the cell value printed on it was below the floor whichever
- * way inkOn went. Darkening it to clear the floor with light ink cost lightness
- * headroom, which the old step 2 (#9a3a1f) then had to give back — the two
- * gates pull against each other and there is no single-value fix. Both steps
- * were re-solved together in OKLCH at the ramp's own hue (36°), holding steps
- * 1, 4 and 5 fixed, for the largest margin available on the tightest gate.
- *
- * Measured on the result: every step clears 4.5:1 with the ink inkOn picks for
- * it — 8.02, 6.17, 4.75, 5.22, 10.16 — lightness is monotone, and the smallest
- * adjacent ΔL is 0.064 against a floor of 0.06.
+ * Every step clears 4.5:1 with the ink inkOn picks for it (8.02, 6.17, 4.75,
+ * 5.22, 10.16), lightness is monotone, and the smallest adjacent ΔL is 0.064
+ * against a floor of 0.06. Steps 2 and 3 were solved together in OKLCH at the
+ * ramp's hue (36°) with steps 1, 4 and 5 held fixed: the contrast and lightness
+ * gates pull against each other there, so changing one means re-solving both.
  */
 export const RAMP = ["#782e1a", "#95381e", "#b34223", "#e4522b", "#fba57f"] as const;
 
@@ -83,21 +68,11 @@ function contrast(a: string, b: string): number {
 }
 
 /**
- * Ink for a label sitting INSIDE a filled cell. The one place text is allowed
- * on a data colour, so it is the one place the ink has to be argued for.
- *
- * This used to pick by luminance against a threshold — L > 0.32 takes the dark
- * ink — with a comment claiming that always cleared contrast. It did not, and
- * a threshold never can: contrast is a ratio between two colours and a
- * threshold only knows about one of them. On the accent itself (#E4522B, the
- * ramp's fourth step) the rule chose the light ink at 3.19:1 when the dark ink
- * was sitting right there at 5.22 — the brightest, most-used cell in the
- * heatmap printing its value below the floor.
- *
- * So: compute both and return the winner. There is no threshold to tune and
- * no fill for which this is worse than the rule it replaces, because "the
- * better of the two" is the definition of better. Whether the winner clears
- * 4.5:1 is a property of the RAMP, checked there.
+ * Ink for a label inside a filled cell: whichever of the dark and light ink
+ * contrasts more with the fill. Not a luminance threshold, which only knows
+ * about one of the two colours: "dark ink above L 0.32" puts light ink on the
+ * accent itself at 3.19:1, where the dark ink reaches 5.22. Whether the winner
+ * clears 4.5:1 is a property of RAMP, checked there.
  */
 export function inkOn(fill: string): string {
   const dark = "#0B0A09";

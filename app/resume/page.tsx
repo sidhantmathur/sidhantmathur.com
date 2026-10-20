@@ -19,10 +19,8 @@ export const metadata: Metadata = {
 export default function ResumePage() {
   return (
     <DocPage>
-        {/* His name heads the page (wave 2). The H1 used to be "Resume", so
-            someone who landed here from an application or a search saw no
-            name above the contact line — on the page most likely to be
-            pasted into an ATS note. The page's purpose moves to a label. */}
+        {/* His name is the H1, not "Resume": this is the page most likely to
+            be pasted into an ATS note, so it leads with whose it is. */}
         <p className="t-label text-text-faint">Resume</p>
         <h1 className="t-title mt-1 font-medium text-text">{SITE_NAME}</h1>
         <p className="t-body mt-3 max-w-[72ch] text-text-soft">
@@ -30,11 +28,10 @@ export default function ResumePage() {
           plain-text version lives at{" "}
           <Link
             href="/resume.md"
-            // Padding, not min-height. A link inside a sentence has to stay
-            // inline: an inline-flex box 44px tall is an atomic item on the
-            // line, and it dragged the whole paragraph's leading up with it.
+            // Padding, not min-height: a 44px inline-flex box is an atomic item
+            // on the line and drags the paragraph's leading up with it.
             // Vertical padding on an inline element grows the hit area without
-            // touching the line box, which is the whole trick.
+            // touching the line box.
             className="-my-2 py-2 text-text underline decoration-line-strong underline-offset-2 transition-colors hover:text-accent hover:decoration-accent"
           >
             /resume.md
@@ -46,9 +43,8 @@ export default function ResumePage() {
 
         <nav
           aria-label="Resume sections"
-          // These wrap to two rows on a phone. As bare text each link was a
-          // 17px band with 8px between rows, which is one target's worth of
-          // slop for five destinations — the height is what separates them.
+          // These wrap to two rows on a phone; the 44px link height is what
+          // keeps five destinations from blurring into one target.
           className="mt-10 flex flex-wrap gap-x-3 border-y border-line py-1.5 text-[13px]"
         >
           {[

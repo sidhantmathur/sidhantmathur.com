@@ -3,11 +3,10 @@ import Link from "next/link";
 import { DocPage } from "@/components/layout/doc-page";
 import { REFUSALS, ENFORCEMENT_LABEL } from "@/lib/refusals";
 
-// The refusal ledger (roadmap Sprint 7, #10).
-//
-// Hand-curated content. The entries live in lib/refusals.ts with the file that
-// enforces each one; this page renders them and adds the framing. The framing
-// is the part that has to stay honest — see the note in the copy ledger.
+// The refusal ledger (#10). The entries live in lib/refusals.ts with the file
+// that enforces each one; this page renders them and adds the framing. The
+// framing is the part that has to stay accurate: see the note on the refusal
+// ledger in docs/copy-ledger.md.
 
 export const metadata: Metadata = {
   alternates: { canonical: "/refusals" },

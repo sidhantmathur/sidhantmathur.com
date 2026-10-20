@@ -7,9 +7,8 @@ export function MonoLabel({
 }: React.ComponentProps<"span">) {
   return (
     <span
-      // A section marker, not a footnote. text-xs put it at 12px in the
-      // faintest colour on the page, which made the one landmark a reader
-      // scans a document by the hardest thing on it to see.
+      // A section marker a reader scans the document by, so it is 13px in
+      // text-soft rather than small and faint.
       className={cn("font-mono text-[13px] tracking-widest text-text-soft", className)}
       {...props}
     >

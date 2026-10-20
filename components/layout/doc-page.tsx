@@ -3,29 +3,22 @@ import type { ReactNode } from "react";
 import { ContactActions } from "@/components/contact-actions";
 import { SITE_NAME } from "@/lib/site";
 
-// Chrome for the document-style routes — /resume, /projects/*, /colophon and
-// the rest.
+// Chrome for the document routes: /resume, /projects/*, /colophon and the
+// rest. They are real server-rendered routes so search engines index them,
+// they can be pasted into an application, and they work with JS off.
 //
-// These pages are deliberately still real, server-rendered, crawlable routes:
-// search engines index them, they can be pasted into an application, and they
-// work with JS off.
+// The header is the site's own: his name (home), Resume, Projects, Contact.
+// Every page ends on the contact block under `id="contact"`, where the
+// header's Contact link goes; a case study passes its own ending
+// (case-study-layout.tsx) and keeps the id.
 //
-// WAVE 2: A REAL HEADER. The only chrome used to be "← Back to the
-// conversation", which told a reader the chat was home — the framing the
-// front-door pass set out to reverse — and offered someone arriving at /resume
-// from LinkedIn a conversation they had never had. The header is now the
-// site's own: his name (home), Resume, Projects, Contact. Every page also ends
-// on the same three ways to act as the front door, under `id="contact"`, which
-// is where the header's Contact link goes; a case study passes its own ending
-// (see case-study-layout.tsx) and keeps the id.
+// The wrapper owns its scroll container because the root body is
+// overflow-hidden for the shell. `.doc-prose` scopes the long-form sans rule
+// in app/globals.css.
 //
-// The wrapper owns its own scroll container because the root body is
-// overflow-hidden for the shell. `.doc-prose` is the scope the long-form sans
-// rule in app/globals.css applies to.
-//
-// PHASE 4 renders these same page bodies inside the shell's context panel via
-// intercepting routes. Keep the content free of fixed widths and viewport
-// units so it reflows into a ~380px column without changes.
+// The case-study bodies (content/*.mdx) also render in the shell's context
+// panel (components/shell/panel-body.tsx). Keep page content free of fixed
+// widths and viewport units so it reflows into a ~380px column.
 
 const NAV = [
   { label: "Resume", href: "/resume" },

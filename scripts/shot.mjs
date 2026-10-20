@@ -1,10 +1,6 @@
-// Headless screenshots, so an agent working in a cloud sandbox can SEE this
-// site instead of inferring it from the DOM.
-//
-// There is no browser pane in a headless environment, and a portfolio whose
-// argument is craft cannot be reviewed through `read_page` output. This drives
-// Chromium with no display, writes PNGs, and those PNGs are readable by an
-// agent's vision and shareable straight into chat for approval from a phone.
+// Headless screenshots of the site, for reviewing visual changes where there is
+// no browser pane, such as a cloud sandbox. Drives Chromium with no display and
+// writes PNGs.
 //
 // Usage:
 //   node scripts/shot.mjs                      # / at desktop
@@ -14,8 +10,10 @@
 //   BASE=https://<preview>.vercel.app node scripts/shot.mjs /
 //
 // Output lands in .screenshots/ (git-ignored; OUT=<dir> to put it elsewhere,
-// so two sessions sharing a checkout don't wipe each other's). Requires a one-time
-// `npx playwright install chromium` per environment.
+// so two sessions sharing a checkout don't wipe each other's). Requires a
+// one-time `npx playwright install chromium` per environment. Exits 1 if any
+// route fails to load, returns HTTP 400 or above, or logs a console or page
+// error.
 
 import { mkdirSync, rmSync } from "node:fs";
 import { join } from "node:path";
@@ -37,36 +35,27 @@ const viewport = mobile
   ? { width: 390, height: 844 }
   : { width: 1280, height: 800 };
 
-// Wiped per run so a stale PNG from a previous change can never be mistaken for
-// the current state — the exact failure mode that makes screenshot review
-// worthless.
+// Wiped per run so a stale PNG can't be mistaken for the current state.
 rmSync(OUT, { recursive: true, force: true });
 mkdirSync(OUT, { recursive: true });
 
-// Vercel deployment protection, when it's on, answers a headless request with a
-// login page rather than the site — which screenshots as a perfectly clean
-// image of the wrong thing. The automation bypass secret turns that off for
-// this request. Unset is fine and normal; protection is currently off.
+// With Vercel deployment protection on, a headless request gets a login page,
+// which screenshots as a clean image of the wrong thing. The automation bypass
+// secret lets the request through; unset is fine when protection is off.
 const bypass = process.env.VERCEL_AUTOMATION_BYPASS_SECRET;
 
-// --full used to be a lie. Every page on this site scrolls INSIDE an `h-dvh`
-// shell — the conversation column, the panel, the document pages all have their
-// own overflow-y container — so the document itself never exceeds the viewport
-// and Playwright's `fullPage` had nothing to extend past. It produced a
-// byte-identical image to a viewport shot, which is the worst kind of broken:
-// the flag reported success and the reviewer believed they had seen the page.
-//
-// So the viewport is GROWN to the content instead. The tallest overflow found
-// on the page is added to the viewport height, the page is given a beat to
-// reflow, and the measurement is repeated a couple of times in case growing the
-// outer scroller revealed more inside an inner one. Capped, because a page with
-// a runaway container should produce a big screenshot, not a hung one.
+// Every page scrolls inside an `h-dvh` shell with its own overflow-y
+// containers, so the document never exceeds the viewport and Playwright's
+// `fullPage` alone captures exactly a viewport shot. --full grows the viewport
+// to the content instead, re-measuring in case growing an outer scroller
+// revealed more in an inner one. Capped so a runaway container produces a big
+// screenshot, not a hung one.
 const FULL_MAX_PX = 5000;
 
 /**
- * How much taller this viewport would have to be for nothing to be scrolled
- * out of sight — the largest overflow across the document and every element
- * that actually scrolls.
+ * How much taller the viewport would have to be for nothing to be scrolled out
+ * of sight: the largest overflow across the document and every scrolling
+ * element.
  */
 async function overflowPx(page) {
   return page.evaluate(() => {
@@ -111,9 +100,8 @@ const page = await browser.newPage({
     : {},
 });
 
-// Console and page errors are collected and printed with the result. Half the
-// value of driving a real browser is catching the hydration error that a
-// screenshot alone would render as a perfectly innocent-looking page.
+// Console and page errors are collected and fail the run: a hydration error
+// can screenshot as an innocent-looking page.
 const problems = [];
 page.on("console", (m) => {
   if (m.type() === "error") problems.push(`console: ${m.text()}`);
@@ -139,15 +127,12 @@ for (const route of routes) {
       problems.push(`${route}: HTTP ${res.status()}`);
       failed = true;
     }
-    // The shell animates in on load. Without a beat here the screenshot catches
-    // motion mid-flight and every review turns into a debate about whether the
-    // layout is broken or simply still arriving.
+    // The shell animates in on load; wait it out so the shot isn't mid-motion.
     await page.waitForTimeout(600);
     let shotHeight = viewport.height;
     if (fullPage) shotHeight = await growToContent(page);
     await page.screenshot({ path: file, fullPage });
-    // The viewport goes back before the next route, so one tall page can't
-    // silently change the frame every route after it is shot in.
+    // Reset so one tall page doesn't change the frame for every later route.
     if (fullPage && shotHeight !== viewport.height) {
       await page.setViewportSize(viewport);
     }
@@ -167,6 +152,4 @@ if (problems.length > 0) {
   for (const p of problems) console.error(`  ${p}`);
 }
 
-// A screenshot run that silently tolerates a 500 or a pageerror teaches you to
-// trust output you shouldn't, so anything that went wrong fails the command.
 process.exit(failed || problems.length > 0 ? 1 : 0);

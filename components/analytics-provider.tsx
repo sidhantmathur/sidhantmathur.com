@@ -4,26 +4,19 @@ import { useEffect } from "react";
 import { initAnalytics, rememberLanding } from "@/lib/analytics";
 
 // Initializes PostHog on the client exactly once. Renders nothing. When
-// NEXT_PUBLIC_POSTHOG_KEY is unset, initAnalytics is a no-op — no network calls.
+// NEXT_PUBLIC_POSTHOG_KEY is unset, initAnalytics is a no-op with no network
+// calls.
 //
-// DEFERRED PAST HYDRATION, not merely past mount. This effect used to run in the
-// same commit as the shell's, which meant that on a slow connection the browser
-// spent part of the one window that mattered — the seconds where the page looks
-// finished and answers no taps — fetching and evaluating an analytics SDK and
-// opening a connection to a third-party origin. None of that is worth a
-// millisecond of time-to-interactive: the first thing PostHog records is a
-// pageview, and a pageview is just as true a second later.
+// Deferred to idle rather than run on mount, so fetching a third-party SDK
+// never competes with hydration on a slow connection; the first event is a
+// pageview, which is just as true a second later. Safari has no
+// requestIdleCallback, so the timeout is the fallback there and the ceiling
+// everywhere else, for a page that never goes idle.
 //
-// requestIdleCallback is the right primitive and Safari still doesn't have it,
-// so the timeout is both the fallback there and the ceiling everywhere else —
-// a page that never goes idle (a conversation streaming from the first second)
-// must still eventually report.
-//
-// THE ONE THING THAT CAN'T WAIT is reading the landing address. An application
-// link's `?ref=` (see lib/analytics.ts) is only guaranteed to be in the address
-// bar at first paint: a replayed fit check opens its panel, and pushes a new
-// address, long before the idle callback below fires. Reading it costs nothing
-// and loads nothing, so it happens on mount.
+// The landing address is read on mount, not at idle: an application link's
+// `?ref=` (see lib/analytics.ts) is only guaranteed to be in the address bar at
+// first paint, because a replayed fit check pushes a new address long before
+// the idle callback fires.
 export function AnalyticsProvider() {
   useEffect(() => {
     rememberLanding();

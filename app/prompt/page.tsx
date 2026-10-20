@@ -4,16 +4,12 @@ import { DocPage } from "@/components/layout/doc-page";
 import { buildSystemPrompt, SITE_APPENDIX } from "@/lib/system-prompt";
 import { REPO_STATS } from "@/lib/repo.generated";
 
-// "Read my instructions" (roadmap Sprint 7, #7).
+// The published system prompt (#7). It renders `buildSystemPrompt()`, the
+// function the chat route calls, rather than a copy of the text, so it can't
+// drift from what the model is sent.
 //
-// The page renders `buildSystemPrompt()` — the same function app/api/chat's
-// route calls — rather than a copy of the text, so it cannot drift from what
-// the model is actually sent. A published prompt that had quietly fallen a
-// sprint behind would be worse than not publishing one.
-//
-// Pre-rendered like everything else here: the prompt has no dynamic content in
-// it by design (that is what makes the provider's cache hit), which is exactly
-// what makes it safe to bake into a static page.
+// Safe to pre-render because the prompt has no per-request content by design;
+// that is also what lets the provider cache it.
 
 export const metadata: Metadata = {
   alternates: { canonical: "/prompt" },
@@ -81,13 +77,10 @@ export default function PromptPage() {
 
 function PromptBlock({ text, label }: { text: string; label: string }) {
   return (
-    // Named, and focusable on purpose. Chrome makes any scrollable box a tab
-    // stop so the arrow keys can scroll it, which meant these two blocks were
-    // anonymous stops — a screen reader announced nothing at all on landing in
-    // the largest document on the site. `role="region"` plus a label makes the
-    // stop say what it is; tabIndex is explicit rather than left to the
-    // browser's inference, so the behaviour does not depend on whether the
-    // block happens to overflow at a given width.
+    // Chrome makes any scrollable box a tab stop so the arrow keys can scroll
+    // it, and an unnamed stop announces nothing. `role="region"` plus a label
+    // names it; tabIndex is explicit so the behaviour doesn't depend on whether
+    // the block overflows at a given width.
     <pre
       role="region"
       aria-label={label}

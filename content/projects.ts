@@ -1,12 +1,10 @@
-// Shared project data — the single source of truth for the three project
-// cards' copy. Both the homepage (`app/page.tsx`) and the chat `showProject`
-// tool (`app/api/chat/route.ts`) read from here so the card text exists in
-// exactly one place.
+// The three projects' card copy and metadata, in one place. Read by /projects,
+// the case-study layout's "next case study" link, the shell's project panel
+// and panel title, and the chat route's `showProject` tool.
 //
-// Every string below is verbatim from docs/site-copy.md (Homepage → Projects
-// section, Cards 1–3), as updated by the July 2026 copy refresh. Do NOT edit,
-// rephrase, or "improve" this copy — it is site copy and site-copy.md wins
-// every text conflict.
+// The copy is verbatim from docs/site-copy.md (Homepage → Projects section,
+// cards 1–3). Change it there first and don't rephrase it here: site-copy.md
+// wins every text conflict.
 
 export type ProjectSlug = "adarle20" | "nokia" | "dell-ml";
 
@@ -16,21 +14,20 @@ export type Project = {
   index: string;
   /** Card / case-study title. */
   title: string;
-  /** Card body copy — verbatim from site-copy.md. */
+  /** Card body copy, verbatim from site-copy.md. */
   description: string;
   /** Metadata strip: role. */
   role: string;
-  /** Metadata strip: stack, as an array (rendered comma-joined on the card). */
+  /** Metadata strip: stack, rendered comma-joined. */
   stack: string[];
   /** Metadata strip: status. */
   status: string;
   /** Case-study href. */
   caseStudyHref: string;
-  /** Optional card image — only A Darle 20 has one. */
+  /** Image sent with the showProject tool result. Only A Darle 20 has one. */
   image?: string;
 };
 
-// Keyed by slug for O(1) lookup in the showProject tool.
 export const PROJECTS: Record<ProjectSlug, Project> = {
   adarle20: {
     slug: "adarle20",
@@ -63,18 +60,16 @@ export const PROJECTS: Record<ProjectSlug, Project> = {
       "As an intern, I built a propensity model on Dell's historical customer database to find cross-sell targets for a high-margin software product — it surfaced about 20,000 qualified accounts representing an estimated $129M in pipeline.",
     role: "Marketing intern",
     // Azure ML only: it is the one tool content/knowledge/projects-dell.md
-    // names. "Python" was here too and is nowhere in the record — it comes
-    // back when Sidhant confirms it (copy ledger, pending).
+    // names. Python stays off until Sidhant confirms it (copy ledger, pending).
     stack: ["Azure ML"],
     status: "2018",
     caseStudyHref: "/projects/dell-ml",
   },
 };
 
-// The order the site lists them in — /projects, and the "next case study" at
-// the end of each one. Nokia first since wave 2 (2026-10-19): it is the
-// current job and the evidence for the sales-ops roles he is applying to, and
-// the council review found it second, under the marketplace, everywhere.
+// The order the site lists them in: /projects, and the "next case study" at
+// the end of each one. Nokia first because it is the current job and the
+// evidence for the sales-ops roles he is applying to.
 export const PROJECT_LIST: Project[] = [
   PROJECTS.nokia,
   PROJECTS.adarle20,
