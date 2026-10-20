@@ -93,7 +93,7 @@ a measurement nobody has taken.
    corpus in the panel with that chunk highlighted. **Also open the trace**
    (status strip → Trace → expand the turn): it should read `corpus knowledge +
    repo`, and input tokens should be ~4,000 higher than an ordinary turn.
-8. **Type `/roast`.** Read it for two things: that it says nothing about *you*,
+8. **Type `/critique`.** Read it for two things: that it says nothing about *you*,
    and that no file path renders as a clickable link (paths should be code-styled).
    Then decide whether you like it — see the copy review, §4.2.
 9. **`/prompt`, `/refusals`, `/sources`, `/budget`, `/pdf`, `/jd`, `/fit`** as
@@ -116,11 +116,11 @@ a measurement nobody has taken.
     browser untouched.
 15. **Open a citation while reading a permalink, then reload.** Correct: the URL
     keeps `#c=…` and the reload replays. *This was a real bug; worth confirming.*
-16. **"start a fresh one"** — clears the conversation, drops the fragment from the
+16. **"start a new conversation"** — clears the conversation, drops the fragment from the
     address bar, and a reload gives the ordinary empty state.
 
 ### The homepage (Track B)
-17. **`/`** — hero, then a left-ruled `tl;dr` block with six label/value rows,
+17. **`/`** — hero, then a left-ruled `summary` block with six label/value rows,
     then four chips, then the disclaimer. All above the fold at 1440×900.
 18. **Ask anything** — the TL;DR should **disappear** once a message exists, and
     not come back until reset.
@@ -166,7 +166,7 @@ What's left is judgment, touch, and iOS-specific behaviour.
     thing that has ever appeared in the message column on a phone. It fits, but
     check where the scroll lands — you may want it at the headline rather than
     the bottom.
-28. **`/roast` on a phone** — a long multi-paragraph answer with bold
+28. **`/critique` on a phone** — a long multi-paragraph answer with bold
     sub-headings. Does it read as a wall?
 29. **`/measurements` at 390 px** — figures wrap; confirm the wrapping looks
     deliberate rather than stranded. The expanded assertion lists contain long

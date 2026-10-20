@@ -30,7 +30,7 @@ The **Claims** column is the one that matters:
 
 ## Ledger
 
-Rows below that quote older wording are superseded by "Copy pass, 2026-10-20" at the end of this file, which has the current text.
+Rows below that quote older wording are superseded by "Copy pass, 2026-10-20" and then "Cute pass, 2026-10-20" at the end of this file, which have the current text.
 
 | Status | Where | String / summary | Claims | Source |
 | --- | --- | --- | --- | --- |
@@ -836,6 +836,97 @@ described it wrongly. Each one now claims less, never more.
 - **A Darle 20, feature surface and caption**: "Everything in it" overclaimed a
   list of what the record names, and the caption said "seats still open" where
   the cards show seats filled.
+
+## Cute pass, 2026-10-20
+
+A second pass, after Sidhant read the first: "There is another thing. Maybe
+there's a lot of language that's too 'cute'. I don't like that tone on this
+site." Three lanes took out jokes and winks, conceits ("Interview this site",
+"theatre", "teletype", "roast"), personified software ("talks it out of one
+rule", "taking orders"), chatty register ("tl;dr", "Give it another try", "Head
+back home") and headings that strike a pose, aiming for plain, professional and
+friendly-neutral. No fact about Sidhant changed. Every row is `draft`, with the
+new string first and the old after "Was:"; where a row in "Copy pass,
+2026-10-20" above quotes the string, this one replaces it. Tests touched, intent
+unchanged: `evals/recursion.test.mjs` now looks for `name: "/critique"`, and
+`scripts/check-pre-hydration.mjs` finds the chips by /short version|shipped end
+to end/.
+
+### Front door, case studies and small pages (lane `pages`)
+
+| Status | Where | String / summary | Claims | Source |
+| --- | --- | --- | --- | --- |
+| draft | `content/recruiter.ts` → `TLDR_LABEL` (heading of the front-door fact block) | "summary". Was: "tl;dr". The block's accessible name was already "Summary". | none | — |
+| draft | `content/recruiter.ts` → `SUGGESTED_QUESTIONS[0]` (chip, and the visitor's first message when tapped) | "Give me the short version". Was: "Give me the 30-second version". | none | Passes `looksLikeJobPosting` and `looksLikeSiteQuestion` as false, like the other chips |
+| draft | `components/shell/app-shell.tsx` → text link under the CTA row (focuses the composer) | "Ask the AI assistant ↓". Was: "Interview this site ↓", which Sidhant picked in the front-door mockup. | none | — |
+| draft | `app/resume/page.tsx` → intro | "The current version, last updated July 2026. There's a plain-text version at /resume.md for pasting into an AI tool." Was: "…at /resume.md if you'd rather feed it to an AI. I won't take it personally." | none | — |
+| draft | `app/not-found.tsx` → first link | "Go to the homepage →". Was: "Head back home →". | none | — |
+| draft | `content/adarle20.mdx` → fourth section heading; `content/adarle20-media.ts` → slot `operations` title (not rendered until the slot has a file) | "Funnel tracking". Was: "The funnel, instrumented". | none | — |
+| draft | `content/adarle20.mdx`, `content/nokia.mdx` → closing headings | "Summary". Was: "What I'd tell a hiring manager". The knowledge files keep "What he'd tell a hiring manager", because those headings are chunk ids, so a chat citation of the same paragraph still shows the old name. | none | — |
+| draft | `content/nokia.mdx` → "In plain terms", first paragraph | "A large company sells in a lot of places, and every quarter its executives need one picture of how that went. Getting to that picture meant asking people across the regions to send their numbers in, in whatever shape they kept them, and somebody assembling it by hand. That fell to a finance analyst, and it took their entire workday, every day of the quarter-end close." Was: "…Here that somebody was a finance analyst, and it took…". | none (restatement; the analyst and the workday are unchanged) | Pinned in `docs/site-copy.md` by `evals/track-b.test.mjs` |
+| draft | `content/knowledge/bio.md` → overview, last line (also the About mirror in `docs/site-copy.md`) | "Outside work: basketball, chess, cooking, and learning three languages." Was: "…and slowly learning three languages." | **factual** (unchanged; only the adverb went) | — |
+
+### Chat interface (lane `chat-ui`)
+
+| Status | Where | String / summary | Claims | Source |
+| --- | --- | --- | --- | --- |
+| draft | `components/shell/instruments.tsx` → section title | "Simulated failures". Was: "Failure theatre". | none | — |
+| draft | `components/shell/instruments.tsx` → Sound toggle | "sound on" / "sound off". Was: "teletype on" / "teletype off". The saved setting's storage key (`teletype.v1`) is unchanged, so nobody's choice resets. | none | `use-teletype.ts` |
+| draft | `components/shell/panels.ts` → `PANELS.instruments.title` (title bar, aside label, mobile sheet); `components/shell/shell-data.ts` → index entry; `components/shell/app-shell.tsx` → receipt button title | "Technical details" · "Technical details" · "Open the technical details". Was: "Instruments" · "Instruments" · "Open the instruments". The panel's internal id (`instruments`) is unchanged. | none | — |
+| draft | `components/shell/shell-data.ts` → `SLASH_COMMANDS` | "/critique" (hint unchanged: "Ask it what's wrong with this site"). Was: "/roast". | none | `evals/recursion.test.mjs` checks the command exists |
+| draft | `lib/site-question.ts` → `ROAST_REQUEST` (sent as the visitor's own turn) | "Critique this site using the repo. Name the specific choices, files and trade-offs that are weak." Was: "Roast this site using the repo. … and don't go easy on it." The detector still accepts "roast" typed by a visitor, and the system prompt's "critique or roast" rule supplies the firmness. | none | `looksLikeSiteQuestion` (fires on "this site" and "the repo") |
+| draft | `lib/chat-telemetry.ts` → `upstream_timeout`, `upstream_unavailable`, `unknown` copy | "The server took too long to respond. Try again." · "Something went wrong on the server. Try again in a moment." · "Something went wrong. Try again in a moment." Was: "…Give it another try." · "…Give it another try in a moment." (twice). | none | — |
+| draft | `components/shell/shell-data.ts` → `IDLE_LINES` (five lines now) | "An idle tab doesn't call the model or cost anything." · "The knowledge base is the same on every request, so after the first turn the provider usually serves it from cache." (unchanged) · "Type / to see the commands." (unchanged) · "The message limit refills on a sliding hour." · "Most entries in the index have their own page. Cmd-click or Ctrl-click one to open it in a new tab." (unchanged). Was: "This line ships with the page, so an idle tab doesn't call the model or cost anything." · "…sliding hour, so you'll rarely have to wait." · and a sixth line, "Ask the question you'd ask on a call.", now deleted. | none about Sidhant; one site claim dropped ("rarely have to wait") | `use-idle.ts` |
+| draft | `components/shell/app-shell.tsx` → replay banner reset button | "start a new conversation". Was: "start a fresh one". | none | — |
+| draft | `components/shell/panel-body.tsx` → prompt panel link | "Read the full instructions". Was: "Read the whole thing". | none | — |
+| draft | `components/shell/manual-mode.tsx` → corpus link and `MANUAL_COPY.corpusHeading` | "All sources" · "Everything else". Was: "Every source, listed" · "The rest of the record". | none | — |
+| draft | `components/shell/answer.tsx` → miscited source-row link | "See the citation check" (it opens the panel at its "Citations" section). Was: "See the trace". | none | — |
+| draft | `scripts/build-repo-corpus.mjs` → repo chunk headings (the citation chip "This site — …" and the source panel title) | "Technical details panel" · "What the assistant won't do". Was: "The instrument deck" · "The refusal ledger". | none | — |
+| draft | `components/shell/instruments.tsx` → header comment quoted to the assistant as `repo:instruments` (visible in the source panel) | "The technical details panel: model picker, cost meter, tokens-per-second rate, per-turn trace, citation check, simulated failures and sound toggle." Was: "The instrument deck: model picker, cost meter, tokens-per-second seismograph, per-turn trace, citation trace, failure theatre and teletype toggle." So the assistant names sections a visitor can find. | none | — |
+| draft | `lib/refusals.ts` → top comment, quoted as the opening of `repo:refusals` | "What the assistant won't do, why, and what it does instead. Hand-curated. …" Was: "The refusal ledger: what the assistant won't do, why, and what it does instead. …". | none | — |
+
+### How this site works: colophon, prompt, refusals, measurements (lane `how-it-works`)
+
+| Status | Where | String / summary | Claims | Source |
+| --- | --- | --- | --- | --- |
+| draft | `app/colophon/page.tsx` → credit line | "Most of the code was written by AI agents working from a build spec. I made the decisions." Was: "…I made the decisions, so the mistakes are mine." | **factual** (unchanged: "I made the decisions") | — |
+| draft | `app/colophon/page.tsx` → section heading and body | Heading "Where to see how the assistant works". Body: "The instructions the assistant runs on are published in full, and so is a list of what it won't answer, with the reason for each. In the chat, the top bar shows what the last answer cost, and the technical details panel lists the cost of every turn. The eval results show how it scores." (links: "instructions" to /prompt, "won't answer" to /refusals, "eval results" to /measurements). Was: "The site shows its workings"; "…the instruments panel lists…"; "The eval results show [how often it's right]." | none about Sidhant; one site claim narrowed | `/measurements/models` says a pass rate isn't a measure of accuracy |
+| draft | `components/shell/shell-data.ts` → `WHY_CHATBOT[1]`, `[2]` | "Questions about a portfolio usually have to wait for a call. If you're going through candidates and can't call me, you can ask the assistant whether any of my work maps to what you need." · "It works best with a specific question, such as how the payments work, what the Nokia rollout involved, or what I'd do in the first ninety days of the role you're hiring for." Was: "A portfolio is a list standing in for a conversation you can't have. If you're going through a stack of candidates at eleven at night, you can't call me, but…" · "So come with a specific question, like…". Paragraphs 1 and 4 are unchanged. | none (the three examples are unchanged) | — |
+| draft | `app/prompt/page.tsx` → third paragraph | "Ask the assistant to recite these instructions and it will decline and link here, even though the prompt isn't a secret. If a conversation gets it to break one rule, the others get easier to break, so it's told to decline every time. The page on what it won't do has more on why." (link "what it won't do" to /refusals). Was: "…A conversation that talks it out of one rule has an easier time with the others, so it doesn't negotiate this one. The refusal ledger has more on why." | none ("it's told to" keeps the rule prompt-enforced) | `lib/system-prompt.ts` |
+| draft | `components/shell/panel-body.tsx` → `PROMPT_NOTE.decline` | "Ask the assistant to recite its instructions and it will decline and link here, even though the prompt isn't a secret. If a conversation gets it to break one rule, the others get easier to break." Was: "…A conversation that talks it out of one rule has an easier time with the others." | none | — |
+| draft | `lib/refusals.ts` → `recite-prompt.why`, `roast-sidhant.why` | "The prompt isn't a secret. But the rule against reciting it sits in the same block as the rules against changing persona and following instructions in pasted text, and if a conversation gets the model to break one of them, the rest get easier to break." · "Asking the site to criticise itself is a fair question about its code and design choices, and Sidhant isn't the subject of that question." Was: "…taking orders from pasted text, and a conversation that talks the model out of one of them has an easier time with the rest." · "Asking the site to roast itself…". Ids, enforcement and anchors unchanged. | none | Each entry's `anchor` |
+| draft | `app/refusals/page.tsx` → intro, first paragraph | "This page lists what the chat assistant won't do, why, and what it does instead." Was: "A chat assistant's limits usually stay hidden until you ask for something and get told no. This page lists what this one won't do, why, and what it does instead." | none | — |
+| draft | `app/measurements/page.tsx` → title, h1, `COPY.intro` | "How the assistant is measured". Intro: "The readouts in the chat cover only your conversation. This page reports on the assistant as a whole: how it scores against a fixed set of questions, how fast and how reliably it answers, and how often its claims pass the site's own checker." Was: "What this assistant scores"; "Every instrument on this site measures the one conversation you're having. …". | none | — |
+| draft | `app/measurements/models/page.tsx` → title, h1, header subline | "Model comparison". "A companion to the measurements page." (link to /measurements). Was: "Five models, one corpus"; "A companion to what this assistant scores." | none (the title no longer counts the models) | — |
+| draft | `app/measurements/models/page.tsx` → `COPY.why`, `COPY.empty` | "Choosing a model is a trade-off between pass rate, time to first token, output tokens per turn and cost. These pull against each other, and the trade-off only shows when all four are measured on the same corpus." · "No live run has been published, so there is nothing to compare. The comparison runs locally, and this page stays empty until someone publishes a run." Was: "Choosing a model is a trade between how often the answer is right, how long you wait for it, how much of it you get, and what it costs. …" · "…The bake-off runs locally…". | none about Sidhant; "how often the answer is right" narrowed to "pass rate" | The page's own grader caveat |
+| draft | `app/measurements/models/page.tsx` → section headings | "Each measurement, ranked" · "All figures in one table" (also the table's scroll-region label). Was: "The numbers underneath" · "Everything, as a table". | none | — |
+
+### Names renamed (visible labels only)
+
+Internal ids, identifiers, storage keys and eval names are unchanged.
+
+- **Failure theatre → Simulated failures** (the section in the technical details
+  panel). The route's `// --- Failure theatre ---` divider stays; it is only a
+  corpus anchor and never reaches the assistant.
+- **Instruments → Technical details** (panel title, index entry, mobile sheet, the
+  receipt button's title, the colophon body). The panel's internal id is still
+  `instruments`.
+- **/roast → /critique** (the slash command and the message it sends). The
+  detector still accepts "roast", and the refusal entry's id is still
+  `roast-sidhant`.
+- **teletype → sound** (the toggle). The storage key `teletype.v1` is unchanged.
+- **"Five models, one corpus" → "Model comparison"** (title and h1 of
+  `/measurements/models`).
+- **"What this assistant scores" → "How the assistant is measured"** (title and h1
+  of `/measurements`). The system prompt's own link text, "what it scores", is
+  model-facing and unchanged.
+- **tl;dr → summary** (the front-door block's label). Docs and eval names still
+  call decision #25 the "TL;DR".
+- **"The refusal ledger" → "What the assistant won't do"** and **"The instrument
+  deck" → "Technical details panel"** (the repo-corpus headings on citation chips
+  and in the source panel). The `/prompt` link that said "The refusal ledger" now
+  says "what it won't do". The eval suite named "the refusal ledger" keeps its
+  name on `/measurements` until it is renamed and republished.
 
 ## Front-door cut, 2026-10-20
 
