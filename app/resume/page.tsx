@@ -36,7 +36,7 @@ export default function ResumePage() {
           >
             /resume.md
           </Link>{" "}
-          if you&apos;d rather feed it to an AI. I won&apos;t take it personally.
+          for pasting into an AI tool.
         </p>
 
         <ResumeDownloadButton />

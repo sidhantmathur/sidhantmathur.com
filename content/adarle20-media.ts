@@ -98,7 +98,7 @@ export const ADARLE_MEDIA: MediaSlot[] = [
   {
     id: "operations",
     kind: "screenshot",
-    title: "The funnel, instrumented",
+    title: "Funnel tracking",
     brief:
       "Whatever you actually look at to run the business — bookings, conversion, cancellations, refunds, host activation. Check before sending: this is the one slot where the file would carry live numbers, and anything in it is published.",
     aspect: "16:9",

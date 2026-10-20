@@ -10,7 +10,7 @@ SQL, the Power Platform, Stripe, and lately, building with LLMs and coding agent
 He likes turning vague business problems into working software, then owning
 it, including the support and the bug fixes.
 
-Outside work: basketball, chess, cooking, and slowly learning three languages.
+Outside work: basketball, chess, cooking, and learning three languages.
 
 ## Background details
 

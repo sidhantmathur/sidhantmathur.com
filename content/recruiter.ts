@@ -16,7 +16,7 @@ export type TldrRow = {
   source: string;
 };
 
-export const TLDR_LABEL = "tl;dr";
+export const TLDR_LABEL = "summary";
 
 // Scan-shaped rather than prose: the reader this is for hasn't started reading
 // yet (six seconds, per decisions #25).
@@ -140,7 +140,7 @@ export const HERO_TLDR = RECRUITER_TLDR.filter(
 // site's own affordance into its worst path. Asserted in
 // evals/track-b.test.mjs.
 export const SUGGESTED_QUESTIONS = [
-  "Give me the 30-second version",
+  "Give me the short version",
   "What has he shipped end to end?",
   "Is he a fit for a RevOps role at an AI-forward company?",
   "What did he build at Nokia?",
