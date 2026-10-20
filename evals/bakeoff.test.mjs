@@ -33,6 +33,7 @@ import {
   latestRunPerModel,
   measuredRange,
   median,
+  placeLabels,
   rank,
   runHistory,
   supportsMedian,
@@ -344,6 +345,31 @@ describe("what the comparison page derives", () => {
   it("finds no gap when the catalogue is what was measured", () => {
     const drift = catalogueDrift(["a/x", "b/y"], ["b/y", "a/x"]);
     assert.deepEqual(drift, { noLongerOffered: [], notMeasured: [] });
+  });
+
+  it("moves a scatter label off a neighbouring dot instead of printing through it", () => {
+    // The 2026-10-20 cost frontier: gpt-6-luna's label, placed to the right as
+    // every label was, ran through deepseek-v4-flash-0731's dot 40px away.
+    const dots = [
+      { x: 150, y: 110, text: "gpt-6-luna" },
+      { x: 190, y: 113, text: "deepseek-v4-flash-0731" },
+    ];
+    const spots = placeLabels(dots, { x0: 72, x1: 560 });
+    const box = (d, s) => {
+      const w = d.text.length * 6;
+      const x0 = s.anchor === "start" ? s.x : s.anchor === "end" ? s.x - w : s.x - w / 2;
+      return { x0, x1: x0 + w, y0: s.y - 9.5, y1: s.y + 1.5 };
+    };
+    const hits = (a, b) => a.x0 < b.x1 && b.x0 < a.x1 && a.y0 < b.y1 && b.y0 < a.y1;
+    const [luna, deepseek] = spots.map((s, i) => box(dots[i], s));
+    const deepseekDot = { x0: 184, x1: 196, y0: 107, y1: 119 };
+    assert.ok(!hits(luna, deepseekDot), "the first label still crosses the second dot");
+    assert.ok(!hits(luna, deepseek), "the two labels overlap");
+  });
+
+  it("keeps a lone label to the right, and flips it near the right edge", () => {
+    assert.equal(placeLabels([{ x: 200, y: 100, text: "gpt-5-mini" }], { x0: 72, x1: 560 })[0].anchor, "start");
+    assert.equal(placeLabels([{ x: 520, y: 100, text: "gpt-5-mini" }], { x0: 72, x1: 560 })[0].anchor, "end");
   });
 
   it("puts a model on the frontier only when nothing beats it on both axes", () => {

@@ -1,7 +1,7 @@
 import { ChartFrame, ScrollFade, floorWidth, shortNames } from "./chart-frame";
 import { CONTEXT, GRID, MARK, SURFACE } from "./chart-tokens";
 import { formatPercent } from "@/lib/measurements";
-import type { FrontierResult } from "@/lib/model-comparison";
+import { placeLabels, type FrontierResult } from "@/lib/model-comparison";
 
 // Quality against cost, and quality against latency (Sprint 8).
 //
@@ -129,6 +129,13 @@ export function FrontierScatter({
     inDomain(xMin, xMax),
   );
   const yTicks = linearTicks(yMin, yMax, 3).filter(inDomain(yMin, yMax));
+  // Labels go wherever they clear the other dots and labels — see placeLabels.
+  // The right edge of the drawing, not of the plot, is the limit: a label may
+  // run into the right padding, as it always could, but never off the SVG.
+  const spots = placeLabels(
+    points.map((p) => ({ x: sx(p.x), y: sy(p.y), text: p.row.short })),
+    { x0: PLOT.x0, x1: W },
+  );
 
   return (
     <ChartFrame
@@ -217,13 +224,11 @@ export function FrontierScatter({
             {Y_LABEL} →
           </text>
 
-          {points.map((p) => {
+          {points.map((p, i) => {
             const cx = sx(p.x);
             const cy = sy(p.y);
             const fill = p.onFrontier ? MARK : CONTEXT;
-            // Labels flip to the left near the right edge so a name never runs
-            // off the plot. A label that doesn't fit is not clipped.
-            const flip = cx > PLOT.x1 - 110;
+            const spot = spots[i];
             return (
               <g key={p.row.model}>
                 {/* Hit target. The dot is 9px across; a pointer should not have
@@ -239,9 +244,9 @@ export function FrontierScatter({
                     they overlap. Not a border — a spacer. */}
                 <circle cx={cx} cy={cy} r={4.5} fill={fill} stroke={SURFACE} strokeWidth={2} />
                 <text
-                  x={flip ? cx - 9 : cx + 9}
-                  y={cy + 3.5}
-                  textAnchor={flip ? "end" : "start"}
+                  x={spot.x}
+                  y={spot.y}
+                  textAnchor={spot.anchor}
                   className={
                     p.onFrontier
                       ? "fill-[var(--text)] text-[10px]"

@@ -234,6 +234,73 @@ export function frontier(
   return { points, unplotted };
 }
 
+// --- Where a scatter label goes -----------------------------------------------
+
+export type LabelSpot = { x: number; y: number; anchor: "start" | "end" | "middle" };
+
+type Box = { x0: number; x1: number; y0: number; y1: number };
+const overlaps = (a: Box, b: Box) => a.x0 < b.x1 && b.x0 < a.x1 && a.y0 < b.y1 && b.y0 < a.y1;
+
+/**
+ * Places each dot's label beside it without landing on another label or dot.
+ *
+ * The frontier charts used to put every label to the right of its dot (to the
+ * left near the right edge), whatever was there. In the 2026-10-20 bake-off
+ * gpt-6-luna and deepseek-v4-flash-0731 passed 90.9% and 90.5% of answered
+ * cases at neighbouring costs, and the first label ran through the second dot.
+ *
+ * Each label now tries right, left, above and below, in that order (left first
+ * near the right edge), and takes the first spot that stays inside `bounds` and
+ * clears every dot and every label already placed. If none does, it takes its
+ * first in-bounds spot, which is where it used to go anyway.
+ *
+ * Widths are estimated from the character count: the labels are 10px Geist
+ * Mono, which advances 0.6em a character.
+ */
+export function placeLabels(
+  dots: { x: number; y: number; text: string }[],
+  bounds: { x0: number; x1: number },
+  { charWidth = 6, gap = 9, dotRadius = 6, flipWithin = 110 } = {},
+): LabelSpot[] {
+  const dotBoxes: Box[] = dots.map((d) => ({
+    x0: d.x - dotRadius,
+    x1: d.x + dotRadius,
+    y0: d.y - dotRadius,
+    y1: d.y + dotRadius,
+  }));
+  const placed: Box[] = [];
+
+  return dots.map((d, i) => {
+    const w = d.text.length * charWidth;
+    const right = {
+      spot: { x: d.x + gap, y: d.y + 3.5, anchor: "start" as const },
+      box: { x0: d.x + gap, x1: d.x + gap + w, y0: d.y - 6, y1: d.y + 5 },
+    };
+    const left = {
+      spot: { x: d.x - gap, y: d.y + 3.5, anchor: "end" as const },
+      box: { x0: d.x - gap - w, x1: d.x - gap, y0: d.y - 6, y1: d.y + 5 },
+    };
+    const above = {
+      spot: { x: d.x, y: d.y - 9, anchor: "middle" as const },
+      box: { x0: d.x - w / 2, x1: d.x + w / 2, y0: d.y - 18, y1: d.y - 7 },
+    };
+    const below = {
+      spot: { x: d.x, y: d.y + 16, anchor: "middle" as const },
+      box: { x0: d.x - w / 2, x1: d.x + w / 2, y0: d.y + 7, y1: d.y + 18 },
+    };
+    const order = d.x > bounds.x1 - flipWithin ? [left, right, above, below] : [right, left, above, below];
+    const inBounds = order.filter((c) => c.box.x0 >= bounds.x0 && c.box.x1 <= bounds.x1);
+    const clear = inBounds.find(
+      (c) =>
+        !placed.some((b) => overlaps(c.box, b)) &&
+        !dotBoxes.some((b, j) => j !== i && overlaps(c.box, b)),
+    );
+    const chosen = clear ?? inBounds[0] ?? order[0];
+    placed.push(chosen.box);
+    return chosen.spot;
+  });
+}
+
 // --- Ranked bars ------------------------------------------------------------
 
 export type RankResult = { bars: Ranked[]; missing: ModelRow[] };
