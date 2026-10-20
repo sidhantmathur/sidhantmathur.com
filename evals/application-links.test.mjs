@@ -201,3 +201,24 @@ describe("the fragment stays in the browser", () => {
     assert.ok(mount !== -1 && mount < idle, "the ref is read after something could have replaced the address");
   });
 });
+
+describe("a pasted posting stays out of analytics", () => {
+  // A posting is someone else's document, often an internal one. The send event
+  // carries an ordinary question's text, and only the length and a flag for a
+  // posting (2026-10-19, found by the application-links pass).
+  test("chat_message_sent never sends a posting's text", () => {
+    const src = read("components/shell/use-conversation.ts").replace(/\s+/g, " ");
+    assert.match(src, /const posting = q\.startsWith\(JD_PREFIX\) \|\| looksLikeJobPosting\(q\);/);
+    assert.match(src, /posting \? \{ message_index: sentCount\.current, jd: true, message_length: q\.length \}/);
+    assert.equal(
+      (src.match(/track\( ?"chat_message_sent"/g) ?? []).length,
+      1,
+      "chat_message_sent is tracked from exactly one place",
+    );
+  });
+
+  test("a reset keeps the query string", () => {
+    const src = read("components/shell/use-conversation.ts");
+    assert.match(src, /replaceState\(null, "", window\.location\.pathname \+ window\.location\.search\)/);
+  });
+});

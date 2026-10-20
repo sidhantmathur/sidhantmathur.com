@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { track } from "@/lib/analytics";
+import { JD_PREFIX, looksLikeJobPosting } from "@/lib/job-posting";
 import { decodeSnapshot, payloadFromHash } from "@/lib/permalink";
 import {
   isPlainPanelKind,
@@ -444,7 +445,17 @@ export function useConversation(model: string) {
     sentAt.current = nowMs();
     clientTtft.current = null;
     setTtft(null);
-    track("chat_message_sent", { message_index: sentCount.current, message: q });
+    // A pasted posting is someone else's document, often an internal one, so
+    // it never goes to analytics: a posting turn reports its length and the
+    // flag. An ordinary question (500 characters at most) still goes, because
+    // what visitors ask is the point of collecting it.
+    const posting = q.startsWith(JD_PREFIX) || looksLikeJobPosting(q);
+    track(
+      "chat_message_sent",
+      posting
+        ? { message_index: sentCount.current, jd: true, message_length: q.length }
+        : { message_index: sentCount.current, message: q },
+    );
     sentCount.current += 1;
     void sendMessage({ text: q }, { body: { model: modelRef.current } });
   }
@@ -481,7 +492,8 @@ export function useConversation(model: string) {
     // the site rather than replaying the link again.
     if (replayed) {
       setReplayed(false);
-      window.history.replaceState(null, "", window.location.pathname);
+      // Keeps the query, so a reset doesn't drop an application's ?ref=.
+      window.history.replaceState(null, "", window.location.pathname + window.location.search);
     }
     setErrorKind("none");
     setErrorClass(null);
