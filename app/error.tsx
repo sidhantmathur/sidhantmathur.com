@@ -13,8 +13,8 @@ export default function Error({ reset }: { error: Error; reset: () => void }) {
   return (
     <div className="flex h-dvh flex-col items-start justify-center gap-4 bg-bg px-6 [font-family:var(--font-geist-mono)] md:px-12">
       <p className="t-body max-w-[54ch] text-text-soft">
-        Something broke in the browser and the conversation didn&apos;t start. That one
-        is on me, not you.
+        Something broke in the browser and the conversation didn&apos;t start.
+        That&apos;s a bug on my end.
       </p>
       <div className="flex flex-wrap gap-2">
         <button

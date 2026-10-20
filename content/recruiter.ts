@@ -35,7 +35,7 @@ export const RECRUITER_TLDR: TldrRow[] = [
   {
     label: "shipped",
     value:
-      "A self-serve Power App used by 80+ stakeholders across 7 regions, which ended a manual process that took one finance analyst's entire workday, every day of quarter-end close — and the migration of all sales reporting from Salesforce Analytics to Power BI for 150+ users.",
+      "A self-serve Power App used by 80+ stakeholders across 7 regions, replacing a manual process that took one finance analyst's entire workday, every day of quarter-end close. He also migrated all sales reporting from Salesforce Analytics to Power BI for 150+ users.",
     source: "content/knowledge/resume.md",
   },
   {
@@ -47,7 +47,7 @@ export const RECRUITER_TLDR: TldrRow[] = [
   {
     label: "how he builds",
     value:
-      "An AI-agent-heavy workflow in Claude Code — agents write most of the code, he keeps architecture, code review and release.",
+      "AI agents in Claude Code write most of the code. He owns architecture, code review and release.",
     source: "content/knowledge/projects-adarle20.md",
   },
   {
@@ -62,7 +62,7 @@ export const RECRUITER_TLDR: TldrRow[] = [
   },
 ];
 
-export const TLDR_FOOTER = "The resume has the rest, and so does the box below.";
+export const TLDR_FOOTER = "The resume has the rest.";
 
 // The hero subline (docs/mockups/front-door-1-hero.html): the `looking for`
 // and `where` rows fused into one sentence a visitor doesn't have to scroll
@@ -70,7 +70,7 @@ export const TLDR_FOOTER = "The resume has the rest, and so does the box below."
 export const POSITIONING: TldrRow = {
   label: "positioning",
   value:
-    "Looking for a RevOps / GTM systems role at an AI-forward company. Toronto, ON — Canadian citizen, no visa sponsorship needed.",
+    "Looking for a RevOps / GTM systems role at an AI-forward company. Toronto, ON. Canadian citizen, no visa sponsorship needed.",
   source: "content/knowledge/faq.md",
 };
 

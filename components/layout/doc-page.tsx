@@ -31,7 +31,7 @@ const NAV_LINK =
 /** The default ending: how to reach him. Drafted copy, logged in the ledger. */
 export const DOC_CONTACT_LABEL = "Contact";
 export const DOC_CONTACT_LINE =
-  "Open to new roles — the resume, an email or LinkedIn, whichever is quickest.";
+  "I'm open to new roles. Download the resume, or reach me by email or LinkedIn.";
 
 export function DocContact() {
   return (

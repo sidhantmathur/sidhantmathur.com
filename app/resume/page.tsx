@@ -24,8 +24,8 @@ export default function ResumePage() {
         <p className="t-label text-text-faint">Resume</p>
         <h1 className="t-title mt-1 font-medium text-text">{SITE_NAME}</h1>
         <p className="t-body mt-3 max-w-[72ch] text-text-soft">
-          The current version, last updated July 2026. A
-          plain-text version lives at{" "}
+          The current version, last updated July 2026. There&apos;s a
+          plain-text version at{" "}
           <Link
             href="/resume.md"
             // Padding, not min-height: a 44px inline-flex box is an atomic item
@@ -36,7 +36,7 @@ export default function ResumePage() {
           >
             /resume.md
           </Link>{" "}
-          if you&apos;d rather feed it to an AI — I won&apos;t take it personally.
+          if you&apos;d rather feed it to an AI. I won&apos;t take it personally.
         </p>
 
         <ResumeDownloadButton />

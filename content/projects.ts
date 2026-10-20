@@ -34,7 +34,7 @@ export const PROJECTS: Record<ProjectSlug, Project> = {
     index: "02",
     title: "A Darle 20",
     description:
-      "A marketplace connecting tabletop game hosts with paying players across Latin America. I designed and shipped the whole product solo — bookings, payments, chat, refunds, notifications — running an AI-agent-heavy development workflow. Four months after launch: 1,400+ registered users, 127 hosts, and 2,100+ bookings.",
+      "A marketplace connecting tabletop game hosts with paying players across Latin America. I designed and shipped the whole product solo (bookings, payments, chat, refunds and notifications) with an AI-agent-heavy development workflow. Four months after launch it had 1,400+ registered users, 127 hosts and 2,100+ bookings.",
     role: "Co-Founder & CTO",
     stack: ["TypeScript", "Next.js", "Supabase", "Stripe Connect"],
     status: "Live at adarle20.com",
@@ -46,7 +46,7 @@ export const PROJECTS: Record<ProjectSlug, Project> = {
     index: "01",
     title: "Reporting tools at Nokia",
     description:
-      "Self-serve reporting tools for a global sales organization. A Power App used by 80+ stakeholders across seven regions replaced a manual quarterly process, and a migration from Salesforce Analytics to Power BI moved 150+ users onto reporting I model and maintain.",
+      "Self-serve reporting tools for a global sales organization. A Power App used by 80+ stakeholders across seven regions replaced a manual quarterly process. I also moved all sales reporting from Salesforce Analytics to Power BI for 150+ users, and I model and maintain it.",
     role: "Sales operations specialist",
     stack: ["Power Apps", "Power BI", "SQL", "DAX", "Salesforce"],
     status: "In production since 2024",
@@ -57,7 +57,7 @@ export const PROJECTS: Record<ProjectSlug, Project> = {
     index: "03",
     title: "Sales prediction model at Dell",
     description:
-      "As an intern, I built a propensity model on Dell's historical customer database to find cross-sell targets for a high-margin software product — it surfaced about 20,000 qualified accounts representing an estimated $129M in pipeline.",
+      "As an intern, I built a propensity model on Dell's historical customer database to find cross-sell targets for a high-margin software product. It surfaced about 20,000 qualified accounts representing an estimated $129M in pipeline.",
     role: "Marketing intern",
     // Azure ML only: it is the one tool content/knowledge/projects-dell.md
     // names. Python stays off until Sidhant confirms it (copy ledger, pending).
