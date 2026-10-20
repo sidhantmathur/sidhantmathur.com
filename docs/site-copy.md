@@ -234,14 +234,19 @@ questions the reader arrived with. These replace them; there is no
 recruiter/engineer toggle, per decisions #26.]
 
 - Give me the 30-second version
-- What has he shipped end to end?
-- Is he a fit for a RevOps role at an AI-forward company?
 - What did he build at Nokia?
+- Is he a fit for a RevOps role at an AI-forward company?
 
 [Wave 2, 2026-10-19: the fourth chip was "Does he need visa sponsorship?",
 which the hero subline already answers. The Nokia work had no chip.]
 
-The `/fit` slash command sends the third one verbatim, so the two can't drift
+[2026-10-20: cut to three so the row sits on one line over the composer.
+"What has he shipped end to end?" went — the Nokia chip asks the same thing
+about the work that matters most. The fit chip moved last because it is the
+longest; where the dock is too narrow for all three, it is the one that
+drops out.]
+
+The `/fit` slash command sends the fit chip verbatim, so the two can't drift
 into different questions.
 
 Input placeholder: Ask a question

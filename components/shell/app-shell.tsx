@@ -1009,10 +1009,19 @@ export function AppShell() {
             )}
             {/* From md up the chips sit here, over the composer — the whole
                 interview affordance in one dock: suggested questions, the
-                input, and the proof line under it. */}
+                input, and the proof line under it.
+
+                One line, never two. The three need about 1,100px side by
+                side, so where the row is narrower — a 1024px window, or a
+                laptop with the context panel open — the last and longest
+                one drops out of the dock. A container query rather than a
+                breakpoint, because the panel narrows the row without the
+                viewport changing. /fit still sends it. */}
             {!hasMessages && (
-              <div className="hidden flex-wrap gap-2 px-4 pt-3 md:flex md:px-10">
-                {chipButtons}
+              <div className="hidden px-4 pt-3 md:block md:px-10">
+                <div className="@container flex gap-2 [&>:last-child]:hidden @min-[1120px]:[&>:last-child]:block">
+                  {chipButtons}
+                </div>
               </div>
             )}
             <form

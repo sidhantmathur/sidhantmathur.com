@@ -132,8 +132,16 @@ export const HERO_TLDR = RECRUITER_TLDR.filter(
   (r) => r.label !== "looking for" && r.label !== "where",
 );
 
-// #26: the first four things a recruiter asks. They replace the old chips
-// rather than adding a recruiter mode.
+/** The chip the `/fit` slash command sends. One string, two surfaces. */
+export const FIT_QUESTION = "Is he a fit for a RevOps role at an AI-forward company?";
+
+// #26: the first things a recruiter asks. They replace the old chips rather
+// than adding a recruiter mode.
+//
+// Three, so the row sits on one line above the composer at laptop widths
+// (Sidhant, 2026-10-20). "What has he shipped end to end?" was the one cut:
+// the Nokia chip asks the same thing about the work that matters most. The
+// longest chip goes last, so a narrow window wraps it alone.
 //
 // None may trip `looksLikeJobPosting` or `looksLikeSiteQuestion`: a suggested
 // question that forces a roleFit call or loads the repo corpus turns the
@@ -141,10 +149,6 @@ export const HERO_TLDR = RECRUITER_TLDR.filter(
 // evals/track-b.test.mjs.
 export const SUGGESTED_QUESTIONS = [
   "Give me the 30-second version",
-  "What has he shipped end to end?",
-  "Is he a fit for a RevOps role at an AI-forward company?",
   "What did he build at Nokia?",
+  FIT_QUESTION,
 ];
-
-/** The chip the `/fit` slash command sends. One string, two surfaces. */
-export const FIT_QUESTION = SUGGESTED_QUESTIONS[2];
