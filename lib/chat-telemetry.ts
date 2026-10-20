@@ -194,6 +194,26 @@ export const TURN_FAILURES = {
     cause: null,
     wire: null,
   },
+  /**
+   * Client-detected on the way back into a saved conversation: it ends on a
+   * question without a whole answer. The visitor left mid-answer (Home, or
+   * the tab closed), or the turn failed and the failure, which isn't saved,
+   * went with the page. Without this the question sits there with no answer,
+   * or half of one, and no way to ask again.
+   */
+  interrupted: {
+    origin: "client",
+    simulatable: false,
+    simulateStatus: null,
+    retryable: true,
+    switchModel: false,
+    silent: false,
+    rateLimit: false,
+    label: "unfinished",
+    copy: "This question never got a full answer — the conversation was left, or the turn failed, before it finished.",
+    cause: null,
+    wire: null,
+  },
   aborted: {
     origin: "server",
     simulatable: true,

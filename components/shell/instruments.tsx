@@ -332,8 +332,8 @@ function CostMeter({
       </p>
       <p className="t-meta text-text-faint">
         Nothing you type is stored on the server. The conversation lives in this browser
-        until you reset it, and the only thing kept server-side is a per-IP counter for the
-        hourly limit.
+        until you clear it from the front page, and the only thing kept server-side is a
+        per-IP counter for the hourly limit.
       </p>
     </div>
   );

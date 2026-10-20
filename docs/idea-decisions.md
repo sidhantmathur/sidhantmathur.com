@@ -333,6 +333,18 @@ was the chosen exploration); the empty state's telemetry deferral, the CTA row
 and the proof line are its expression, and `docs/site-copy.md` § Hero records
 what it reversed.
 
+**Getting back to it — added 2026-10-19.** Sidhant: *"when clicking on my name
+or 'home' or refreshing, the user expects to go back to the starting screen,
+not be stuck in the same chat."* So the front door is also where every exit
+lands. A reload, a new visit, the name and a "← Home" button at the top of
+every conversation all open it; the browser's Back does too, because entering
+a conversation gives it a history entry of its own. Nothing is thrown away on
+the way: the last conversation is offered on the front door as "Continue where
+you left off", with "clear" beside it. Don't restore a stored conversation
+straight onto the screen on load — that is the bug this replaced. The one
+exception is Back from another page of the site, which returns the visitor
+to the conversation they left for it.
+
 ---
 
 ## 5. For whoever plans these — what this review already established

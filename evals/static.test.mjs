@@ -435,7 +435,7 @@ describe("live-eval assertions are still grounded", () => {
     assert.equal(longest.length, MAX_USER_TEXT, "the longest pasteable posting should land exactly on the route's limit");
     assert.match(read("app/api/chat/route.ts"), /msg\.role === "user" \? MAX_USER_TEXT/);
     assert.match(read("components/shell/panel-body.tsx"), /const JD_MAX = MAX_POSTING_TEXT;/);
-    assert.match(read("components/shell/app-shell.tsx"), /submit\(`\$\{JD_COPY\.prefix\}\\n\\n\$\{text\}`\)/);
+    assert.match(read("components/shell/app-shell.tsx"), /(?:submit|ask)\(`\$\{JD_COPY\.prefix\}\\n\\n\$\{text\}`\)/);
   });
 
   test("the unqualified postings really are unqualified", () => {

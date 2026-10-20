@@ -107,7 +107,7 @@ export const REFUSALS: Refusal[] = [
     id: "storage",
     title: "Store your conversation",
     why: "Nothing about a stranger reading a portfolio needs to be kept. There is no account, no database and no transcript log, which also means there is nothing here to leak.",
-    instead: "The conversation lives in your browser until you reset it. The only thing kept server-side is a per-IP counter for the hourly message limit, and a shared link carries the conversation inside the URL rather than storing it anywhere.",
+    instead: "The conversation lives in your browser until you clear it from the front page. The only thing kept server-side is a per-IP counter for the hourly message limit, and a shared link carries the conversation inside the URL rather than storing it anywhere.",
     enforcedBy: "code",
     anchor: { path: "app/api/chat/route.ts", contains: "Per-IP" },
   },
