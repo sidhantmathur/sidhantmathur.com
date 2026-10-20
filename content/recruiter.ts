@@ -25,9 +25,10 @@ export const TLDR_LABEL = "summary";
 // is applying to, Nokia is the proof and A Darle 20 the differentiator. Every
 // figure is the resume's.
 //
-// Two rows, not four: what each project shipped is on its case-study card, so
-// the block doesn't state the same numbers the cards do (front-door cut,
-// 2026-10-20). First person, like everything else he says on the page.
+// One row in the block: what each project shipped is on its case-study card,
+// so the block doesn't state the same numbers the cards do (front-door cut,
+// 2026-10-20). "how he builds" (agents write the code) is off the front door
+// at Sidhant's call; the chat still answers it from projects-adarle20.md.
 export const RECRUITER_TLDR: TldrRow[] = [
   {
     label: "now",
@@ -36,19 +37,13 @@ export const RECRUITER_TLDR: TldrRow[] = [
     source: "content/knowledge/resume.md",
   },
   {
-    label: "how I build",
-    value:
-      "AI agents in Claude Code write most of the code. I own architecture, code review and release.",
-    source: "content/knowledge/projects-adarle20.md",
-  },
-  {
     label: "looking for",
     value: "A RevOps / GTM systems role at an AI-forward company.",
     source: "content/knowledge/faq.md",
   },
   {
     label: "where",
-    value: "Toronto, ON. Canadian citizen, no visa sponsorship needed.",
+    value: "Toronto, ON.",
     source: "content/knowledge/faq.md",
   },
 ];
@@ -63,7 +58,7 @@ export const TLDR_FOOTER = "The resume has the rest.";
 export const POSITIONING: TldrRow = {
   label: "positioning",
   value:
-    "Looking for a RevOps / GTM systems role at an AI-forward company. Toronto, ON. Canadian citizen, no visa sponsorship needed.",
+    "Looking for a RevOps / GTM systems role at an AI-forward company. Toronto, ON.",
   source: "content/knowledge/faq.md",
 };
 

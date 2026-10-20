@@ -129,11 +129,6 @@ const [ROLE_TITLE, HERO] = ROLE_LINE.value.split(": ");
 // The empty state's desktop placeholder. The subline under the headline is
 // POSITIONING from content/recruiter.ts, where the citation checker covers it.
 const HERO_SUB = "Ask what you'd ask on a call";
-// The composer's fine print, one line at each width. The full DISCLAIMER in
-// lib/site.ts travels with exports.
-const DISCLAIMER_SHORT = "AI answers can be wrong.";
-const DISCLAIMER_LONG =
-  "Answers cite their sources but can be wrong. The resume is the authoritative version.";
 // Per-class error copy lives in lib/chat-telemetry.ts, rendered by TurnError.
 const RATE_LIMIT_STATE =
   "You've hit the message limit for now. The resume has everything in the meantime.";
@@ -1279,18 +1274,11 @@ export function AppShell() {
                 sentence because the long one wraps to two lines at 390px.
                 Gone once a conversation starts: answers then carry their own
                 sources, and the actions strip takes this row. */}
-            {!hasMessages && (
-              <p className="t-meta px-4 pb-3 text-text-faint md:px-10">
-                <span className="lg:hidden">{DISCLAIMER_SHORT}</span>
-                <span className="hidden lg:inline">{DISCLAIMER_LONG}</span>{" "}
-                <Link
-                  href="/colophon"
-                  className="-my-2 py-2 text-text-soft underline decoration-line-strong underline-offset-2 hover:text-accent"
-                >
-                  How it works
-                </Link>
-              </p>
-            )}
+            {/* No fine print under the empty composer (Sidhant, 2026-10-20):
+                the front door is about him, not a liability notice. Answers
+                carry their own sources, and exports carry DISCLAIMER from
+                lib/site.ts. "How it works" is in the index. */}
+            {!hasMessages && <div className="pb-3" />}
 
             {/* ---- Actions strip ---------------------------------------
                 Quiet and present from the first turn; it gains a little

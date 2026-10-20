@@ -63,7 +63,10 @@ The old heading is a good line for the colophon or the about section.]
 
 Subline:
 Looking for a RevOps / GTM systems role at an AI-forward company. Toronto, ON.
-Canadian citizen, no visa sponsorship needed.
+
+[Sidhant, 2026-10-20: the visa line is off the front door. Was "Toronto, ON.
+Canadian citizen, no visa sponsorship needed." The fact stays in `faq.md`, so
+the chat still answers it when asked.]
 
 [Front-door pass, 2026-08-23 — Sidhant's call, from
 `docs/mockups/front-door-1-hero.html`. The old subline ("Ask what you'd ask on
@@ -140,6 +143,12 @@ Composer fine print (empty state only, wave 2):
   authoritative version. How it works
 ("How it works" links to /colophon.)
 
+[Sidhant, 2026-10-20: removed, both widths, link included. "There are already
+other disclaimers once you open the chat, and this is not like a liability
+issue for asking about my personal experience." The empty composer has no
+fine print now. `DISCLAIMER` in `lib/site.ts` still ends copied, exported and
+printed transcripts; "How it works" is still in the index.]
+
 [Copy pass 2026-10-20: reworded to read less like AI-generated text. No fact
 changed. See the copy-pass section of docs/copy-ledger.md. In this section: the
 subline and the lg fine print lost their dashes. The heading, CTA row, header
@@ -185,9 +194,8 @@ and a Salesforce Analytics to Power BI migration for 150+ users."]
 | Row label | Value | From |
 | --- | --- | --- |
 | now | Sales operations specialist at Nokia since Jun 2024, building internal tools and automation for global sales and finance teams. | `resume.md` |
-| how I build | AI agents in Claude Code write most of the code. I own architecture, code review and release. | `projects-adarle20.md` |
 | looking for | A RevOps / GTM systems role at an AI-forward company. | `faq.md`, `resume.md` |
-| where | Toronto, ON. Canadian citizen, no visa sponsorship needed. | `faq.md` |
+| where | Toronto, ON. | `faq.md` |
 
 Footer link (to /resume): The resume has the rest. (Not rendered since the
 front-door cut.)
@@ -202,7 +210,10 @@ quarter-end close. He also migrated all sales reporting from Salesforce
 Analytics to Power BI for 150+ users."; also — "Co-founder and CTO of A Darle
 20, a two-sided marketplace he architected and shipped solo: 1,400+ registered
 users, 127 hosts and 2,100+ bookings in its first four months." "how he
-builds" became "how I build", first person like the rest of the page. The
+builds" became "how I build", first person like the rest of the page, and
+then went too, at Sidhant's call (2026-10-20): "AI agents in Claude Code write
+most of the code. I own architecture, code review and release." The chat still
+answers it from `projects-adarle20.md`. The
 footer link went: the hero already has two ways to the resume.]
 
 [Copy pass 2026-10-20: reworded to read less like AI-generated text. No fact
