@@ -64,7 +64,7 @@ every row.]
 
 CTA row (under the subline):
 Download resume (PDF) · hello@sidhantmathur.com [copy] · LinkedIn ↗
-Text links under it: Resume as a web page · Interview this site ↓
+Text links under it: Resume as a web page · Ask the AI assistant ↓
 
 [DRAFT 2026-10-19, wave 2. Was "View resume · Email me · Interview this site
 ↓". The PDF is primary because it is what a recruiter attaches to an ATS; the
@@ -85,9 +85,10 @@ conversation starts).]
 Header (wave 2, 2026-10-19): Sidhant Mathur · Toronto, ON (lg and up) ·
 Resume · Projects · Contact — at every width, before and after the first
 turn. After the first turn, at lg and up, one receipt beside the nav:
-"{n}/10 turns · last answer ${cost}", which opens the instruments. The
-readouts, the rate needle and the model picker that used to replace the nav
-live in the instruments panel; the picker lists models by name ("GPT-6 Luna
+"{n}/10 turns · last answer ${cost}", which opens the technical details panel
+(button title "Open the technical details"). The readouts, the rate graph and
+the model picker that used to replace the nav live in that panel; the picker
+lists models by name ("GPT-6 Luna
 (default)", "DeepSeek V4 Flash", "Claude Haiku 5.5", "GPT-5 mini", "Gemini
 3.5 Flash-Lite"). "Colophon" left the header for the index.
 
@@ -96,7 +97,7 @@ Index (behind ☰), three groups:
   description
 - Contact: the address with a copy button · LinkedIn ↗ · GitHub ↗
 - How this site works: How it's built · The instructions · What it won't do ·
-  Measurements · Instruments
+  Measurements · Technical details
 
 "Why this site is a chatbot" is no longer an index entry; its text is a
 section of the colophon.
@@ -126,6 +127,13 @@ changed. See the copy-pass section of docs/copy-ledger.md. In this section: the
 subline and the lg fine print lost their dashes. The heading, CTA row, header
 and index are unchanged.]
 
+[Cute pass 2026-10-20: playful wording removed at Sidhant's request. No fact
+changed. "Interview this site ↓" is now "Ask the AI assistant ↓" (the notes
+above record the old label, which Sidhant picked in the front-door mockup). The
+panel the receipt opens, "Instruments", is now titled "Technical details" in
+the index, the panel title bar and the mobile sheet; its internal id is
+unchanged.]
+
 ### Recruiter TL;DR (#25)
 
 [DRAFT 2026-07-27 — assembled by Claude for Track B. Every value is lifted from
@@ -139,7 +147,12 @@ four of the six rows at body scale — `looking for` and `where` live in the
 hero subline instead (see above), so they are not repeated four lines apart.
 All six rows stay canonical here and stay checked by the suite.
 
-Label: tl;dr
+Label: summary
+
+[Cute pass 2026-10-20: playful wording removed at Sidhant's request. No fact
+changed. The label was "tl;dr", internet slang; it now matches the block's
+accessible name, "Summary". This section's heading keeps "TL;DR" as the name of
+decision #25. The rows are unchanged.]
 
 [Wave 2, 2026-10-19: reordered. Nokia — the current job and the sales-ops
 evidence — was labelled "before that" and sat under A Darle 20. It now leads,
@@ -166,7 +179,7 @@ Footer link (to /resume): The resume has the rest.
 changed. See the copy-pass section of docs/copy-ledger.md. Rows "shipped" and
 "how he builds" and the footer link changed; the other four rows did not.]
 
-### Case-study cards (under the tl;dr)
+### Case-study cards (under the summary block)
 
 [DRAFT 2026-10-19, wave 2. One number each, a link to the long version. Dell
 stays off the homepage. `CASE_CARDS` in `content/recruiter.ts`, checked
@@ -249,13 +262,18 @@ a solutions engineering role?" — a demo of the site's range rather than the
 questions the reader arrived with. These replace them; there is no
 recruiter/engineer toggle, per decisions #26.]
 
-- Give me the 30-second version
+- Give me the short version
 - What has he shipped end to end?
 - Is he a fit for a RevOps role at an AI-forward company?
 - What did he build at Nokia?
 
 [Wave 2, 2026-10-19: the fourth chip was "Does he need visa sponsorship?",
 which the hero subline already answers. The Nokia work had no chip.]
+
+[Cute pass 2026-10-20: playful wording removed at Sidhant's request. No fact
+changed. The first chip was "Give me the 30-second version"; it is still a
+request for brevity in the visitor's voice. `scripts/check-pre-hydration.mjs`
+now finds the chips by /short version|shipped end to end/.]
 
 The `/fit` slash command sends the third one verbatim, so the two can't drift
 into different questions.
@@ -292,6 +310,13 @@ sit once, in "The unit economics", instead of twice. The page's metadata
 description now reads "A marketplace for tabletop game sessions in Latin
 America, with 2,100+ bookings in its first four months."]
 
+[Cute pass 2026-10-20: playful wording removed at Sidhant's request. No fact
+changed. Two headings: "The funnel, instrumented" is now "Funnel tracking" (so
+is the matching media slot's title), and "What I'd tell a hiring manager" is now
+"Summary". The knowledge file keeps "What he'd tell a hiring manager", because
+that heading is a chunk id, so a chat citation of the closing paragraph still
+shows the old name.]
+
 ### The problem
 
 Tabletop roleplaying games are big in Latin America, but finding and paying a
@@ -320,7 +345,7 @@ Running A Darle 20 has taught me as much about unit economics as about code. We
 tested a commission model against direct event ticket sales and made decisions
 about where the margin is.
 
-### The funnel, instrumented
+### Funnel tracking
 
 I instrumented the funnel end to end: bookings, conversion, cancellations,
 refunds and host activation. That covers both sides of the marketplace, so I
@@ -354,7 +379,7 @@ Money is the hard part. It has to get to the host, some players have no card
 and pay cash at a convenience store, and bookings get cancelled and refunded.
 Most of what I built handles that automatically.
 
-### What I'd tell a hiring manager
+### Summary
 
 A Darle 20 shows I can take an ambiguous idea to a revenue-generating product
 and handle the refunds, payment edge cases, and infrastructure costs that come
@@ -417,7 +442,7 @@ capture briefs. Summary:
 | Paying in cash | screenshot | 9:16 | the OXXO reference handed to the player |
 | What a host sees | screenshot | 16:9 | a host's profile, sessions and payouts |
 | Host and player chat | screenshot | 9:16 | a real thread, redacted or on test accounts |
-| The funnel, instrumented | screenshot | 16:9 | whatever he actually watches — live numbers, so check before sending |
+| Funnel tracking | screenshot | 16:9 | whatever he actually watches — live numbers, so check before sending |
 | The 251-player event | video | 16:9 | footage or photographs from the convention |
 
 Caption for the filled slot: Each card shows the host and their rating, the
@@ -447,6 +472,12 @@ content/nokia.mdx verbatim. Rewrite in your own voice.]
 changed. See the copy-pass section of docs/copy-ledger.md. The body below is
 re-copied from content/nokia.mdx. "For both tools I was the whole team." was
 reworded and then put back, so it is unchanged.]
+
+[Cute pass 2026-10-20: playful wording removed at Sidhant's request. No fact
+changed. "In plain terms" ¶1: "Here that somebody was a finance analyst" is now
+"That fell to a finance analyst". The closing heading "What I'd tell a hiring
+manager" is now "Summary" (the knowledge chunk keeps the old heading, as on A
+Darle 20).]
 
 ### At a glance
 
@@ -506,7 +537,7 @@ facility utilization data.
 A large company sells in a lot of places, and every quarter its executives need
 one picture of how that went. Getting to that picture meant asking people across
 the regions to send their numbers in, in whatever shape they kept them, and
-somebody assembling it by hand. Here that somebody was a finance analyst, and it
+somebody assembling it by hand. That fell to a finance analyst, and it
 took their entire workday, every day of the quarter-end close.
 
 So I built something the regions could fill in themselves, got it in front of
@@ -514,7 +545,7 @@ the people who had to use it, and kept it working when they ran into trouble.
 The migration was the same kind of work. The company was moving off one
 reporting system, and every report and every user had to move to the new one.
 
-### What I'd tell a hiring manager
+### Summary
 
 I sit between the business and the tools it runs on. When the tools don't do
 what the team needs, I fix them myself.
@@ -571,7 +602,7 @@ LLMs and coding agents.
 I like turning vague business problems into working software, then owning it,
 including the support and the bug fixes.
 
-Outside work: basketball, chess, cooking, and slowly learning three languages.
+Outside work: basketball, chess, cooking, and learning three languages.
 
 [Copy pass 2026-10-20: reworded to read less like AI-generated text. No fact
 changed. See the copy-pass section of docs/copy-ledger.md. No page renders this
@@ -579,6 +610,9 @@ section today; it is the first-person mirror of `content/knowledge/bio.md`.
 The pass reworded bio.md's "The through line is that… support, bugs, and all"
 paragraph, and this section follows it. The degree sentence now breaks at a full
 stop, as bio.md's always has.]
+
+[Cute pass 2026-10-20: playful wording removed at Sidhant's request. No fact
+changed. "slowly learning three languages" lost "slowly", here and in bio.md.]
 
 ---
 
@@ -616,13 +650,16 @@ Heading: Sidhant Mathur
 [Wave 2: the heading was "Resume", so the page carried no name above the
 contact line.]
 Body: The current version, last updated July 2026. There's a plain-text
-version at /resume.md if you'd rather feed it to an AI. I won't take it
-personally.
+version at /resume.md for pasting into an AI tool.
 Button: Download PDF
 
 [Copy pass 2026-10-20: reworded to read less like AI-generated text. No fact
 changed. See the copy-pass section of docs/copy-ledger.md. The joke stays; the
 dash went.]
+
+[Cute pass 2026-10-20: playful wording removed at Sidhant's request. No fact
+changed. The joke went too: "if you'd rather feed it to an AI. I won't take it
+personally." is now "for pasting into an AI tool."]
 
 ---
 
@@ -641,7 +678,7 @@ to DeepSeek in August. The model id is now read from `DEFAULT_MODEL` in
 whichever model is the default.]
 
 Most of the code was written by AI agents working from a build spec. I made the
-decisions, so the mistakes are mine.
+decisions.
 
 [Wave 1, 2026-10-19: cut from the page, pending a decision — "The spec, design
 brief, and source are on GitHub. [TODO: confirm repo is public before
@@ -652,13 +689,13 @@ The assistant is tested against a fixed set of questions, and the results are
 published on the measurements page. (Link text: "measurements page", to
 /measurements.)
 
-Section heading: The site shows its workings
+Section heading: Where to see how the assistant works
 Body: The instructions the assistant runs on are published in full, and so is a
 list of what it won't answer, with the reason for each. In the chat, the top
-bar shows what the last answer cost, and the instruments panel lists the cost
-of every turn. The eval results show how often it's right. (Links:
-"instructions" to /prompt, "won't answer" to /refusals, "how often it's right"
-to /measurements.)
+bar shows what the last answer cost, and the technical details panel lists the
+cost of every turn. The eval results show how it scores. (Links:
+"instructions" to /prompt, "won't answer" to /refusals, "eval results" to
+/measurements.)
 
 Then "Why there's a chat on a portfolio" (below).
 
@@ -671,11 +708,19 @@ because almost all of the site's copy is still Claude's draft, and the cost
 sentence no longer says each turn's cost is "printed next to the turn", which
 it isn't.]
 
+[Cute pass 2026-10-20: playful wording removed at Sidhant's request. No fact
+changed. The credit line lost its joke ("so the mistakes are mine"). The heading
+was "The site shows its workings". In the body, "the instruments panel" follows
+that panel's new name, and "The eval results show how often it's right" became
+"…show how it scores", because the site's own caveats say a pass rate isn't a
+measure of accuracy.]
+
 ---
 
 ## Small pieces
 
-404 page: There's nothing at this address. Head back home. · Read the resume.
+404 page: There's nothing at this address. Go to the homepage → · Read the
+resume →
 Footer: © 2026 Sidhant Mathur · Toronto, ON · GitHub · LinkedIn · Email
 Chat empty state: Ask me about my work at Nokia, A Darle 20, or anything on my
 resume.
@@ -685,10 +730,10 @@ mono label reading "turn failed · <class>", above a "try again" button.
 
 - connection: The connection dropped before the answer made it through. Check
   your signal and try again.
-- server timeout: The server took too long to respond. Give it another try.
-- upstream: Something went wrong on the server. Give it another try in a moment.
+- server timeout: The server took too long to respond. Try again.
+- upstream: Something went wrong on the server. Try again in a moment.
 - unknown (also the fallback for any class without its own sentence): Something
-  went wrong. Give it another try in a moment.
+  went wrong. Try again in a moment.
 - misconfigured: The chat server is misconfigured. Your message is fine.
 - no answer: The model hit the site's output limit before it got to an answer.
   There's nothing wrong with your question.
@@ -717,6 +762,11 @@ in wave 1) and is here now. The timeout sentence dropped "partway through",
 because the class also covers a request that never started. The error page
 line was not recorded here before.]
 
+[Cute pass 2026-10-20: playful wording removed at Sidhant's request. No fact
+changed. "Give it another try" became "Try again" in the three sentences that
+had it, matching the connection sentence. The 404's first link was "Head back
+home →".]
+
 ---
 
 ## Why this site is a chatbot
@@ -738,19 +788,25 @@ changed. See the copy-pass section of docs/copy-ledger.md. The second paragraph
 now names the assistant, so the chat no longer reads as Sidhant ("The better
 version is talking to me… You can do this.").]
 
+[Cute pass 2026-10-20: playful wording removed at Sidhant's request. No fact
+changed. Paragraph 2 lost the aphorism ("A portfolio is a list standing in for a
+conversation you can't have") and the eleven-at-night scene; paragraph 3 lost
+"So come with…". The ninety-days example is still there, and nothing in
+`content/knowledge/` answers it.]
+
 Body:
 Most software is turning into a conversation. I don't build my own PostHog
 dashboards anymore. I describe what I want and the product's assistant builds
 it, because it knows the platform better than I do. I think a lot of interfaces
 will go the same way, portfolios included.
 
-A portfolio is a list standing in for a conversation you can't have. If you're
-going through a stack of candidates at eleven at night, you can't call me, but
-you can ask the assistant whether any of my work maps to what you need.
+Questions about a portfolio usually have to wait for a call. If you're going
+through candidates and can't call me, you can ask the assistant whether any of
+my work maps to what you need.
 
-So come with a specific question, like how the payments work, what the Nokia
-rollout involved, or what I'd do in the first ninety days of the role you're
-hiring for.
+It works best with a specific question, such as how the payments work, what the
+Nokia rollout involved, or what I'd do in the first ninety days of the role
+you're hiring for.
 
 Every answer is built from the same source files as the resume and shows which
 ones it drew on, so you can open the file when a paragraph isn't enough.
@@ -795,7 +851,7 @@ session.
 Added to the replay banner when the posting was left out: The link leaves out
 the posting. Each requirement in the table is quoted from it.
 Then, in the banner: Download resume (PDF) · hello@sidhantmathur.com [copy] ·
-LinkedIn ↗
+LinkedIn ↗, and the reset button "start a new conversation"
 Replayed turn label: 01 · asked (a live turn is still "01 · you")
 Over an excerpt table: Showing 3 of 14 requirements, the strongest cited ones.
 The counts cover all 14, and every gap is listed below.
@@ -811,3 +867,7 @@ changed. See the copy-pass section of docs/copy-ledger.md. The replay banner
 keeps all four of its claims (a replay, rebuilt from the link, the site stored
 nothing, a snapshot and not a live session); it was not recorded here before.
 The fit-check banner line is unchanged.]
+
+[Cute pass 2026-10-20: playful wording removed at Sidhant's request. No fact
+changed. The banner's reset button was "start a fresh one"; it sits on the page
+a stranger opens from an application link, so it now says what it does.]
