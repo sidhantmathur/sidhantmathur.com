@@ -1,28 +1,16 @@
-// Recognising a pasted job description (roadmap Sprint 1, the JD fix).
+// Recognising a pasted job description, and wrapping it as untrusted input.
 //
-// WHY THIS EXISTS
+// Left to choose, the model answered the postings Sidhant is least qualified
+// for in prose and skipped the `roleFit` tool (docs/idea-bank.md §6, Stage 0
+// results), leaving no structured assessment exactly when a recruiter most
+// needs one. So the route forces the tool calls on a job-posting turn, which
+// means it has to know, server-side, that a turn is one.
 //
-// Stage 0 of the job-description work (docs/idea-bank.md §6) found that on the
-// postings Sidhant is LEAST qualified for, the model abandons the `roleFit`
-// tool entirely and answers in prose. The prose is honest — it names the gaps —
-// but there is no structured assessment behind it, so the feature silently
-// degrades to a paragraph exactly when a recruiter most needs the verdict, and
-// every downstream item (per-requirement rows, the scorecard, the export) has
-// nothing to read from.
-//
-// The fix is to stop asking. The route forces the tool call on the first step
-// of a job-posting turn instead of hoping the model chooses it. That requires
-// knowing, server-side, that a turn IS a job posting.
-//
-// WHY IT'S A HEURISTIC AND NOT JUST THE PREFIX
-//
-// The paste-a-JD panel prefixes the posting with `JD_PREFIX`, so the prefix
-// alone would cover the UI. It would not cover the eval harness, which posts
-// postings raw, or a visitor who pastes into the normal input box — and a
-// detector that only fires on the site's own affordance would mean the evals
-// grade a path production doesn't take. So: prefix OR shape.
-//
-// Both halves are covered by evals/static.test.mjs against the real corpus.
+// Detection is prefix or shape. The paste panel prepends JD_PREFIX, but the eval
+// harness sends postings raw and a visitor may paste into the normal input; a
+// detector that only fired on the panel would have the evals grading a path
+// production doesn't take. evals/static.test.mjs covers both against the real
+// corpus.
 
 /** Prepended by the paste-a-JD panel. Shared so the two can't drift. */
 export const JD_PREFIX =
@@ -30,28 +18,25 @@ export const JD_PREFIX =
 
 /**
  * The longest user turn the chat route accepts, in characters. A whole posting
- * arrives as one message, and abuse is bounded by the hourly budget rather
- * than by this cap — but it is still the cost ceiling on a single turn, so it
- * moves only on purpose.
+ * arrives as one message. Abuse is bounded by the hourly budget, but this is
+ * still the cost ceiling on a single turn.
  */
 export const MAX_USER_TEXT = 4000;
 
 /**
  * The longest posting the paste panel takes: the route's limit less the prefix
- * and the blank line the panel sends ahead of it. The panel used to hard-code
- * 3,500 against the route's 4,000, so the two disagreed by four hundred
- * characters nobody chose. Derived now, so they can't.
+ * and the blank line the panel sends ahead of it. Derived so the two can't
+ * disagree.
  */
 export const MAX_POSTING_TEXT = MAX_USER_TEXT - `${JD_PREFIX}\n\n`.length;
 
 /**
  * Shape signals. Any two, on a long enough message, is a posting.
  *
- * Tuned to be hard to trip by accident: a visitor asking "is he a fit for a
- * solutions engineering role?" hits none of these, and a long question about
- * his background hits at most one. The cost of a false positive is a forced
- * `roleFit` call on a turn that didn't need one; the cost of a false negative
- * is the bug this module exists to fix. The asymmetry is intentional.
+ * Hard to trip by accident: "is he a fit for a solutions engineering role?" hits
+ * none, and a long question about his background hits at most one. A false
+ * positive costs a forced `roleFit` call on one turn; a false negative loses
+ * the structured assessment.
  */
 const SIGNALS: RegExp[] = [
   /^\s*requirements?\s*:/im,
@@ -66,26 +51,25 @@ const SIGNALS: RegExp[] = [
 /** Below this, a message is a question about a role, not a posting. */
 const MIN_POSTING_CHARS = 300;
 
-// --- Treating the posting as hostile input (Sprint 4, bank §6 Stage 2) ------
+// --- Treating the posting as hostile input ---------------------------------
 //
 // The posting is the one place on this site where a stranger's text arrives at
-// length, through a channel that explicitly says "act on this". Three cheap,
-// deterministic defenses, none of which involves a second model call:
+// length, through a channel that says "act on this". Three cheap, deterministic
+// defenses, none of which needs a second model call:
 //
-//   1. DELIMIT AND SPOTLIGHT. The posting is fenced and labeled as data before
-//      the model reads a word of it, and the fence markers are stripped out of
-//      the posting itself so it can't close its own fence.
-//   2. RE-ASSERT AFTER. The untrusted-input rules live at the top of a system
-//      prompt that is thousands of tokens away by the time a 3,000-character
-//      posting has been read. Recency matters, so they are restated underneath
-//      it, where the injection would otherwise get the last word.
-//   3. FLAG THE SHAPE. A pre-pass looks for language aimed at an assistant
-//      rather than at a candidate. It changes nothing about the assessment —
-//      it only tells the model what it is holding.
+//   1. Delimit. The posting is fenced and labelled as data, and the fence
+//      markers are stripped from the posting so it can't close its own fence.
+//   2. Re-assert after. The untrusted-input rules sit at the top of a system
+//      prompt thousands of tokens away by the time the posting has been read,
+//      so they are restated underneath it, where an injection would otherwise
+//      get the last word.
+//   3. Flag the shape. A pre-pass looks for language aimed at an assistant
+//      rather than at a candidate. It changes nothing about the assessment; it
+//      only tells the model what it is holding.
 //
-// The output path is constrained separately, by the forced tool call: even a
-// fully compromised generation can only fill a validated schema, and every
-// positive row in that schema still has to cite a chunk that exists.
+// The output is constrained separately by the forced tool call: even a
+// compromised generation can only fill the tool's schema, and every positive
+// row still has to cite a chunk that exists (lib/role-fit.ts).
 
 /** Fence markers. Stripped from the posting so it cannot forge its own. */
 const POSTING_OPEN = "---BEGIN-UNTRUSTED-JOB-POSTING---";
@@ -96,8 +80,7 @@ const POSTING_CLOSE = "---END-UNTRUSTED-JOB-POSTING---";
  * label and the pattern that earns it; the labels are what the model is told.
  *
  * Reported, never used to refuse: a posting that says "you'll ignore the noise
- * and focus on impact" is a posting, and the site's answer to injection is to
- * survive it visibly rather than to bounce anything that pattern-matches.
+ * and focus on impact" is still a posting.
  */
 const INJECTION_SIGNALS: { label: string; pattern: RegExp }[] = [
   { label: "override", pattern: /\b(?:ignore|disregard|forget|override)\b[^.\n]{0,40}\b(?:previous|prior|above|earlier|all)\b[^.\n]{0,30}\b(?:instruction|prompt|rule|direction)/i },
@@ -114,12 +97,10 @@ export function scanPosting(text: string): string[] {
 }
 
 /**
- * The posting, fenced and re-asserted, as it goes to the model.
- *
- * This is model-facing prompt text and never reaches the screen, so it isn't
- * site copy. It also lives on the USER message, not the system prompt: the
- * system prompt has to stay byte-identical across requests or the cache that
- * makes every turn cheap stops hitting (Sprint 3, constraint 1).
+ * The posting, fenced and re-asserted, as it goes to the model. Model-facing
+ * text that never reaches the screen, so it isn't site copy. It goes on the
+ * user message, not the system prompt, which has to stay byte-identical across
+ * requests for the prompt cache to hit.
  */
 export function wrapPosting(text: string): string {
   const flags = scanPosting(text);

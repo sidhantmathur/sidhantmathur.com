@@ -1,21 +1,15 @@
-// The URL-fragment permalink (roadmap Sprint 5, #18).
+// The URL-fragment permalink. The conversation is deflated and base64url-encoded
+// into the URL fragment, which is never sent in the HTTP request. A permalink
+// opens the same static page the site already serves, and JavaScript reads the
+// hash and replays it. Nothing is stored server-side, so there is nothing to
+// persist or expire, and no per-use cost.
 //
-// WHY THERE IS NO DATABASE HERE. The conversation is deflated and base64url'd
-// into the URL **fragment**, and fragments are client-only by spec: they are
-// never sent in the HTTP request. The page a permalink opens is the same static
-// file the site already serves; JavaScript then reads the hash and replays. So
-// there is nothing to persist, no key to expire, no per-use cost, and the
-// static-first rule in CLAUDE.md survives intact.
+// No dependency: `CompressionStream('deflate-raw')` is native in every browser
+// the site targets and in Node 18+, which also lets evals/export.test.mjs
+// round-trip a real payload under `node --test`.
 //
-// WHY THERE IS NO DEPENDENCY HERE. `CompressionStream('deflate-raw')` is native
-// in every browser the site targets and in Node 18+, so lz-string — the one
-// library this feature would otherwise have wanted — buys nothing. That is the
-// whole dependency conversation for #18, and the answer is none. (Node having
-// it too is what lets evals/export.test.mjs round-trip a real payload under
-// `node --test` rather than trusting the encoder by inspection.)
-//
-// WHAT IT IS NOT. base64 is encoding, not encryption. Anyone holding the link
-// reads the conversation, and the surface that generates one has to say so.
+// base64 is encoding, not encryption. Anyone holding the link can read the
+// conversation, and the surface that generates one has to say so.
 
 import {
   fitSnapshot,
@@ -30,29 +24,26 @@ export const PERMALINK_PREFIX = "#c=";
 
 /**
  * The length past which mail clients and chat unfurlers start mangling a URL.
- *
- * Measured against the site's own limits in docs/idea-decisions.md: a 12-turn
- * transcript encoded to ~1,700 characters, and the route caps a conversation at
- * 10 user turns. So an ordinary conversation cannot reach this — but a pasted
- * job posting and a full requirement table can, which is exactly why the number
- * is reported to the reader rather than assumed away.
+ * An ordinary conversation can't reach it (docs/idea-decisions.md: a 12-turn
+ * transcript encoded to about 1,700 characters, and the route caps a
+ * conversation at 10 user turns), but one with a full requirement table can, so
+ * the length is reported to the reader rather than assumed.
  */
 export const PERMALINK_SAFE_CHARS = 2000;
 
 /**
- * Hard ceiling on an INCOMING payload, before it is decompressed.
- *
- * A fragment arrives from whoever sent the link. This bounds the work a hostile
- * one can ask for; the decoder bounds the output as well.
+ * Ceiling on an incoming payload before it is decompressed. A fragment comes
+ * from whoever sent the link; this bounds the work a hostile one can ask for,
+ * and MAX_DECODED_BYTES bounds the output.
  */
 const MAX_PAYLOAD_CHARS = 64_000;
 const MAX_DECODED_BYTES = 512_000;
 
 // --- base64url ------------------------------------------------------------
 //
-// Hand-rolled over btoa/atob rather than Buffer so the same code runs in the
-// browser and under `node --test`. Chunked because a spread of a 100 kB byte
-// array into String.fromCharCode overflows the argument limit.
+// Over btoa/atob rather than Buffer so the same code runs in the browser and
+// under `node --test`. Chunked because spreading a 100 kB byte array into
+// String.fromCharCode overflows the argument limit.
 
 function toBase64Url(bytes: Uint8Array): string {
   let binary = "";
@@ -78,10 +69,9 @@ function fromBase64Url(value: string): Uint8Array | null {
 
 // --- deflate --------------------------------------------------------------
 
-// The lib.dom type for CompressionStream is `TransformStream<BufferSource,
-// Uint8Array>`, which does not unify with the DecompressionStream one under a
-// single generic parameter. Typed structurally instead, on the two properties
-// this function actually uses.
+// lib.dom types CompressionStream as `TransformStream<BufferSource, Uint8Array>`,
+// which doesn't unify with DecompressionStream under one generic parameter, so
+// this is typed structurally on the two properties pipe() uses.
 type ByteStream = {
   writable: WritableStream<Uint8Array>;
   readable: ReadableStream<Uint8Array>;
@@ -89,12 +79,10 @@ type ByteStream = {
 
 async function pipe(bytes: Uint8Array, stream: ByteStream) {
   const writer = stream.writable.getWriter();
-  // The write and close promises are deliberately not awaited — the reader
-  // below is what drains the stream — but they MUST be caught. On a corrupt
-  // payload the inflater errors both ends, and an uncaught rejection on the
-  // writable side surfaces as an unhandledRejection long after decodeSnapshot
-  // has already returned its honest `null`. (Found by the truncated-link test,
-  // which is exactly the case a mail client produces.)
+  // The write and close promises aren't awaited (the reader below drains the
+  // stream) but must be caught: on a corrupt or truncated payload the inflater
+  // errors both ends, and an uncaught rejection on the writable side surfaces
+  // as an unhandledRejection after decodeSnapshot has already returned null.
   const ignore = () => {};
   writer.write(bytes).catch(ignore);
   writer.close().catch(ignore);
@@ -139,9 +127,8 @@ export async function decodeSnapshot(payload: string): Promise<TranscriptMessage
     const messages = fromSnapshot(JSON.parse(new TextDecoder().decode(inflated)));
     return messages.length ? messages : null;
   } catch {
-    // Truncated by a mail client, hand-edited, or from a future version of the
-    // format. All three are the same event to a reader: this link doesn't
-    // open, and the site's ordinary empty state is the honest response.
+    // Truncated by a mail client or hand-edited. Either way the link doesn't
+    // open, and the site shows its ordinary empty state.
     return null;
   }
 }
@@ -170,14 +157,12 @@ export async function fitPermalinkFor(
 }
 
 /**
- * The payload in a `location.hash`, if there is one.
- *
- * Anything from the first `?` or `&` on is not payload. base64url never
- * contains either, so the cut is unambiguous, and it is what makes the most
- * likely mistake with an application link harmless: `?ref=acme` pasted onto
- * the END of a copied permalink lands inside the fragment, and used to turn a
- * working link into the site's empty state. lib/analytics.ts reads the ref from
- * there; this ignores it. docs/application-links.md has the right order.
+ * The payload in a `location.hash`, if there is one. Anything from the first `?`
+ * or `&` on is not payload; base64url contains neither, so the cut is
+ * unambiguous. That keeps the likeliest mistake with an application link,
+ * `?ref=acme` pasted onto the end of a copied permalink, from breaking the
+ * link. lib/analytics.ts reads the ref from there; this ignores it.
+ * docs/application-links.md has the right order.
  */
 export function payloadFromHash(hash: string): string | null {
   if (!hash.startsWith(PERMALINK_PREFIX)) return null;

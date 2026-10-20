@@ -1,27 +1,17 @@
-// Serializes a conversation to the shapes it can leave the page in.
+// Serializes a conversation to the shapes it can leave the page in: a markdown
+// transcript, the snapshot a permalink carries, an interview-style scorecard
+// for a fit check, and a condensed mail draft. Nothing is stored server-side;
+// the clipboard, the printer and the URL fragment are the transports.
 //
-// This is the storage-free answer to "can I keep this?" — a recruiter who has a
-// useful conversation can paste it into an email, a Slack thread, or an ATS
-// note. Nothing is stored server-side; the clipboard, the printer and the URL
-// fragment are the transports.
+// No site copy lives here. Every human-readable string in the output is a field
+// name from the roleFit tool schema, a label the shell already shows, or passed
+// in by the caller. The one import, JD_PREFIX, is the request the paste panel
+// already sends, owned by lib/job-posting.ts, which imports nothing.
 //
-// Sprint 5 EXTENDED this module rather than replacing it (roadmap #17): the
-// markdown serializer below is unchanged, and the three new shapes — the
-// snapshot the permalink compresses, the scorecard, and the condensed mail body
-// — are more pure functions in the same lane. Compression and clipboard access
-// live in lib/permalink.ts and the components; nothing here touches a browser
-// API, which is what keeps the whole file runnable under `node --test`.
-//
-// Deliberately dependency-free and structurally typed rather than importing
-// UIMessage from `ai`: these functions are pure and are unit-tested directly by
-// evals/transcript.test.mjs under `node --test`, which shouldn't have to resolve
-// the SDK's module graph to check string formatting.
-//
-// NO SITE COPY LIVES HERE. Every human-readable string in the output is either
-// a field name from the roleFit tool schema, a label that already exists in the
-// shell UI, or passed in by the caller. See CLAUDE.md. (JD_PREFIX is the one
-// import: it is the request the paste panel already sends, owned by
-// lib/job-posting.ts, which imports nothing.)
+// Pure functions only. Compression and clipboard access live in
+// lib/permalink.ts and the components, and messages are typed structurally
+// rather than as the SDK's UIMessage, so evals/transcript.test.mjs can run this
+// under `node --test` without resolving the SDK.
 
 import { JD_PREFIX } from "./job-posting.ts";
 
@@ -42,7 +32,7 @@ type RoleFitRow = {
   verdict?: string;
   evidence?: string;
   downgrade?: string | null;
-  /** Chunk ids the row cited and that exist (Sprint 4's reconciler fills these). */
+  /** Chunk ids the row cited and that exist (filled by lib/role-fit.ts). */
   sources?: string[];
   /** Checkable tokens the cited chunks didn't contain. */
   unverified?: string[];
@@ -71,10 +61,9 @@ type ContactOutput = { email?: string; github?: string; linkedin?: string };
 
 const SITE_ORIGIN = "https://sidhantmathur.com";
 
-// Citation markers (Sprint 3). Kept as a local copy rather than an import from
-// lib/verify.ts so this module stays free of the generated corpus — it is unit
-// tested under `node --test` and has no business resolving a build artifact.
-// The two regexes are asserted equivalent by evals/citations.test.mjs.
+// A local copy of lib/verify.ts's citation marker, so this module imports
+// nothing beyond lib/job-posting.ts. evals/citations.test.mjs asserts the two
+// strip the same way.
 const CITATION_MARKER = /\[([a-z0-9]+(?:-[a-z0-9]+)*:[a-z0-9]+(?:-[a-z0-9]+)*)\](?!\()/g;
 
 /** Concatenated text of a message's text parts. */
@@ -103,11 +92,8 @@ function absolute(href: string): string {
 
 /**
  * Renders one tool output as markdown. Returns null for tools whose output adds
- * nothing in a text transcript.
- *
- * The roleFit case is the one that matters: it's the structured assessment a
- * recruiter would actually forward, and the caveats have to survive the trip.
- * If the model named a gap, it appears here.
+ * nothing in a text transcript. For roleFit, the verdict tags and every gap
+ * survive the trip.
  */
 export function toolPartToMarkdown(part: TranscriptPart): string | null {
   const out = part.output;
@@ -117,13 +103,11 @@ export function toolPartToMarkdown(part: TranscriptPart): string | null {
     case "tool-roleFit": {
       const data = out as RoleFitOutput;
       const lines: string[] = [];
-      // "Role fit — {role}" is the existing citation-chip label in app-shell.
+      // "Role fit — {role}" is the shell's existing chip label.
       lines.push(data.role ? `**Role fit — ${data.role}**` : "**Role fit**");
 
-      // The verdict tags travel. A forwarded assessment that dropped them
-      // would read as a list of things he does, which is the flattering half
-      // of what the panel showed — the same soft-pedal the schema exists to
-      // prevent, arriving by way of the clipboard.
+      // The verdict tags travel: without them a forwarded assessment reads as
+      // a list of things he does, the flattering half of what the panel showed.
       const rows = Array.isArray(data.rows) ? data.rows : [];
       if (rows.length) {
         lines.push("");
@@ -197,10 +181,8 @@ export function messageToMarkdown(message: TranscriptMessage): string {
   }
 
   // Inline markers are noise in a pasted email, but dropping the provenance
-  // entirely would make a forwarded answer less checkable than the one on
-  // screen. So they come out of the prose and the ids they named are listed
-  // once at the end. (#17 in Sprint 5 owns what a real exported artifact looks
-  // like; this is the minimum that doesn't lose information.)
+  // would make a forwarded answer less checkable than the one on screen. So
+  // they come out of the prose and the ids are listed once at the end.
   const cited: string[] = [];
   for (const [, id] of text.matchAll(CITATION_MARKER)) {
     if (!cited.includes(id)) cited.push(id);
@@ -217,8 +199,8 @@ export function messageToMarkdown(message: TranscriptMessage): string {
     const rendered = toolPartToMarkdown(part);
     if (rendered) blocks.push(rendered);
   }
-  // "Sources" is a label, not site copy — the ids themselves are generated
-  // identifiers from content/knowledge, the same ones shown beside the answer.
+  // "Sources" is a label, not site copy; the ids are the same chunk ids shown
+  // beside the answer.
   if (cited.length) blocks.push(`Sources: ${cited.join(", ")}`);
   return blocks.join("\n\n");
 }
@@ -226,7 +208,7 @@ export function messageToMarkdown(message: TranscriptMessage): string {
 export type TranscriptOptions = {
   /** Document title. Caller supplies it so no site copy lives in this module. */
   title?: string;
-  /** Trailing note — the shell passes the disclaimer from docs/site-copy.md. */
+  /** Trailing note. The shell passes DISCLAIMER from lib/site.ts. */
   footer?: string;
   /** Canonical URL for the site, included under the title when a title is set. */
   sourceUrl?: string;
@@ -268,36 +250,14 @@ export function conversationToMarkdown(
   return blocks.join("\n\n") + "\n";
 }
 
-// ---------------------------------------------------------------------------
-// The snapshot — what a permalink carries (Sprint 5, #18)
-// ---------------------------------------------------------------------------
+// --- The snapshot: what a permalink carries -------------------------------
 //
-// The URL fragment is the storage, so the wire format is chosen for size and
-// for nothing else: one-letter keys, no ids, no timestamps per message, and
-// only the parts that render. It is deliberately NOT the SDK's UIMessage shape
-// — that carries streaming state, tool call ids and input echoes that would
-// double the byte count for a reader who will never see them.
-//
-// Everything in a snapshot was already on the reader's screen. There is no
-// server round-trip and nothing here is trusted on the way back in: the decoder
-// caps every length and drops anything it doesn't recognise, because a snapshot
-// arrives from whoever pasted the link.
-//
-// TWO THINGS NEVER TRAVEL, measured on a real 3,891-character posting and its
-// 14-row table (docs/application-links.md has the numbers). Together they took
-// the link from 4,523 characters to 3,271, with nothing on the replayed page
-// lost but the posting's own text:
-//
-//   · The posting. It was a quarter of the link, and the reader a fit check is
-//     sent to is the one person guaranteed to have it already; the table quotes
-//     every requirement it judged in the posting's own words. The turn replays
-//     as the paste panel's request line, and the replay banner says the posting
-//     was left out.
-//   · `extractRequirements`. Internal by definition (lib/chat-transport.ts): it
-//     never renders, and every line of it reappears as a row of the table.
-//
-// The table alone is still ~2,900 characters, past the length mail clients and
-// ATS fields cut. That is what `fitSnapshot` below is for.
+// The URL fragment is the storage, so the format is chosen for size: one-letter
+// keys, no ids or timestamps, and only the parts that render. Not the SDK's
+// UIMessage shape, whose streaming state, tool call ids and input echoes would
+// double the byte count. Nothing is trusted on the way back in: a snapshot
+// arrives from whoever pasted the link, so the decoder caps every length and
+// drops anything it doesn't recognise.
 
 export const SNAPSHOT_VERSION = 1;
 
@@ -305,42 +265,53 @@ export type SnapshotTool = { y: string; o: unknown };
 export type SnapshotMessage = { r: "u" | "a"; t?: string; p?: SnapshotTool[] };
 export type TranscriptSnapshot = { v: number; m: SnapshotMessage[] };
 
-// Bounds on the way back in. The route caps a conversation at 10 user turns and
-// a user message at 4,000 characters; these sit just above that, so a snapshot
-// of the largest conversation the site can produce round-trips exactly while a
-// hand-written fragment cannot make the page render a novel.
+// Bounds on the way back in. They sit above the route's caps (MAX_USER_MESSAGES
+// and MAX_USER_TEXT), so the largest conversation the site can produce
+// round-trips exactly while a hand-written fragment can't make the page render
+// a novel.
 const MAX_SNAPSHOT_MESSAGES = 40;
 const MAX_SNAPSHOT_TEXT = 8000;
 const MAX_SNAPSHOT_TOOLS = 4;
 
 /**
  * Tool parts that never render. A local copy of lib/chat-transport.ts's
- * INTERNAL_TOOLS, for the same reason CITATION_MARKER is local: this module
- * stays free of the transport's imports. evals/export.test.mjs asserts the two
- * agree.
+ * INTERNAL_TOOLS, so this module stays free of the transport's imports.
+ * evals/export.test.mjs asserts the two agree.
  */
 export const INTERNAL_TOOL_PARTS: ReadonlySet<string> = new Set(["tool-extractRequirements"]);
 
 /**
- * A user turn the route treated as a pasted posting: the next message carries
- * the extraction step, which the route forces on posting turns and only on
- * them. Reading the reply rather than re-running the posting heuristic means a
- * short question that happened to produce a `roleFit` ("is he a fit for an SE
- * role?") is never mistaken for a posting and blanked.
+ * A user turn the route treated as a pasted posting: the reply carries the
+ * extraction step, which the route forces on posting turns only. Reading the
+ * reply rather than re-running the heuristic means a short question that
+ * produced a `roleFit` ("is he a fit for an SE role?") is never blanked.
  */
 function isPostingTurn(message: TranscriptMessage, next: TranscriptMessage | undefined): boolean {
   if (message.role !== "user" || next?.role !== "assistant") return false;
   return next.parts.some((p) => p.type === "tool-extractRequirements");
 }
 
-/** A conversation reduced to what a permalink needs to replay it. */
+/**
+ * A conversation reduced to what a permalink needs to replay it. Two things
+ * never travel (sizes in docs/application-links.md):
+ *
+ *   - The posting. The reader a fit check is sent to already has it, and the
+ *     table quotes every requirement it judged. The turn replays as the paste
+ *     panel's request line, and the replay banner says the posting was left
+ *     out.
+ *   - `extractRequirements`. Internal (lib/chat-transport.ts): it never
+ *     renders, and every line of it reappears as a row of the table.
+ *
+ * The full table can still exceed what mail clients and ATS fields keep; that
+ * is what `fitSnapshot` is for.
+ */
 export function toSnapshot(messages: TranscriptMessage[]): TranscriptSnapshot {
   const m: SnapshotMessage[] = [];
   const kept = messages.slice(-MAX_SNAPSHOT_MESSAGES);
   for (const [i, message] of kept.entries()) {
     const role = message.role === "user" ? "u" : "a";
-    // A posting replays as the request the paste panel sends ahead of one,
-    // whether or not this turn came through the panel — it is the same request.
+    // A posting replays as the paste panel's request line, whether or not this
+    // turn came through the panel.
     const text = isPostingTurn(message, kept[i + 1])
       ? JD_PREFIX
       : textOf(message).slice(0, MAX_SNAPSHOT_TEXT);
@@ -358,11 +329,9 @@ export function toSnapshot(messages: TranscriptMessage[]): TranscriptSnapshot {
 }
 
 /**
- * The other direction, hardened.
- *
- * Returns an empty array rather than throwing on anything malformed: a bad
- * fragment is a link someone mangled in an email client, and the honest
- * response to that is the site's ordinary empty state, not an error screen.
+ * The other direction, hardened. Returns an empty array rather than throwing on
+ * anything malformed: a bad fragment is usually a link mangled by an email
+ * client, and gets the ordinary empty state, not an error screen.
  */
 export function fromSnapshot(value: unknown): TranscriptMessage[] {
   if (!value || typeof value !== "object") return [];
@@ -384,8 +353,6 @@ export function fromSnapshot(value: unknown): TranscriptMessage[] {
       for (const tool of entry.p.slice(0, MAX_SNAPSHOT_TOOLS)) {
         if (!tool || typeof tool !== "object") continue;
         const { y, o } = tool as SnapshotTool;
-        // Only tool names this module knows how to render survive the trip. An
-        // unknown one would ride into the shell as a part nothing draws.
         if (typeof y !== "string" || !y.startsWith("tool-")) continue;
         if (o == null || typeof o !== "object") continue;
         parts.push({ type: y, state: "output-available", output: o });
@@ -397,18 +364,13 @@ export function fromSnapshot(value: unknown): TranscriptMessage[] {
   return out;
 }
 
-// ---------------------------------------------------------------------------
-// The scorecard (Sprint 5, #24 — bank §6 Stage 3's output contract)
-// ---------------------------------------------------------------------------
+// --- The scorecard --------------------------------------------------------
 //
-// Headline verdict, the counts, the strongest cited rows, EVERY gap, and the
-// one recommendation line the model wrote. Nothing in here is composed by this
-// module: every sentence is the model's, every requirement is the posting's,
-// and the counts are counts of rows. The one editorial act is choosing which
-// three evidence rows to show, and that ordering is stated below.
-//
-// "Not a chat transcript — a recruiter's reputation is attached when they hit
-// send," which is why the gaps are the one section that is never truncated.
+// The model's verdict line, the counts, the strongest cited rows and every gap.
+// Nothing here is composed by this module: every sentence is the model's, every
+// requirement is the posting's, and the counts are counts of rows. The one
+// editorial act is choosing which three evidence rows to show (`evidenceRank`).
+// The gaps are never truncated: whoever forwards this puts their name on it.
 
 const MAX_SCORECARD_EVIDENCE = 3;
 
@@ -429,9 +391,8 @@ export type ScorecardOptions = {
 
 /**
  * The rows worth showing first: a judged, cited, unflagged claim beats one
- * without. Only cited rows are eligible at all — this section is called
- * evidence, and a row with nothing to point at is not evidence. The unmet rows
- * are not lost by that: every one of them is in the gaps section below, uncut.
+ * without. Only cited rows are eligible (see `strongestRows`): a row with
+ * nothing to point at is not evidence.
  */
 function evidenceRank(row: RoleFitRow): number {
   const verdict = row.verdict ?? "unclear";
@@ -495,16 +456,15 @@ export function scorecardMarkdown(
     if (labels.evidence) lines.push(`**${labels.evidence}**`, "");
     for (const { row } of strongest) {
       const evidence = row.evidence ? ` — ${stripMarkers(row.evidence)}` : "";
-      // The cited ids travel with the sentence. A forwarded claim that dropped
-      // them is less checkable than the one on screen, which is the one thing
-      // an exported artifact is not allowed to be.
+      // The cited ids travel with the sentence, so the forwarded claim stays
+      // as checkable as the one on screen.
       const sources = row.sources?.length ? ` [${row.sources.join(", ")}]` : "";
       lines.push(`- **${row.verdict ?? "unclear"}** — ${row.requirement}${evidence}${sources}`);
     }
     blocks.push(lines.join("\n"));
   }
 
-  // Every gap, always, uncut. This is the section the export exists to protect.
+  // Every gap, always, uncut.
   const gaps = (fit.gaps ?? []).filter(Boolean);
   if (gaps.length) {
     const lines: string[] = [];
@@ -534,25 +494,19 @@ export function latestRoleFit(messages: TranscriptMessage[]): RoleFitOutput | nu
   return null;
 }
 
-// ---------------------------------------------------------------------------
-// The short fit link (application links, docs/application-links.md)
-// ---------------------------------------------------------------------------
+// --- The short fit link (docs/application-links.md) -----------------------
 //
-// A fit check's whole table does not fit in a link that survives an ATS field
-// or a plain-text email: measured on a 3,891-character posting, the table alone
-// encodes to ~2,900 characters, and no lossless trim gets it near 2,000. So the
-// short link carries what the scorecard above already decided a condensed
-// assessment keeps — the verdict, the counts, the strongest cited rows and
-// EVERY gap — plus the answer's own prose, as a snapshot rather than as text.
-// Same measurement: 1,635 characters.
-//
-// Nothing new is decided here. The rows are the scorecard's rows, put back in
-// the posting's order because that is the table's rule. The counts stay the
-// counts of the WHOLE table, which is how the replayed table knows it is an
-// excerpt and says so (panel-body.tsx) — three rows under "3 met · 11 partial"
-// must never read as the complete assessment.
+// A whole fit-check table doesn't fit in a link that survives an ATS field or a
+// plain-text email. The short link carries what the scorecard keeps (the
+// verdict, the counts, the strongest cited rows and every gap) plus the
+// answer's prose, as a snapshot.
 
-/** The latest fit check as a short permalink's snapshot, or null if there is none. */
+/**
+ * The latest fit check as a short permalink's snapshot, or null if there is
+ * none. The rows are the scorecard's, back in the posting's order. The counts
+ * stay the whole table's: that is how the replayed table knows it is an excerpt
+ * and says so (`fitExcerptNote`).
+ */
 export function fitSnapshot(messages: TranscriptMessage[]): TranscriptSnapshot | null {
   for (let i = messages.length - 1; i >= 0; i -= 1) {
     const message = messages[i]!;
@@ -575,7 +529,7 @@ export function fitSnapshot(messages: TranscriptMessage[]): TranscriptSnapshot |
     };
 
     // The request that produced it: the paste panel's line for a posting, or
-    // the question itself when the assessment answered one.
+    // the question itself.
     const prev = messages[i - 1];
     const ask = prev?.role === "user" ? (isPostingTurn(prev, message) ? JD_PREFIX : textOf(prev)) : "";
     const answer: SnapshotMessage = { r: "a", p: [{ y: part.type, o: excerpt }] };
@@ -589,20 +543,20 @@ export function fitSnapshot(messages: TranscriptMessage[]): TranscriptSnapshot |
   return null;
 }
 
-// ---------------------------------------------------------------------------
-// The mail draft (Sprint 5, bank §6 Stage 3's mailto)
-// ---------------------------------------------------------------------------
+// --- The mail draft -------------------------------------------------------
 //
-// `mailto:` bodies are the one export path with a hard external ceiling —
-// clients start truncating somewhere around 2,000 characters of encoded URL,
-// and a truncated assessment is one whose gaps fell off the end. So the body is
-// condensed on purpose and cut at a line boundary, and the permalink goes
-// FIRST in the trailer so the full version is reachable even from a draft that
-// a client decided to shorten.
+// `mailto:` bodies have a hard external ceiling: clients start truncating
+// around 2,000 characters of encoded URL, and a truncated assessment is one
+// whose gaps fell off the end. So the body is condensed and cut at a line
+// boundary. scorecardMarkdown puts the permalink at the top, under the heading,
+// so the full version is reachable even from a draft a client shortened.
 
 export const MAILTO_MAX_BODY = 1600;
 
-/** Cuts to `max` characters at the last line break, never mid-sentence. */
+/**
+ * Cuts to `max` characters at the last line break, or mid-line when no break
+ * falls in the second half.
+ */
 export function condense(body: string, max = MAILTO_MAX_BODY): string {
   if (body.length <= max) return body;
   const cut = body.slice(0, max);

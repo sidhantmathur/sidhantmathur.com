@@ -1,78 +1,14 @@
-// The model catalogue — one row per model, and the only place any of it is said.
+// The model catalogue: the chat route's allowlist, the shell's picker, the cost
+// meter and the bake-off all read from here.
 //
-// This used to be four lists: the server allowlist in `app/api/chat/route.ts`,
-// the dropdown's array in `components/shell/app-shell.tsx`, the price and
-// confidence tables in `lib/pricing.ts`, and the bake-off's list in
-// `scripts/run-bakeoff.mjs`. Two of them were kept in step by a regex that
-// scraped the other two files' source text, which is a strange way to compare
-// two constants that could simply have been one. They are one now.
+// The client picks a model, so this is a security and a cost boundary: the id
+// in a request is only a lookup key into MODELS, never passed to the Gateway.
 //
-// Why the drift mattered: the route resolves an unknown id to the default
-// rather than erroring, so a dropdown offering a model the server had dropped
-// produced no error anywhere — just a visitor who picked a model and quietly
-// got a different one.
-//
-// --- The allowlist ---------------------------------------------------------
-//
-// The client picks a model, so this is a security AND a cost boundary: the id
-// from the request is never passed through to the Gateway, only used to look up
-// an entry here.
-//
-// Every model spends from one hourly bucket per visitor — `HOURLY_LIMIT`,
-// below — and the budget is visible in the UI, showing the cost engineering
-// rather than hiding it.
-//
-// There used to be two buckets: `standard` for the cheap workhorses and a
-// 5/hour `premium` one for whichever model billed most per turn (Sonnet, then
-// Luna, then Haiku 4.5). The 2026-10-19 refresh made every row cheap: the
-// priciest bills about 1.2x the next, and no turn in that day's smoke test
-// cost two cents. A small bucket on a model that costs what the others cost
-// rations nothing, so the tier was removed rather than kept as ceremony. If a
-// genuinely expensive model is ever offered again, the tier comes back with
-// it.
-//
-// --- The prices ------------------------------------------------------------
-//
-// HONESTY, because this is a site about instrumentation being honest:
-//
-//   * These are LIST prices, per 1M tokens, as published on the Vercel AI
-//     Gateway model list and checked on `PRICES_CHECKED` below. They are what
-//     the meter estimates with. They are not an invoice.
-//   * Cache rates are the Gateway's published figures where it publishes one.
-//     Where it doesn't, the rate is DERIVED from the provider's published
-//     discount, the row is labelled `derived`, and its comment says so.
-//   * `confidence` says how far a row is to be trusted, as data rather than as
-//     a comment, because a comment cannot be rendered and `/measurements/models`
-//     prints these numbers. A page that prints a dollar figure without saying
-//     which of its prices could not be confirmed is doing the thing this whole
-//     site argues against, so the caveat travels with the number.
-//
-// Anything rendering these must label the result as an estimate at list price.
-//
-// RE-CHECKED 2026-10-19 against the Gateway's own list,
-// https://ai-gateway.vercel.sh/v1/models, and its per-provider breakdown at
-// /v1/models/{id}/endpoints. Every rate below is published there, cache rates
-// included. What changed since 2026-08-12:
-//   * claude-haiku-4.5 → claude-haiku-5.5, its successor: $1.00/$5.00 →
-//     $0.10/$0.50. Haiku 4.5 is still served; this site no longer offers it.
-//   * gpt-5.6-luna → gpt-6-luna, its successor: $0.20/$1.20 → $0.10/$0.50.
-//   * deepseek-v4-flash-0731 repriced, $0.09/$0.18 → $0.076/$0.153, and its
-//     cache rate is published now ($0.014; the derived $0.0018 was 8x low).
-//     Kept rather than swapped for deepseek-v4.1-flash, and now unconfirmed —
-//     both for reasons on its row.
-//   * gemini-3.5-flash-lite's cache rate is published at $0.03; the derived
-//     $0.075 was 2.5x high. Input/output unchanged.
-//   * gpt-5-mini unchanged, its $0.025 cache rate now published.
-// No row is deprecated on the Gateway.
-//
-// Published bake-off costs were computed at the prices on record when each run
-// was published and are not recomputed here — see /measurements/models.
-//
-// DEFAULT, 2026-10-19: gpt-6-luna, approved by Sidhant from that day's smoke
-// test (docs/followups.md §2). It was the only model to render all four
-// homepage chips and a pasted job posting with no per-model settings. DeepSeek
-// 0731, the default before it, spent the whole output cap reasoning on two of
-// those five turns and rendered nothing.
+// Prices are list prices per 1M tokens from the Vercel AI Gateway
+// (https://ai-gateway.vercel.sh/v1/models and /v1/models/{id}/endpoints) as of
+// PRICES_CHECKED. Anything rendering them must label the result as an estimate
+// at list price. Published bake-off costs keep the prices on record when each
+// run was published and are not recomputed from this table.
 
 /** When the `input`/`output` prices below were last checked against the Gateway. */
 export const PRICES_CHECKED = "2026-10-19";
@@ -90,9 +26,9 @@ export type PriceConfidence = "confirmed" | "derived" | "unconfirmed";
 /**
  * AI SDK 7's top-level `reasoning` option, which the Gateway translates into
  * each provider's own setting. Restated rather than imported so this file stays
- * dependency-free: the evals read it under plain `node --test`. The route passes
- * one of these straight to `streamText`, so the type checker holds the two
- * lists together.
+ * dependency-free: the evals import it under plain `node --test`. The route
+ * passes one straight to `streamText`, so the type checker keeps the two lists
+ * in step.
  */
 export type ReasoningLevel =
   | "provider-default"
@@ -105,13 +41,11 @@ export type ReasoningLevel =
   | "max";
 
 /**
- * How hard one model thinks, by kind of turn. A key that is absent means the
- * provider's default, which is what every row got before this existed.
- *
- * Split by turn because the two kinds fail differently. An ordinary turn has a
- * 600-token ceiling, and a model that thinks by default can spend all of it
- * before saying a word. A job-posting turn has room, but spends three steps, and
- * its hidden reasoning is most of the wait before the card appears.
+ * How hard one model thinks, by kind of turn; an absent key means the
+ * provider's default. Split because the two fail differently: an ordinary turn
+ * has a 600-token ceiling a thinking model can exhaust before saying a word,
+ * while a job-posting turn has room but runs three steps, so hidden reasoning
+ * is most of the wait.
  */
 export type ReasoningSetting = {
   /** Every turn that is not a pasted job posting. */
@@ -134,22 +68,12 @@ export type ModelSpec = {
 };
 
 // Order is the dropdown order: the default first, then cheapest first. The
-// first entry is what the shell selects on load — so it must be the same model
-// as DEFAULT_MODEL below.
+// shell selects the first entry on load, so it must be DEFAULT_MODEL.
 export const MODELS = {
-  // The default (see the header). Successor to gpt-5.6-luna. Short-context
-  // rates; the long-context tier starts at 272k tokens, far past any turn here.
-  // Every provider the Gateway routes to (OpenAI, Azure, Bedrock) bills the
-  // same.
-  //
-  // Reasoning `low` on a pasted posting, measured 2026-10-19 (docs/followups.md
-  // §2, "Reasoning on posting turns"): on a 2,500-character posting the card
-  // arrived at 13–14 s instead of 28–33 s, with the same 14 requirements
-  // extracted and verdict counts inside the default's own run-to-run spread.
-  // `none` was barely slower (15–16 s) but less consistent: one of its two runs
-  // rated the posting 2 unmet where every other run said 4–7. Ordinary turns
-  // keep the provider default, because they were never slow (1–7 s) and were
-  // not re-measured.
+  // Short-context rates; the long-context tier starts at 272k tokens. OpenAI,
+  // Azure and Bedrock all bill the same. `low` reasoning on postings brought
+  // the card from 28–33 s to 13–14 s with the same requirements extracted
+  // (docs/followups.md §2); ordinary turns were never slow.
   "openai/gpt-6-luna": {
     input: 0.1,
     output: 0.5,
@@ -158,21 +82,13 @@ export const MODELS = {
     confidence: "confirmed",
     reasoning: { jobPosting: "low" },
   },
-  // The default until 2026-10-19. At its default reasoning level it can spend
-  // a turn's whole output cap thinking and render nothing.
-  //
-  // The Gateway serves this snapshot through
-  // fifteen providers whose rates run from $0.02 to $0.44 input and $0.15 to
-  // $1.32 output; these figures are its headline, which is the cheapest
-  // provider's. The route does not pin a provider and the meter cannot see
-  // which one a turn billed at, so the price is UNCONFIRMED for any given
-  // turn, and could be several times low. (All ten of its smoke-test turns did
-  // go to the headline provider; nothing makes that routing a rule.)
-  //
-  // deepseek-v4.1-flash is the newer version, and DeepSeek's own endpoint on
-  // the Gateway serves that rather than this snapshot. It is not swapped in
-  // because its first-party rate doubles in weekday peak windows, which a
-  // list-price meter cannot state honestly either.
+  // Fifteen providers serve this snapshot at $0.02–$0.44 input and
+  // $0.15–$1.32 output; these are the cheapest, headline rates. The route
+  // doesn't pin a provider and the meter can't see which one billed, so any
+  // given turn's price is unconfirmed and could be several times low. The newer
+  // deepseek-v4.1-flash isn't a fix: its first-party rate doubles at weekday
+  // peak. At its default reasoning level this model can spend a turn's whole
+  // output cap thinking.
   "deepseek/deepseek-v4-flash-0731": {
     input: 0.076,
     output: 0.153,
@@ -180,11 +96,10 @@ export const MODELS = {
     cacheWrite: 0,
     confidence: "unconfirmed",
   },
-  // Successor to claude-haiku-4.5, at a tenth of its price. These are the
-  // rates for prompts up to 100k tokens ($0.50/$2.50 beyond); a turn here is
-  // nowhere near. Cache writes are the 5-minute rate. Unlike 4.5 it thinks by
-  // default, and thinking bills as output — on the smoke test's RevOps chip it
-  // spent 599 of a 600-token turn thinking and rendered nothing.
+  // Rates for prompts up to 100k tokens ($0.50/$2.50 beyond); a turn here is
+  // nowhere near. Cache writes are the 5-minute rate. It thinks by default and
+  // thinking bills as output, so it can spend a whole 600-token turn before
+  // writing anything.
   "anthropic/claude-haiku-5.5": {
     input: 0.1,
     output: 0.5,
@@ -193,8 +108,8 @@ export const MODELS = {
     confidence: "confirmed",
   },
   // OpenAI doesn't bill cache writes. Azure's cached rate is $0.03 against
-  // OpenAI's $0.025; the meter uses OpenAI's. A reasoning model: in the
-  // smoke test it spent the whole cap reasoning on two of the four chips.
+  // OpenAI's $0.025; the meter uses OpenAI's. A reasoning model, so it too can
+  // spend the whole output cap before answering.
   "openai/gpt-5-mini": {
     input: 0.25,
     output: 2.0,
@@ -219,12 +134,10 @@ export type ModelId = keyof typeof MODELS;
 export const MODEL_IDS = Object.keys(MODELS) as ModelId[];
 
 /**
- * What a person calls each model — the picker's option text and the
- * "ask … instead" button. The council review's line: a recruiter should never
- * meet `deepseek/deepseek-v4-flash-0731` in a header. The ids stay where they
- * are the point (the trace, the measurements). Keyed by ModelId, so a model
- * added to the catalogue without a name is a type error rather than a blank
- * option.
+ * What a person calls each model: the picker's option text and the
+ * "ask … instead" button. Raw ids appear only where they are the point (the
+ * trace, the measurements). Keyed by ModelId, so a model added to the
+ * catalogue without a name is a type error rather than a blank option.
  */
 export const MODEL_NAMES: Record<ModelId, string> = {
   "openai/gpt-6-luna": "GPT-6 Luna",
@@ -239,13 +152,15 @@ export function modelName(id: string): string {
   return (MODEL_NAMES as Record<string, string>)[id] ?? id;
 }
 
-/** What an unknown or absent id resolves to. Must be `MODEL_IDS[0]`. */
+/**
+ * What an unknown or absent id resolves to. Must be `MODEL_IDS[0]`. Chosen in
+ * docs/followups.md §2.
+ */
 export const DEFAULT_MODEL: ModelId = "openai/gpt-6-luna";
 
 /**
  * The reasoning level to send for one turn, or undefined to send none and leave
- * the provider on its default. The route's only way to read `reasoning`, so a
- * row without the key behaves exactly as it did before the key existed.
+ * the provider on its default. The route's only way to read `reasoning`.
  */
 export function reasoningFor(
   model: ModelId,
@@ -258,17 +173,13 @@ export function reasoningFor(
 // --- What a visitor is allowed ---------------------------------------------
 //
 // Endpoint policy rather than a fact about any model, but it has three readers
-// now — the route enforces it, the status strip renders it, and the system
-// prompt tells the visitor about it in words — so it is stated once, here,
-// beside the catalogue it applies to.
-//
-// Anything that phrases these for a human must read them from here. A number
-// retyped into prose is a number that goes stale silently.
+// (the route enforces it, the status strip renders it, the system prompt
+// describes it), so it is stated once, beside the catalogue it applies to.
+// Anything that phrases these for a person must read them from here.
 
 /**
- * Turns an hour each visitor's bucket buys, on a sliding one-hour window. One
- * bucket for every model — see "The allowlist" above for why there is no
- * longer a second.
+ * Turns per visitor per sliding hour. One bucket covers every model: no model
+ * in the catalogue costs enough more than the others to need its own.
  */
 export const HOURLY_LIMIT = 20;
 

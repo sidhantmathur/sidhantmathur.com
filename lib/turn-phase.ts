@@ -1,44 +1,20 @@
 // What a turn in flight is doing right now, read off the message as it streams.
+// Free of React and the `@/` alias so evals/turn-phase.test.mjs can load it
+// under `node --test`; components/shell/use-conversation.ts re-exports
+// `phaseOf` and `OPENING_PHASE`.
 //
-// Moved here from components/shell/use-conversation.ts so `node --test` can
-// load it (evals/turn-phase.test.mjs): that file imports React and the `@/`
-// alias, and this needs neither. The hook re-exports everything here, so its
-// callers read as before.
+// The shell skips a message with no text and no tool output, so without this a
+// job-posting turn shows an empty column for two model calls. The phase line
+// reports the step, not the wait. Phases are read off the stream, never guessed on a
+// timer, and the line stays one line under the conversation, never an
+// expandable trace. Two readings, because they change at different rates:
 //
-// `awaitingReply` alone left a hole. It goes false the moment an assistant
-// message exists, but a message holding only a tool call and no text yet
-// renders as nothing at all (app-shell skips messages with neither) — so a
-// job-description turn, which spends its first step extracting requirements
-// and its second judging them, showed a live indicator, then an empty column
-// for the length of two model calls, then an answer.
-//
-// So the line reports the step instead of the wait. It stays ONE line, under
-// the conversation, and it never becomes an expandable trace: the
-// instrumentation policy puts density around the conversation, and a reasoning
-// drawer in the message column is the thing that policy exists to refuse.
-//
-// The phases are read off the stream, not guessed on a timer. Nothing here
-// claims work that isn't happening.
-//
-// TWO READINGS, BECAUSE THEY CHANGE AT DIFFERENT RATES (2026-10-19)
-//
-//   phaseOf     the step: one string that changes only when the turn moves to
-//               a new step. The shell keys the line by this string, so a change
-//               replays the line's entry, and it is the line's aria-live text,
-//               so a change is announced. Both are right once per step and
-//               wrong fourteen times in ten seconds.
-//   activityOf  what the stream is doing inside that step, which can change
-//               every chunk: hidden reasoning in progress, or the assessment's
-//               rows arriving one by one. Rendered as an aria-hidden readout
-//               beside the elapsed count, never folded into the step string.
-//
-// Why the second exists: on a pasted posting the two longest stretches are the
-// model reasoning (reasoning-start, then nothing at all until reasoning-end —
-// GPT-6 Luna streams no reasoning text) and the `roleFit` call's input
-// streaming row by row. Measured on a 2,500-character posting at the provider
-// default: 10 s of the first and 12 s of the second, with the line saying
-// "writing the answer…" through the first. Both are real, both are on the
-// stream, and neither was shown.
+//   phaseOf     the step. The shell keys the line by it and uses it as the
+//               aria-live text, so each change replays the entry and is
+//               announced.
+//   activityOf  what the stream is doing inside the step, which can change
+//               every chunk: hidden reasoning, or the assessment's rows
+//               arriving. An aria-hidden readout, never part of the step.
 
 import { looksLikeJobPosting } from "./job-posting.ts";
 
@@ -61,7 +37,7 @@ const TOOL_PHASE: Record<string, string> = {
   "tool-contactCard": "finding the contact details…",
 };
 
-/** The default, and the string the site has always shown while a turn opens. */
+/** The default, shown while a turn opens. */
 export const OPENING_PHASE = "reading the resume…";
 
 /** The gap between a finished tool call and the first token of the answer. */
@@ -69,26 +45,18 @@ export const WRITING_PHASE = "writing the answer…";
 
 // --- A pasted job posting ---------------------------------------------------
 //
-// Three steps, each with its own name: extract, judge, then the sentence or two
-// after the card. Short because they have to be. The line shares its row with
-// the readout, the elapsed count and, after eight seconds, the stop button, and
-// the shell is Geist Mono, so every character is 9px at 15px. Measured at 375px
-// (2026-10-19): 343px of row, 124px of it fixed, so a label and its readout get
-// 219px between them. "checking 14 requirements…" (225px) wrapped onto two lines
-// on its own; "reading the job description…" (252px) wrapped once the readout
-// joined it. The count the first one carried is in the readout instead (6/14),
-// which is where something that changes every row belongs anyway.
-//
+// Three steps: extract, judge, then the sentence or two after the card. The
+// labels are short because the line shares a 375px row with the readout, the
+// elapsed count and, after eight seconds, the stop button, in Geist Mono at 9px
+// a character: a label and its readout get about 219px between them. A count
+// that changes every row belongs in the readout (6/14), not the label.
 // evals/turn-phase.test.mjs holds every step, with its widest readout, to that
 // budget.
 
 /** Before the stream opens and through the extraction step. */
 export const JD_READING_PHASE = TOOL_PHASE["tool-extractRequirements"]!;
 
-/**
- * From the moment extraction returns until the card is in. The reasoning in
- * between belongs to this step, not to the writing one.
- */
+/** From the moment extraction returns until the card is in. */
 export const JD_CHECKING_PHASE = "checking the fit…";
 
 /** After the card is in, while the model writes what follows it. */
@@ -118,13 +86,9 @@ const settled = (p: Part | undefined) =>
   p?.state === "output-available" || p?.state === "output-error";
 
 /**
- * Is the turn in flight a pasted posting?
- *
- * The route's own answer when it has given one: the opening telemetry frame
- * carries `jobPosting`, and it is the first thing on the stream. Before that
- * frame exists — the whole "submitted" wait — the same detector the route runs,
- * on the same text the route will read. That is not a guess at what the server
- * will decide; it is the decision, made twice.
+ * Is the turn in flight a pasted posting? The route's own answer once the
+ * opening telemetry frame (the first thing on the stream) carries `jobPosting`;
+ * before that, the same detector the route runs, on the same text.
  */
 export function isJobPostingTurn(messages: readonly Message[]): boolean {
   const last = messages[messages.length - 1];
@@ -151,17 +115,12 @@ function jobPostingPhase(parts: Part[]): string {
   if (fit && settled(fit)) return JD_WRITING_PHASE;
   const extract = lastPart(parts, "tool-extractRequirements");
   // Judging starts the moment extraction returns, not when the roleFit call
-  // first streams: the model reasons in between, and that stretch belongs to
-  // the judging step. Before this, it read "writing the answer…".
+  // first streams: the model reasons in between, and that belongs to judging.
   if (fit || settled(extract)) return JD_CHECKING_PHASE;
   return JD_READING_PHASE;
 }
 
-/**
- * The one-line status for a turn in flight, or null once prose is on screen.
- * Once there is text to read, the reader has the answer — a status line under
- * it would be describing something they can already see.
- */
+/** The one-line status for a turn in flight, or null once prose is on screen. */
 export function phaseOf(status: string, messages: readonly Message[]): string | null {
   const jobPosting = isJobPostingTurn(messages);
   const opening = jobPosting ? JD_READING_PHASE : OPENING_PHASE;
@@ -175,9 +134,8 @@ export function phaseOf(status: string, messages: readonly Message[]): string | 
   const parts = partsOf(last);
   if (jobPosting) return jobPostingPhase(parts);
 
-  // The most recent tool call that hasn't produced its output yet is the step
-  // actually in flight. Reading from the end matters when one tool has already
-  // finished by the time the next starts.
+  // The most recent unsettled tool call is the step in flight; read from the
+  // end because an earlier tool may already have finished.
   for (let i = parts.length - 1; i >= 0; i--) {
     const p = parts[i]!;
     if (!p.type.startsWith("tool-")) continue;
@@ -195,13 +153,12 @@ export function phaseOf(status: string, messages: readonly Message[]): string | 
  * What the stream is doing within the current step, when it is doing something
  * a reader can't otherwise see.
  *
- *   reasoning  a reasoning part is open. The model is producing tokens the page
- *              will never show; on GPT-6 Luna not even their text arrives, only
- *              the part opening and, later, closing. This is the only proof on
+ *   reasoning  a reasoning part is open. GPT-6 Luna streams no reasoning text,
+ *              only the part opening and closing, so this is the only sign on
  *              the stream that the silence is work.
  *   rows       the assessment's rows arriving, counted off the partial tool
- *              input as it streams, out of the requirements extracted. The row
- *              being written counts, so the first one reads 1 of N.
+ *              input, out of the requirements extracted. The row being written
+ *              counts, so the first one reads 1 of N.
  */
 export type PhaseActivity =
   | { kind: "reasoning" }
@@ -239,9 +196,9 @@ export function sameActivity(a: PhaseActivity | null, b: PhaseActivity | null): 
 }
 
 /**
- * The readout's text: `thinking`, or `6/14`. "Thinking" rather than the
- * stream's own word: it is the reader's word for it, and 8px narrower on a
- * phone, which is the difference between one line and two.
+ * The readout's text: `thinking`, or `6/14`. "Thinking" rather than
+ * "reasoning": it is the reader's word, and one character narrower in a row
+ * with no room to spare.
  */
 export function formatActivity(activity: PhaseActivity): string {
   return activity.kind === "reasoning" ? "thinking" : `${activity.done}/${activity.total}`;

@@ -2,22 +2,16 @@ import { KNOWLEDGE_BASE } from "./knowledge.generated";
 import { REPO_CORPUS } from "./repo.generated";
 import { HOURLY_LIMIT, MAX_USER_MESSAGES } from "./models";
 
-// Assembles the chat system prompt. Intentionally free of any dynamic content
-// (no timestamps, no per-request IDs) so the string is byte-identical across
-// requests — that stability is what makes Anthropic prompt caching hit on every
-// request after the first (see docs/implementation-plan/03-chat.md §4.1 step 4).
+// Assembles the chat system prompt. Free of dynamic content (no timestamps, no
+// per-request ids) so the string is byte-identical across requests, which is
+// what lets the provider's prompt cache hit on every request after the first.
 //
-// Phase 4 appends a `## Tools` section after the knowledge-base block; this
-// prompt is structured so that section slots in without restructuring anything
-// above it.
-//
-// SPRINT 7 (#8) adds ONE optional block, appended at the very end on turns that
-// asked about the site itself. Everything above that block is byte-for-byte
-// what it was, deliberately: an ordinary turn's prompt has to remain the string
-// the provider already has cached, or the second corpus would cost money on
-// every turn that never wanted it. `evals/recursion.test.mjs` asserts both
-// halves of that — the base is unchanged by the appendix existing, and the
-// appendix only ever arrives at the end.
+// One optional block, SITE_APPENDIX, is appended at the very end on turns that
+// ask about the site itself. Everything above it stays byte-for-byte the same,
+// so an ordinary turn sends the string the provider already has cached and the
+// repo corpus costs nothing on turns that never wanted it.
+// `evals/recursion.test.mjs` asserts both halves: the base prompt never carries
+// the corpus, and the appendix only ever arrives at the end.
 export function buildSystemPrompt(options: { repoCorpus?: boolean } = {}): string {
   return options.repoCorpus ? `${basePrompt()}\n\n${SITE_APPENDIX}` : basePrompt();
 }
@@ -257,13 +251,12 @@ aid, not a replacement for your answer.
   us?".`;
 }
 
-// --- The second corpus (Sprint 7, #8) --------------------------------------
+// --- The second corpus -----------------------------------------------------
 //
-// Appended after everything above on a site turn, and nowhere else. It is a
-// constant for the same reason the base prompt is: no timestamps, no request
-// ids, nothing that changes between two turns that asked the same kind of
-// question. The corpus itself is generated at build time from the repo (see
-// scripts/build-repo-corpus.mjs) and is verbatim source, not written prose.
+// Appended after everything above on a site turn, and nowhere else. A constant
+// for the same reason the base prompt is: nothing in it changes between two
+// site turns. The corpus is generated at build time from the repo
+// (scripts/build-repo-corpus.mjs) and is verbatim source, not written prose.
 export const SITE_APPENDIX = `---SITE-SOURCE---
 
 The block below is this site's own source, chunked the same way the knowledge

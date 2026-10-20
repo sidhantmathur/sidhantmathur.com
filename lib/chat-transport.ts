@@ -1,36 +1,24 @@
-// --- The guarded fetch ------------------------------------------------------
+// The browser's fetch for the chat route (`guardedFetch`). It turns every
+// failure into one of the telemetry error classes, reads the hourly budget off
+// the response headers, puts two clocks on the request, and fails a turn that
+// finished having said nothing.
 //
-// Turns any failure into one of the telemetry error classes. useChat's onError
-// receives only an Error, not the HTTP status, so the class is read here — from
-// the JSON body the route sends on an early exit, or from the status — and
-// encoded as the message. Mid-stream failures already arrive as a class string,
-// because the route's stream `onError` returns one.
+// useChat's onError receives only an Error, not the HTTP status, so the class
+// is read here (from the JSON body the route sends on an early exit, or from
+// the status) and encoded as the message. Mid-stream failures already arrive as
+// a class string, because the route's stream `onError` returns one.
 //
-// Also lifts the hourly budget out of the response headers, which is where it
-// lands before a single token has streamed.
+// Without a client-side timeout, a stream that stops arriving (iOS Safari
+// suspending a tab mid-answer, for one) leaves `status` at "streaming" forever
+// and every later send returns early. Two clocks:
 //
-// AND IT PUTS A CLOCK ON THE WHOLE THING, which is the reason this file was
-// reopened. There was no timeout anywhere on the client path: a stream that
-// simply stopped arriving — iOS Safari suspending the tab mid-answer is the
-// case this was reported from, at a restaurant, on a phone — left `status` at
-// "streaming" forever. `isBusy` stays true, `submit()` returns early on every
-// later send, and the site is silently dead until the visitor reloads it. They
-// don't reload. They leave.
+//   connect   to the response headers (CONNECT_TIMEOUT_MS). A request
+//             unanswered that long is gone, not slow.
+//   inactive  between chunks (STREAM_IDLE_TIMEOUT_MS). Catches a connection
+//             that is established and then stops.
 //
-// Two clocks, because one would have to be wrong:
-//
-//   connect   15s to the response HEADERS. A request that hasn't been answered
-//             in fifteen seconds isn't slow, it's gone.
-//   inactive  20s between CHUNKS. This is the one that catches the reported
-//             failure, where the connection is established and then stops.
-//
-// Deliberately NOT `AbortSignal.timeout` over the whole request: a healthy
-// job-posting turn spends three model steps and can legitimately run past a
-// minute, and a total-duration abort would kill it mid-answer.
-//
-// The seam is `fetch` itself, and it is injectable: the browser passes the real
-// one, a test passes a scripted one. Same for the two clocks, so a test can
-// assert the thresholds without sitting through fifteen seconds of them.
+// Not `AbortSignal.timeout` over the whole request: a healthy job-posting turn
+// spends three model steps and can legitimately run past a minute.
 
 import { toTurnErrorClass, type TurnErrorClass } from "./chat-telemetry.ts";
 
@@ -42,11 +30,9 @@ export const STREAM_IDLE_TIMEOUT_MS = 20_000;
 export type Budget = { remaining: number; limit: number };
 
 /**
- * A failure this module has already classified.
- *
- * The message IS the class string, so anything still reading `error.message` —
- * the SDK's own plumbing included — sees exactly what it saw before. `cls` is
- * the typed way to read the same thing without a string round-trip.
+ * A failure this module has already classified. The message is the class
+ * string, for anything reading `error.message` (the SDK's plumbing included);
+ * `cls` is the typed way to read the same thing.
  */
 export class TurnFailure extends Error {
   readonly cls: TurnErrorClass;
@@ -90,30 +76,12 @@ function isAbortError(err: unknown): boolean {
 }
 
 /**
- * What a failure DURING the stream actually was, in the vocabulary the rest of
- * the site speaks. Called with whatever `reader.read()` threw.
- *
- * Passing the raw error through — which is what this used to do — got two
- * things wrong, both of them visible:
- *
- *   a wifi drop mid-answer  arrived as a TypeError, fell through to "unknown",
- *                           and the unknown copy says "something went wrong on
- *                           my end" — the site apologising for the visitor's
- *                           train going into a tunnel. It is a `network`
- *                           failure and the network copy is the true one.
- *   the stop button         rendered an error block roughly one run in five.
- *                           An abort races the reader: depending on the browser
- *                           and on where in the pipeline the tear-down lands,
- *                           what surfaces here is sometimes a clean AbortError
- *                           and sometimes a TypeError from the socket dying
- *                           underneath it. The design rule is that an aborted
- *                           turn renders NOTHING, so the shape of the error is
- *                           the wrong thing to read.
- *
- * So the outer signal is the authority on the second one: if the caller's
- * signal is aborted, the reader pressed stop, whatever the error looks like.
- * That signal is aborted by `stop()` and by navigation only — the idle
- * watchdog below aborts our own controller, never this one.
+ * Classifies whatever `reader.read()` threw. A network drop arrives as a
+ * TypeError and is `network`, not `unknown`. The stop button races the reader:
+ * depending on the browser it surfaces as an AbortError or as a TypeError from
+ * the socket dying underneath, so the caller's signal is the authority on
+ * aborts. Only `stop()` and navigation abort that signal; the idle watchdog
+ * aborts our own controller instead.
  */
 function classifyStreamError(err: unknown, outer: AbortSignal | null | undefined): unknown {
   // A genuine abort passes through untouched, so the SDK takes its abort path
@@ -126,29 +94,21 @@ function classifyStreamError(err: unknown, outer: AbortSignal | null | undefined
 
 // --- A turn that said nothing ----------------------------------------------
 //
-// The other silent failure, and the one that was reproduced on production. A
-// reasoning model can spend its whole output ceiling thinking and finish on
-// `finishReason: "length"` without writing a word. Nothing errors anywhere on
-// that path: the stream closes cleanly, the SDK says "ready", the status dot
-// goes green, and the conversation column shows nothing at all, because the
-// shell skips a message with no text and no tool output.
+// A reasoning model can spend its whole output ceiling thinking and finish on
+// `finishReason: "length"` without writing a word. Nothing errors: the stream
+// closes cleanly, the SDK says "ready", and the shell shows nothing.
 //
-// The transport already reads every byte of the turn to run its idle clock, so
-// it is the one place that can answer "did this turn put anything on the page?"
-// for every turn, whichever model or route produced it. When the answer is no,
-// it appends one error chunk to the stream, in the SDK's own wire format, so
-// the turn fails through exactly the path a real mid-stream failure takes:
-// `onError` fires with the class, status becomes "error", and TurnError renders
-// with a way out. Appended rather than thrown, because erroring a stream
-// discards whatever the reader hasn't consumed yet, and the turn's closing
-// telemetry record is among the last chunks to arrive.
+// The transport already reads every byte for its idle clock, so when a turn
+// put nothing on the page it appends one `empty_answer` error chunk in the
+// SDK's wire format, and the turn fails like a real mid-stream failure.
+// Appended rather than thrown, because erroring a stream discards whatever the
+// reader hasn't consumed yet, including the turn's closing telemetry record.
 
 /**
  * Tools whose output has no surface of its own. `extractRequirements` is the
- * first half of a job-description turn: its output is the input to the
- * assessment that follows and is rendered inside it, so a turn that extracted
- * and then stopped has still shown the reader nothing. The shell reads the same
- * set to decide which tool parts get a chip.
+ * first half of a job-posting turn: its output feeds the assessment and is
+ * rendered inside it, so a turn that extracted and then stopped has still shown
+ * nothing. The shell reads the same set to decide which tool parts get a chip.
  */
 export const INTERNAL_TOOLS: ReadonlySet<string> = new Set(["extractRequirements"]);
 
@@ -166,13 +126,11 @@ type StreamChunk = {
 };
 
 /**
- * Reads a UI message stream as it passes, for one question only.
- *
- * Deliberately narrow, so it can't invent a failure. It answers "empty" only
- * for a COMPLETE turn — one that reached its `finish` chunk — that carried no
- * visible text, no tool output with a surface, and no error of its own. A body
- * that isn't a UI message stream never reaches `finish`, so it passes through
- * untouched, and once anything visible has arrived it stops parsing at all.
+ * Reads a UI message stream as it passes: did this turn say nothing?
+ * Deliberately narrow, so it can't invent a failure: "empty" only for a turn
+ * that reached its `finish` chunk with no visible text, no tool output with a
+ * surface, and no error of its own. It stops parsing once anything visible
+ * arrives.
  */
 function answerWatcher() {
   const dec = new TextDecoder();
@@ -243,14 +201,9 @@ function answerWatcher() {
 }
 
 /**
- * Wraps a response body so a stream that goes quiet fails instead of hanging.
- *
- * The wrapped stream is errored with a real class, which is the whole point:
- * the SDK surfaces it, `onError` fires, `status` becomes "error", `isBusy`
- * goes false, and the NEXT SEND WORKS. A silent stall does none of that.
- *
- * It also watches for the turn that finishes having said nothing — see
- * `answerWatcher` above.
+ * Wraps a response body so a stream that goes quiet fails with a class instead
+ * of hanging: `onError` fires, `status` becomes "error", and the next send
+ * works. Also watches for a turn that said nothing (`answerWatcher`).
  */
 function watchStream(
   body: ReadableStream<Uint8Array>,
@@ -274,8 +227,7 @@ function watchStream(
         clear();
         timer = setTimeout(() => {
           firedTimeout = true;
-          // Release the socket first, then fail the stream. The other order
-          // works too, but this way the abort can't race a reader that is
+          // Release the socket first, so the abort can't race a reader that is
           // already unwinding.
           abort();
           controller.error(new TurnFailure("upstream_timeout"));
@@ -294,18 +246,16 @@ function watchStream(
             bump();
           }
           clear();
-          // Not when the reader pressed stop: an aborted turn renders nothing,
-          // and a stream that happened to close cleanly under the abort is
-          // still an abort.
+          // Not when the reader pressed stop: a stream that closed cleanly
+          // under an abort is still an abort, and renders nothing.
           if (!outer?.aborted && watcher.saidNothing()) {
             controller.enqueue(new TextEncoder().encode(EMPTY_ANSWER_CHUNK));
           }
           controller.close();
         } catch (err) {
           clear();
-          // Already errored above — a second `controller.error` would throw.
-          // Everything else is classified rather than passed through raw: see
-          // classifyStreamError for the two failures that made this necessary.
+          // After a timeout the stream is already errored, and a second
+          // `controller.error` would throw.
           if (!firedTimeout) controller.error(classifyStreamError(err, outer));
         }
       })();
@@ -324,8 +274,7 @@ export function guardedFetch(deps: TransportDeps = {}): typeof fetch {
   const onBudget = deps.onBudget;
 
   return async (input, init) => {
-    // Our own controller rather than the caller's, so the timers below can
-    // abort a request the SDK has no reason to abort. The SDK's signal is
+    // Our own controller, so the timers can abort; the SDK's signal is
     // forwarded into it, so `stop()` still works.
     const ctrl = new AbortController();
     const outer = init?.signal;
@@ -344,9 +293,8 @@ export function guardedFetch(deps: TransportDeps = {}): typeof fetch {
     try {
       res = await doFetch(input, { ...init, signal: ctrl.signal });
     } catch (err) {
-      // Rethrown as a class rather than as whatever the platform said. The
-      // distinction that matters to the reader is "your connection" versus
-      // "my server", and it is only knowable here.
+      // Rethrown as a class: "your connection" versus "my server" is only
+      // knowable here.
       if (connectTimedOut) throw new TurnFailure("upstream_timeout");
       if (isNetworkError(err)) throw new TurnFailure("network");
       throw err;

@@ -1,18 +1,11 @@
-// PostHog wrapper. Initializes posthog-js ONLY when NEXT_PUBLIC_POSTHOG_KEY is
-// set — no init call at all otherwise (not an init with a dummy key). Every call
-// site can call track(...) safely regardless of whether PostHog is configured.
+// PostHog wrapper. posthog-js is initialised only when NEXT_PUBLIC_POSTHOG_KEY
+// is set, and loaded with a dynamic import so it stays out of the bundle when it
+// isn't. track() is safe to call either way.
 //
-// posthog-js is loaded via a lazy `import("posthog-js")` instead of a static
-// import so it never lands in the shared/page JS bundle when analytics is off
-// (the common case — no key set). The dynamic import only fires from inside
-// the init path, and only when NEXT_PUBLIC_POSTHOG_KEY is present.
-//
-// Events fired while the SDK is still loading are HELD, up to a small cap, and
-// sent once it arrives. They used to be dropped, on the theory that losing the
-// rare event racing init was cheap. It was not rare for the event application
-// links depend on: `chat_permalink_opened` fires the moment a fragment
-// decodes, which is always before the SDK has loaded, so every opened link was
-// lost. When analytics is off nothing is held — there is nothing to send it to.
+// Events fired while the SDK is loading are held, up to MAX_PENDING, and sent
+// when it arrives. This matters for `chat_permalink_opened`, which fires as soon
+// as a fragment decodes, always before the SDK has loaded. With analytics off
+// nothing is held.
 
 import type { PostHog } from "posthog-js";
 
@@ -28,27 +21,22 @@ const pending: Array<[AnalyticsEvent, Record<string, unknown> | undefined]> = []
 
 // --- Application links: `?ref=` ---------------------------------------------
 //
-// Sidhant sends one link per application, `?ref=<company>`, so PostHog can say
-// which applications turned into visits. docs/application-links.md is the
-// routine. Four rules keep it to counting and nothing else:
+// One link per application, `?ref=<company>`, so PostHog can say which
+// applications turned into visits (docs/application-links.md). The rules:
 //
-//   1. NEVER RENDERED. The value goes to PostHog and nowhere else: no greeting,
-//      no "welcome, Acme". The repo is public, so an allowlist of companies in
-//      the source would publish who he has applied to, and echoing text from
-//      the URL would let anyone make the page say anything.
-//      evals/application-links.test.mjs holds this.
-//   2. A SLUG OR NOTHING. Lowercase letters, digits and hyphens, 40 at most. An
-//      email address or a name with a space in it is dropped, not cleaned up:
-//      the convention is a company slug, and anything else goes untracked.
-//   3. READ AT LANDING, KEPT FOR THE SESSION. The query string does not survive
-//      the visit — a link to /resume drops it, and a replayed fit check opens
-//      its panel within milliseconds of loading, well before the SDK arrives.
-//      So the value is read from the address the visitor landed on and
-//      registered as a SESSION super property, which PostHog attaches to every
-//      later event in the tab whatever the address bar says by then.
-//   4. FOUND AFTER THE FRAGMENT TOO. Appending `?ref=acme` to a copied
-//      permalink puts it after `#c=…`, inside the fragment. That is the natural
-//      way to get it wrong, so it is read from there as well, and
+//   1. Never rendered. The value goes to PostHog and nowhere else. The repo is
+//      public, so an allowlist of companies in the source would publish where
+//      he has applied, and echoing URL text would let anyone make the page say
+//      anything. evals/application-links.test.mjs holds this.
+//   2. A slug or nothing: lowercase letters, digits and hyphens, 40 at most.
+//      Anything else, like an email address, is dropped rather than cleaned up.
+//   3. Read at landing, kept for the session. The query string doesn't survive
+//      the visit (a link to /resume drops it, and a replayed fit check changes
+//      the address before the SDK loads), so the value is read from the landing
+//      address and registered as a session super property, which PostHog
+//      attaches to every later event in the tab.
+//   4. Also found after the fragment. `?ref=acme` appended to a copied
+//      permalink lands inside `#c=…`, so it is read from there too, and
 //      lib/permalink.ts ignores it when decoding the conversation.
 
 /** The query parameter. Exported for the eval, not for the UI. */
@@ -57,11 +45,9 @@ export const REF_PARAM = "ref";
 const REF_SLUG = /^[a-z0-9](?:[a-z0-9-]{0,38}[a-z0-9])?$/;
 
 /**
- * The application slug in a landing address, or null.
- *
- * Pure, so the eval can hold the rules above without a browser. `hash` is
- * searched only past its first `?` or `&` — base64url never contains either,
- * so that is always text someone appended, never part of a payload.
+ * The application slug in a landing address, or null. Pure, so the eval can
+ * test it without a browser. `hash` is searched only past its first `?` or `&`;
+ * base64url contains neither, so that is always appended text.
  */
 export function readRef(search: string, hash = ""): string | null {
   const fromQuery = new URLSearchParams(search).get(REF_PARAM);
@@ -77,9 +63,9 @@ export function readRef(search: string, hash = ""): string | null {
 let landingRef: string | null | undefined;
 
 /**
- * Reads the ref off the address the visitor arrived at. Called on mount by the
- * analytics provider, before anything in the shell can push a new address, and
- * again (harmlessly) by init in case nothing called it first.
+ * Reads the ref off the address the visitor arrived at. The analytics provider
+ * calls this on mount, before the shell can push a new address; init calls it
+ * again in case nothing did.
  */
 export function rememberLanding(): void {
   if (landingRef !== undefined || typeof window === "undefined") return;
@@ -97,15 +83,12 @@ function ensureInit(): void {
       api_host: POSTHOG_HOST,
       capture_pageview: true,
       person_profiles: "identified_only",
-      // THE FRAGMENT STAYS IN THE BROWSER. A permalink's `#c=…` is the whole
-      // conversation — a pasted posting, the assessment, every answer — and
-      // the site's claim is that it never reaches a server. By default
-      // posthog-js reports `location.href`, fragment included, as
-      // `$current_url`, `$session_entry_url` and `$initial_current_url`, so with
-      // analytics on, every opened link was uploaded to PostHog. This is the
-      // SDK's own switch for all of those, and for replay and heatmap URLs.
-      // The query string, and so `?ref=`, is untouched; the site has no hash
-      // routes to lose.
+      // A permalink's `#c=…` is the whole conversation, and the site's claim is
+      // that it never reaches a server. By default posthog-js reports
+      // `location.href`, fragment included, as `$current_url`,
+      // `$session_entry_url` and `$initial_current_url`. This switch strips it
+      // from those and from replay and heatmap URLs. The query string, and so
+      // `?ref=`, is untouched; the site has no hash routes to lose.
       disable_capture_url_hashes: true,
       // Runs inside init, before the initial pageview is captured, so the
       // pageview carries the ref along with everything after it.
@@ -118,65 +101,57 @@ function ensureInit(): void {
   });
 }
 
-// Call once from a client component mounted in the app (e.g. the root layout's
-// analytics provider) to trigger init on the client. Safe no-op when unset.
+// Called by components/analytics-provider.tsx once the page is idle. Safe
+// no-op when the key is unset.
 export function initAnalytics(): void {
   ensureInit();
 }
 
-// The event vocabulary.
-//
-// Widened in roadmap Sprint 1 (F3) ahead of the panel that consumes it (#23,
-// Sprint 6). That panel aggregates PostHog history at BUILD time, so the
-// emitters have to have been running for weeks before it has anything to show
-// — shipping the events early and the panel late is the whole point of putting
-// F3 in this sprint rather than that one.
+// The event vocabulary; indented lines list an event's properties.
+// `chat_turn_complete` and `chat_turn_failed` feed /measurements, which queries
+// PostHog at build time (scripts/build-measurements.mjs), so they have to have
+// been emitted for a while before that page has anything to show.
 export type AnalyticsEvent =
   | "chat_message_sent"
   | "chat_error"
   | "chat_rate_limited"
   | "resume_download"
-  // The HTML resume, opened from a CTA. Its own event so the PDF-or-HTML
-  // question the council left open can be answered from real clicks.
+  // The HTML resume, opened from a CTA, so HTML opens can be compared with
+  // PDF downloads.
   | "resume_open"
   | "contact_click"
-  // Copy-to-clipboard. Worth measuring: the site stores nothing, so a copy is
-  // the clearest signal that an answer was considered worth keeping.
+  // The site stores nothing, so a copy or an export is the clearest signal
+  // that an answer was worth keeping.
   | "chat_copy_message"
   | "chat_copy_conversation"
-  // The export surface (Sprint 5, #17). `kind` says which handle was pulled —
-  // file, print, mailto, or a copied link. Same reasoning as the copy events:
-  // the site stores nothing, so an export is the clearest signal that the
-  // conversation was worth keeping.
-  //   kind, chars
+  // `kind` is file, print or mailto; a copied link or scorecard sends `chars`
+  // instead.
+  //   kind | chars
   | "chat_export"
-  // A permalink was built. The character count travels with it, because
-  // whether real conversations produce links that survive an email client is a
-  // measurement, not the estimate in docs/idea-decisions.md.
-  //   chars
+  // A permalink was built. The length shows whether real links survive an
+  // email client; `kind: "fit"` marks a short fit link.
+  //   chars, kind
   | "chat_permalink_created"
-  // Someone opened one. The counterpart to the event above: links built vs
-  // links followed is the only way to find out whether this feature is used.
+  // Someone opened one. Links built against links opened is how use of the
+  // feature is measured.
   //   messages
   | "chat_permalink_opened"
-  // One event per completed turn, carrying the F1 telemetry record. This is
-  // what #23's latency and reliability panel is built from.
-  //   model, tier, jd, ttft_ms, duration_ms, tokens_per_second,
-  //   input_tokens, cached_input_tokens, output_tokens, cache_hit,
-  //   cache_hit_ratio, steps, tools_called, finish_reason
+  // One per completed turn: the per-turn telemetry record.
+  //   model, jd, ttft_ms, client_ttft_ms, duration_ms, tokens_per_second,
+  //   input_tokens, cached_input_tokens, output_tokens, reasoning_tokens,
+  //   cache_hit, cache_hit_ratio, steps, tools_called, finish_reason
   | "chat_turn_complete"
-  // A turn that failed with a class attached — the reliability half of #23,
-  // and the difference between "the site is down" and "the model timed out".
-  //   error_class, model, tier, jd
+  // A failed turn with its error class, which tells "the model timed out"
+  // apart from "the site is down".
+  //   error_class, model, jd
   | "chat_turn_failed"
-  // A failed turn was sent again from the error block. Paired with
-  // `chat_turn_failed` it answers the only question that matters about the
-  // failure copy: did the reader try again, or did they leave.
-  //   model
+  // A failed turn sent again from the error block. Paired with
+  // `chat_turn_failed`, it says whether the reader retried or left.
+  //   model, switched
   | "chat_retry";
 
-// Safe no-op when PostHog isn't configured. While the SDK is still loading the
-// event is held and sent on arrival (see the note at the top).
+// Safe no-op when PostHog isn't configured. While the SDK is loading, the event
+// is held and sent on arrival.
 export function track(
   event: AnalyticsEvent,
   props?: Record<string, unknown>,

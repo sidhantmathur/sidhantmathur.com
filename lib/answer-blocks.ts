@@ -1,30 +1,24 @@
-// Where an assistant answer breaks into blocks — the one place that decides.
+// Where an assistant answer breaks into blocks: the one place that decides.
 //
-// The citation gutter is indexed BY BLOCK. `lib/verify.ts` computes a block
+// The citation gutter is indexed by block. `lib/verify.ts` computes a block
 // index for every claim it downgrades, and `components/shell/markdown.tsx`
-// renders the margin note for block N beside the Nth thing it drew. If the two
-// disagree about where block 3 starts, the mark lands on the wrong paragraph —
-// silently, because both sides still produce a well-formed answer. Nothing on
-// screen says the note moved.
+// renders the margin note for block N beside the Nth block it drew. If the two
+// disagreed about where a block starts, the mark would land on the wrong
+// paragraph with nothing on screen to show it. Both split with this module, and
+// `evals/answer-blocks.test.mjs` asserts they agree.
 //
-// Both of them used to split the answer themselves, on the same regex, with the
-// agreement written down in prose in both files and enforced by nothing. This
-// module is that split, once, and `evals/answer-blocks.test.mjs` asserts the
-// invariant directly: same block count, same block N, on both sides.
-//
-// Deliberately framework-free and dependency-free — no React, no generated
-// corpus — so `node --test --experimental-strip-types` can import the real
-// thing rather than a copy of it. Same reasoning as lib/verify.ts, which is a
-// consumer and must stay dependency-free itself.
+// Framework- and dependency-free (no React, no generated corpus) so
+// `node --test --experimental-strip-types` can import it, and so lib/verify.ts,
+// a consumer, stays dependency-free too.
 
 /**
  * An opening or closing code fence, alone on its line.
  *
- * Any fence line toggles the state, including a closing one that carries an
- * info string. CommonMark is stricter — a closer takes no info string and has
- * to match its opener's character and length — but the model is asked for a
- * five-construct subset, and a stricter rule here would mean a malformed fence
- * swallowing the rest of the answer instead of ending it.
+ * Any fence line toggles the state, including a closer with an info string.
+ * CommonMark is stricter (a closer takes no info string and must match its
+ * opener's character and length), but the model is asked for a small markdown
+ * subset, and the stricter rule would let a malformed fence swallow the rest of
+ * the answer instead of ending it.
  */
 const FENCE = /^ {0,3}(`{3,}|~{3,})\s*([\w+#.-]*)\s*$/;
 
@@ -55,18 +49,14 @@ export type AnswerBlock = {
 /**
  * Splits an answer into the blocks the gutter is indexed by.
  *
- * Blank lines separate blocks. A fence is NOT exempt from that: a fenced block
- * containing a blank line spans two indices, and both consumers have to see it
- * that way. The renderer joins the halves for display while reporting the first
- * half's index; the checker sees two blocks with nothing checkable in either.
- * What matters is that they count the same.
+ * Blank lines separate blocks, inside a fence too: a fenced block containing a
+ * blank line spans two indices on both sides. The renderer joins the halves for
+ * display under the first half's index; the checker sees two blocks with
+ * nothing checkable. The fence state carries across the split.
  *
- * The fence state carries across blocks — the blank line that separated them
- * was consumed by the split, but it did not close anything.
- *
- * Runs on every streamed token (see components/shell/answer.tsx), so it is one
- * pass over the lines and nothing else. An unterminated fence is the normal
- * case mid-stream, not an error: its lines are `code` and the block ends.
+ * Runs on every streamed token (components/shell/answer.tsx), so it is a single
+ * pass. An unterminated fence is normal mid-stream: its lines are `code` and
+ * the block ends.
  */
 export function splitBlocks(answer: string): AnswerBlock[] {
   let open = false;
@@ -86,24 +76,17 @@ export function splitBlocks(answer: string): AnswerBlock[] {
 }
 
 /**
- * The block as the citation checker should read it: fenced-code lines blanked.
+ * The block as the citation checker should read it: fenced-code lines blanked,
+ * since a line of code is not a claim.
  *
- * Code is not prose and a line of it is not a claim. Without this, an answer
- * that shows a snippet gets one "uncited" verdict per line of it — the check
- * asking which chunk of the resume supports `const rate = 0;`, which is both
- * wrong and the fastest way to teach a reader to stop reading the margin.
+ * Each masked line becomes a single space, not an empty string, which is why
+ * this lives beside the split rather than in verify.ts. An emptied line would
+ * read as blank, split the block on the checker's side only, and shift every
+ * later block's index by one. Blank lines already inside a fence stay blank;
+ * they split on both sides.
  *
- * Each masked line becomes a single SPACE rather than an empty string, and that
- * is the whole reason this lives next to the split instead of inside verify.ts.
- * Blocks are separated by blank lines. An emptied code line would read as a
- * blank one, split a block in two on the checker's side only, and shift every
- * later block's index by one — moving citations onto the wrong paragraph. A
- * space is non-blank, so masking preserves exactly which lines are empty, so it
- * cannot move a boundary. Blank lines already inside a fence stay blank: they
- * split on both sides, which is agreement, not a bug.
- *
- * Kept separate from `splitBlocks` rather than precomputed as a field on the
- * block, because the renderer never wants it and the split runs per keystroke.
+ * Not precomputed on the block, because the renderer never wants it and the
+ * split runs on every streamed token.
  */
 export function maskedText(block: AnswerBlock): string {
   return block.lines
