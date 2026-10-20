@@ -74,7 +74,7 @@ const COPY = {
   latencyIntro:
     "Time to the first token of an answer, and how often a turn finishes at all, measured on the server over visitors' conversations.",
   latencyNoCredentials:
-    "This build had no analytics credentials, so it couldn't read the chat's events and there's nothing to aggregate. The events are still being recorded.",
+    "This build had no analytics credentials, so it couldn't read the chat's events or tell whether any were recorded.",
   latencyNoEvents:
     "The analytics store answered and holds no chat turns in the window. Either nobody has used the assistant yet or the events aren't arriving, and this page has no way to tell which.",
   latencyQueryFailed:
@@ -101,13 +101,13 @@ const COPY = {
   groundedNoCurrent:
     "None of the models the chat offers now has a run scored by the current checker, so there's no current figure. Earlier runs are below, counted separately.",
   groundedEmpty:
-    "No live run has been published, so there's no rate to report. This figure comes only from published eval runs.",
+    "No live run has been published, so there's no rate to report. It's computed only from published eval runs.",
   groundedCalibration:
-    "The checker is tuned to under-report. Every false alarm a live run has produced (a discourse marker, a trailing comma inside a number, a derived word form, an abbreviated month, a compound written two ways) is now a test in the static suite above. When correct sentences get marked, people learn to ignore the marks, so the checker leans toward leaving a sentence unmarked. A mark only says that something wasn't found.",
+    "The checker is tuned to under-report, because people learn to ignore marks that flag correct sentences. Every false alarm a live run has produced (a discourse marker, a trailing comma inside a number, a derived word form, an abbreviated month, a compound written two ways) is now a test in the static suite above. A mark only says that something wasn't found.",
   groundedJdOnly:
     "The published runs cover only the job-description flow. The closing text after an assessment cites the record far less than an ordinary answer does, because the evidence is in the requirement rows. So this sample is close to the least favourable one the site could report, and it doesn't represent ordinary answers.",
   groundedBlind:
-    "The checker only reads numbers and proper nouns, so a claim with neither in it never gets checked. It has also never been tested against live answers labelled by a person, so the only evidence of its accuracy is the calibration cases.",
+    "The checker only reads numbers and proper nouns, so a claim with neither in it never gets checked. It has also never been tested against live answers labelled by a person. The calibration cases are the only evidence of its accuracy.",
 } as const;
 
 /**

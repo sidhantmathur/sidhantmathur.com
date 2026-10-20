@@ -67,39 +67,39 @@ export const metadata: Metadata = {
 
 const COPY = {
   intro:
-    "This site runs a handful of models behind one chat endpoint. This page is what happened when the ones it offers now answered the same 22 questions, in the same order, against the same server, in one sitting — graded by the same checker, and costed at list price.",
+    "The chat on this site can run several models. For this page, each one it offers now answered the same 22 questions, in the same order, against the same server, in one sitting. The same checker graded every answer, and every cost is at list price.",
   archiveLead:
     "Earlier runs are kept in the archive at the end of the page, each under the model it ran on. None of their figures carries over to a successor, and none is in the charts.",
-  why: "The point is not to crown a winner. It is that a model choice is a trade between four things that pull against each other — how often the answer is right, how long you wait for it, how much of it you get, and what it costs — and that trade is only legible once someone measures all four on the same corpus.",
+  why: "Choosing a model is a trade between how often the answer is right, how long you wait for it, how much of it you get, and what it costs. Those pull against each other, and you can only see the trade when all four are measured on the same corpus.",
   noCurrent:
     "None of the models the chat offers now has a published run yet, so there is nothing to compare. Earlier runs, on models it offered before, are in the archive below.",
   empty:
-    "No live run has been published, so there is nothing to compare. The bake-off exists and runs locally; publishing it is a deliberate step, and this page stays empty until someone takes it.",
+    "No live run has been published, so there is nothing to compare. The bake-off runs locally, and this page stays empty until someone publishes a run.",
 
   frontierHeading: "Quality against cost",
   frontierNote:
-    "Median list-price cost of one graded turn, against the share of answered cases that passed. Better is up; cheaper is left. A turn that broke mid-stream is not counted as a wrong answer — reliability is its own panel below.",
+    "Median list-price cost of one graded turn, against the share of answered cases that passed. Better is up; cheaper is left. Turns that broke mid-stream aren't counted as wrong answers. They have their own panel below.",
   latencyHeading: "Quality against latency",
   latencyNote:
     "Median time to the model's first token, against the share of answered cases that passed. Better is up; faster is left.",
 
   panelsHeading: "The numbers underneath",
   panelsIntro:
-    "One panel per measurement, each sorted best-first. Nothing here is stacked or double-encoded: every panel plots one number, and where there is a winner it is the only bar wearing the accent. One panel has no winner, and nothing in it is highlighted — a longer answer is not a better answer, it is just more of the bill.",
+    "Each panel plots one measurement, sorted best first. Where one model is best, its bar is the only one in the accent colour. In output tokens per turn neither end is better, so nothing is highlighted. A longer answer costs more without being better.",
 
   scorecardHeading: "The scorecard",
   scorecardIntro:
-    "Pass rate by model and by what the group is testing. There is deliberately no single intelligence score: a model that answers grounded questions well and folds under prompt injection is a different problem from one that is mediocre at both, and one number cannot tell you which you have.",
+    "Pass rate by model and by what each group tests. There's no overall score, because a model that answers grounded questions well but falls for prompt injection is a different problem from one that's mediocre at both, and a single number can't tell them apart.",
   groupsNote:
-    "grounded — does it state facts that are actually in the corpus, and say 'I don't have that' when they aren't. refusal — does it decline out-of-scope requests instead of helping. injection — role override, prompt extraction, knowledge-base dump, a fake system message, disparagement bait, persona hijack. roleFit — pasted job descriptions, graded on whether the assessment names the gaps rather than flattering the reader.",
+    "grounded checks that the model states facts that are in the corpus, and says 'I don't have that' when they aren't. refusal checks that it turns down out-of-scope requests. injection covers role override, prompt extraction, knowledge-base dump, a fake system message, disparagement bait and persona hijack. roleFit is pasted job descriptions, graded on whether the assessment names the gaps or flatters the reader.",
 
   tableHeading: "Everything, as a table",
   tableIntro:
-    "The same figures the charts plot, plus the ones no chart shows. This is the accessibility twin for every chart above — nothing on this page is reachable only by colour or only by hover.",
+    "The figures from the scatter plots and panels above, plus some no chart shows. Nothing in this table depends on colour or hover.",
 
   archiveHeading: "The run archive",
   archiveIntro:
-    "Every run ever published, per model, with the date it was measured. Before the archive existed a second run on a model overwrote the first, which meant a regression was invisible and a figure measured twice looked exactly like one measured once. Runs are now kept. The charts above read the most recent run of each model the chat offers; a retired model is one it no longer offers, and its runs stay here under its own id.",
+    "Every published run, by model, with the date it was measured. A second run on a model used to overwrite the first, so a regression didn't show and a figure measured twice looked the same as one measured once. Now every run is kept. The charts above use the latest run of each model the chat offers. A retired model is one the chat no longer offers, and its runs stay here under its own id.",
 
   limitsHeading: "What this does not measure",
 } as const;
@@ -108,37 +108,37 @@ const LIMITS = [
   {
     id: "sample",
     title: "One sample per case",
-    body: "In the run charted here, each model answered each question once. Every timing figure here is a median over about twenty turns, which is enough to rank models and nowhere near enough for a 95th percentile — so none is computed. Re-running the same corpus on the same model would move these numbers.",
+    body: "In the run charted here, each model answered each question once. Every timing figure is a median over about twenty turns. That's enough to rank the models but far too few for a 95th percentile, so none is computed. Re-running the same corpus on the same model would move these numbers.",
   },
   {
-    title: "Latency includes the day it was measured",
-    body: "Time to first token is the server's own measurement, with the browser network excluded — but not the hop from a home connection to the provider, nor whatever load that provider was under at that hour. It is a real measurement of a real request; it is not a claim about the model in a datacentre.",
+    title: "Latency depends on the connection and the day",
+    body: "Time to first token is measured on the server, so the browser's network isn't in it. The hop from a home connection to the provider is, and so is whatever load the provider was under at that hour. Read it as what these requests took that day, not as the model's speed inside a datacentre.",
   },
   {
-    title: "The grader is a string matcher, not a judge",
-    body: "Cases pass by containing specific evidence — a name, a number, a refusal. That keeps runs free and reproducible, and it means a wrong answer containing the right number still passes, and a right answer phrased unusually can still fail. This is a regression net, not a quality score, and a pass rate here is not an accuracy claim.",
+    title: "The grader checks for specific text",
+    body: "A case passes when the answer contains specific evidence, like a name, a number or a refusal. That keeps grading free and repeatable, but it also means a wrong answer containing the right number still passes, and a right answer phrased oddly can fail. The checks are there to catch regressions, and a pass rate here isn't a measure of accuracy.",
   },
   {
     id: "cost",
-    title: "Costs are list prices, not an invoice",
-    body: "Every dollar figure is the tokens the run actually used, priced at the list rates on record when the run was published. It is an estimate at list price, and it is not recomputed when a price changes. DeepSeek V4 Flash's rate is unconfirmed: the Gateway serves it through many providers whose rates differ several times over, and the meter cannot see which one billed a turn. Archived runs keep the rates of their day, and two of those have since been corrected: gpt-5.6-luna's July run was costed at an unconfirmed $1.00 in and $6.00 out per million tokens, five times what the Gateway later published, and gemini-3.5-flash-lite's cache reads at a derived rate two and a half times the published one.",
+    title: "Costs are list-price estimates",
+    body: "Every dollar figure is the tokens the run used, priced at the list rates on record when the run was published. It's an estimate, and it isn't recomputed when a price changes. DeepSeek V4 Flash's rate is unconfirmed. The Gateway serves it through many providers whose rates differ several times over, and the meter can't see which one billed a turn. Archived runs keep the rates of their day, and two of those have since been corrected: gpt-5.6-luna's July run was costed at an unconfirmed $1.00 in and $6.00 out per million tokens, five times what the Gateway later published, and gemini-3.5-flash-lite's cache reads at a derived rate two and a half times the published one.",
   },
   {
-    title: "A broken turn is counted, but it is not counted as a wrong answer",
-    body: "Some turns died mid-stream and never produced an answer. Those are excluded from the pass rate — scoring a dropped connection as bad judgment is the confusion this whole site is built to avoid — and reported on their own panel instead. But one sitting's requests are a thin basis for a reliability claim: it says a model dropped streams here, then, not that it drops them at that rate everywhere.",
+    title: "Broken turns are counted separately from wrong answers",
+    body: "Some turns died mid-stream and never produced an answer. They're left out of the pass rate, because a dropped connection says nothing about the model's judgment, and they get their own panel. One sitting is a small sample for a reliability claim, though. It shows that a model dropped streams here on that day, but can't say how often it drops them elsewhere.",
   },
   {
     id: "settings",
     title: "Each model runs the way the chat runs it",
-    body: "Each model answered with the settings the chat gives it, so this measures the site as a visitor would meet it, not each model at its best.",
+    body: "Each model answered with the settings the chat gives it. This measures the site as a visitor would find it, and doesn't try to get the best out of each model.",
   },
   {
     title: "Token counts are each provider's own",
-    body: "Every model got byte-identical prompts, so the spread in input tokens is mostly the tokenizers disagreeing about how to count the same text, not one model being sent more work. Seconds and dollars compare across rows; tokens really do not.",
+    body: "Every model got byte-identical prompts, so most of the spread in input tokens comes from each tokenizer counting the same text differently. Seconds and dollars compare across models, but token counts don't.",
   },
   {
-    title: "The corpus is narrow on purpose",
-    body: "Twenty-two cases about one person's résumé and the ways someone might try to break a chatbot answering questions about it. That is exactly the workload this site runs, which is why the numbers are useful here — and why they do not transfer to yours.",
+    title: "The corpus is narrow",
+    body: "Twenty-two cases about one person's resume, and the ways someone might try to break a chatbot that answers questions about it. That's the workload this site runs, so the numbers are useful here but won't transfer to yours.",
   },
 ] as const;
 
@@ -238,8 +238,8 @@ export default function ModelComparisonPage() {
       <p className="t-body mt-4 max-w-[62ch] text-text-faint">
         Measured {summary.measuredRange}. Published {formatDate(snapshot?.publishedAt)}, built into
         this page{" "}
-        {formatDate(BUILT_AT)}. It is a dated artifact, not a live dashboard — it was run once
-        and it goes stale.
+        {formatDate(BUILT_AT)}. The comparison was run once and doesn&apos;t update, so it will
+        go out of date.
       </p>
       {(earlier.length > 0 || notMeasured.length > 0) && (
         <div className="t-body mt-4 max-w-[62ch] border-l-2 border-line-strong pl-3 text-text-soft">
@@ -292,9 +292,9 @@ export default function ModelComparisonPage() {
               ? `${COPY.frontierNote} ${bill.off
                   .map(
                     (o) =>
-                      `${modelName(o.model)}'s run billed ${(o.billed / o.list).toFixed(1)} times its list-price total on the Gateway, so plotted by its bill its dot would sit further right`,
+                      `${modelName(o.model)}'s Gateway bill was ${(o.billed / o.list).toFixed(1)} times its list-price total, so at the billed cost its dot would sit further right`,
                   )
-                  .join("; ")}. The note on list prices below has the figures.`
+                  .join("; ")}. The figures are in the note on list prices below.`
               : COPY.frontierNote
           }
           plot={cost}
@@ -334,34 +334,34 @@ export default function ModelComparisonPage() {
           />
           <RankedBars
             heading="Cost per turn"
-            note="Median, at list price on the date checked. Lower is better."
+            note="Median, at list price when the run was published. Lower is better."
             bestLabel="cheapest"
             format={formatTurnCost}
             ranked={rank(rows, (r) => r.costPerTaskUsd, "lower")}
           />
           <RankedBars
             heading="Output tokens per turn"
-            note="Median. Neither direction is better — it is how much answer you get, and what the output side of the bill is. Counted by each provider's own tokenizer, so compare within a row rather than across them."
+            note="Median. Neither end is better. More tokens means a longer answer and a bigger output bill. Each provider counts with its own tokenizer, so the counts don't line up exactly across models."
             format={(v) => formatCount(v)}
             ranked={rank(rows, (r) => median(r.outputTokens), "none")}
           />
           <RankedBars
             heading="Input tokens per turn"
-            note="Median. The corpus is identical for every model, so most of the spread here is the tokenizers disagreeing about how to count the same text, not one model being sent more — these counts are not comparable across providers the way seconds and dollars are."
+            note="Median. Every model got the same prompts, so most of this spread is each tokenizer counting the same text differently. These counts don't compare across providers the way seconds and dollars do."
             bestLabel="fewest"
             format={(v) => formatCount(v)}
             ranked={rank(rows, (r) => median(r.inputTokens), "lower")}
           />
           <RankedBars
             heading="Turns that broke"
-            note="Share of attempted turns that failed in transport or died mid-stream, so the model never produced an answer. Lower is better, and it is deliberately kept out of the pass rate above."
+            note="Share of attempted turns that failed in transport or died mid-stream, so the model never produced an answer. Lower is better. These turns aren't in the pass rate above."
             bestLabel="most reliable"
             format={(v) => formatPercent(v)}
             ranked={rank(rows, (r) => r.breakRate, "lower")}
           />
           <RankedBars
             heading="Prompt cache hit rate"
-            note="Share of input TOKENS served from the provider's cache — not share of turns. Higher is cheaper."
+            note="Share of input tokens (not turns) served from the provider's cache. Higher is cheaper."
             bestLabel="best"
             format={(v) => formatPercent(v)}
             ranked={rank(rows, (r) => r.cacheHitRate, "higher")}
@@ -448,20 +448,20 @@ export default function ModelComparisonPage() {
           </table>
         </ScrollFade>
         <Note>
-          Costs are at the list prices on record when each run was published, and are not
-          recomputed when a price changes; &ldquo;price now&rdquo; describes the chat&apos;s
-          current prices, checked {PRICES_CHECKED}. A median is withheld and shown as an em dash
-          under{" "}
+          Costs use the list prices on record when each run was published and aren&apos;t
+          recomputed when a price changes. &ldquo;price now&rdquo; describes the chat&apos;s
+          current prices, checked {PRICES_CHECKED}. A median over fewer than{" "}
           {MIN_TURNS_FOR_P50}{" "}
-          measured turns, and a 95th percentile is not computed at all — one
-          sample per case cannot support one. &ldquo;in cited source&rdquo; is the site&apos;s own
-          citation checker run over that model&apos;s answers: the sentences whose names and
-          numbers it found in the source they cited, out of the sentences with something
-          checkable in them. It is not a count of true statements;{" "}
+          measured turns is withheld and shown as an em dash. No 95th percentile is computed,
+          because one sample per case can&apos;t support one. &ldquo;in cited source&rdquo; is the
+          site&apos;s citation checker run over that model&apos;s answers: the sentences whose
+          names and numbers it found in the source they cited, out of the sentences with
+          something checkable in them. A match doesn&apos;t mean the sentence is true. For where
+          the rest were found, see{" "}
           <Link href="/measurements" className="text-accent">
             the groundedness section
-          </Link>{" "}
-          says where the rest were found.
+          </Link>
+          .
         </Note>
       </Section>
 
@@ -486,11 +486,11 @@ export default function ModelComparisonPage() {
                             {i > 0 && " "}
                             {modelName(r.model)} was run{" "}
                             {r.passed.length === 2 ? "twice" : `${r.passed.length} times`} on{" "}
-                            {r.date}, and passed {r.passed.join(", then ")} of {r.total}
+                            {r.date} and passed {r.passed.join(", then ")} of {r.total}
                             {i === repeats.length - 1 &&
                               (repeats.length === 1
-                                ? ": the only spread this page has, on one model."
-                                : ": the only spread this page has.")}
+                                ? ". That's the only measure of run-to-run variation on this page, and it covers one model."
+                                : ". Those are the only measures of run-to-run variation on this page.")}
                             {i < repeats.length - 1 && "."}
                           </span>
                         ))}
@@ -500,11 +500,11 @@ export default function ModelComparisonPage() {
                   <>
                     {" "}
                     {bill.off.length === 0
-                      ? "For the runs charted here, the Gateway's own bill matched every model's list-price total."
-                      : `For the runs charted here, the Gateway's own bill matched the list-price total for every model but ${bill.off
+                      ? "For the runs charted here, the Gateway's bill matched every model's list-price total."
+                      : `For the runs charted here, the Gateway's bill matched the list-price total for every model except ${bill.off
                           .map(
                             (o) =>
-                              `${modelName(o.model)}, whose run billed ${formatCost(o.billed, 4)} against ${formatCost(o.list, 4)} at list price`,
+                              `${modelName(o.model)}, which was billed ${formatCost(o.billed, 4)} against ${formatCost(o.list, 4)} at list price`,
                           )
                           .join("; ")}.`}
                   </>
