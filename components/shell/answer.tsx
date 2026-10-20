@@ -68,7 +68,7 @@ export function Answer({
     if (!block.ids.length && !downgraded.length) return null;
 
     return (
-      <div className="space-y-1 pt-1 text-[12px] leading-[1.5]">
+      <div className="space-y-1 pt-1 t-label">
         {block.ids.map((id) => (
           <button
             key={id}
@@ -141,7 +141,7 @@ function SourceRow({
               title={sourceTitle(id)}
               // Below lg this row is the only way to open a source, usually with
               // a thumb, so the vertical padding makes the chip a real target.
-              className="border border-line px-3 py-2.5 text-[13px] text-text-faint transition-colors hover:border-accent hover:text-accent"
+              className="border border-line px-3 py-2.5 t-meta text-text-faint transition-colors hover:border-accent hover:text-accent"
             >
               ↗ {chipLabel(id)}
             </button>

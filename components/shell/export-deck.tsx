@@ -272,7 +272,7 @@ export function ExportDeck({
 }
 
 const BUTTON =
-  "inline-flex min-h-[44px] items-center border border-line-strong px-3 py-2.5 text-[13px] text-text-soft transition-colors hover:border-accent hover:text-accent disabled:border-line disabled:text-text-dim";
+  "inline-flex min-h-[44px] items-center border border-line-strong px-3 py-2.5 t-meta text-text-soft transition-colors hover:border-accent hover:text-accent disabled:border-line disabled:text-text-dim";
 
 function Section({
   label,

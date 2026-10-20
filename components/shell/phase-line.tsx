@@ -53,7 +53,7 @@ export function PhaseLine({
       {(activity || elapsed != null) && (
         <span
           aria-hidden
-          className="flex shrink-0 items-center gap-1.5 tabular-nums text-[13px] [font-family:var(--font-geist-mono)]"
+          className="flex shrink-0 items-center gap-1.5 tabular-nums t-meta [font-family:var(--font-geist-mono)]"
         >
           {activity && <span className="text-text-soft">{formatActivity(activity)}</span>}
           {elapsed != null && <span className="text-text-faint">{formatElapsed(elapsed)}</span>}

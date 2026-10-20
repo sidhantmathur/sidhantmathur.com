@@ -53,7 +53,7 @@ export function ManualMode({
               ))}
               {/* The id it would have cited, so the manual answer and the
                   assisted one are visibly the same piece of the record. */}
-              <dd className="mt-0.5 text-[12px] text-text-faint">{chunk.id}</dd>
+              <dd className="mt-0.5 t-label text-text-faint">{chunk.id}</dd>
             </div>
           ))}
         </dl>

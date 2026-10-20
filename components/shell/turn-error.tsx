@@ -21,7 +21,7 @@ export function alternativeModel(current: string): string | null {
 }
 
 const BUTTON =
-  "flex min-h-[44px] items-center border border-line-strong px-3 py-2.5 text-[13px] text-text-soft transition-colors hover:border-accent hover:text-accent";
+  "flex min-h-[44px] items-center border border-line-strong px-3 py-2.5 t-meta text-text-soft transition-colors hover:border-accent hover:text-accent";
 
 // A failed turn: a label naming the kind of failure, one class-specific
 // sentence saying whose problem it is, and a button that sends the turn again.
@@ -49,7 +49,7 @@ export function TurnError({
     onSwitchModel && model && offersModelSwitch(cls) ? alternativeModel(model) : null;
   return (
     <div className="border-l-2 border-accent bg-raised px-3 py-2" role="alert">
-      <p className="text-[12px] tracking-widest text-text-faint [font-family:var(--font-geist-mono)]">
+      <p className="t-label tracking-widest text-text-faint [font-family:var(--font-geist-mono)]">
         turn failed · {turnErrorLabel(cls)}
       </p>
       <p className="t-body mt-1.5 text-text-soft">{turnErrorCopy(cls)}</p>

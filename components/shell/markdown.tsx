@@ -193,14 +193,14 @@ function CodeBlock({ lang, code }: { lang: string; code: string }) {
           would need a parser dependency and a second palette, and coloured
           tokens would be the loudest thing on the page. */}
       {lang && (
-        <div className="border-b border-line px-3 py-1 text-[12px] tracking-widest text-text-faint [font-family:var(--font-geist-mono)]">
+        <div className="border-b border-line px-3 py-1 t-label tracking-widest text-text-faint [font-family:var(--font-geist-mono)]">
           {lang.toLowerCase()}
         </div>
       )}
       {/* Scrolls itself, so a long line can't widen the answer column and put
           the whole page on a horizontal scrollbar. */}
       <pre className="overflow-x-auto px-3 py-2.5">
-        <code className="text-[13px] leading-[1.6] text-text [font-family:var(--font-geist-mono)]">
+        <code className="t-meta text-text [font-family:var(--font-geist-mono)]">
           {code}
         </code>
       </pre>
@@ -248,13 +248,13 @@ function Table({ lines, keyPrefix }: { lines: string[]; keyPrefix: string }) {
 
   return (
     <div className="overflow-x-auto border border-line">
-      <table className="w-full border-collapse text-left text-[14px]">
+      <table className="w-full border-collapse text-left t-meta">
         <thead>
           <tr className="border-b border-line">
             {head.map((c, i) => (
               <th
                 key={i}
-                className="px-3 py-2 font-normal tracking-widest text-text-faint [font-family:var(--font-geist-mono)] text-[12px] align-top"
+                className="px-3 py-2 font-normal tracking-widest text-text-faint [font-family:var(--font-geist-mono)] t-label align-top"
               >
                 {c}
               </th>
