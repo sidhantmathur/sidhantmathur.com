@@ -24,7 +24,7 @@ export default function ColophonPage() {
             page doesn't half-make the offer. */}
         <p className="t-body mt-4 max-w-[58ch] text-text-soft">
           Most of the code was written by AI agents working from a build spec.
-          I made the decisions, so the mistakes are mine.
+          I made the decisions.
         </p>
         <p className="t-body mt-4 max-w-[58ch] text-text-soft">
           The assistant is tested against a fixed set of questions, and the
@@ -35,7 +35,7 @@ export default function ColophonPage() {
           .
         </p>
         <h2 className="t-head mt-10 font-medium text-text">
-          The site shows its workings
+          Where to see how the assistant works
         </h2>
         <p className="t-body mt-4 max-w-[58ch] text-text-soft">
           The{" "}
@@ -48,12 +48,12 @@ export default function ColophonPage() {
             won&apos;t answer
           </Link>
           , with the reason for each. In the chat, the top bar shows what the
-          last answer cost, and the instruments panel lists the cost of every
-          turn. The eval results show{" "}
+          last answer cost, and the technical details panel lists the cost of
+          every turn. The{" "}
           <Link href="/measurements" className="text-accent">
-            how often it&apos;s right
-          </Link>
-          .
+            eval results
+          </Link>{" "}
+          show how it scores.
         </p>
         {/* Folded in from the index's "Why this site is a chatbot" panel in
             wave 2. The front door is portfolio-first now, so the argument

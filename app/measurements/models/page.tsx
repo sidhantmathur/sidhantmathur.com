@@ -60,7 +60,7 @@ import { PRICES_CHECKED, PRICE_CONFIDENCE } from "@/lib/pricing";
 
 export const metadata: Metadata = {
   alternates: { canonical: "/measurements/models" },
-  title: "Five models, one corpus",
+  title: "Model comparison",
   description:
     "The five models this site's chat offers, measured against the same eval corpus: pass rate, time to first token, output speed, tokens and cost per task.",
 };
@@ -70,11 +70,11 @@ const COPY = {
     "The chat on this site can run several models. For this page, each one it offers now answered the same 22 questions, in the same order, against the same server, in one sitting. The same checker graded every answer, and every cost is at list price.",
   archiveLead:
     "Earlier runs are kept in the archive at the end of the page, each under the model it ran on. None of their figures carries over to a successor, and none is in the charts.",
-  why: "Choosing a model is a trade between how often the answer is right, how long you wait for it, how much of it you get, and what it costs. Those pull against each other, and you can only see the trade when all four are measured on the same corpus.",
+  why: "Choosing a model is a trade-off between pass rate, time to first token, output tokens per turn and cost. These pull against each other, and the trade-off only shows when all four are measured on the same corpus.",
   noCurrent:
     "None of the models the chat offers now has a published run yet, so there is nothing to compare. Earlier runs, on models it offered before, are in the archive below.",
   empty:
-    "No live run has been published, so there is nothing to compare. The bake-off runs locally, and this page stays empty until someone publishes a run.",
+    "No live run has been published, so there is nothing to compare. The comparison runs locally, and this page stays empty until someone publishes a run.",
 
   frontierHeading: "Quality against cost",
   frontierNote:
@@ -83,7 +83,7 @@ const COPY = {
   latencyNote:
     "Median time to the model's first token, against the share of answered cases that passed. Better is up; faster is left.",
 
-  panelsHeading: "The numbers underneath",
+  panelsHeading: "Each measurement, ranked",
   panelsIntro:
     "Each panel plots one measurement, sorted best first. Where one model is best, its bar is the only one in the accent colour. In output tokens per turn neither end is better, so nothing is highlighted. A longer answer costs more without being better.",
 
@@ -93,7 +93,7 @@ const COPY = {
   groupsNote:
     "grounded checks that the model states facts that are in the corpus, and says 'I don't have that' when they aren't. refusal checks that it turns down out-of-scope requests. injection covers role override, prompt extraction, knowledge-base dump, a fake system message, disparagement bait and persona hijack. roleFit is pasted job descriptions, graded on whether the assessment names the gaps or flatters the reader.",
 
-  tableHeading: "Everything, as a table",
+  tableHeading: "All figures in one table",
   tableIntro:
     "The figures from the scatter plots and panels above, plus some no chart shows. Nothing in this table depends on colour or hover.",
 
@@ -593,12 +593,12 @@ function Header() {
   return (
     <>
       <h1 className="t-title font-medium text-text">
-        Five models, one corpus
+        Model comparison
       </h1>
       <p className="t-meta mt-3 text-text-faint">
         A companion to{" "}
         <Link href="/measurements" className="text-accent">
-          what this assistant scores
+          the measurements page
         </Link>
         .
       </p>

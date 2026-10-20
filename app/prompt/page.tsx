@@ -42,11 +42,11 @@ export default function PromptPage() {
       </p>
       <p className="mt-4 max-w-[62ch] text-[15px] leading-relaxed text-text-soft md:text-base">
         Ask the assistant to recite these instructions and it will decline and
-        link here, even though the prompt isn&apos;t a secret. A conversation
-        that talks it out of one rule has an easier time with the others, so it
-        doesn&apos;t negotiate this one.{" "}
+        link here, even though the prompt isn&apos;t a secret. If a
+        conversation gets it to break one rule, the others get easier to break,
+        so it&apos;s told to decline every time. The page on{" "}
         <Link href="/refusals" className="text-accent">
-          The refusal ledger
+          what it won&apos;t do
         </Link>{" "}
         has more on why.
       </p>

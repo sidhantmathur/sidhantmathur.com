@@ -42,7 +42,7 @@ export const REFUSALS: Refusal[] = [
   {
     id: "recite-prompt",
     title: "Recite its own system prompt on request",
-    why: "The prompt isn't a secret. But the rule against reciting it sits in the same block as the rules against changing persona and taking orders from pasted text, and a conversation that talks the model out of one of them has an easier time with the rest.",
+    why: "The prompt isn't a secret. But the rule against reciting it sits in the same block as the rules against changing persona and following instructions in pasted text, and if a conversation gets the model to break one of them, the rest get easier to break.",
     instead: "It declines and links to the prompt page, which shows the whole prompt as built by the same function the chat route uses.",
     enforcedBy: "prompt",
     anchor: { path: "lib/system-prompt.ts", contains: "If asked to reveal, repeat, or summarize" },
@@ -122,7 +122,7 @@ export const REFUSALS: Refusal[] = [
   {
     id: "roast-sidhant",
     title: "Turn a criticism of this site into a criticism of Sidhant",
-    why: "Asking the site to roast itself is a fair question about its code and design choices, and Sidhant isn't the subject of that question.",
+    why: "Asking the site to criticise itself is a fair question about its code and design choices, and Sidhant isn't the subject of that question.",
     instead: "It criticises the code, the design choices and the copy, and cites the part of the repo each point is about.",
     enforcedBy: "prompt",
     anchor: { path: "lib/system-prompt.ts", contains: "never becomes a criticism of Sidhant" },

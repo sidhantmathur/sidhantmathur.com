@@ -23,9 +23,8 @@ export default function RefusalsPage() {
       </h1>
 
       <p className="t-body mt-6 max-w-[62ch] text-text-soft">
-        A chat assistant&apos;s limits usually stay hidden until you ask for
-        something and get told no. This page lists what this one won&apos;t do,
-        why, and what it does instead.
+        This page lists what the chat assistant won&apos;t do, why, and what it
+        does instead.
       </p>
       <p className="t-body mt-4 max-w-[62ch] text-text-soft">
         The label beside each entry says how the rule is enforced. A rule in the

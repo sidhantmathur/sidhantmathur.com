@@ -34,14 +34,14 @@ import {
 
 export const metadata: Metadata = {
   alternates: { canonical: "/measurements" },
-  title: "What this assistant scores",
+  title: "How the assistant is measured",
   description:
     "The published eval suite, the latency and reliability aggregate, and the groundedness self-report for the chat assistant on this site.",
 };
 
 const COPY = {
   intro:
-    "Every instrument on this site measures the one conversation you're having. This page reports on the assistant as a whole: how it scores against a fixed set of questions, how fast and how reliably it answers, and how often its claims pass the site's own checker.",
+    "The readouts in the chat cover only your conversation. This page reports on the assistant as a whole: how it scores against a fixed set of questions, how fast and how reliably it answers, and how often its claims pass the site's own checker.",
   freshness:
     "All three are computed when the site is built, so they're only as current as the last deploy. Nothing on this page is fetched while you read it.",
   honesty:
@@ -149,7 +149,7 @@ export default function MeasurementsPage() {
   return (
     <DocPage>
       <h1 className="t-title font-medium text-text">
-        What this assistant scores
+        How the assistant is measured
       </h1>
       <p className="t-body mt-6 max-w-[62ch] text-text-soft">
         {COPY.intro}
