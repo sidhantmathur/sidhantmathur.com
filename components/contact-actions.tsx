@@ -56,12 +56,18 @@ export function ResumePdfButton({
   );
 }
 
+// A text link rather than a button, for a row of text links beside it.
+const TEXT_LINK =
+  "flex min-h-[44px] touch-manipulation items-center text-text-soft underline decoration-line-strong underline-offset-4 transition-colors hover:text-accent hover:decoration-accent";
+
 export function LinkedInButton({
   surface,
   className = "",
+  asLink = false,
 }: {
   surface: ContactSurface;
   className?: string;
+  asLink?: boolean;
 }) {
   return (
     <a
@@ -69,7 +75,7 @@ export function LinkedInButton({
       target="_blank"
       rel="noreferrer"
       onClick={() => track("contact_click", { channel: "linkedin", surface })}
-      className={`${QUIET} ${className}`}
+      className={`${asLink ? TEXT_LINK : QUIET} ${className}`}
     >
       LinkedIn ↗
     </a>

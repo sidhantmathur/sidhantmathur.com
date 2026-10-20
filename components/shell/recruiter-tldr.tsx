@@ -3,7 +3,6 @@ import {
   CASE_CARDS,
   CASE_CARDS_LABEL,
   HERO_TLDR,
-  TLDR_FOOTER,
   TLDR_LABEL,
 } from "@/content/recruiter";
 
@@ -16,8 +15,9 @@ import {
 //      the transcript. Asserted in evals/track-b.test.mjs.
 //   2. Every value is corpus text, not drafted prose (see content/recruiter.ts):
 //      nothing the model couldn't also say and cite.
-//   3. It renders HERO_TLDR, not the full six-row RECRUITER_TLDR: the `looking
-//      for` and `where` rows are in the hero subline already.
+//   3. It renders HERO_TLDR, not the full RECRUITER_TLDR: the `looking for`
+//      and `where` rows are in the hero subline already.
+//   4. No link to the resume under it: the hero has two already.
 export function RecruiterTldr() {
   return (
     <section aria-label="Summary" className="max-w-[64ch] border-t border-line pt-4">
@@ -34,11 +34,6 @@ export function RecruiterTldr() {
           </div>
         ))}
       </dl>
-      <p className="t-meta mt-3 text-text-faint">
-        <Link href="/resume" className="text-text-faint underline decoration-line-strong underline-offset-2 hover:text-accent">
-          {TLDR_FOOTER}
-        </Link>
-      </p>
     </section>
   );
 }

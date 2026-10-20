@@ -39,7 +39,6 @@ import { looksLikeJobPosting } from "../lib/job-posting.ts";
 import { looksLikeSiteQuestion } from "../lib/site-question.ts";
 import {
   CASE_CARDS,
-  FIT_QUESTION,
   HERO_TLDR,
   POSITIONING,
   RECRUITER_TLDR,
@@ -215,11 +214,9 @@ describe("#26 — the recruiter chips", () => {
     }
   });
 
-  test("the /fit command sends a chip verbatim", () => {
-    assert.ok(
-      SUGGESTED_QUESTIONS.includes(FIT_QUESTION),
-      "/fit sends a question that is not one of the chips — two surfaces, two questions",
-    );
+  test("the /fit command reads the shared constant", () => {
+    // The fit question left the chips for the job-description chip
+    // (front-door cut, 2026-10-20); /fit still sends it, from one string.
     const data = read("components/shell/shell-data.ts");
     assert.ok(
       data.includes("message: FIT_QUESTION"),
