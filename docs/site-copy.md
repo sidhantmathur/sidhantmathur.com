@@ -39,7 +39,12 @@ contest he wants to be judged in.
 
 Name and role line (above the heading, beside a small square headshot):
 Sidhant Mathur
-Revenue and sales operations: I build the tools sales and finance teams run on.
+Revenue and sales operations
+
+[DRAFT 2026-10-20, front-door cut — PROPOSED, needs Sidhant's yes. The role
+line is split at its colon: the title stays under the name, the claim becomes
+the heading. `ROLE_LINE` is still the one checked string (and the og:image's
+text); the shell splits it.]
 
 [DRAFT 2026-10-19, wave 2. The council's finding: the front door named neither
 him nor his role. The heading stays Sidhant's; this sits over it in the words a
@@ -48,7 +53,13 @@ recruiter searches for. `ROLE_LINE` in `content/recruiter.ts`, checked against
 and finance teams at Nokia").]
 
 Heading:
-I learn what the problem needs, then I build the thing.
+I build the tools sales and finance teams run on.
+
+[DRAFT 2026-10-20, front-door cut — PROPOSED. This replaces Sidhant's own
+heading, "I learn what the problem needs, then I build the thing.", so it is
+his call. The reason: the largest text on the page was the one line any
+engineer could also say, and the specific claim sat in small type above it.
+The old heading is a good line for the colophon or the about section.]
 
 Subline:
 Looking for a RevOps / GTM systems role at an AI-forward company. Toronto, ON.
@@ -63,8 +74,15 @@ the `looking for` and `where` TL;DR rows fused into one sentence
 every row.]
 
 CTA row (under the subline):
-Download resume (PDF) · hello@sidhantmathur.com [copy] · LinkedIn ↗
-Text links under it: Resume as a web page · Interview this site ↓
+Download resume (PDF) · hello@sidhantmathur.com [copy]
+Text links under it: Resume as a web page · LinkedIn ↗
+
+[DRAFT 2026-10-20, front-door cut: LinkedIn moved from a third button to the
+text links. As a button it wrapped onto a row of its own at 1280px.]
+
+[DRAFT 2026-10-20, front-door cut: "Ask the AI assistant ↓" (formerly
+"Interview this site ↓") is gone. The dock under the page is the way into the
+chat, and the hero no longer points at it a second and third time.]
 
 [DRAFT 2026-10-19, wave 2. Was "View resume · Email me · Interview this site
 ↓". The PDF is primary because it is what a recruiter attaches to an ATS; the
@@ -154,13 +172,25 @@ and a Salesforce Analytics to Power BI migration for 150+ users."]
 | Row label | Value | From |
 | --- | --- | --- |
 | now | Sales operations specialist at Nokia since Jun 2024, building internal tools and automation for global sales and finance teams. | `resume.md` |
-| shipped | A self-serve Power App used by 80+ stakeholders across 7 regions, replacing a manual process that took one finance analyst's entire workday, every day of quarter-end close. He also migrated all sales reporting from Salesforce Analytics to Power BI for 150+ users. | `resume.md` |
-| also | Co-founder and CTO of A Darle 20, a two-sided marketplace he architected and shipped solo: 1,400+ registered users, 127 hosts and 2,100+ bookings in its first four months. | `resume.md` |
-| how he builds | AI agents in Claude Code write most of the code. He owns architecture, code review and release. | `projects-adarle20.md` |
+| how I build | AI agents in Claude Code write most of the code. I own architecture, code review and release. | `projects-adarle20.md` |
 | looking for | A RevOps / GTM systems role at an AI-forward company. | `faq.md`, `resume.md` |
 | where | Toronto, ON. Canadian citizen, no visa sponsorship needed. | `faq.md` |
 
-Footer link (to /resume): The resume has the rest.
+Footer link (to /resume): The resume has the rest. (Not rendered since the
+front-door cut.)
+
+[DRAFT 2026-10-20, front-door cut — PROPOSED. Two rows instead of four.
+"shipped" and "also" are gone from the block because the case-study cards
+under it now carry the same projects; the block and the cards were stating
+150+ and 2,100+ twice, a few lines apart. The rows were: shipped — "A
+self-serve Power App used by 80+ stakeholders across 7 regions, replacing a
+manual process that took one finance analyst's entire workday, every day of
+quarter-end close. He also migrated all sales reporting from Salesforce
+Analytics to Power BI for 150+ users."; also — "Co-founder and CTO of A Darle
+20, a two-sided marketplace he architected and shipped solo: 1,400+ registered
+users, 127 hosts and 2,100+ bookings in its first four months." "how he
+builds" became "how I build", first person like the rest of the page. The
+footer link went: the hero already has two ways to the resume.]
 
 [Copy pass 2026-10-20: reworded to read less like AI-generated text. No fact
 changed. See the copy-pass section of docs/copy-ledger.md. Rows "shipped" and
@@ -176,8 +206,15 @@ Label: case studies
 
 | Card | Number | Under it | From |
 | --- | --- | --- | --- |
-| Reporting tools at Nokia | 150+ | users on the sales reporting he moved from Salesforce Analytics to Power BI | `projects-nokia.md` |
-| A Darle 20 | 2,100+ | bookings in the marketplace's first four months | `projects-adarle20.md` |
+| Reporting tools at Nokia | 80+ | stakeholders across seven regions use the self-serve Power App I built for quarterly executive reporting | `projects-nokia.md` |
+| A Darle 20 | 2,100+ | bookings in the first four months of the marketplace I architected and shipped solo | `projects-adarle20.md` |
+
+[DRAFT 2026-10-20, front-door cut — PROPOSED. The cards now carry what the
+tl;dr's "shipped" and "also" rows did. Nokia leads with the Power App (80+
+stakeholders, seven regions) rather than the 150+ migration, because it is the
+thing he built rather than moved; the migration stays on the case study. Were:
+150+ "users on the sales reporting he moved from Salesforce Analytics to Power
+BI"; 2,100+ "bookings in the marketplace's first four months".]
 
 Link on each: Read the case study →
 
@@ -249,9 +286,15 @@ a solutions engineering role?" — a demo of the site's range rather than the
 questions the reader arrived with. These replace them; there is no
 recruiter/engineer toggle, per decisions #26.]
 
+- Paste a job description (opens the fit check; first, in the accent)
 - Give me the short version
 - What did he build at Nokia?
-- Is he a fit for a RevOps role at an AI-forward company?
+
+[DRAFT 2026-10-20, front-door cut — PROPOSED. "Is he a fit for a RevOps role
+at an AI-forward company?" left the chips: a site asking itself whether he
+fits a role it names reads as a pitch. The job-description chip is the honest
+version of that question, and it was the one entry the front door lacked; it
+was only in the strip after a first turn. /fit still sends the old question.]
 
 [Wave 2, 2026-10-19: the fourth chip was "Does he need visa sponsorship?",
 which the hero subline already answers. The Nokia work had no chip.]

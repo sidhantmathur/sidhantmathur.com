@@ -22,9 +22,12 @@ export const TLDR_LABEL = "summary";
 // yet (six seconds, per decisions #25).
 //
 // Nokia first and labelled as current: for the RevOps and sales-ops roles he
-// is applying to, Nokia is the proof and A Darle 20 the differentiator. The
-// Nokia rows carry outcomes rather than a job title alone. Every figure is the
-// resume's.
+// is applying to, Nokia is the proof and A Darle 20 the differentiator. Every
+// figure is the resume's.
+//
+// Two rows, not four: what each project shipped is on its case-study card, so
+// the block doesn't state the same numbers the cards do (front-door cut,
+// 2026-10-20). First person, like everything else he says on the page.
 export const RECRUITER_TLDR: TldrRow[] = [
   {
     label: "now",
@@ -33,21 +36,9 @@ export const RECRUITER_TLDR: TldrRow[] = [
     source: "content/knowledge/resume.md",
   },
   {
-    label: "shipped",
+    label: "how I build",
     value:
-      "A self-serve Power App used by 80+ stakeholders across 7 regions, replacing a manual process that took one finance analyst's entire workday, every day of quarter-end close. He also migrated all sales reporting from Salesforce Analytics to Power BI for 150+ users.",
-    source: "content/knowledge/resume.md",
-  },
-  {
-    label: "also",
-    value:
-      "Co-founder and CTO of A Darle 20, a two-sided marketplace he architected and shipped solo: 1,400+ registered users, 127 hosts and 2,100+ bookings in its first four months.",
-    source: "content/knowledge/resume.md",
-  },
-  {
-    label: "how he builds",
-    value:
-      "AI agents in Claude Code write most of the code. He owns architecture, code review and release.",
+      "AI agents in Claude Code write most of the code. I own architecture, code review and release.",
     source: "content/knowledge/projects-adarle20.md",
   },
   {
@@ -62,6 +53,8 @@ export const RECRUITER_TLDR: TldrRow[] = [
   },
 ];
 
+// Not rendered since the front-door cut: the PDF button and "Resume as a web
+// page" are already two ways to the resume. Kept for the markers check.
 export const TLDR_FOOTER = "The resume has the rest.";
 
 // The hero subline (docs/mockups/front-door-1-hero.html): the `looking for`
@@ -109,8 +102,8 @@ export const CASE_CARDS: CaseCard[] = [
   {
     slug: "nokia",
     title: "Reporting tools at Nokia",
-    stat: "150+",
-    statLabel: "users on the sales reporting he moved from Salesforce Analytics to Power BI",
+    stat: "80+",
+    statLabel: "stakeholders across seven regions use the self-serve Power App I built for quarterly executive reporting",
     href: "/projects/nokia",
     source: "content/knowledge/projects-nokia.md",
   },
@@ -118,7 +111,7 @@ export const CASE_CARDS: CaseCard[] = [
     slug: "adarle20",
     title: "A Darle 20",
     stat: "2,100+",
-    statLabel: "bookings in the marketplace's first four months",
+    statLabel: "bookings in the first four months of the marketplace I architected and shipped solo",
     href: "/projects/adarle20",
     source: "content/knowledge/projects-adarle20.md",
   },
@@ -138,10 +131,10 @@ export const FIT_QUESTION = "Is he a fit for a RevOps role at an AI-forward comp
 // #26: the first things a recruiter asks. They replace the old chips rather
 // than adding a recruiter mode.
 //
-// Three, so the row sits on one line above the composer at laptop widths
-// (Sidhant, 2026-10-20). "What has he shipped end to end?" was the one cut:
-// the Nokia chip asks the same thing about the work that matters most. The
-// longest chip goes last, so a narrow window wraps it alone.
+// Three including JD_CHIP, so the row sits on one line above the composer at
+// laptop widths (Sidhant, 2026-10-20). "What has he shipped end to end?" was
+// the one cut: the Nokia chip asks the same thing about the work that matters
+// most.
 //
 // None may trip `looksLikeJobPosting` or `looksLikeSiteQuestion`: a suggested
 // question that forces a roleFit call or loads the repo corpus turns the
@@ -150,5 +143,12 @@ export const FIT_QUESTION = "Is he a fit for a RevOps role at an AI-forward comp
 export const SUGGESTED_QUESTIONS = [
   "Give me the short version",
   "What did he build at Nokia?",
-  FIT_QUESTION,
 ];
+
+// The chip in front of the two questions: opens the job-description fit check,
+// the one answer here built for the reader's own role. An action rather than a
+// question, so it isn't in SUGGESTED_QUESTIONS. It replaced the fit question as
+// a chip (front-door cut, 2026-10-20): asking the site whether he fits a role
+// it names itself reads as a sales pitch, and the posting is the honest
+// version of the same question. /fit still sends FIT_QUESTION.
+export const JD_CHIP = "Paste a job description";

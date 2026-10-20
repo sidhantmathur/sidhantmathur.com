@@ -836,3 +836,25 @@ described it wrongly. Each one now claims less, never more.
 - **A Darle 20, feature surface and caption**: "Everything in it" overclaimed a
   list of what the record names, and the caption said "seats still open" where
   the cards show seats filled.
+
+## Front-door cut, 2026-10-20
+
+Proposed on `claude/happy-johnson-dc9vv6`, for Sidhant's review with
+before-and-after screenshots. Mostly removals. Nothing here is a new fact: the
+heading and the role title are `ROLE_LINE` split at its colon, and every card
+and row is still checked against its corpus file by `evals/track-b.test.mjs`.
+
+| Status | Where | String / summary | Claims | Source |
+| --- | --- | --- | --- | --- |
+| draft | `app-shell.tsx` → hero heading | "I build the tools sales and finance teams run on." Replaces Sidhant's own heading, "I learn what the problem needs, then I build the thing." — his call. | factual | `resume.md` (via `ROLE_LINE`) |
+| draft | `app-shell.tsx` → role line under the name | "Revenue and sales operations" (was the whole `ROLE_LINE`) | factual | `resume.md` (via `ROLE_LINE`) |
+| removed | `app-shell.tsx` → hero text links | "Ask the AI assistant ↓". The dock is the way into the chat. | none | — |
+| removed | `content/recruiter.ts` → tl;dr rows "shipped" and "also" | Their projects moved to the case-study cards, which were repeating 150+ and 2,100+. | factual | `resume.md` |
+| draft | `content/recruiter.ts` → tl;dr row | "how I build" · "AI agents in Claude Code write most of the code. I own architecture, code review and release." (was third person) | factual | `projects-adarle20.md` |
+| removed | `recruiter-tldr.tsx` → footer link | "The resume has the rest." The hero has two resume links already. | none | — |
+| draft | `content/recruiter.ts` → Nokia card | "80+" · "stakeholders across seven regions use the self-serve Power App I built for quarterly executive reporting" (was 150+, the Power BI migration) | factual | `projects-nokia.md` |
+| draft | `content/recruiter.ts` → A Darle 20 card | "2,100+" · "bookings in the first four months of the marketplace I architected and shipped solo" | factual | `projects-adarle20.md` |
+| draft | `content/recruiter.ts` → `JD_CHIP` | "Paste a job description" as the first chip, in the accent; opens the fit check | none | — |
+| removed | `content/recruiter.ts` → chips | "Is he a fit for a RevOps role at an AI-forward company?" as a chip. `/fit` still sends it. | none | — |
+| removed | `app-shell.tsx` → header status | "● ready" on the front door. Still shows "loading" before hydration and the status during a conversation. | none | — |
+| draft | `app-shell.tsx` → hero | "LinkedIn ↗" moved from a third button to the text links beside "Resume as a web page" (same string) | none | — |

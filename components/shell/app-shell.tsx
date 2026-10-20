@@ -48,6 +48,7 @@ import {
   POSITIONING,
   ROLE_LINE,
   SUGGESTED_QUESTIONS as SUGGESTED,
+  JD_CHIP,
 } from "@/content/recruiter";
 import { EmailCopy, LinkedInButton, ResumePdfButton } from "@/components/contact-actions";
 import { costOfTurn, sumCosts } from "@/lib/pricing";
@@ -121,7 +122,10 @@ const PrintSheet = dynamic(() => import("./print-sheet").then((m) => m.PrintShee
 // Copy. Final strings come from docs/site-copy.md; drafted ones are logged in
 // docs/copy-ledger.md.
 // ---------------------------------------------------------------------------
-const HERO = "I learn what the problem needs, then I build the thing.";
+// The role line split in two (front-door cut, 2026-10-20): the claim is the
+// headline, the job title sits under the name. One checked string, so the
+// headline is under the same citation check as the tl;dr rows.
+const [ROLE_TITLE, HERO] = ROLE_LINE.value.split(": ");
 // The empty state's desktop placeholder. The subline under the headline is
 // POSITIONING from content/recruiter.ts, where the citation checker covers it.
 const HERO_SUB = "Ask what you'd ask on a call";
@@ -588,19 +592,32 @@ export function AppShell() {
   // width: in the dock above the composer from md up, grouped with the
   // interview they start, and in the hero column below md, after the facts,
   // where a phone's fold belongs to the headline and the actions.
-  const chipButtons = SUGGESTED.map((q) => (
+  const chipButtons = [
+    // First and in the accent: the one chip that answers for the reader's own
+    // role. Opens the fit check rather than asking anything.
     <button
-      key={q}
+      key="jd"
       type="button"
-      onClick={() => ask(q)}
-      disabled={isBusy || !hydrated}
-      // py-2.5 keeps a chip over 44px on a phone, where it is a finger
-      // target; md:py-2 matches the header's pointer-sized controls.
-      className="border border-line-strong px-3 py-2.5 text-left t-meta text-text-soft transition-colors hover:border-accent hover:text-text disabled:border-line disabled:text-text-dim md:py-2"
+      onClick={() => openPanel({ kind: "jd" })}
+      disabled={!hydrated}
+      className="border border-accent px-3 py-2.5 text-left t-meta text-text transition-colors hover:bg-accent hover:text-bg disabled:border-line disabled:text-text-dim md:py-2"
     >
-      {q}
-    </button>
-  ));
+      {JD_CHIP}
+    </button>,
+    ...SUGGESTED.map((q) => (
+      <button
+        key={q}
+        type="button"
+        onClick={() => ask(q)}
+        disabled={isBusy || !hydrated}
+        // py-2.5 keeps a chip over 44px on a phone, where it is a finger
+        // target; md:py-2 matches the header's pointer-sized controls.
+        className="border border-line-strong px-3 py-2.5 text-left t-meta text-text-soft transition-colors hover:border-accent hover:text-text disabled:border-line disabled:text-text-dim md:py-2"
+      >
+        {q}
+      </button>
+    )),
+  ];
 
   // Two panel views aren't built from content (export is conversation state,
   // the deck is instrument state), so they render here rather than inside
@@ -763,23 +780,28 @@ export function AppShell() {
               {receiptText(turns, lastAnswerCost)}
             </button>
           )}
-          <span className="flex items-center gap-1.5">
-            {/* Grey while the page is still loading, so it never says "ready"
-                before it is. */}
-            <span
-              aria-hidden="true"
-              className={`inline-block h-2 w-2 rounded-full ${
-                !hydrated ? "bg-text-dim" : isBusy ? "bg-accent" : "bg-signal"
-              }`}
-            />
-            {/* Visible at every width until hydration, because a grey dot alone
-                explains nothing; after that, visible from sm up. Below sm it's
-                sr-only rather than hidden, since the dot is decorative and a
-                screen reader still needs the state. */}
-            <span className={!hydrated ? "inline" : "sr-only sm:not-sr-only sm:inline"}>
-              {!hydrated ? "loading" : isBusy ? "streaming" : "ready"}
+          {/* Machinery, so it waits for a conversation: on the front door the
+              word "ready" means nothing to someone reading about Sidhant. It
+              still shows "loading" until the composer works. */}
+          {(hasMessages || !hydrated) && (
+            <span className="flex items-center gap-1.5">
+              {/* Grey while the page is still loading, so it never says "ready"
+                  before it is. */}
+              <span
+                aria-hidden="true"
+                className={`inline-block h-2 w-2 rounded-full ${
+                  !hydrated ? "bg-text-dim" : isBusy ? "bg-accent" : "bg-signal"
+                }`}
+              />
+              {/* Visible at every width until hydration, because a grey dot alone
+                  explains nothing; after that, visible from sm up. Below sm it's
+                  sr-only rather than hidden, since the dot is decorative and a
+                  screen reader still needs the state. */}
+              <span className={!hydrated ? "inline" : "sr-only sm:not-sr-only sm:inline"}>
+                {!hydrated ? "loading" : isBusy ? "streaming" : "ready"}
+              </span>
             </span>
-          </span>
+          )}
         </div>
       </header>
 
@@ -890,7 +912,7 @@ export function AppShell() {
                         {SITE_NAME}
                       </span>
                       <span className="block text-[15px] leading-snug text-text-soft">
-                        {ROLE_LINE.value}
+                        {ROLE_TITLE}
                       </span>
                     </p>
                   </div>
@@ -911,11 +933,12 @@ export function AppShell() {
                   <div className="flex flex-col gap-2.5 pt-2 sm:flex-row sm:flex-wrap">
                     <ResumePdfButton surface="front-door" primary />
                     <EmailCopy surface="front-door" />
-                    <LinkedInButton surface="front-door" />
                   </div>
-                  {/* "Interview this site" only focuses the composer, so it's
-                      styled as a link, and gated on hydration like every
-                      control that needs JavaScript. */}
+                  {/* The secondary ways out, as text: the web resume and
+                      LinkedIn. As a third button LinkedIn wrapped onto a row
+                      of its own at laptop widths. The chat has no link here
+                      since the front-door cut: the dock under the page is
+                      the way in, and on a phone the chips follow the cards. */}
                   <div className="-mt-1.5 flex flex-wrap items-center gap-x-5 t-meta">
                     <Link
                       href="/resume"
@@ -924,15 +947,7 @@ export function AppShell() {
                     >
                       Resume as a web page
                     </Link>
-                    <button
-                      type="button"
-                      onClick={() => inputRef.current?.focus()}
-                      disabled={!hydrated}
-                      data-js-control
-                      className="flex min-h-[44px] touch-manipulation items-center text-text-soft underline decoration-line-strong underline-offset-4 transition-colors hover:text-accent hover:decoration-accent disabled:text-text-dim disabled:no-underline"
-                    >
-                      Ask the AI assistant ↓
-                    </button>
+                    <LinkedInButton surface="front-door" asLink />
                   </div>
                   {/* The six-second scan; see recruiter-tldr.tsx. */}
                   <div>
@@ -1163,15 +1178,14 @@ export function AppShell() {
                 interview affordance in one dock: suggested questions, the
                 input, and the proof line under it.
 
-                One line, never two. The three need about 1,100px side by
-                side, so where the row is narrower — a 1024px window, or a
-                laptop with the context panel open — the last and longest
-                one drops out of the dock. A container query rather than a
-                breakpoint, because the panel narrows the row without the
-                viewport changing. /fit still sends it. */}
+                One line, never two. The three need about 780px side by side,
+                so where the row is narrower — a tablet, or a small laptop
+                with the context panel open — the last one drops out of the
+                dock. A container query rather than a breakpoint, because the
+                panel narrows the row without the viewport changing. */}
             {!hasMessages && (
               <div className="hidden px-4 pt-3 md:block md:px-10">
-                <div className="@container flex gap-2 [&>:last-child]:hidden @min-[1120px]:[&>:last-child]:block">
+                <div className="@container flex gap-2 [&>:last-child]:hidden @min-[800px]:[&>:last-child]:block">
                   {chipButtons}
                 </div>
               </div>
