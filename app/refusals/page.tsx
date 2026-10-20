@@ -12,7 +12,7 @@ export const metadata: Metadata = {
   alternates: { canonical: "/refusals" },
   title: "What this assistant won't do",
   description:
-    "Every refusal the site enforces, why it exists, what happens instead, and whether it is enforced by code or asked of the model.",
+    "What the site's chat assistant won't do, why, what it does instead, and whether each rule is enforced by code or only asked of the model.",
 };
 
 export default function RefusalsPage() {
@@ -23,24 +23,20 @@ export default function RefusalsPage() {
       </h1>
 
       <p className="t-body mt-6 max-w-[62ch] text-text-soft">
-        Most of the interesting decisions in a system like this are decisions
-        about what it will not say. They are usually invisible — you only meet
-        one by asking for something and being told no, and by then it looks like
-        a limitation rather than a choice. So here they are as a list, with the
-        file that holds each one.
+        A chat assistant&apos;s limits usually stay hidden until you ask for
+        something and get told no. This page lists what this one won&apos;t do,
+        why, and what it does instead.
       </p>
       <p className="t-body mt-4 max-w-[62ch] text-text-soft">
-        The last column is the one worth reading. A refusal written into the
-        prompt is a request: it holds because the model cooperates with it, and
-        a determined visitor may eventually find a phrasing that gets around it.
-        A refusal written into the code holds whether the model cooperates or
-        not. Both are listed, and they are not labelled the same, because
-        pretending a request is a guarantee is the kind of claim this site tries
-        not to make.
+        The label beside each entry says how the rule is enforced. A rule in the
+        prompt holds only while the model follows it, and a determined visitor
+        may find a phrasing that gets around it. A rule in code holds whether
+        the model follows it or not. One entry is an idea Sidhant decided
+        against, so it was never built.
       </p>
       <p className="t-body mt-4 max-w-[62ch] text-text-soft">
-        Nothing here is a new rule written for this page. Each one already ran
-        before it was listed — you can read{" "}
+        The path under each entry is the file that holds the rule, and a test
+        checks that the rule is still there. You can read{" "}
         <Link href="/prompt" className="text-accent">
           the prompt
         </Link>{" "}
