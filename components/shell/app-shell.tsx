@@ -535,7 +535,7 @@ export function AppShell() {
       disabled={isBusy || !hydrated}
       // py-2.5 keeps a chip over 44px on a phone, where it is a finger
       // target; md:py-2 matches the header's pointer-sized controls.
-      className="border border-line-strong px-3 py-2.5 text-left text-[14px] text-text-soft transition-colors hover:border-accent hover:text-text disabled:border-line disabled:text-text-dim md:py-2"
+      className="border border-line-strong px-3 py-2.5 text-left t-meta text-text-soft transition-colors hover:border-accent hover:text-text disabled:border-line disabled:text-text-dim md:py-2"
     >
       {q}
     </button>
@@ -603,13 +603,13 @@ export function AppShell() {
           question box. Visually hidden until focused. */}
       <a
         href="#ask"
-        className="sr-only focus:not-sr-only focus:absolute focus:left-3 focus:top-3 focus:z-50 focus:border focus:border-accent focus:bg-panel focus:px-3 focus:py-1.5 focus:text-[12px] focus:text-text focus:no-underline"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-3 focus:top-3 focus:z-50 focus:border focus:border-accent focus:bg-panel focus:px-3 focus:py-1.5 focus:text-[14px] focus:text-text focus:no-underline"
       >
         Skip to the question box
       </a>
 
       {/* ---- Status strip ------------------------------------------------- */}
-      <header className="flex h-11 shrink-0 items-center gap-3 border-b border-line bg-panel px-3 text-[12px] md:px-4">
+      <header className="t-meta flex h-14 shrink-0 items-center gap-3 border-b border-line bg-panel px-3 md:h-16 md:px-4">
         {/* The one way into the full index, at every width. A full 44px
             target, drawn as an SVG because the Unicode trigram renders
             inconsistently across platforms and hairline-thin on iOS. */}
@@ -626,20 +626,20 @@ export function AppShell() {
           className="-ml-1.5 flex h-11 w-11 shrink-0 touch-manipulation items-center justify-center text-text-soft hover:text-accent"
         >
           <svg
-            width="17"
-            height="17"
-            viewBox="0 0 17 17"
+            width="20"
+            height="20"
+            viewBox="0 0 20 20"
             fill="none"
             stroke="currentColor"
             strokeWidth="1.5"
             strokeLinecap="square"
             aria-hidden="true"
           >
-            <path d="M2.5 4.5h12M2.5 8.5h12M2.5 12.5h12" />
+            <path d="M3 5.5h14M3 10h14M3 14.5h14" />
           </svg>
         </button>
-        {/* Fills the strip for the same reason the index button does: a 12px
-            line of text isn't a touch target. */}
+        {/* Fills the strip for the same reason the index button does: a line
+            of text isn't a touch target. */}
         <Link
           href="/"
           className="-mx-2 flex h-full touch-manipulation items-center px-2 text-text no-underline hover:text-accent"
@@ -651,16 +651,17 @@ export function AppShell() {
         <div className="ml-auto flex items-center gap-2 text-text-faint sm:gap-4">
           {/* The nav stays at every width, conversation or not, so the resume
               and contact links are there once a visitor shows interest. A
-              phone drops Projects below 380px, where the index still carries
-              it. Live readouts belong to the instruments panel; the header
+              phone drops Projects below 440px, where the index still carries
+              it — the name and three links at the meta size don't fit beside
+              the index button on a 390px screen. Live readouts belong to the instruments panel; the header
               keeps only the receipt below. */}
-          <nav aria-label="Site" className="flex items-center">
+          <nav aria-label="Site" className="flex items-center text-text-soft">
             {HEADER_NAV.map((n) => (
               <Link
                 key={n.label}
                 href={n.href}
-                className={`h-11 touch-manipulation items-center px-1.5 text-[12px] no-underline transition-colors hover:text-accent sm:px-2.5 sm:text-[13px] ${
-                  n.label === "Projects" ? "hidden min-[380px]:flex" : "flex"
+                className={`h-11 touch-manipulation items-center px-1.5 no-underline transition-colors hover:text-accent sm:px-3 ${
+                  n.label === "Projects" ? "hidden min-[440px]:flex" : "flex"
                 }`}
               >
                 {n.label}
@@ -671,7 +672,7 @@ export function AppShell() {
               onClick={() => openPanel({ kind: "contact" })}
               disabled={!hydrated}
               data-js-control
-              className="flex h-11 touch-manipulation items-center px-1.5 text-[12px] transition-colors hover:text-accent sm:px-2.5 sm:text-[13px]"
+              className="flex h-11 touch-manipulation items-center px-1.5 transition-colors hover:text-accent sm:px-3"
             >
               Contact
             </button>
@@ -697,7 +698,7 @@ export function AppShell() {
                 before it is. */}
             <span
               aria-hidden="true"
-              className={`inline-block h-1.5 w-1.5 rounded-full ${
+              className={`inline-block h-2 w-2 rounded-full ${
                 !hydrated ? "bg-text-dim" : isBusy ? "bg-accent" : "bg-signal"
               }`}
             />
@@ -818,7 +819,7 @@ export function AppShell() {
                   {/* "Interview this site" only focuses the composer, so it's
                       styled as a link, and gated on hydration like every
                       control that needs JavaScript. */}
-                  <div className="-mt-1.5 flex flex-wrap items-center gap-x-5 text-[14px] md:text-[13px]">
+                  <div className="-mt-1.5 flex flex-wrap items-center gap-x-5 t-meta">
                     <Link
                       href="/resume"
                       onClick={() => track("resume_open", { surface: "front-door" })}
@@ -871,7 +872,7 @@ export function AppShell() {
                         // numbered mono rule on top. A replayed turn isn't the
                         // reader's own question, so it says "asked", not "you".
                         <div className={mi > 0 ? "border-t border-line pt-4" : ""}>
-                          <p className="mb-2 text-[12px] tracking-widest text-text-faint [font-family:var(--font-geist-mono)]">
+                          <p className="mb-2 t-label tracking-widest text-text-faint [font-family:var(--font-geist-mono)]">
                             {String(exchange).padStart(2, "0")} ·{" "}
                             {m.id.startsWith("replay-") ? "asked" : "you"}
                           </p>
@@ -910,7 +911,7 @@ export function AppShell() {
                                     target="_blank"
                                     rel="noreferrer"
                                     download={RESUME_PDF_FILENAME}
-                                    className={`border px-3 py-2.5 text-[13px] no-underline transition-colors hover:border-accent hover:text-accent ${
+                                    className={`border px-3 py-2.5 t-meta no-underline transition-colors hover:border-accent hover:text-accent ${
                                       m.id === lastId
                                         ? "border-line-strong text-text-soft"
                                         : "border-line text-text-faint"
@@ -955,7 +956,7 @@ export function AppShell() {
                         type="button"
                         onClick={stop}
                         data-js-control
-                        className="flex min-h-[44px] shrink-0 touch-manipulation items-center text-[13px] text-text-faint transition-colors hover:text-accent"
+                        className="flex min-h-[44px] shrink-0 touch-manipulation items-center t-meta text-text-faint transition-colors hover:text-accent"
                       >
                         stop
                       </button>
@@ -998,7 +999,7 @@ export function AppShell() {
                       runSlash(c.name);
                     }}
                     data-js-control
-                    className="flex min-h-[44px] w-full items-center gap-3 px-4 py-2.5 text-left text-[14px] hover:bg-raised md:px-10"
+                    className="flex min-h-[44px] w-full items-center gap-3 px-4 py-2.5 text-left t-meta hover:bg-raised md:px-10"
                   >
                     <span className="text-accent">{c.name}</span>
                     <span className="text-text-faint">{c.hint}</span>
@@ -1008,10 +1009,19 @@ export function AppShell() {
             )}
             {/* From md up the chips sit here, over the composer — the whole
                 interview affordance in one dock: suggested questions, the
-                input, and the proof line under it. */}
+                input, and the proof line under it.
+
+                One line, never two. The three need about 1,100px side by
+                side, so where the row is narrower — a 1024px window, or a
+                laptop with the context panel open — the last and longest
+                one drops out of the dock. A container query rather than a
+                breakpoint, because the panel narrows the row without the
+                viewport changing. /fit still sends it. */}
             {!hasMessages && (
-              <div className="hidden flex-wrap gap-2 px-4 pt-3 md:flex md:px-10">
-                {chipButtons}
+              <div className="hidden px-4 pt-3 md:block md:px-10">
+                <div className="@container flex gap-2 [&>:last-child]:hidden @min-[1120px]:[&>:last-child]:block">
+                  {chipButtons}
+                </div>
               </div>
             )}
             <form
@@ -1085,7 +1095,7 @@ export function AppShell() {
                 // arrives shows it can't send yet rather than silently doing
                 // nothing.
                 disabled={!hydrated || !input.trim() || isBusy}
-                className="-mr-1.5 my-1.5 ml-2 disabled:cursor-progress flex h-11 min-w-[44px] shrink-0 touch-manipulation items-center justify-center border border-line-strong bg-raised px-3 text-[14px] text-text-soft transition-colors hover:border-accent hover:text-accent disabled:border-line disabled:text-text-dim"
+                className="-mr-1.5 my-1.5 ml-2 disabled:cursor-progress flex h-11 min-w-[44px] shrink-0 touch-manipulation items-center justify-center border border-line-strong bg-raised px-3 t-meta text-text-soft transition-colors hover:border-accent hover:text-accent disabled:border-line disabled:text-text-dim"
               >
                 send ↵
               </button>
@@ -1125,7 +1135,7 @@ export function AppShell() {
               // the fine print instead. Pasting a posting straight into the
               // composer works too; the route's detector, not this entry,
               // starts the job-posting flow.
-              className={`h-11 items-center gap-4 overflow-x-auto whitespace-nowrap border-t px-4 text-[13px] transition-colors md:px-10 ${
+              className={`h-11 items-center gap-4 overflow-x-auto whitespace-nowrap border-t px-4 t-meta transition-colors md:px-10 ${
                 hasMessages ? "flex" : "hidden"
               } ${emphasis ? "border-accent" : "border-line"}`}
             >
@@ -1223,7 +1233,7 @@ export function AppShell() {
               style={{ width: panelWidth }}
               className="hidden shrink-0 flex-col border-l border-line bg-panel lg:flex"
             >
-              <div className="flex h-11 shrink-0 items-center justify-between border-b border-line px-4 text-[13px]">
+              <div className="flex h-12 shrink-0 items-center justify-between border-b border-line px-4 t-meta">
                 <span className="truncate text-text-faint">{panelTitle(panel)}</span>
                 <button
                   type="button"
@@ -1481,7 +1491,7 @@ function CitationChip({
       onClick={() => onOpen(view)}
       // Same padding as the source chips in answer.tsx — they sit in adjacent
       // rows under the same answer and were two different sizes.
-      className={`border px-3 py-2.5 text-[13px] transition-colors hover:border-accent hover:text-accent ${
+      className={`border px-3 py-2.5 t-meta transition-colors hover:border-accent hover:text-accent ${
         latest ? "border-line-strong text-text-soft" : "border-line text-text-faint"
       }`}
     >

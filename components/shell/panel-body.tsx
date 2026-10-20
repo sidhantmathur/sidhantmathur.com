@@ -118,7 +118,7 @@ export function PanelBody({
                   className="t-meta flex min-h-[44px] w-full items-center border-b border-line py-2.5 text-left text-text-soft transition-colors last:border-b-0 hover:text-accent"
                 >
                   {chunk.heading}
-                  <span className="ml-2 text-[12px] text-text-faint">{chunk.id}</span>
+                  <span className="ml-2 t-label text-text-faint">{chunk.id}</span>
                 </button>
               ))}
             </div>
@@ -333,7 +333,7 @@ function RequirementTable({
             className="grid grid-cols-[72px_1fr] gap-3 border-b border-line py-3 last:border-b-0"
           >
             <span
-              className={`mt-0.5 self-start border px-1 py-0.5 text-center text-[12px] tracking-[0.07em] ${VERDICT_STYLE[row.verdict]}`}
+              className={`mt-0.5 self-start border px-1 py-0.5 text-center t-label tracking-[0.07em] ${VERDICT_STYLE[row.verdict]}`}
             >
               {row.verdict}
             </span>
@@ -345,7 +345,7 @@ function RequirementTable({
                   {stripCitations(row.evidence)}
                 </p>
               )}
-              <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[12px] text-text-faint">
+              <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 t-label text-text-faint">
                 {row.sources.map((id) => (
                   <button
                     key={id}
@@ -477,7 +477,7 @@ function JobDescriptionForm({ onSubmit }: { onSubmit?: (text: string) => void })
         <button
           type="submit"
           disabled={!trimmed}
-          className="flex min-h-[44px] items-center border border-line-strong px-3 py-2.5 text-[13px] text-text-soft transition-colors hover:border-accent hover:text-accent disabled:border-line disabled:text-text-dim"
+          className="flex min-h-[44px] items-center border border-line-strong px-3 py-2.5 t-meta text-text-soft transition-colors hover:border-accent hover:text-accent disabled:border-line disabled:text-text-dim"
         >
           {JD_COPY.submit} →
         </button>
@@ -509,7 +509,7 @@ function ChunkBlock({
       <div className={`t-meta ${focused ? "text-accent" : "text-text"}`}>
         {chunk.heading}
       </div>
-      {showId && <div className="mt-0.5 text-[12px] text-text-faint">{chunk.id}</div>}
+      {showId && <div className="mt-0.5 t-label text-text-faint">{chunk.id}</div>}
       {chunk.meta && <div className="t-meta mt-0.5 text-text-faint">{chunk.meta}</div>}
       <ul className="mt-2 space-y-2">
         {chunk.lines.map((b, i) => (

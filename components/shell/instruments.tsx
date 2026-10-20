@@ -151,7 +151,7 @@ export function InstrumentDeck({
             // hydration in the worst way: it opens, it takes a choice, and
             // the choice reaches nothing.
             disabled={!hydrated}
-            className="min-h-[44px] w-full cursor-pointer border border-line-strong bg-raised px-2 text-[13px] text-text-soft outline-none focus:border-accent disabled:cursor-progress disabled:border-line disabled:text-text-dim"
+            className="min-h-[44px] w-full cursor-pointer border border-line-strong bg-raised px-2 t-meta text-text-soft outline-none focus:border-accent disabled:cursor-progress disabled:border-line disabled:text-text-dim"
           >
             {/* Catalogue order: the default first, then cheapest first. */}
             {MODEL_IDS.map((m) => (
@@ -200,7 +200,7 @@ export function InstrumentDeck({
           type="button"
           onClick={onToggleTeletype}
           aria-pressed={teletype}
-          className="border border-line-strong px-3 py-3 text-[13px] text-text-soft transition-colors hover:border-accent hover:text-accent"
+          className="border border-line-strong px-3 py-3 t-meta text-text-soft transition-colors hover:border-accent hover:text-accent"
         >
           sound {teletype ? "on" : "off"}
         </button>
@@ -226,8 +226,8 @@ function Section({
   return (
     <section>
       <div className="mb-2 flex items-baseline justify-between gap-2 border-b border-line pb-1">
-        <h3 className="text-[12px] text-text">{title}</h3>
-        {hint && <span className="shrink-0 text-[12px] text-text-faint">{hint}</span>}
+        <h3 className="t-label text-text">{title}</h3>
+        {hint && <span className="shrink-0 t-label text-text-faint">{hint}</span>}
       </div>
       {children}
     </section>
@@ -245,7 +245,7 @@ function Row({
   emphasis?: boolean;
 }) {
   return (
-    <div className="flex items-baseline justify-between gap-3 text-[12px]">
+    <div className="flex items-baseline justify-between gap-3 t-label">
       <span className="shrink-0 text-text-faint">{label}</span>
       {/* min-w-0 and break-words: the citation trace puts token lists and
           chunk ids here, which are longer than any number the deck had. */}
@@ -309,7 +309,7 @@ function CostMeter({
 
       {latest && latestCost && (
         <div className="space-y-1 border-t border-line pt-2">
-          <div className="text-[12px] text-text-faint">last turn · {latest.model}</div>
+          <div className="t-label text-text-faint">last turn · {latest.model}</div>
           <Row label="fresh input" value={formatUsd(latestCost.freshInput)} />
           <Row label="cached input" value={formatUsd(latestCost.cacheRead)} />
           {latestCost.cacheWrite > 0 && (
@@ -373,7 +373,7 @@ function TraceInspector({ turnLog }: { turnLog: TurnRecord[] }) {
                 type="button"
                 onClick={() => setOpenIndex(open ? null : i)}
                 aria-expanded={open}
-                className="flex min-h-[44px] w-full items-baseline gap-2 px-2 py-2.5 text-left text-[12px] hover:bg-raised"
+                className="flex min-h-[44px] w-full items-baseline gap-2 px-2 py-2.5 text-left t-label hover:bg-raised"
               >
                 <span className="tabular-nums text-text-faint">#{i + 1}</span>
                 <span className={turn.error ? "text-accent" : "text-text-soft"}>
@@ -450,10 +450,10 @@ function TraceInspector({ turnLog }: { turnLog: TurnRecord[] }) {
                   <Row label="finish reason" value={turn.finishReason ?? "—"} />
                   {turn.error && <Row label="error" value={turn.error.class} emphasis />}
                   <details className="pt-1">
-                    <summary className="cursor-pointer py-1 text-[12px] text-text-faint hover:text-accent">
+                    <summary className="cursor-pointer py-1 t-label text-text-faint hover:text-accent">
                       raw record
                     </summary>
-                    <pre className="mt-1 overflow-x-auto bg-raised p-2 text-[12px] leading-relaxed text-text-soft">
+                    <pre className="mt-1 overflow-x-auto bg-raised p-2 t-label text-text-soft">
                       {JSON.stringify(turn, null, 2)}
                     </pre>
                   </details>
@@ -514,7 +514,7 @@ function CitationTrace({ answers }: { answers: string[] }) {
             {check.claims
               .filter((c) => c.verdict !== "verified")
               .map((claim, j) => (
-                <div key={j} className="border-t border-line pt-1.5 text-[12px] leading-[1.5]">
+                <div key={j} className="border-t border-line pt-1.5 t-label">
                   <div className={claim.verdict === "unverified" ? "text-accent" : "text-text-soft"}>
                     {VERDICT_LABEL[claim.verdict]}
                   </div>
@@ -621,7 +621,7 @@ function FailureTheatre({ errorCopy }: { errorCopy: ErrorCopy }) {
               type="button"
               onClick={() => run(f.cls)}
               disabled={running != null}
-              className="flex min-h-[44px] w-full items-baseline gap-2 px-2 py-2.5 text-left text-[12px] hover:bg-raised disabled:text-text-dim"
+              className="flex min-h-[44px] w-full items-baseline gap-2 px-2 py-2.5 text-left t-label hover:bg-raised disabled:text-text-dim"
             >
               <span className="text-text-soft">{f.cls}</span>
               <span className="ml-auto shrink-0 text-text-faint">{f.wire}</span>
@@ -637,10 +637,10 @@ function FailureTheatre({ errorCopy }: { errorCopy: ErrorCopy }) {
         <div className="space-y-1 border border-line-strong p-2">
           <Row label="class" value={result.cls} emphasis />
           <Row label="http status" value={String(result.status)} />
-          <div className="pt-1 text-[12px] text-text-faint">what you would have seen</div>
+          <div className="pt-1 t-label text-text-faint">what you would have seen</div>
           <p className="t-meta text-text-soft">{result.shown}</p>
-          <div className="pt-1 text-[12px] text-text-faint">what came back</div>
-          <pre className="overflow-x-auto bg-raised p-2 text-[12px] leading-relaxed text-text-soft">
+          <div className="pt-1 t-label text-text-faint">what came back</div>
+          <pre className="overflow-x-auto bg-raised p-2 t-label text-text-soft">
             {result.raw || "(empty body)"}
           </pre>
         </div>

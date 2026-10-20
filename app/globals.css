@@ -131,16 +131,18 @@ body {
    prose and the composer — had both ended up at 13px, which is a caption size
    being asked to carry a conversation.
 
-   THE FLOOR IS 12px, AND 12px IS ONLY FOR FIELD NAMES. If a string states a
+   THE FLOOR IS 13px, AND 13px IS ONLY FOR FIELD NAMES. If a string states a
    fact — a test name, a date, a measurement, a caption, anything a reader is
    meant to read rather than scan past — it is 14px or larger. The one exemption
    is components/shell/print-sheet.tsx, which is laid out for paper and sized in
    the print stylesheet's terms rather than the screen's.
 
-   Desktop steps the body tiers DOWN rather than up: a phone is held further
-   from nothing and read in worse light, so the mobile size is the honest one
-   and the desktop size is the concession. Headings step up, because a wider
-   column can carry them.
+   Standard sizes, on purpose. The site spent a while with a 44px header, 12px
+   labels and a body that stepped DOWN to 15px on desktop, which read as a
+   dense instrument panel and asked a first-time visitor to lean in. Sidhant
+   reversed that (2026-10-19): sizes a reader already knows from every other
+   site, so nothing has to be squinted at to be understood. Every tier holds or
+   steps up on desktop; none steps down.
 
    Declared outside @layer on purpose, so a `t-*` class beats a Tailwind text
    utility rather than losing to one at random. The corollary: never put both on
@@ -153,13 +155,13 @@ body {
 }
 
 .t-title {
-  font-size: 24px;
+  font-size: 26px;
   line-height: 1.25;
   letter-spacing: -0.02em;
 }
 
 .t-head {
-  font-size: 17px;
+  font-size: 18px;
   line-height: 1.35;
   letter-spacing: -0.01em;
 }
@@ -175,25 +177,25 @@ body {
 }
 
 .t-label {
-  font-size: 12px;
+  font-size: 13px;
   line-height: 1.5;
 }
 
 @media (min-width: 768px) {
   .t-title {
-    font-size: 28px;
+    font-size: 32px;
   }
 
   .t-head {
-    font-size: 18px;
+    font-size: 20px;
   }
 
   .t-body {
-    font-size: 15px;
+    font-size: 17px;
   }
 
   .t-meta {
-    font-size: 13px;
+    font-size: 15px;
   }
 }
 
@@ -312,7 +314,7 @@ body {
 
 @media (min-width: 768px) {
   .doc-prose .mdx-prose {
-    font-size: 15px;
+    font-size: 17px;
   }
 }
 

@@ -27,12 +27,12 @@ export default function PromptPage() {
         The instructions this assistant was given
       </h1>
 
-      <p className="mt-6 max-w-[62ch] text-[15px] leading-relaxed text-text-soft md:text-base">
+      <p className="mt-6 max-w-[62ch] t-body text-text-soft">
         This is the full system prompt the chat runs on. The page renders it
         with the same function the chat route calls, so it always matches what
         the model is sent.
       </p>
-      <p className="mt-4 max-w-[62ch] text-[15px] leading-relaxed text-text-soft md:text-base">
+      <p className="mt-4 max-w-[62ch] t-body text-text-soft">
         The knowledge-base block in the middle is generated from the markdown
         files the answers are built from, chunk by chunk, under the same ids the
         model cites and the site checks. The prompt has no timestamp, session id
@@ -40,7 +40,7 @@ export default function PromptPage() {
         provider serve most of it from cache, which is cheaper than processing
         it from scratch on every turn.
       </p>
-      <p className="mt-4 max-w-[62ch] text-[15px] leading-relaxed text-text-soft md:text-base">
+      <p className="mt-4 max-w-[62ch] t-body text-text-soft">
         Ask the assistant to recite these instructions and it will decline and
         link here, even though the prompt isn&apos;t a secret. If a
         conversation gets it to break one rule, the others get easier to break,
@@ -60,7 +60,7 @@ export default function PromptPage() {
         Appended only when you ask about the site · {SITE_APPENDIX.length.toLocaleString()}{" "}
         characters
       </h2>
-      <p className="mt-3 max-w-[62ch] text-[15px] leading-relaxed text-text-soft md:text-base">
+      <p className="mt-3 max-w-[62ch] t-body text-text-soft">
         The site&apos;s own source is a second corpus, {REPO_STATS.chunks} chunks
         drawn verbatim from {REPO_STATS.files} files. They&apos;re cited by{" "}
         <span className="font-mono text-text-faint">repo:</span> ids and checked
@@ -83,7 +83,7 @@ function PromptBlock({ text, label }: { text: string; label: string }) {
       role="region"
       aria-label={label}
       tabIndex={0}
-      className="mt-4 overflow-x-auto border border-line bg-panel p-4 text-[13px] leading-relaxed text-text-soft"
+      className="mt-4 overflow-x-auto border border-line bg-panel p-4 t-meta text-text-soft"
     >
       {text}
     </pre>
