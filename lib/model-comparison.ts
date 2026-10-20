@@ -11,7 +11,7 @@
 // By its real filename, the same convention lib/role-fit.ts uses, so
 // `node --test` can load this module directly for evals/bakeoff.test.mjs.
 import { MIN_TURNS_FOR_P50, formatDate, type Maybe } from "./measurements.ts";
-import type { PublishedRun, PublishedSample } from "./measurement-types";
+import type { CitationVerdicts, PublishedRun, PublishedSample } from "./measurement-types";
 
 /**
  * The most recent run per model.
@@ -69,6 +69,46 @@ export function catalogueDrift(
   };
 }
 
+/**
+ * The archive, split the way both measurement pages read it.
+ *
+ * `current` is the most recent run of each model the chat offers today, in
+ * catalogue order: what the charts compare and what the headline figures are
+ * drawn from. `earlier` is every other run, newest first. That means older runs
+ * of models still offered, and every run of a model the chat has retired. A
+ * retired model's run is never in `current`, however recent it is, and nothing
+ * here hands it to a successor.
+ *
+ * Before this existed both pages read `latestRunPerModel` over the whole
+ * archive. Once the catalogue moved, that put a July run of gpt-5.6-luna beside
+ * an October run of gpt-5-mini in one chart, under a sentence saying they were
+ * measured on the same afternoon.
+ */
+export function splitArchive(
+  runs: PublishedRun[],
+  offered: readonly string[],
+): { current: PublishedRun[]; earlier: PublishedRun[]; retired: string[] } {
+  const order = new Map(offered.map((id, i) => [id, i]));
+  const current = latestRunPerModel(runs.filter((r) => order.has(r.model))).sort(
+    (a, b) => order.get(a.model)! - order.get(b.model)!,
+  );
+  const shown = new Set(current);
+  const earlier = runs
+    .filter((r) => !shown.has(r))
+    .sort(
+      (a, b) =>
+        String(b.ranAt ?? "").localeCompare(String(a.ranAt ?? "")) || a.model.localeCompare(b.model),
+    );
+  return {
+    current,
+    earlier,
+    retired: catalogueDrift(
+      runs.map((r) => r.model),
+      offered,
+    ).noLongerOffered,
+  };
+}
+
 /** One model's row in the comparison. Every number here is nullable on purpose. */
 export type ModelRow = {
   model: string;
@@ -99,6 +139,8 @@ export type ModelRow = {
   groups: { group: string; passed: number; total: number; rate: number | null }[];
   claims: number;
   verified: number;
+  /** The verdict split behind `verified`, where the run published one. */
+  verdicts: CitationVerdicts | null;
   /** Withheld under MIN_CLAIMS_FOR_RATE — same policy Sprint 6 set. */
   groundedRate: Maybe<number>;
   ttftMs: PublishedSample;
@@ -145,6 +187,7 @@ export function toRow(run: PublishedRun): ModelRow {
       .sort((a, b) => a.group.localeCompare(b.group)),
     claims,
     verified,
+    verdicts: run.citations.verdicts ?? null,
     groundedRate: groundedRateFor(claims, verified),
     ttftMs: perf?.ttftMs ?? null,
     durationMs: perf?.durationMs ?? null,

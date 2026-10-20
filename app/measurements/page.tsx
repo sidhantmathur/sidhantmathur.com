@@ -1,9 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { DocPage } from "@/components/layout/doc-page";
-import { latestRunPerModel } from "@/lib/model-comparison";
+import { latestRunPerModel, measuredRange, splitArchive } from "@/lib/model-comparison";
 import { ANALYTICS, BUILT_AT, PUBLISHED_EVALS } from "@/lib/measurements.generated";
+import type { PublishedRun } from "@/lib/measurement-types";
+import { DEFAULT_MODEL, MODEL_IDS } from "@/lib/models";
 import {
+  CHECKER_REVISED,
   MIN_CLAIMS_FOR_RATE,
   MIN_TURNS_FOR_P50,
   MIN_TURNS_FOR_P95,
@@ -11,6 +14,7 @@ import {
   formatMs,
   formatPercent,
   groundedness,
+  checkedByCurrentRules,
   latencyReadout,
   successRate,
   type Maybe,
@@ -55,6 +59,12 @@ const COPY = {
     "The live corpus asks a real server real questions and checks the answers for specific evidence. It costs tokens and needs a key, so it is run deliberately and the result is committed rather than measured on every build.",
   liveEmpty:
     "No live run has been published yet.",
+  liveCurrent: "The models the chat offers now, latest run of each",
+  liveNoCurrent:
+    "None of the models the chat offers now has a published run yet. The runs below were measured on models it offered before.",
+  liveEarlier: "Earlier runs",
+  liveEarlierNote:
+    "Kept under the model each one ran on. Retired means the chat no longer offers that model, and none of its results carries over to the one that replaced it.",
   liveNote:
     "A run is recorded per model, on the day it was run, and every run is kept. A turn that failed in transport is counted separately from one the model answered badly — they are different problems and collapsing them hides both.",
   liveCompare:
@@ -75,8 +85,21 @@ const COPY = {
   groundedHeading: "Groundedness",
   groundedIntro:
     "After every answer, a non-model checker takes each sentence that makes a checkable claim, reads the chunk of the record that sentence cited, and looks for the claim's numbers and proper nouns in it. A claim that cites nothing, or cites something that doesn't contain it, is marked in the margin of the answer you're reading.",
+  groundedMeaning:
+    "The first figure is the share of sentences with a checkable name or number whose names and numbers the site's checker, a deterministic text match rather than a model, found in the source that sentence cited. It is not the share of statements that are true, and a sentence the checker could not match there is not thereby a false one.",
+  groundedMeaningSplit: "The figures beside it say where the rest were found, or that they weren't.",
+  groundedByModel: "Found in the cited source, by model:",
+  groundedElsewhereNote: "in the record, under a different source",
+  groundedAbsentNote: "can include a sentence naming what the record lacks, or a word taken for a name",
+  groundedRules:
+    "A name or number found elsewhere in the record is now counted apart from one found nowhere, numbers match only as whole numbers, and a sentence that only names a gap is no longer checked.",
+  groundedRulesAbove: "Every run counted above was scored after the change.",
+  groundedEarlierLead:
+    "Runs from before the change were scored by the older rules, so they are kept apart rather than added in.",
   groundedNarrow:
-    "Verified means the numbers and names in a sentence appear in the source it named. It does not mean the sentence is true, and it says nothing about sentences with nothing checkable in them — those are not claims and are not counted.",
+    "Found in the cited source means the numbers and names in a sentence appear in the source it named. It does not mean the sentence is true, and it says nothing about sentences with nothing checkable in them — those are not claims and are not counted.",
+  groundedNoCurrent:
+    "No run on a model the chat offers now has been scored by the current checker, so there is no current figure. Earlier runs are below, kept apart.",
   groundedEmpty:
     "No live run has been published, so there is nothing to report. This number is deliberately read out of the eval snapshot and nowhere else: no run, no rate.",
   groundedCalibration:
@@ -106,8 +129,22 @@ export default function MeasurementsPage() {
   // appears twice. Every aggregate here has to pick one run per model or it
   // double-counts that model — which would have silently inflated the
   // groundedness claim count the moment the archive shipped.
-  const runs = latestRunPerModel(evals?.live.runs ?? []);
-  const ground = groundedness(runs);
+  //
+  // And it keeps runs of models the chat has since dropped. Those stay on the
+  // record under their own ids, but they are not the assistant as it runs now,
+  // so the headline reads the models on offer and lists the rest as history.
+  const archive = evals?.live.runs ?? [];
+  const { current: runs, earlier, retired } = splitArchive(archive, MODEL_IDS);
+  const retiredSet = new Set(retired);
+  // Groundedness adds counts across runs, so it may only add runs the same
+  // checker scored. Today's runs and July's were scored by different rules
+  // (CHECKER_REVISED), and a sum across both would be a number neither set of
+  // rules produced.
+  const scored = runs.filter(checkedByCurrentRules);
+  const unscored = runs.filter((r) => !checkedByCurrentRules(r));
+  const ground = groundedness(scored);
+  const before = archive.filter((r) => !checkedByCurrentRules(r));
+  const groundBefore = groundedness(latestRunPerModel(before));
 
   return (
     <DocPage>
@@ -175,38 +212,75 @@ export default function MeasurementsPage() {
       </Section>
 
       <Section heading={COPY.liveHeading} intro={COPY.liveIntro} level={3}>
-        {!runs.length ? (
+        {!archive.length ? (
           <Empty>{COPY.liveEmpty}</Empty>
         ) : (
           <>
-            <div className="mt-1">
-              {runs.map((run) => (
-                <div key={run.model} className="border-b border-line py-3 last:border-b-0">
-                  <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                    <span className="t-meta text-text">{run.model}</span>
-                    <span className="t-meta text-text-faint">{formatDate(run.ranAt)}</span>
-                    <span className="t-meta text-text-soft tabular-nums">
-                      {run.passed}/{run.total} passed
-                    </span>
-                    {run.broke > 0 && (
-                      <span className="t-meta text-accent tabular-nums">
-                        {run.broke} broke in transport
+            <div className="t-label mt-5 text-text-faint">{COPY.liveCurrent}</div>
+            {!runs.length ? (
+              <Empty>{COPY.liveNoCurrent}</Empty>
+            ) : (
+              <div className="mt-1">
+                {runs.map((run) => (
+                  <div key={run.model} className="border-b border-line py-3 last:border-b-0">
+                    <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                      <span className="t-meta text-text">{run.model}</span>
+                      {run.model === DEFAULT_MODEL && (
+                        <span className="t-meta text-accent">default</span>
+                      )}
+                      <span className="t-meta text-text-faint">{formatDate(run.ranAt)}</span>
+                      <span className="t-meta text-text-soft tabular-nums">
+                        {run.passed}/{run.total} passed
                       </span>
-                    )}
-                  </div>
-                  <div className="t-meta mt-1.5 flex flex-wrap gap-x-3 gap-y-1 text-text-faint">
-                    {Object.entries(run.groups).map(([group, g]) => (
-                      <span key={group}>
-                        {group}{" "}
-                        <span className="tabular-nums text-text-soft">
-                          {g.passed}/{g.total}
+                      {run.broke > 0 && (
+                        <span className="t-meta text-accent tabular-nums">
+                          {run.broke} broke in transport
                         </span>
-                      </span>
-                    ))}
+                      )}
+                    </div>
+                    <div className="t-meta mt-1.5 flex flex-wrap gap-x-3 gap-y-1 text-text-faint">
+                      {Object.entries(run.groups).map(([group, g]) => (
+                        <span key={group}>
+                          {group}{" "}
+                          <span className="tabular-nums text-text-soft">
+                            {g.passed}/{g.total}
+                          </span>
+                        </span>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
+
+            {earlier.length > 0 && (
+              <>
+                <div className="t-label mt-6 text-text-faint">{COPY.liveEarlier}</div>
+                <p className="t-meta mt-1 max-w-[62ch] text-text-faint">{COPY.liveEarlierNote}</p>
+                <ul className="mt-2">
+                  {earlier.map((run) => (
+                    <li
+                      key={`${run.model}@${run.ranAt}`}
+                      className="t-meta flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-line py-2 font-mono last:border-b-0"
+                    >
+                      <span className="text-text-soft">{run.model}</span>
+                      {retiredSet.has(run.model) && (
+                        <span className="text-text-faint">retired</span>
+                      )}
+                      <span className="text-text-faint">{formatDate(run.ranAt)}</span>
+                      <span className="tabular-nums text-text-soft">
+                        {run.passed}/{run.total} passed
+                      </span>
+                      {run.broke > 0 && (
+                        <span className="tabular-nums text-text-faint">
+                          {run.broke} broke in transport
+                        </span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
             <Note>
               {COPY.liveNote} {COPY.liveCompare}{" "}
               <Link href="/measurements/models" className="text-accent">
@@ -284,23 +358,51 @@ export default function MeasurementsPage() {
       {/* --- #22 ------------------------------------------------------- */}
       <Section heading={COPY.groundedHeading} intro={COPY.groundedIntro}>
         {!ground ? (
-          <Empty>{COPY.groundedEmpty}</Empty>
+          <Empty>{groundBefore ? COPY.groundedNoCurrent : COPY.groundedEmpty}</Empty>
         ) : (
           <>
-            <Figures>
+            <Figures grid>
+              {/*
+                The lead figure was labelled "claims verified" until
+                2026-10-20, and 52.8% under that label read to a visitor as
+                "half of what it says about him is false". The number was
+                honest and the label let it be misread, so the label now says
+                where the names and numbers were found, the sentence under the
+                row says what the share is and isn't, and the figures beside it
+                say what happened to the rest.
+              */}
               <MaybeFigure
-                label="claims verified"
+                label="found in the cited source"
                 maybe={ground.rate}
                 format={formatPercent}
-                note={`${ground.verified} of ${ground.claims}`}
+                note={`${ground.verified} of ${ground.claims} checkable sentences`}
               />
+              {ground.verdicts && (
+                <>
+                  <Figure
+                    label="found elsewhere in the record"
+                    value={String(ground.verdicts.miscited)}
+                    note={COPY.groundedElsewhereNote}
+                  />
+                  <Figure
+                    label="not found in the record"
+                    value={String(ground.verdicts.unverified)}
+                    note={COPY.groundedAbsentNote}
+                  />
+                  <Figure label="cited no source" value={String(ground.verdicts.uncited)} />
+                </>
+              )}
+              <Figure label="invented sources" value={String(ground.inventedIds)} />
               <Figure
                 label="answers checked"
                 value={String(ground.answers)}
                 note={ground.groups.join(", ")}
               />
-              <Figure label="invented sources" value={String(ground.inventedIds)} />
             </Figures>
+            <p className="t-body mt-5 max-w-[62ch] text-text-soft">
+              {COPY.groundedMeaning}
+              {ground.verdicts && ` ${COPY.groundedMeaningSplit}`}
+            </p>
             {ground.rate.reason === "too-few" && (
               <p className="t-body mt-4 max-w-[62ch] text-accent">
                 Under {MIN_CLAIMS_FOR_RATE} published claims, so no rate is shown — {ground.verified}{" "}
@@ -308,9 +410,28 @@ export default function MeasurementsPage() {
               </p>
             )}
             <p className="t-body mt-4 max-w-[62ch] text-text-faint">
-              Measured on {ground.models.join(", ")}, over the {ground.groups.join(" and ")} group
+              Measured on the latest run of each model the chat offers,{" "}
+              {measuredRange(datesOf(scored))}, over the {listOf(ground.groups)} group
               {ground.groups.length === 1 ? "" : "s"}.
             </p>
+            <div className="t-meta mt-2 flex flex-wrap gap-x-4 gap-y-1 text-text-faint">
+              <span>{COPY.groundedByModel}</span>
+              {scored.map((run) => (
+                <span key={run.model}>
+                  {run.model}
+                  {run.model === DEFAULT_MODEL && " (default)"}{" "}
+                  <span className="tabular-nums text-text-soft">
+                    {run.citations.verified} of {run.citations.claims}
+                  </span>
+                </span>
+              ))}
+            </div>
+            {unscored.length > 0 && (
+              <p className="t-meta mt-2 max-w-[62ch] text-text-faint">
+                Not counted: {unscored.map((r) => r.model).join(", ")}, whose latest run predates
+                the change described below.
+              </p>
+            )}
             {/*
               Naming the group isn't enough on its own: a reader has no way to
               know that job-posting turns cite differently from ordinary ones.
@@ -323,6 +444,20 @@ export default function MeasurementsPage() {
               </p>
             )}
           </>
+        )}
+        <p className="t-body mt-4 max-w-[62ch] text-text-soft">
+          The checker&apos;s rules changed on {formatDate(CHECKER_REVISED)}. {COPY.groundedRules}
+          {ground && ` ${COPY.groundedRulesAbove}`}
+        </p>
+        {groundBefore && (
+          <p className="t-body mt-3 max-w-[62ch] text-text-faint">
+            {COPY.groundedEarlierLead} The latest of those runs on each model found{" "}
+            {groundBefore.verified} of {groundBefore.claims} checkable sentences in the cited source
+            {groundBefore.rate.value != null && ` (${formatPercent(groundBefore.rate.value)})`},
+            across {groundBefore.models.length} model{groundBefore.models.length === 1 ? "" : "s"}{" "}
+            measured {measuredRange(datesOf(latestRunPerModel(before)))}
+            {ground ? ", and that figure does not compare with the one above." : "."}
+          </p>
         )}
         <p className="t-body mt-4 max-w-[62ch] text-text-soft">
           {COPY.groundedNarrow}
@@ -339,6 +474,19 @@ export default function MeasurementsPage() {
 }
 
 // --- pieces -----------------------------------------------------------------
+
+/** ["a", "b", "c"] → "a, b and c". */
+function listOf(items: string[]): string {
+  return items.length < 2 ? items.join("") : `${items.slice(0, -1).join(", ")} and ${items.at(-1)}`;
+}
+
+/** Run dates, earliest first, for `measuredRange`. Undated runs are left out. */
+function datesOf(runs: PublishedRun[]): string[] {
+  return runs
+    .map((r) => r.ranAt)
+    .filter((d): d is string => !!d)
+    .sort();
+}
 
 function Section({
   heading,
@@ -369,8 +517,22 @@ function Section({
   );
 }
 
-function Figures({ children }: { children: React.ReactNode }) {
-  return <div className="mt-5 flex flex-wrap gap-x-8 gap-y-4">{children}</div>;
+/**
+ * A row of figures. `grid` keeps a longer set in fixed columns, so one figure
+ * with a long note can't leave another stranded on a row by itself.
+ */
+function Figures({ children, grid = false }: { children: React.ReactNode; grid?: boolean }) {
+  return (
+    <div
+      className={
+        grid
+          ? "mt-5 grid grid-cols-2 gap-x-8 gap-y-5 sm:grid-cols-3"
+          : "mt-5 flex flex-wrap gap-x-8 gap-y-4"
+      }
+    >
+      {children}
+    </div>
+  );
 }
 
 function Figure({ label, value, note }: { label: string; value: string; note?: string }) {
@@ -378,7 +540,7 @@ function Figure({ label, value, note }: { label: string; value: string; note?: s
     <div>
       <div className="text-[20px] tabular-nums leading-none text-text">{value}</div>
       <div className="t-label mt-1.5 text-text-faint">{label}</div>
-      {note && <div className="t-meta text-text-faint">{note}</div>}
+      {note && <div className="t-meta max-w-[30ch] text-text-faint">{note}</div>}
     </div>
   );
 }
@@ -405,7 +567,7 @@ function MaybeFigure({
         {maybe.value == null ? "—" : format(maybe.value)}
       </div>
       <div className="t-label mt-1.5 text-text-faint">{label}</div>
-      {note && <div className="t-meta text-text-faint">{note}</div>}
+      {note && <div className="t-meta max-w-[30ch] text-text-faint">{note}</div>}
       {maybe.value == null && (
         <div className="t-meta text-text-faint">
           {maybe.reason === "too-few" ? "too few to report" : "not measured"}

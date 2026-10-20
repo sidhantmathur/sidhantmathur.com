@@ -10,7 +10,7 @@
 // than collapsing them; the equivalent here is refusing to print a statistic the
 // sample cannot support, and saying how many samples there are instead.
 
-import type { ModelLatency, PublishedRun } from "./measurement-types";
+import type { CitationVerdicts, ModelLatency, PublishedRun } from "./measurement-types";
 
 /**
  * Below this many checkable claims, the groundedness section reports the raw
@@ -29,6 +29,30 @@ export const MIN_TURNS_FOR_P50 = 10;
  * percentile's name.
  */
 export const MIN_TURNS_FOR_P95 = 50;
+
+/**
+ * When the citation checker's rules last changed: the commit time of f7d7439,
+ * the third of three changes to lib/verify.ts on 2026-10-19.
+ *
+ *   - 0cd0372 splits a fact found elsewhere in the record (`miscited`) from one
+ *     found nowhere (`unverified`). It moves nothing into or out of `verified`.
+ *   - 926eddf matches numbers on digit boundaries, so "20" no longer passes
+ *     against "2024". Fewer sentences verify.
+ *   - f7d7439 stops checking a clause that only names a gap. Fewer sentences
+ *     count as claims at all.
+ *
+ * A run's citation counts are computed by the runner, with whatever checker the
+ * tree had that day, and are never recomputed. So a run from before this moment
+ * was scored by other rules, and its share found in the cited source does not
+ * compare with one after it. Anything that adds runs' counts together has to
+ * keep the two sides apart.
+ */
+export const CHECKER_REVISED = "2026-10-19T23:56:21Z";
+
+/** Whether a run's citation counts come from today's checker rules. */
+export function checkedByCurrentRules(run: Pick<PublishedRun, "ranAt">): boolean {
+  return !!run.ranAt && Date.parse(run.ranAt) >= Date.parse(CHECKER_REVISED);
+}
 
 export type Withheld = { value: null; reason: "too-few" | "not-measured" };
 export type Reported<T> = { value: T; reason: null };
@@ -86,6 +110,13 @@ export type Groundedness = {
   /** Null until there are enough claims to mean anything. */
   rate: Maybe<number>;
   /**
+   * What happened to every claim that wasn't verified, as well as the ones that
+   * were. Null unless EVERY contributing run carries the split: a breakdown of
+   * some of the claims beside a total of all of them would not add up, and the
+   * gap would be invisible.
+   */
+  verdicts: CitationVerdicts | null;
+  /**
    * The eval groups behind the number. Load-bearing: the job-description group
    * cites almost nothing by construction (Sprint 3's finding 4), so a figure
    * drawn only from `roleFit` measures something different from one drawn from
@@ -109,6 +140,19 @@ export function groundedness(runs: PublishedRun[]): Groundedness | null {
     for (const g of Object.keys(run.groups)) groups.add(g);
   }
 
+  const split = contributing.map((r) => r.citations.verdicts);
+  const verdicts = split.every((v): v is CitationVerdicts => !!v)
+    ? split.reduce<CitationVerdicts>(
+        (sum, v) => ({
+          verified: sum.verified + v.verified,
+          miscited: sum.miscited + v.miscited,
+          unverified: sum.unverified + v.unverified,
+          uncited: sum.uncited + v.uncited,
+        }),
+        { verified: 0, miscited: 0, unverified: 0, uncited: 0 },
+      )
+    : null;
+
   return {
     models: contributing.map((r) => r.model),
     answers: contributing.reduce((n, r) => n + r.citations.answers, 0),
@@ -116,6 +160,7 @@ export function groundedness(runs: PublishedRun[]): Groundedness | null {
     verified,
     inventedIds: contributing.reduce((n, r) => n + r.citations.inventedIds, 0),
     rate: claims < MIN_CLAIMS_FOR_RATE ? withhold("too-few") : report(verified / claims),
+    verdicts,
     groups: [...groups].sort(),
   };
 }

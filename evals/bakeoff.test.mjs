@@ -36,6 +36,7 @@ import {
   placeLabels,
   rank,
   runHistory,
+  splitArchive,
   supportsMedian,
   toRow,
 } from "../lib/model-comparison.ts";
@@ -340,6 +341,38 @@ describe("what the comparison page derives", () => {
     );
     assert.deepEqual(drift.noLongerOffered, ["anthropic/claude-haiku-4.5"]);
     assert.deepEqual(drift.notMeasured, ["anthropic/claude-haiku-5.5"]);
+  });
+
+  it("charts only the models on offer, and keeps a retired model's runs as history", () => {
+    // The 2026-10-19 refresh: the archive held July runs of three models the
+    // chat then dropped. Read as "latest per model", they sat in the charts
+    // beside October's runs under a sentence saying it was one afternoon.
+    const offered = ["openai/gpt-6-luna", "openai/gpt-5-mini"];
+    const july = run({ ranAt: "2026-07-27T00:00:00.000Z" });
+    const october = run({ ranAt: "2026-10-20T02:00:00.000Z" });
+    const retiredRun = run({ model: "openai/gpt-5.6-luna", ranAt: "2026-07-27T00:00:00.000Z" });
+    const luna1 = run({ model: "openai/gpt-6-luna", ranAt: "2026-10-20T01:00:00.000Z" });
+    const luna2 = run({ model: "openai/gpt-6-luna", ranAt: "2026-10-20T03:00:00.000Z" });
+
+    const split = splitArchive([july, retiredRun, october, luna1, luna2], offered);
+    assert.deepEqual(
+      split.current.map((r) => `${r.model}@${r.ranAt}`),
+      ["openai/gpt-6-luna@2026-10-20T03:00:00.000Z", "openai/gpt-5-mini@2026-10-20T02:00:00.000Z"],
+      "the latest run of each offered model, in catalogue order",
+    );
+    assert.deepEqual(split.retired, ["openai/gpt-5.6-luna"]);
+    assert.equal(split.earlier.length, 3, "every run not charted is still on the record");
+    assert.ok(split.earlier.includes(retiredRun));
+    assert.ok(!split.current.some((r) => r.model === "openai/gpt-5.6-luna"), "a retired run is never charted");
+  });
+
+  it("never charts a retired model, even when its run is the newest", () => {
+    const split = splitArchive(
+      [run({ model: "anthropic/claude-haiku-4.5", ranAt: "2026-12-01T00:00:00.000Z" })],
+      ["anthropic/claude-haiku-5.5"],
+    );
+    assert.equal(split.current.length, 0);
+    assert.deepEqual(split.retired, ["anthropic/claude-haiku-4.5"]);
   });
 
   it("finds no gap when the catalogue is what was measured", () => {

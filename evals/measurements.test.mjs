@@ -24,9 +24,11 @@ import { test, describe } from "node:test";
 import assert from "node:assert/strict";
 
 import {
+  CHECKER_REVISED,
   MIN_CLAIMS_FOR_RATE,
   MIN_TURNS_FOR_P50,
   MIN_TURNS_FOR_P95,
+  checkedByCurrentRules,
   formatDate,
   formatMs,
   formatPercent,
@@ -151,6 +153,61 @@ describe("groundedness (#22), which is gated on #2 in code", () => {
     ]);
     assert.deepEqual(mixed.groups, ["grounded", "roleFit"]);
     assert.deepEqual(mixed.models, ["test/model", "other/model"]);
+  });
+});
+
+describe("groundedness after the 2026-10-19 checker changes", () => {
+  const run = (over) => ({
+    model: "test/model",
+    ranAt: "2026-10-20T02:00:00.000Z",
+    groups: { grounded: { total: 6, passed: 6, broke: 0 } },
+    passed: 6,
+    total: 6,
+    broke: 0,
+    citations: {
+      answers: 6,
+      claims: 30,
+      verified: 20,
+      inventedIds: 0,
+      verdicts: { verified: 20, miscited: 6, unverified: 3, uncited: 1 },
+    },
+    cases: [],
+    ...over,
+  });
+
+  test("a run is scored by today's rules only if it ran after they changed", () => {
+    // July's runs and today's were scored by different checkers, and the
+    // counts are never recomputed. Adding the two together would publish a
+    // figure that neither set of rules produced.
+    assert.equal(checkedByCurrentRules({ ranAt: "2026-07-27T20:43:28.667Z" }), false);
+    assert.equal(checkedByCurrentRules({ ranAt: CHECKER_REVISED }), true);
+    assert.equal(checkedByCurrentRules({ ranAt: "2026-10-20T02:27:27.691Z" }), true);
+    assert.equal(checkedByCurrentRules({ ranAt: null }), false, "an undated run is not assumed current");
+  });
+
+  test("the verdict split adds up across runs and sums to the claims", () => {
+    const g = groundedness([run(), run({ model: "other/model" })]);
+    assert.deepEqual(g.verdicts, { verified: 40, miscited: 12, unverified: 6, uncited: 2 });
+    const { verified, miscited, unverified, uncited } = g.verdicts;
+    assert.equal(verified + miscited + unverified + uncited, g.claims);
+    assert.equal(g.verdicts.verified, g.verified);
+  });
+
+  test("no split is shown when any contributing run lacks one", () => {
+    // A breakdown of some of the claims beside a total of all of them would not
+    // add up, and nothing on the page would say so.
+    const legacy = run({ citations: { answers: 6, claims: 12, verified: 10, inventedIds: 0 } });
+    assert.equal(groundedness([run(), legacy]).verdicts, null);
+  });
+
+  test("the page keeps the two checkers apart and labels the lead figure for what it is", () => {
+    const page = read("app/measurements/page.tsx");
+    assert.match(page, /filter\(checkedByCurrentRules\)/, "the headline adds runs from both checkers");
+    assert.ok(
+      !page.includes('label="claims verified"'),
+      "the lead figure is labelled \"claims verified\" again, the label that read as \"the rest are false\"",
+    );
+    assert.match(page, /label="found in the cited source"/);
   });
 });
 
