@@ -17,11 +17,11 @@ import { ActionLink } from "./action-link";
 // the reader at the resume; this component follows through on it.
 const MANUAL_COPY = {
   body:
-    "Nothing is broken and nothing is lost — the limit is per IP and refills on a sliding hour, so the assistant comes back on its own. In the meantime, here is the same material it was reading, by hand: these are the source files the answers are built from, quoted rather than summarized.",
-  faqHeading: "Straight answers, unassisted",
-  corpusHeading: "The rest of the record",
+    "Your conversation is still here. The hourly limit is per IP address and refills on a sliding hour. If this conversation has used all its turns, reset it to start a new one. Meanwhile, these are the source files the answers are built from, quoted word for word.",
+  faqHeading: "Common questions",
+  corpusHeading: "Everything else",
   footer:
-    "No model was called to render this, and it cost nothing. The resume is the authoritative version either way.",
+    "No model was called to show this, so it cost nothing. The resume is the authoritative version.",
 };
 
 export function ManualMode({
@@ -53,7 +53,7 @@ export function ManualMode({
               ))}
               {/* The id it would have cited, so the manual answer and the
                   assisted one are visibly the same piece of the record. */}
-              <dd className="mt-0.5 text-[12px] text-text-faint">{chunk.id}</dd>
+              <dd className="mt-0.5 t-label text-text-faint">{chunk.id}</dd>
             </div>
           ))}
         </dl>
@@ -63,7 +63,7 @@ export function ManualMode({
         <div className="t-label text-text-faint">{MANUAL_COPY.corpusHeading}</div>
         <div className="mt-2 flex flex-wrap gap-2">
           <ActionLink onClick={() => onOpenSource({ kind: "corpus" })}>
-            Every source, listed
+            All sources
           </ActionLink>
           <ActionLink href="/resume">Full resume</ActionLink>
           <ActionLink href="/resume.pdf" external>

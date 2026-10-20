@@ -7,10 +7,10 @@ He doesn't have a computer science degree. He has a business degree, a bootcamp,
 and eight years of teaching himself whatever the next problem required: React,
 SQL, the Power Platform, Stripe, and lately, building with LLMs and coding agents.
 
-The through line is that he likes turning vague business problems into working
-software, and he likes owning the result — support, bugs, and all.
+He likes turning vague business problems into working software, then owning
+it, including the support and the bug fixes.
 
-Outside work: basketball, chess, cooking, and slowly learning three languages.
+Outside work: basketball, chess, cooking, and learning three languages.
 
 ## Background details
 

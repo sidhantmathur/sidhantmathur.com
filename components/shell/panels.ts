@@ -97,7 +97,7 @@ export const PANELS = {
     surface: "content",
   },
   instruments: {
-    title: "Instruments",
+    title: "Technical details",
     path: null,
     slash: { name: "/budget", hint: "Turns, tokens and what they cost" },
     fromTool: null,
@@ -115,7 +115,7 @@ export const PANELS = {
   export: {
     title: "Export",
     path: null,
-    slash: { name: "/pdf", hint: "Export — markdown, print, link" },
+    slash: { name: "/pdf", hint: "Export as markdown, PDF or a link" },
     fromTool: null,
     stealable: true,
     surface: "shell",

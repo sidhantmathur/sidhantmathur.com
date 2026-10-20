@@ -83,7 +83,7 @@ export function FrontierScatter({
     return (
       <ChartFrame heading={heading}>
         <p className="t-meta mt-2 text-text-faint">
-          Nothing published carries both axes, so there is no chart to draw.
+          No published run has both measurements, so there&apos;s no chart to draw.
         </p>
       </ChartFrame>
     );
@@ -130,14 +130,14 @@ export function FrontierScatter({
   return (
     <ChartFrame
       heading={heading}
-      note={`${note} The vertical axis is zoomed to the measured range, not to zero.`}
+      note={`${note} The vertical axis is zoomed in to the measured range and doesn't start at zero.`}
       measure
       trailer={
         <>
-          <span className="text-accent">Highlighted</span> models sit on the frontier — nothing
-          measured here is both better and {xScale === "log" ? "cheaper" : "faster"}.
+          <span className="text-accent">Highlighted</span> models are on the frontier, which means
+          no other model here is both better and {xScale === "log" ? "cheaper" : "faster"}.
           {unplotted.length > 0 &&
-            ` ${shortNames(unplotted)} could not be plotted: one of the two axes was not measured.`}
+            ` ${shortNames(unplotted)} could not be plotted because one of the two axes was not measured.`}
         </>
       }
     >
@@ -217,7 +217,7 @@ export function FrontierScatter({
                     circle carries the tooltip. */}
                 <circle cx={cx} cy={cy} r={12} fill="transparent">
                   <title>
-                    {`${p.row.model} — ${formatY(p.y)} on ${p.row.cases} cases, ${formatX(p.x)}` +
+                    {`${p.row.model}: ${formatY(p.y)} of ${p.row.answered} answered, ${formatX(p.x)}` +
                       (p.onFrontier ? " · on the frontier" : "")}
                   </title>
                 </circle>

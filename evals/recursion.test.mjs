@@ -430,7 +430,7 @@ describe("Sprint 7's surfaces are reachable", () => {
     for (const kind of ["prompt", "refusals"]) {
       assert.equal(PANELS[kind].slash?.name, `/${kind}`, `slash command /${kind} is missing`);
     }
-    for (const name of ["/roast", "/site"]) {
+    for (const name of ["/critique", "/site"]) {
       assert.ok(shellData.includes(`name: "${name}"`), `slash command ${name} is missing`);
     }
   });

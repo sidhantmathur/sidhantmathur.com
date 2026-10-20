@@ -10,7 +10,7 @@
 // costs a bigger prompt on one turn, a false negative an answer that declines a
 // legitimate question or answers it with nothing behind it. Fire eagerly.
 //
-// The `/roast` and `/site` commands send fixed messages, and
+// The `/critique` and `/site` commands send fixed messages, and
 // evals/recursion.test.mjs asserts both are detected here, so neither needs a
 // magic prefix.
 
@@ -41,12 +41,12 @@ export function looksLikeSiteQuestion(text: string): boolean {
 }
 
 /**
- * The message `/roast` sends. It shows in the conversation as the visitor's own
+ * The message `/critique` sends. It shows in the conversation as the visitor's own
  * turn, so it reads as a question a person would ask. It asks for specifics
  * because without them the model produces affectionate nonsense.
  */
 export const ROAST_REQUEST =
-  "Roast this site. Use the repo — name the specific choices, files and trade-offs that are actually weak, not the flattering kind of criticism.";
+  "Critique this site using the repo. Name the specific choices, files and trade-offs that are weak.";
 
 /** The message `/site` sends. */
 export const SITE_REQUEST =

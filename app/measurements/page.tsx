@@ -34,29 +34,29 @@ import {
 
 export const metadata: Metadata = {
   alternates: { canonical: "/measurements" },
-  title: "What this assistant scores",
+  title: "How the assistant is measured",
   description:
     "The published eval suite, the latency and reliability aggregate, and the groundedness self-report for the chat assistant on this site.",
 };
 
 const COPY = {
   intro:
-    "Every instrument on this site measures one conversation — yours. This page is the aggregate: how the assistant scores against a fixed corpus, how fast and how reliably it answers, and how often its claims survive the site's own checker.",
+    "The readouts in the chat cover only your conversation. This page reports on the assistant as a whole: how it scores against a fixed set of questions, how fast and how reliably it answers, and how often its claims pass the site's own checker.",
   freshness:
-    "All three are aggregated when the site is built, so they are exactly as old as the last deploy. Nothing on this page is fetched while you read it.",
+    "All three are computed when the site is built, so they're only as current as the last deploy. Nothing on this page is fetched while you read it.",
   honesty:
-    "Where a figure is derived, drawn from a small sample, or not measured at all, it says so beside itself rather than in a footnote. Sections with nothing behind them stay empty on purpose.",
+    "If a figure is derived, comes from a small sample, or wasn't measured at all, the page says so next to it. A section with no data behind it stays empty and says why.",
 
   suiteHeading: "The eval suite",
   suiteIntro:
-    "Two layers. The static layer runs on every change and needs no API key: it checks the knowledge base, the citation index, the system prompt's guard rails, the reconciler that decides what a job-description assessment is allowed to claim, and every export path. The live layer sends a fixed corpus of questions to a real running server and grades the answers.",
+    "The suite has two layers. The static layer runs on every change and needs no API key. It checks the knowledge base, the citation index, the system prompt's guard rails, the reconciler that decides what a job-description assessment is allowed to claim, and every export path. The live layer sends a fixed set of questions to a running server and grades the answers.",
   suiteEmpty:
-    "No run has been published yet. The suite exists and runs locally; publishing it is a deliberate step, so this stays empty until someone takes it.",
+    "No run has been published yet. The suite runs locally, but publishing a run is a separate step, and this section stays empty until someone does it.",
   suiteStaticNote:
-    "These are assertions, not questions asked of a model — they pass or fail deterministically, and they are what stops a change quietly breaking something the answers depend on.",
+    "These checks don't call a model. Each one passes or fails the same way every time, and together they catch a change that would break something the answers depend on.",
   liveHeading: "Live runs",
   liveIntro:
-    "The live corpus asks a real server real questions and checks the answers for specific evidence. It costs tokens and needs a key, so it is run deliberately and the result is committed rather than measured on every build.",
+    "The live layer sends the questions to a running server and checks each answer for specific evidence. It costs tokens and needs an API key, so it's run by hand, and each result is committed to the repo for the build to read.",
   liveEmpty:
     "No live run has been published yet.",
   liveCurrent: "The models the chat offers now, latest run of each",
@@ -66,48 +66,48 @@ const COPY = {
   liveEarlierNote:
     "Kept under the model each one ran on. Retired means the chat no longer offers that model, and none of its results carries over to the one that replaced it.",
   liveNote:
-    "A run is recorded per model, on the day it was run, and every run is kept. A turn that failed in transport is counted separately from one the model answered badly — they are different problems and collapsing them hides both.",
+    "Each run is recorded under its model and the day it ran, and every run is kept. A turn that broke in transport is counted separately from one the model answered badly, because they're different problems.",
   liveCompare:
-    "What each of these models cost and how fast it answered, plotted side by side:",
+    "Each model's cost and speed are charted side by side in",
 
   latencyHeading: "Latency and reliability",
   latencyIntro:
-    "Time to the first token of an answer, and how often a turn finishes at all, measured on the server across real conversations.",
+    "How long an answer takes to start, as the server timed it, and how often a turn finishes at all, counted from the events visitors' browsers report.",
   latencyNoCredentials:
-    "This build had no analytics credentials, so there is nothing to aggregate. The events are being recorded; this deploy could not read them.",
+    "This build had no analytics credentials, so it couldn't read the chat's events or tell whether any were recorded.",
   latencyNoEvents:
-    "The analytics store answered and holds no chat turns in the window. Either nobody has used the assistant yet, or the events are not arriving — and this page cannot tell you which, so it will not guess.",
+    "The analytics store answered and holds no chat turns in the window. Either nobody has used the assistant yet or the events aren't arriving, and this page has no way to tell which.",
   latencyQueryFailed:
-    "The analytics query failed while this site was being built, so this section has nothing to show. The build was not held up for it.",
+    "The analytics query failed while the site was being built, so this section has nothing to show. The build went ahead without it.",
   latencyNote:
-    "Time to first token is the server's own measurement, with the network to your browser excluded. It is not how long the answer took to finish.",
+    "Time to first token is measured on the server, so it leaves out the network between the server and your browser. It only covers how long the answer took to start.",
 
   groundedHeading: "Groundedness",
   groundedIntro:
-    "After every answer, a non-model checker takes each sentence that makes a checkable claim, reads the chunk of the record that sentence cited, and looks for the claim's numbers and proper nouns in it. A claim that cites nothing, or cites something that doesn't contain it, is marked in the margin of the answer you're reading.",
+    "After every answer, a text-matching checker (no model involved) takes each sentence that makes a checkable claim, reads the part of the record that sentence cited, and looks for the sentence's numbers and proper nouns in it. A claim that cites nothing, or cites a source that doesn't contain it, is marked on the answer in the chat.",
   groundedMeaning:
-    "The first figure is the share of sentences with a checkable name or number whose names and numbers the site's checker, a deterministic text match rather than a model, found in the source that sentence cited. It is not the share of statements that are true, and a sentence the checker could not match there is not thereby a false one.",
-  groundedMeaningSplit: "The figures beside it say where the rest were found, or that they weren't.",
+    "The first figure is the share of sentences with a checkable name or number where the checker found those names and numbers in the source the sentence cited. It isn't the share of statements that are true, and a sentence the checker couldn't match may still be correct.",
+  groundedMeaningSplit: "The figures next to it show what happened to the rest.",
   groundedByModel: "Found in the cited source, by model:",
   groundedElsewhereNote: "in the record, under a different source",
   groundedAbsentNote: "can include a sentence naming what the record lacks, or a word taken for a name",
   groundedRules:
-    "A name or number found elsewhere in the record is now counted apart from one found nowhere, numbers match only as whole numbers, and a sentence that only names a gap is no longer checked.",
+    "A name or number found elsewhere in the record is now counted separately from one found nowhere, numbers only match as whole numbers, and a sentence that only names a gap isn't checked any more.",
   groundedRulesAbove: "Every run counted above was scored after the change.",
   groundedEarlierLead:
-    "Runs from before the change were scored by the older rules, so they are kept apart rather than added in.",
+    "Runs from before the change were scored by the older rules, so they're counted separately.",
   groundedNarrow:
-    "Found in the cited source means the numbers and names in a sentence appear in the source it named. It does not mean the sentence is true, and it says nothing about sentences with nothing checkable in them — those are not claims and are not counted.",
+    "Found in the cited source means the numbers and names in a sentence appear in the source it named. It doesn't mean the sentence is true. Sentences with nothing checkable in them aren't treated as claims and aren't counted.",
   groundedNoCurrent:
-    "No run on a model the chat offers now has been scored by the current checker, so there is no current figure. Earlier runs are below, kept apart.",
+    "None of the models the chat offers now has a run scored by the current checker, so there's no current figure. Earlier runs are below, counted separately.",
   groundedEmpty:
-    "No live run has been published, so there is nothing to report. This number is deliberately read out of the eval snapshot and nowhere else: no run, no rate.",
+    "No live run has been published, so there's no rate to report. It's computed only from published eval runs.",
   groundedCalibration:
-    "The checker is tuned to under-report. Every false alarm a live run has produced — a discourse marker, a trailing comma inside a number, a derived word form, an abbreviated month, a compound written two ways — is pinned as a test in the static suite above, because a checker that cries wolf stops being read. The leniency runs one way on purpose: it reports absence, and a near-miss must never become an accusation.",
+    "The checker is tuned to under-report, because people learn to ignore marks that flag correct sentences. Every false alarm a live run has produced (a discourse marker, a trailing comma inside a number, a derived word form, an abbreviated month, a compound written two ways) is now a test in the static suite above. A mark only says that something wasn't found.",
   groundedJdOnly:
-    "Read the group above before reading the counts. The published runs cover the job-description flow only, and the closing prose after an assessment cites the record far less than an ordinary answer does — the evidence there travels in the requirement rows instead. So this is close to the least favourable sample the site could report, not a representative one.",
+    "The published runs cover only the job-description flow. The closing text after an assessment cites the record far less than an ordinary answer does, because the evidence is in the requirement rows. So this sample is close to the least favourable one the site could report, and it doesn't represent ordinary answers.",
   groundedBlind:
-    "It reads numbers and proper nouns, so an unfalsifiable sentence is invisible to it. And it has never been scored against a human-labelled sample of live answers — its accuracy is bounded by the calibration cases, not measured against a person.",
+    "The checker only reads numbers and proper nouns, so a claim with neither in it never gets checked. It has also never been tested against live answers labelled by a person. The calibration cases are the only evidence of its accuracy.",
 } as const;
 
 /**
@@ -149,7 +149,7 @@ export default function MeasurementsPage() {
   return (
     <DocPage>
       <h1 className="t-title font-medium text-text">
-        What this assistant scores
+        How the assistant is measured
       </h1>
       <p className="t-body mt-6 max-w-[62ch] text-text-soft">
         {COPY.intro}
@@ -284,7 +284,7 @@ export default function MeasurementsPage() {
             <Note>
               {COPY.liveNote} {COPY.liveCompare}{" "}
               <Link href="/measurements/models" className="text-accent">
-                Five models, one corpus
+                the model comparison
               </Link>
               .
             </Note>
@@ -347,9 +347,9 @@ export default function MeasurementsPage() {
             )}
 
             <Note>
-              {COPY.latencyNote} A median is withheld under {MIN_TURNS_FOR_P50} turns and a 95th
-              percentile under {MIN_TURNS_FOR_P95}, because below that they are a maximum wearing a
-              percentile&apos;s name.
+              {COPY.latencyNote} A median isn&apos;t shown under {MIN_TURNS_FOR_P50} turns, or a 95th
+              percentile under {MIN_TURNS_FOR_P95}, because samples that small can&apos;t support
+              them.
             </Note>
           </>
         )}
@@ -405,8 +405,9 @@ export default function MeasurementsPage() {
             </p>
             {ground.rate.reason === "too-few" && (
               <p className="t-body mt-4 max-w-[62ch] text-accent">
-                Under {MIN_CLAIMS_FOR_RATE} published claims, so no rate is shown — {ground.verified}{" "}
-                of {ground.claims} is a pair of counts, not a percentage anyone should carry away.
+                With fewer than {MIN_CLAIMS_FOR_RATE} checkable sentences published, the page shows no
+                rate. {ground.verified} of {ground.claims} is too small a sample to turn into a
+                percentage.
               </p>
             )}
             <p className="t-body mt-4 max-w-[62ch] text-text-faint">
@@ -456,7 +457,7 @@ export default function MeasurementsPage() {
             {groundBefore.rate.value != null && ` (${formatPercent(groundBefore.rate.value)})`},
             across {groundBefore.models.length} model{groundBefore.models.length === 1 ? "" : "s"}{" "}
             measured {measuredRange(datesOf(latestRunPerModel(before)))}
-            {ground ? ", and that figure does not compare with the one above." : "."}
+            {ground ? ", and that figure can't be compared with the one above." : "."}
           </p>
         )}
         <p className="t-body mt-4 max-w-[62ch] text-text-soft">

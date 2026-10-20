@@ -24,8 +24,8 @@ export default function ResumePage() {
         <p className="t-label text-text-faint">Resume</p>
         <h1 className="t-title mt-1 font-medium text-text">{SITE_NAME}</h1>
         <p className="t-body mt-3 max-w-[72ch] text-text-soft">
-          The current version, last updated July 2026. A
-          plain-text version lives at{" "}
+          The current version, last updated July 2026. There&apos;s a
+          plain-text version at{" "}
           <Link
             href="/resume.md"
             // Padding, not min-height: a 44px inline-flex box is an atomic item
@@ -36,7 +36,7 @@ export default function ResumePage() {
           >
             /resume.md
           </Link>{" "}
-          if you&apos;d rather feed it to an AI — I won&apos;t take it personally.
+          for pasting into an AI tool.
         </p>
 
         <ResumeDownloadButton />
@@ -45,7 +45,7 @@ export default function ResumePage() {
           aria-label="Resume sections"
           // These wrap to two rows on a phone; the 44px link height is what
           // keeps five destinations from blurring into one target.
-          className="mt-10 flex flex-wrap gap-x-3 border-y border-line py-1.5 text-[13px]"
+          className="mt-10 flex flex-wrap gap-x-3 border-y border-line py-1.5 t-meta"
         >
           {[
             ["Summary", "#summary"],
@@ -66,13 +66,13 @@ export default function ResumePage() {
 
         {/* Resume body matches docs/Sidhant_Mathur_Resume.pdf (July 2026). */}
         <div className="mt-8">
-          <h2 className="font-mono text-[14px] text-text-soft">Toronto, ON</h2>
-          <p className="mt-1 font-mono text-[14px] text-text-soft">
+          <h2 className="font-mono t-meta text-text-soft">Toronto, ON</h2>
+          <p className="mt-1 font-mono t-meta text-text-soft">
             613-795-9684 · hello@sidhantmathur.com · linkedin.com/in/sidhantmathur ·
             github.com/sidhantmathur · sidhantmathur.com
           </p>
 
-          <div id="summary" className="mt-10 scroll-mt-14">
+          <div id="summary" className="mt-10 scroll-mt-20">
             <MonoLabel>Summary</MonoLabel>
             <p className="t-body mt-3 max-w-[72ch] text-text-soft">
               AI-native revenue operations builder who turns ambiguous business problems
@@ -85,17 +85,17 @@ export default function ResumePage() {
             </p>
           </div>
 
-          <div id="experience" className="mt-10 scroll-mt-14">
+          <div id="experience" className="mt-10 scroll-mt-20">
             <MonoLabel>Experience</MonoLabel>
 
             <div className="mt-4">
               <h3 className="t-head font-medium text-text">
                 Nokia — Toronto, ON{" "}
-                <Link href="/projects/nokia" className="-my-2 ml-1 py-2 text-[14px] font-normal text-text-faint no-underline hover:text-accent">
+                <Link href="/projects/nokia" className="-my-2 ml-1 py-2 t-meta font-normal text-text-faint no-underline hover:text-accent">
                   case study →
                 </Link>
               </h3>
-              <p className="mt-3 font-mono text-[14px] text-text-soft">
+              <p className="mt-3 font-mono t-meta text-text-soft">
                 Sales operations specialist (internal tools &amp; automation) · Jun 2024 – Present
               </p>
               <ul className="t-body mt-3 max-w-[72ch] list-disc space-y-2 pl-5 text-text-soft marker:text-text-faint">
@@ -118,7 +118,7 @@ export default function ResumePage() {
                 </li>
               </ul>
 
-              <p className="mt-6 font-mono text-[14px] text-text-soft">
+              <p className="mt-6 font-mono t-meta text-text-soft">
                 Workforce management specialist · Oct 2022 – Jun 2024
               </p>
               <ul className="t-body mt-3 max-w-[72ch] list-disc space-y-2 pl-5 text-text-soft marker:text-text-faint">
@@ -136,11 +136,11 @@ export default function ResumePage() {
             <div className="mt-10">
               <h3 className="t-head font-medium text-text">
                 A Darle 20 (&quot;Let&apos;s Go 20&quot;) — adarle20.com{" "}
-                <Link href="/projects/adarle20" className="-my-2 ml-1 py-2 text-[14px] font-normal text-text-faint no-underline hover:text-accent">
+                <Link href="/projects/adarle20" className="-my-2 ml-1 py-2 t-meta font-normal text-text-faint no-underline hover:text-accent">
                   case study →
                 </Link>
               </h3>
-              <p className="mt-3 font-mono text-[14px] text-text-soft">
+              <p className="mt-3 font-mono t-meta text-text-soft">
                 Co-Founder &amp; CTO (solo developer) · Aug 2025 – Present · launched Mar
                 2026
               </p>
@@ -196,7 +196,7 @@ export default function ResumePage() {
               <h3 className="t-head font-medium text-text">
                 Freelance web development &amp; consulting — remote
               </h3>
-              <p className="mt-3 font-mono text-[14px] text-text-soft">
+              <p className="mt-3 font-mono t-meta text-text-soft">
                 Self-employed · May 2019 – Oct 2022
               </p>
               <ul className="t-body mt-3 max-w-[72ch] list-disc space-y-2 pl-5 text-text-soft marker:text-text-faint">
@@ -219,7 +219,7 @@ export default function ResumePage() {
               <h3 className="t-head font-medium text-text">
                 Dell Technologies — Austin, TX
               </h3>
-              <p className="mt-3 font-mono text-[14px] text-text-soft">
+              <p className="mt-3 font-mono t-meta text-text-soft">
                 Marketing intern · May 2018 – Aug 2018
               </p>
               <ul className="t-body mt-3 max-w-[72ch] list-disc space-y-2 pl-5 text-text-soft marker:text-text-faint">
@@ -233,9 +233,9 @@ export default function ResumePage() {
             </div>
           </div>
 
-          <div id="education" className="mt-10 scroll-mt-14">
+          <div id="education" className="mt-10 scroll-mt-20">
             <MonoLabel>Education</MonoLabel>
-            <ul className="mt-3 max-w-[58ch] list-disc space-y-2 pl-5 text-[15px] leading-relaxed text-text-soft">
+            <ul className="mt-3 max-w-[58ch] list-disc space-y-2 pl-5 t-body text-text-soft">
               <li>
                 B.S. in Business Administration — The University of Texas at Dallas,
                 2016 – 2019
@@ -247,9 +247,9 @@ export default function ResumePage() {
             </ul>
           </div>
 
-          <div id="technical-skills" className="mt-10 scroll-mt-14">
+          <div id="technical-skills" className="mt-10 scroll-mt-20">
             <MonoLabel>Technical skills</MonoLabel>
-            <ul className="mt-3 max-w-[58ch] list-disc space-y-2 pl-5 text-[15px] leading-relaxed text-text-soft">
+            <ul className="mt-3 max-w-[58ch] list-disc space-y-2 pl-5 t-body text-text-soft">
               <li>
                 <strong className="text-text">GTM systems &amp; analytics:</strong>{" "}
                 Salesforce,
@@ -270,7 +270,7 @@ export default function ResumePage() {
             </ul>
           </div>
 
-          <div id="other" className="mt-10 scroll-mt-14">
+          <div id="other" className="mt-10 scroll-mt-20">
             <MonoLabel>Other</MonoLabel>
             <p className="t-body mt-3 max-w-[72ch] text-text-soft">
               Canadian citizen

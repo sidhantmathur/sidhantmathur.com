@@ -12,7 +12,8 @@ import { PROJECT_LIST } from "@/content/projects";
 export const metadata: Metadata = {
   alternates: { canonical: "/projects" },
   title: "Projects",
-  description: "Three case studies, and what each one was.",
+  description:
+    "Three case studies: reporting tools at Nokia, the A Darle 20 marketplace, and a sales prediction model at Dell.",
 };
 
 export default function ProjectsPage() {
@@ -20,8 +21,7 @@ export default function ProjectsPage() {
     <DocPage>
       <h1 className="t-title font-medium text-text">Projects</h1>
       <p className="t-body mt-3 max-w-[62ch] text-text-soft">
-        Three case studies. The conversation will summarise any of them — these are
-        the long versions.
+        Three case studies. The assistant on the homepage can summarize any of them.
       </p>
 
       <div className="mt-10 space-y-10">

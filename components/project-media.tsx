@@ -18,11 +18,10 @@ export function AdarleFeatureSurface() {
   return (
     <section className="mt-12 border-t border-line pt-8">
       <h2 className="t-head font-medium text-text">
-        Everything in it
+        What&apos;s in it
       </h2>
       <p className="t-body mt-3 max-w-[68ch] text-text-soft">
-        The prose above is the story. This is the surface area — what a host or a
-        player can actually do.
+        The main features, grouped by area.
       </p>
       <dl className="mt-6 grid gap-x-8 gap-y-5 sm:grid-cols-2">
         {FEATURE_SURFACE.map((group) => (

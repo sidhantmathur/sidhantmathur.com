@@ -52,7 +52,7 @@ export const ADARLE_MEDIA: MediaSlot[] = [
       src: "/images/adarle20-listings.png",
       alt: "Three A Darle 20 session listing cards side by side, each with cover art, a title, tags, a weekly time, a price in Mexican pesos, the number of seats filled, and the host's name and review score.",
       caption:
-        "Session listings. Each card carries the host, their rating, the price in pesos, the schedule and how many seats are still open.",
+        "Each card shows the host and their rating, the price in pesos, the schedule, and how many seats are filled.",
     },
   },
   {
@@ -98,7 +98,7 @@ export const ADARLE_MEDIA: MediaSlot[] = [
   {
     id: "operations",
     kind: "screenshot",
-    title: "The funnel, instrumented",
+    title: "Funnel tracking",
     brief:
       "Whatever you actually look at to run the business — bookings, conversion, cancellations, refunds, host activation. Check before sending: this is the one slot where the file would carry live numbers, and anything in it is published.",
     aspect: "16:9",
@@ -163,7 +163,7 @@ export const FEATURE_SURFACE: Feature[] = [
   {
     group: "Operations",
     items: [
-      "End-to-end funnel instrumentation — bookings, conversion, cancellations, refunds, host activation",
+      "End-to-end funnel instrumentation (bookings, conversion, cancellations, refunds, host activation)",
     ],
     source: "projects-adarle20.md, resume.md",
   },
@@ -173,5 +173,5 @@ export const FEATURE_SURFACE: Feature[] = [
 // ledger's pending row points at; once the missing features are written into
 // content/knowledge/, the marker goes and the sentence can go on the page.
 export const FEATURE_SURFACE_NOTE =
-  "This list is everything the written record names, which is not the same as everything the product does — [VERIFY: the features that exist in A Darle 20 but appear in no source file. Sidhant's own note on this page was that there is a lot buried up there; nothing can be added here until it is written down somewhere checkable.]";
+  "These are the features written down so far, and the product has more. [VERIFY: the features that exist in A Darle 20 but appear in no source file. Sidhant's own note on this page was that there is a lot buried up there; nothing can be added here until it is written down somewhere checkable.]";
 

@@ -12,6 +12,7 @@ import {
 import {
   SIMULATABLE_CLASSES,
   TURN_FAILURES,
+  isSilentClass,
   turnErrorCopy,
   type TurnErrorClass,
 } from "@/lib/chat-telemetry";
@@ -21,8 +22,8 @@ import { verifyAnswer, type Claim } from "@/lib/verify";
 import type { Budget, TurnRecord } from "./use-conversation";
 import type { TokenRate } from "./use-token-rate";
 
-// The instrument deck: model picker, cost meter, tokens-per-second seismograph,
-// per-turn trace, citation trace, failure theatre and teletype toggle.
+// The technical details panel: model picker, cost meter, tokens-per-second
+// rate, per-turn trace, citation check, simulated failures and sound toggle.
 //
 // WHERE THIS LIVES is the constraint every choice here answers to. The
 // instrumentation policy in docs/idea-decisions.md §4 puts density around the
@@ -31,7 +32,7 @@ import type { TokenRate } from "./use-token-rate";
 // status strip (turns used and what the last answer cost). The rest opens in
 // the context panel on a deliberate click, beside the conversation rather than
 // over it. Every control is idempotent and every readout passive; the one
-// control that makes a request, failure theatre, cannot produce an answer or
+// control that makes a request, simulated failures, cannot produce an answer or
 // spend the budget, and reports into its own box.
 
 // ---------------------------------------------------------------------------
@@ -150,7 +151,7 @@ export function InstrumentDeck({
             // hydration in the worst way: it opens, it takes a choice, and
             // the choice reaches nothing.
             disabled={!hydrated}
-            className="min-h-[44px] w-full cursor-pointer border border-line-strong bg-raised px-2 text-[13px] text-text-soft outline-none focus:border-accent disabled:cursor-progress disabled:border-line disabled:text-text-dim"
+            className="min-h-[44px] w-full cursor-pointer border border-line-strong bg-raised px-2 t-meta text-text-soft outline-none focus:border-accent disabled:cursor-progress disabled:border-line disabled:text-text-dim"
           >
             {/* Catalogue order: the default first, then cheapest first. */}
             {MODEL_IDS.map((m) => (
@@ -161,8 +162,8 @@ export function InstrumentDeck({
           </select>
         </label>
         <p className="t-meta mt-2 text-text-faint">
-          Every model spends from the same hourly budget, so switching changes what the
-          meter below charges and nothing else. The id it runs under is{" "}
+          All models share one hourly budget, so switching only changes what the cost
+          meter below charges. The id it runs under is{" "}
           <span className="text-text-soft">{model}</span>.
         </p>
       </Section>
@@ -176,9 +177,9 @@ export function InstrumentDeck({
           <Seismograph rate={rate} settled={settled} width={120} height={22} />
         </div>
         <p className="t-meta mt-2 text-text-faint">
-          The live needle is sampled from the text as it arrives and marked{" "}
-          <span className="text-text-soft">≈</span>. The number without one is the
-          server&apos;s own measurement of the last finished turn.
+          While an answer streams, the rate is estimated from the incoming text and
+          marked <span className="text-text-soft">≈</span>. A number without the mark is
+          the server&apos;s measurement of the last finished turn.
         </p>
       </Section>
 
@@ -190,7 +191,7 @@ export function InstrumentDeck({
         <CitationTrace answers={answers} />
       </Section>
 
-      <Section title="Failure theatre">
+      <Section title="Simulated failures">
         <FailureTheatre errorCopy={errorCopy} />
       </Section>
 
@@ -199,13 +200,14 @@ export function InstrumentDeck({
           type="button"
           onClick={onToggleTeletype}
           aria-pressed={teletype}
-          className="border border-line-strong px-3 py-3 text-[13px] text-text-soft transition-colors hover:border-accent hover:text-accent"
+          className="border border-line-strong px-3 py-3 t-meta text-text-soft transition-colors hover:border-accent hover:text-accent"
         >
-          teletype {teletype ? "on" : "off"}
+          sound {teletype ? "on" : "off"}
         </button>
         <p className="t-meta mt-2 text-text-faint">
-          A tick per chunk of text, pitched to how fast it&apos;s arriving. Synthesized in
-          the browser, off until you switch it on, and remembered after that.
+          Plays a tick for each chunk of text, pitched higher when text arrives faster.
+          The sound is made in the browser. It&apos;s off by default, and this browser
+          remembers your setting.
         </p>
       </Section>
     </div>
@@ -224,8 +226,8 @@ function Section({
   return (
     <section>
       <div className="mb-2 flex items-baseline justify-between gap-2 border-b border-line pb-1">
-        <h3 className="text-[12px] text-text">{title}</h3>
-        {hint && <span className="shrink-0 text-[12px] text-text-faint">{hint}</span>}
+        <h3 className="t-label text-text">{title}</h3>
+        {hint && <span className="shrink-0 t-label text-text-faint">{hint}</span>}
       </div>
       {children}
     </section>
@@ -243,7 +245,7 @@ function Row({
   emphasis?: boolean;
 }) {
   return (
-    <div className="flex items-baseline justify-between gap-3 text-[12px]">
+    <div className="flex items-baseline justify-between gap-3 t-label">
       <span className="shrink-0 text-text-faint">{label}</span>
       {/* min-w-0 and break-words: the citation trace puts token lists and
           chunk ids here, which are longer than any number the deck had. */}
@@ -307,7 +309,7 @@ function CostMeter({
 
       {latest && latestCost && (
         <div className="space-y-1 border-t border-line pt-2">
-          <div className="text-[12px] text-text-faint">last turn · {latest.model}</div>
+          <div className="t-label text-text-faint">last turn · {latest.model}</div>
           <Row label="fresh input" value={formatUsd(latestCost.freshInput)} />
           <Row label="cached input" value={formatUsd(latestCost.cacheRead)} />
           {latestCost.cacheWrite > 0 && (
@@ -320,20 +322,19 @@ function CostMeter({
 
       {!priced && (
         <p className="t-meta text-text-faint">
-          No list price on file for {model}, so its turns are left out of the total rather
-          than estimated.
+          No list price on file for {model}, so its turns aren&apos;t included in the total.
         </p>
       )}
 
       <p className="t-meta text-text-faint">
-        Estimated at published list price. The knowledge base is byte-identical on every
-        request, so once it is cached that part of the input bills at a fraction of the
-        fresh rate — the saving is the line above.
+        Estimated at published list prices. The knowledge base is identical on every
+        request, so once it&apos;s cached, that part of the input is billed at a fraction of
+        the normal rate. The difference is the &ldquo;saved by the cache&rdquo; row.
       </p>
       <p className="t-meta text-text-faint">
         Nothing you type is stored on the server. The conversation lives in this browser
-        until you reset it, and the only thing kept server-side is a per-IP counter for the
-        hourly limit.
+        until you clear it from the front page, and the only thing kept server-side is a
+        per-IP counter for the hourly limit.
       </p>
     </div>
   );
@@ -353,7 +354,7 @@ function TraceInspector({ turnLog }: { turnLog: TurnRecord[] }) {
   if (!turnLog.length) {
     return (
       <p className="t-meta text-text-faint">
-        Nothing yet. Ask a question and every number behind the answer lands here.
+        After you ask a question, each turn&apos;s timing, tokens and cost show up here.
       </p>
     );
   }
@@ -372,7 +373,7 @@ function TraceInspector({ turnLog }: { turnLog: TurnRecord[] }) {
                 type="button"
                 onClick={() => setOpenIndex(open ? null : i)}
                 aria-expanded={open}
-                className="flex min-h-[44px] w-full items-baseline gap-2 px-2 py-2.5 text-left text-[12px] hover:bg-raised"
+                className="flex min-h-[44px] w-full items-baseline gap-2 px-2 py-2.5 text-left t-label hover:bg-raised"
               >
                 <span className="tabular-nums text-text-faint">#{i + 1}</span>
                 <span className={turn.error ? "text-accent" : "text-text-soft"}>
@@ -449,10 +450,10 @@ function TraceInspector({ turnLog }: { turnLog: TurnRecord[] }) {
                   <Row label="finish reason" value={turn.finishReason ?? "—"} />
                   {turn.error && <Row label="error" value={turn.error.class} emphasis />}
                   <details className="pt-1">
-                    <summary className="cursor-pointer py-1 text-[12px] text-text-faint hover:text-accent">
+                    <summary className="cursor-pointer py-1 t-label text-text-faint hover:text-accent">
                       raw record
                     </summary>
-                    <pre className="mt-1 overflow-x-auto bg-raised p-2 text-[12px] leading-relaxed text-text-soft">
+                    <pre className="mt-1 overflow-x-auto bg-raised p-2 t-label text-text-soft">
                       {JSON.stringify(turn, null, 2)}
                     </pre>
                   </details>
@@ -463,8 +464,9 @@ function TraceInspector({ turnLog }: { turnLog: TurnRecord[] }) {
           );
         })}
       <p className="t-meta pt-1 text-text-faint">
-        Two latencies on purpose: the server measures the model, the browser measures the
-        wait. The gap between them is the network.
+        The server&apos;s ttft is how long the model took to start its output. The
+        browser&apos;s runs from when you pressed send until the first chunk of the response
+        arrived, which the route sends before the model starts.
       </p>
     </div>
   );
@@ -495,8 +497,8 @@ function CitationTrace({ answers }: { answers: string[] }) {
   if (!checks.some((c) => c.claims.length)) {
     return (
       <p className="t-meta text-text-faint">
-        Nothing checked yet. Every sentence that names a number or a proper noun is
-        checked against the source it cites, and lands here.
+        Nothing checked yet. Each sentence that names a number or a proper noun is
+        checked against the source it cites, and the results show up here.
       </p>
     );
   }
@@ -512,7 +514,7 @@ function CitationTrace({ answers }: { answers: string[] }) {
             {check.claims
               .filter((c) => c.verdict !== "verified")
               .map((claim, j) => (
-                <div key={j} className="border-t border-line pt-1.5 text-[12px] leading-[1.5]">
+                <div key={j} className="border-t border-line pt-1.5 t-label">
                   <div className={claim.verdict === "unverified" ? "text-accent" : "text-text-soft"}>
                     {VERDICT_LABEL[claim.verdict]}
                   </div>
@@ -581,7 +583,14 @@ function FailureTheatre({ errorCopy }: { errorCopy: ErrorCopy }) {
         status: res.status,
         // The same copy the conversation shows. Rate limiting is the exception:
         // the conversation renders ManualMode for it, and this is its headline.
-        shown: cls === "rate_limited" ? errorCopy.rateLimited : turnErrorCopy(cls),
+        // A silent class (`aborted`) shows nothing, so say that rather than
+        // print the generic sentence it would fall back to.
+        shown:
+          cls === "rate_limited"
+            ? errorCopy.rateLimited
+            : isSilentClass(cls)
+              ? "(no message for a stopped turn)"
+              : turnErrorCopy(cls),
         raw: elide(text),
       });
     } catch (err) {
@@ -601,9 +610,9 @@ function FailureTheatre({ errorCopy }: { errorCopy: ErrorCopy }) {
   return (
     <div className="space-y-3">
       <p className="t-meta text-text-faint">
-        Every way this site can fail, on demand. Each button takes the real exit in the
-        chat route — no model is called, no budget is spent, and nothing here can produce
-        an answer.
+        Each button triggers one of the chat route&apos;s failures, using the same exit the
+        real failure takes. No model is called, your hourly budget isn&apos;t used, and the
+        request can&apos;t return an answer.
       </p>
       <div className="space-y-1">
         {FAILURES.map((f) => (
@@ -612,7 +621,7 @@ function FailureTheatre({ errorCopy }: { errorCopy: ErrorCopy }) {
               type="button"
               onClick={() => run(f.cls)}
               disabled={running != null}
-              className="flex min-h-[44px] w-full items-baseline gap-2 px-2 py-2.5 text-left text-[12px] hover:bg-raised disabled:text-text-dim"
+              className="flex min-h-[44px] w-full items-baseline gap-2 px-2 py-2.5 text-left t-label hover:bg-raised disabled:text-text-dim"
             >
               <span className="text-text-soft">{f.cls}</span>
               <span className="ml-auto shrink-0 text-text-faint">{f.wire}</span>
@@ -628,10 +637,10 @@ function FailureTheatre({ errorCopy }: { errorCopy: ErrorCopy }) {
         <div className="space-y-1 border border-line-strong p-2">
           <Row label="class" value={result.cls} emphasis />
           <Row label="http status" value={String(result.status)} />
-          <div className="pt-1 text-[12px] text-text-faint">what you would have seen</div>
+          <div className="pt-1 t-label text-text-faint">what you would have seen</div>
           <p className="t-meta text-text-soft">{result.shown}</p>
-          <div className="pt-1 text-[12px] text-text-faint">what came over the wire</div>
-          <pre className="overflow-x-auto bg-raised p-2 text-[12px] leading-relaxed text-text-soft">
+          <div className="pt-1 t-label text-text-faint">what came back</div>
+          <pre className="overflow-x-auto bg-raised p-2 t-label text-text-soft">
             {result.raw || "(empty body)"}
           </pre>
         </div>

@@ -16,7 +16,7 @@ export type TldrRow = {
   source: string;
 };
 
-export const TLDR_LABEL = "tl;dr";
+export const TLDR_LABEL = "summary";
 
 // Scan-shaped rather than prose: the reader this is for hasn't started reading
 // yet (six seconds, per decisions #25).
@@ -35,7 +35,7 @@ export const RECRUITER_TLDR: TldrRow[] = [
   {
     label: "shipped",
     value:
-      "A self-serve Power App used by 80+ stakeholders across 7 regions, which ended a manual process that took one finance analyst's entire workday, every day of quarter-end close — and the migration of all sales reporting from Salesforce Analytics to Power BI for 150+ users.",
+      "A self-serve Power App used by 80+ stakeholders across 7 regions, replacing a manual process that took one finance analyst's entire workday, every day of quarter-end close. He also migrated all sales reporting from Salesforce Analytics to Power BI for 150+ users.",
     source: "content/knowledge/resume.md",
   },
   {
@@ -47,7 +47,7 @@ export const RECRUITER_TLDR: TldrRow[] = [
   {
     label: "how he builds",
     value:
-      "An AI-agent-heavy workflow in Claude Code — agents write most of the code, he keeps architecture, code review and release.",
+      "AI agents in Claude Code write most of the code. He owns architecture, code review and release.",
     source: "content/knowledge/projects-adarle20.md",
   },
   {
@@ -62,7 +62,7 @@ export const RECRUITER_TLDR: TldrRow[] = [
   },
 ];
 
-export const TLDR_FOOTER = "The resume has the rest, and so does the box below.";
+export const TLDR_FOOTER = "The resume has the rest.";
 
 // The hero subline (docs/mockups/front-door-1-hero.html): the `looking for`
 // and `where` rows fused into one sentence a visitor doesn't have to scroll
@@ -70,7 +70,7 @@ export const TLDR_FOOTER = "The resume has the rest, and so does the box below."
 export const POSITIONING: TldrRow = {
   label: "positioning",
   value:
-    "Looking for a RevOps / GTM systems role at an AI-forward company. Toronto, ON — Canadian citizen, no visa sponsorship needed.",
+    "Looking for a RevOps / GTM systems role at an AI-forward company. Toronto, ON. Canadian citizen, no visa sponsorship needed.",
   source: "content/knowledge/faq.md",
 };
 
@@ -132,19 +132,23 @@ export const HERO_TLDR = RECRUITER_TLDR.filter(
   (r) => r.label !== "looking for" && r.label !== "where",
 );
 
-// #26: the first four things a recruiter asks. They replace the old chips
-// rather than adding a recruiter mode.
+/** The chip the `/fit` slash command sends. One string, two surfaces. */
+export const FIT_QUESTION = "Is he a fit for a RevOps role at an AI-forward company?";
+
+// #26: the first things a recruiter asks. They replace the old chips rather
+// than adding a recruiter mode.
+//
+// Three, so the row sits on one line above the composer at laptop widths
+// (Sidhant, 2026-10-20). "What has he shipped end to end?" was the one cut:
+// the Nokia chip asks the same thing about the work that matters most. The
+// longest chip goes last, so a narrow window wraps it alone.
 //
 // None may trip `looksLikeJobPosting` or `looksLikeSiteQuestion`: a suggested
 // question that forces a roleFit call or loads the repo corpus turns the
 // site's own affordance into its worst path. Asserted in
 // evals/track-b.test.mjs.
 export const SUGGESTED_QUESTIONS = [
-  "Give me the 30-second version",
-  "What has he shipped end to end?",
-  "Is he a fit for a RevOps role at an AI-forward company?",
+  "Give me the short version",
   "What did he build at Nokia?",
+  FIT_QUESTION,
 ];
-
-/** The chip the `/fit` slash command sends. One string, two surfaces. */
-export const FIT_QUESTION = SUGGESTED_QUESTIONS[2];

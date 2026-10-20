@@ -10,7 +10,7 @@ export const metadata: Metadata = {
   alternates: { canonical: "/projects/adarle20" },
   title: "A Darle 20",
   description:
-    "A marketplace for tabletop game sessions in Latin America — 2,100+ bookings in its first four months.",
+    "A marketplace for tabletop game sessions in Latin America, with 2,100+ bookings in its first four months.",
 };
 
 export default function AdarleTwentyPage() {

@@ -29,10 +29,10 @@ export type ContactSurface =
   | "replay";
 
 const QUIET =
-  "flex h-11 touch-manipulation items-center justify-center border border-line-strong px-4 text-[13px] text-text no-underline transition-colors hover:border-accent hover:text-accent";
+  "flex h-11 touch-manipulation items-center justify-center border border-line-strong px-4 t-meta text-text no-underline transition-colors hover:border-accent hover:text-accent";
 
 const PRIMARY =
-  "flex h-11 touch-manipulation items-center justify-center border border-accent bg-accent px-5 text-[13px] font-medium text-bg no-underline transition-opacity hover:opacity-90";
+  "flex h-11 touch-manipulation items-center justify-center border border-accent bg-accent px-5 t-meta font-medium text-bg no-underline transition-opacity hover:opacity-90";
 
 export function ResumePdfButton({
   surface,
@@ -127,7 +127,7 @@ export function EmailCopy({
         ref={addressRef}
         href={`mailto:${EMAIL}`}
         onClick={() => track("contact_click", { channel: "email_link", surface })}
-        className="flex min-w-0 flex-1 touch-manipulation items-center px-3 text-[13px] text-text no-underline transition-colors hover:text-accent"
+        className="flex min-w-0 flex-1 touch-manipulation items-center px-3 t-meta text-text no-underline transition-colors hover:text-accent"
       >
         {EMAIL}
       </a>
@@ -137,7 +137,7 @@ export function EmailCopy({
         disabled={!hydrated}
         data-js-control
         aria-label={`Copy ${EMAIL}`}
-        className="flex shrink-0 touch-manipulation items-center border-l border-line-strong px-3 text-[13px] text-text-soft transition-colors hover:text-accent disabled:text-text-dim"
+        className="flex shrink-0 touch-manipulation items-center border-l border-line-strong px-3 t-meta text-text-soft transition-colors hover:text-accent disabled:text-text-dim"
       >
         {state === "copied" ? "copied" : state === "selected" ? "selected" : "copy"}
       </button>

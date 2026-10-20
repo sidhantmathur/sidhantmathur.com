@@ -10,7 +10,7 @@ Toronto, ON.
 
 ## Is he open to new roles?
 
-Yes — open to new roles.
+Yes, he's open to new roles.
 
 ## What roles is he targeting?
 

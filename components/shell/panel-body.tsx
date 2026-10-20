@@ -37,19 +37,19 @@ const CASE_STUDIES = {
 // in code: the knowledge base is in every system prompt, and the repo corpus is
 // appended only when lib/site-question.ts recognises the turn.
 const CORPUS_NOTE =
-  "Two corpora. The record above — the resume, the projects, the FAQ — rides inside the prompt on every turn. This site's own source is the second one, and it is only loaded when you ask about the site, so an ordinary answer never pays for it.";
+  "Everything above the last group is Sidhant's record, and it's in the prompt on every turn. The last group is the site's own source, a second corpus that's added only when you ask about the site, so it costs nothing on other turns.";
 
 // The prompt and refusals panels' framing. Both restate what the code does and
 // say nothing about Sidhant.
 const PROMPT_NOTE = {
   intro:
-    "Everything the model was told before it read your question, in order. It is published in full, and this list is read out of the prompt itself rather than kept beside it.",
+    "The system prompt's sections, in the order the model reads them before your question. The list is read from the prompt itself, and the full text is published.",
   decline:
-    "Ask it in the chat to recite them and it will decline and link here — the prompt is public, but talking it out of that rule is the first move in talking it out of the others.",
+    "Ask the assistant to recite its instructions and it will decline and link here, even though the prompt isn't a secret. If a conversation gets it to break one rule, the others get easier to break.",
 };
 
 const REFUSALS_NOTE =
-  "What it won't do, and what it does instead. The label on the right says whether the rule is enforced by code or asked of the model, because those are not the same promise.";
+  "What it won't do, and what it does instead. The label on the right says whether code enforces the rule or the model is only asked to follow it.";
 
 export function PanelBody({
   panel,
@@ -118,7 +118,7 @@ export function PanelBody({
                   className="t-meta flex min-h-[44px] w-full items-center border-b border-line py-2.5 text-left text-text-soft transition-colors last:border-b-0 hover:text-accent"
                 >
                   {chunk.heading}
-                  <span className="ml-2 text-[12px] text-text-faint">{chunk.id}</span>
+                  <span className="ml-2 t-label text-text-faint">{chunk.id}</span>
                 </button>
               ))}
             </div>
@@ -198,8 +198,8 @@ export function PanelBody({
         <p className="t-body text-text-soft">{COLOPHON_STACK}</p>
         <div className="flex flex-wrap gap-2">
           <ActionLink href="/colophon">Open as a page</ActionLink>
-          <ActionLink href="/measurements">What it scores</ActionLink>
-          <ActionLink href="/prompt">Its instructions</ActionLink>
+          <ActionLink href="/measurements">Measurements</ActionLink>
+          <ActionLink href="/prompt">The instructions</ActionLink>
           <ActionLink href="/refusals">What it won&apos;t do</ActionLink>
         </div>
         <h3 className="t-label pt-3 text-text-faint">{WHY_CHATBOT_HEADING}</h3>
@@ -231,7 +231,7 @@ export function PanelBody({
           ))}
         </ul>
         <p className="t-meta text-text-faint">{PROMPT_NOTE.decline}</p>
-        <ActionLink href="/prompt">Read the whole thing</ActionLink>
+        <ActionLink href="/prompt">Read the full instructions</ActionLink>
       </div>
     );
   }
@@ -333,7 +333,7 @@ function RequirementTable({
             className="grid grid-cols-[72px_1fr] gap-3 border-b border-line py-3 last:border-b-0"
           >
             <span
-              className={`mt-0.5 self-start border px-1 py-0.5 text-center text-[12px] tracking-[0.07em] ${VERDICT_STYLE[row.verdict]}`}
+              className={`mt-0.5 self-start border px-1 py-0.5 text-center t-label tracking-[0.07em] ${VERDICT_STYLE[row.verdict]}`}
             >
               {row.verdict}
             </span>
@@ -345,7 +345,7 @@ function RequirementTable({
                   {stripCitations(row.evidence)}
                 </p>
               )}
-              <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[12px] text-text-faint">
+              <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 t-label text-text-faint">
                 {row.sources.map((id) => (
                   <button
                     key={id}
@@ -359,14 +359,14 @@ function RequirementTable({
                 ))}
                 {row.downgrade === "uncited" && (
                   <span className="text-accent">
-                    cited no source — downgraded from {row.claimedVerdict}
+                    cited no source · downgraded from {row.claimedVerdict}
                   </span>
                 )}
                 {row.downgrade === "uncovered" && (
                   <span>the assessment didn&apos;t answer this one</span>
                 )}
                 {row.downgrade === "unjudged" && (
-                  <span>the assessment restated this one without judging it</span>
+                  <span>the assessment listed this one without a verdict</span>
                 )}
                 {/* Same split as an answer's marks: a token the record holds
                     under another chunk is a pointer problem and is said
@@ -374,7 +374,10 @@ function RequirementTable({
                 {row.unverified.length > 0 && <RowMark row={row} />}
                 {row.unknownSources.length > 0 && (
                   <span className="text-accent">
-                    cited {row.unknownSources.join(", ")}, which isn&apos;t a source on this site
+                    cited {row.unknownSources.join(", ")},{" "}
+                    {row.unknownSources.length === 1
+                      ? "which isn't a source on this site"
+                      : "which aren't sources on this site"}
                   </span>
                 )}
               </div>
@@ -428,7 +431,7 @@ function RowMark({ row }: { row: RoleFit["rows"][number] }) {
   return (
     <span>
       not in cited source · {row.unverified.join(", ")}
-      {elsewhere.length > 0 && <> — in {elsewhere.join(", ")}</>}
+      {elsewhere.length > 0 && <> · found in {elsewhere.join(", ")}</>}
     </span>
   );
 }
@@ -474,7 +477,7 @@ function JobDescriptionForm({ onSubmit }: { onSubmit?: (text: string) => void })
         <button
           type="submit"
           disabled={!trimmed}
-          className="flex min-h-[44px] items-center border border-line-strong px-3 py-2.5 text-[13px] text-text-soft transition-colors hover:border-accent hover:text-accent disabled:border-line disabled:text-text-dim"
+          className="flex min-h-[44px] items-center border border-line-strong px-3 py-2.5 t-meta text-text-soft transition-colors hover:border-accent hover:text-accent disabled:border-line disabled:text-text-dim"
         >
           {JD_COPY.submit} →
         </button>
@@ -506,7 +509,7 @@ function ChunkBlock({
       <div className={`t-meta ${focused ? "text-accent" : "text-text"}`}>
         {chunk.heading}
       </div>
-      {showId && <div className="mt-0.5 text-[12px] text-text-faint">{chunk.id}</div>}
+      {showId && <div className="mt-0.5 t-label text-text-faint">{chunk.id}</div>}
       {chunk.meta && <div className="t-meta mt-0.5 text-text-faint">{chunk.meta}</div>}
       <ul className="mt-2 space-y-2">
         {chunk.lines.map((b, i) => (

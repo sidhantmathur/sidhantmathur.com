@@ -141,7 +141,7 @@ const before = await page.evaluate(() => {
   const form = ask?.closest("form");
   const send = form?.querySelector('button[type="submit"]');
   const chips = [...document.querySelectorAll("button")].filter((b) =>
-    /30-second version|shipped end to end/i.test(b.textContent ?? ""),
+    /short version|shipped end to end/i.test(b.textContent ?? ""),
   );
   return {
     askDisabled: Boolean(ask?.disabled),
@@ -235,7 +235,7 @@ await page.waitForTimeout(300);
 const after = await page.evaluate(() => {
   const ask = document.getElementById("ask");
   const chips = [...document.querySelectorAll("button")].filter((b) =>
-    /30-second version|shipped end to end/i.test(b.textContent ?? ""),
+    /short version|shipped end to end/i.test(b.textContent ?? ""),
   );
   return {
     askEnabled: ask && !ask.disabled,

@@ -29,10 +29,10 @@ export const SLUG_TO_RESUME: Record<string, string> = {
 export const WHY_CHATBOT_HEADING = "Why there's a chat on a portfolio";
 
 export const WHY_CHATBOT = [
-  "Most software is turning into a conversation. I don't build my own PostHog dashboards anymore — I describe what I want and the product's assistant builds it, because it knows the platform better than I do. That pattern is going to take over a lot of interfaces, and I don't see why a portfolio would be the exception.",
-  "A portfolio is a list standing in for a conversation you can't have. The better version is talking to me — about what I built, why, what it took, whether any of it maps to what you need. You can't do that at eleven at night while you're going through a stack of candidates. You can do this.",
-  "So come with the specific question. How the payments work. What the Nokia rollout actually involved. What I'd do in the first ninety days of the role you're hiring for. Skip everything you don't care about.",
-  "Every answer is built from the same source files as the resume, and it will show you which one, so you can open the long version whenever something is worth more than a paragraph.",
+  "Most software is turning into a conversation. I don't build my own PostHog dashboards anymore. I describe what I want and the product's assistant builds it, because it knows the platform better than I do. I think a lot of interfaces will go the same way, portfolios included.",
+  "Questions about a portfolio usually have to wait for a call. If you're going through candidates and can't call me, you can ask the assistant whether any of my work maps to what you need.",
+  "It works best with a specific question, such as how the payments work, what the Nokia rollout involved, or what I'd do in the first ninety days of the role you're hiring for.",
+  "Every answer is built from the same source files as the resume and shows which ones it drew on, so you can open the file when a paragraph isn't enough.",
 ];
 
 // A rail item with a `view` opens in the context panel and pushes `href` into
@@ -87,7 +87,7 @@ export const RAIL_HOW: RailGroup = {
     { label: "Measurements", href: "/measurements" },
     // The header's receipt is the desktop way in; below lg it is hidden, so
     // this is the route to the instruments — and the model picker — there.
-    { label: "Instruments", view: { kind: "instruments" } },
+    { label: "Technical details", view: { kind: "instruments" } },
   ],
 };
 
@@ -99,12 +99,11 @@ export const RAIL_HOW: RailGroup = {
 // the byte-identical cached prompt is the base `buildSystemPrompt()` returns on
 // every turn that didn't ask about the site. Logged in docs/copy-ledger.md.
 export const IDLE_LINES = [
-  "Still here. These lines ship with the page — an idle tab costs nothing and calls nothing.",
-  "The knowledge base rides inside the prompt, byte for byte, so the cache hits on every turn after the first.",
-  "No tokens are moving. The needle is at rest.",
-  "The message budget refills on a sliding hour, so there's rarely anything to wait for.",
-  "Most of the rail has a real page underneath it. Cmd-click and see.",
-  "Ask the question you'd actually ask on a call.",
+  "An idle tab doesn't call the model or cost anything.",
+  "The knowledge base is the same on every request, so after the first turn the provider usually serves it from cache.",
+  "Type / to see the commands.",
+  "The message limit refills on a sliding hour.",
+  "Most entries in the index have their own page. Cmd-click or Ctrl-click one to open it in a new tab.",
 ];
 
 // docs/site-copy.md → "Job-description fit", marked as a draft there.
@@ -112,7 +111,7 @@ export const JD_COPY = {
   // The panel's title bar shows the same words, so the heading is read out of
   // the registry rather than kept twice.
   heading: PANELS.jd.title,
-  body: "Paste the posting and I'll map my experience onto it — including the parts I don't match.",
+  body: "Paste the posting and the assistant will check it against Sidhant's record and list the requirements he doesn't meet.",
   placeholder: "Paste the job description here",
   submit: "Check the fit",
   // Lives in lib/job-posting.ts because the server reads it too — it's the
@@ -131,11 +130,11 @@ export const JD_COPY = {
 // the table into print and the scorecard for the same reason the gaps do.
 export const FIT_LABELS = {
   gaps: "What he doesn't have",
-  noGaps: "No unmet requirements — why",
+  noGaps: "No unmet requirements",
   counts: "Coverage",
   evidence: "Strongest evidence",
   notAScore:
-    "Each row is a judgment against the record, not a score, and the four tags don't add up to one. A row claiming a fit has to name the part of the record it stands on; where it didn't, the site downgraded it rather than the model.",
+    "Each row is a judgment against the record, and the four tags don't add up to an overall score. A row that claims a fit has to cite a source. Where one didn't, the site downgraded it to unclear, overriding the model.",
 };
 
 /**
@@ -146,7 +145,7 @@ export const FIT_LABELS = {
  */
 export function fitExcerptNote(shown: number, total: number): string {
   return shown > 0
-    ? `Showing ${shown} of ${total} requirements: the strongest cited ones. The counts cover all ${total}, and every gap is listed below.`
+    ? `Showing ${shown} of ${total} requirements, the strongest cited ones. The counts cover all ${total}, and every gap is listed below.`
     : `This link carries the counts for all ${total} requirements and every gap, but none of the rows.`;
 }
 
@@ -192,7 +191,7 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     message: SITE_REQUEST,
   },
   {
-    name: "/roast",
+    name: "/critique",
     hint: "Ask it what's wrong with this site",
     kind: "send",
     message: ROAST_REQUEST,

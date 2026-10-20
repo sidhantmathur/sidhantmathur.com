@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import type { ProjectSlug } from "@/content/projects";
 import { PANEL_BY_PATH, PANELS, type PanelView } from "./panels";
+import { carriedState } from "./conversation-history";
 
 // Keeps the context panel and the address bar in sync.
 //
@@ -49,7 +50,9 @@ export function usePanelUrl(panel: PanelView, setPanel: (v: PanelView) => void) 
     const search = window.location.search;
     const target = panelHref(panel, window.location.hash, search);
     if (window.location.pathname + search + window.location.hash === target) return;
-    window.history.pushState(null, "", target);
+    // Carries the conversation marker, so Back from a panel lands in the
+    // conversation it was opened from. See conversation-history.ts.
+    window.history.pushState(carriedState(), "", target);
   }, [panel]);
 
   // URL → panel, so Back and Forward move through opened views rather than

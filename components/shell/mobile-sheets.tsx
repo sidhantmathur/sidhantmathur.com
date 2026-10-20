@@ -63,17 +63,17 @@ export function MobileSheets({
           // screen. The bottom pad clears the home indicator on a notched
           // phone.
           showCloseButton={false}
-          className="w-72 overflow-y-auto overscroll-contain border-line bg-panel p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] text-[13px] text-text [font-family:var(--font-geist-mono)]"
+          className="w-72 overflow-y-auto overscroll-contain border-line bg-panel p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] t-meta text-text [font-family:var(--font-geist-mono)]"
         >
           {/* Title and close on one row, matching the bottom sheet's header
               rather than the default floating ✕. */}
           <SheetHeader className="-mr-2 -my-2 flex-row items-center gap-2 space-y-0 p-0">
-            <SheetTitle className="min-w-0 flex-1 truncate text-[13px] font-normal text-text-faint">
+            <SheetTitle className="min-w-0 flex-1 truncate t-meta font-normal text-text-faint">
               Index
             </SheetTitle>
             <SheetClose
               aria-label="Close"
-              className="flex h-11 w-11 shrink-0 touch-manipulation items-center justify-center text-[13px] text-text-faint transition-colors hover:text-accent"
+              className="flex h-11 w-11 shrink-0 touch-manipulation items-center justify-center t-meta text-text-faint transition-colors hover:text-accent"
             >
               ✕
             </SheetClose>
@@ -109,7 +109,7 @@ export function MobileSheets({
           className="border-line bg-panel p-0 text-text transition-[height] duration-200 [font-family:var(--font-geist-mono)]"
         >
           <SheetHeader className="flex-row items-center gap-2 space-y-0 border-b border-line py-0 pl-4 pr-1">
-            <SheetTitle className="min-w-0 flex-1 truncate text-[13px] font-normal text-text-faint">
+            <SheetTitle className="min-w-0 flex-1 truncate t-meta font-normal text-text-faint">
               {panel.title}
             </SheetTitle>
             {/* Both controls fill the header's height: this surface is only
@@ -118,13 +118,13 @@ export function MobileSheets({
               type="button"
               onClick={panel.onToggleFull}
               aria-expanded={panel.full}
-              className="flex h-11 shrink-0 touch-manipulation items-center px-2 text-[13px] text-text-faint transition-colors hover:text-accent"
+              className="flex h-11 shrink-0 touch-manipulation items-center px-2 t-meta text-text-faint transition-colors hover:text-accent"
             >
               {panel.full ? "collapse ↓" : "expand ↑"}
             </button>
             <SheetClose
               aria-label="Close"
-              className="flex h-11 w-11 shrink-0 touch-manipulation items-center justify-center text-[13px] text-text-faint transition-colors hover:text-accent"
+              className="flex h-11 w-11 shrink-0 touch-manipulation items-center justify-center t-meta text-text-faint transition-colors hover:text-accent"
             >
               ✕
             </SheetClose>
