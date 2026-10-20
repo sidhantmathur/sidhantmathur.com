@@ -2,12 +2,11 @@ import type { MetadataRoute } from "next";
 import { SITE_URL } from "@/lib/site";
 
 // Hand-listed rather than derived from the filesystem: there are a handful of
-// routes,
-// they change rarely, and a generated list would also have to exclude
-// /api/chat, /llms.txt and /resume.md, which is more logic than the list.
+// routes, they change rarely, and a generated list would also have to exclude
+// /api/chat, /llms.txt and /resume.md.
 //
-// No `lastModified`. A build-time `new Date()` would stamp every page as
-// changed on every deploy, which is worse than no signal at all.
+// No `lastModified`: a build-time `new Date()` would mark every page changed on
+// every deploy, which is worse than no signal.
 const ROUTES = [
   { path: "/", priority: 1 },
   { path: "/resume", priority: 0.9 },

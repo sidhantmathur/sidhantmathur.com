@@ -1,25 +1,19 @@
-// What /measurements/models is allowed to say, and how it derives it (Sprint 8).
+// What /measurements/models is allowed to say, and how it derives it. The data
+// is generated (lib/measurements.generated.ts) and the rendering is a page; the
+// decisions live here so they can be tested without a browser.
 //
-// Same split as Sprint 6: the data is generated (lib/measurements.generated.ts),
-// the rendering is a page, and the DECISIONS live here where they can be read
-// and tested without a browser.
-//
-// The archive holds every run ever published, so the first job here is picking
-// which run speaks for a model — and the second is refusing to compare runs
-// that aren't comparable. Both are policy, not formatting.
+// The archive holds every published run, so the two jobs here are picking which
+// run speaks for a model and refusing to compare runs that aren't comparable.
 
-// By its real filename, the same convention lib/role-fit.ts uses, so
-// `node --test` can load this module directly for evals/bakeoff.test.mjs.
+// Imported by its real filename, like lib/role-fit.ts does, so `node --test`
+// can load this module directly for evals/bakeoff.test.mjs.
 import { MIN_TURNS_FOR_P50, formatDate, type Maybe } from "./measurements.ts";
 import type { CitationVerdicts, PublishedRun, PublishedSample } from "./measurement-types";
 
 /**
- * The most recent run per model.
- *
- * The archive deliberately keeps older runs. Every aggregate on the site has to
- * pick one per model or it double-counts the models that were measured twice —
- * which is exactly the bug the archive would have introduced into Sprint 6's
- * groundedness figure if this didn't exist.
+ * The most recent run per model. The archive keeps older runs, so every
+ * aggregate has to pick one per model or it double-counts models measured
+ * twice.
  */
 export function latestRunPerModel(runs: PublishedRun[]): PublishedRun[] {
   const byModel = new Map<string, PublishedRun>();
@@ -45,13 +39,10 @@ export function runHistory(runs: PublishedRun[]): { model: string; runs: Publish
 }
 
 /**
- * Where the measured models and the chat's current catalogue part ways.
- *
- * The archive is keyed by the id that was measured, and stays that way: a run
- * of claude-haiku-4.5 is a measurement of claude-haiku-4.5, and nothing here
- * hands it to the model that replaced it. What the page owes a reader instead
- * is the difference, said out loud — which measured models the chat no longer
- * offers, and which models it offers that nothing here has measured.
+ * Where the measured models and the chat's current catalogue part ways: measured
+ * models the chat no longer offers, and offered models nothing has measured. A
+ * run stays keyed by the id that was measured and is never credited to the
+ * model that replaced it.
  *
  * `offered` is passed in rather than imported so that `node --test` can load
  * this module without the catalogue.
@@ -78,11 +69,6 @@ export function catalogueDrift(
  * of models still offered, and every run of a model the chat has retired. A
  * retired model's run is never in `current`, however recent it is, and nothing
  * here hands it to a successor.
- *
- * Before this existed both pages read `latestRunPerModel` over the whole
- * archive. Once the catalogue moved, that put a July run of gpt-5.6-luna beside
- * an October run of gpt-5-mini in one chart, under a sentence saying they were
- * measured on the same afternoon.
  */
 export function splitArchive(
   runs: PublishedRun[],
@@ -109,7 +95,7 @@ export function splitArchive(
   };
 }
 
-/** One model's row in the comparison. Every number here is nullable on purpose. */
+/** One model's row in the comparison. A metric the run didn't record is null, never zero. */
 export type ModelRow = {
   model: string;
   /** Short label for a chart axis: the model id without its provider prefix. */
@@ -122,15 +108,10 @@ export type ModelRow = {
   /** Turns that failed in transport or mid-stream rather than in judgment. */
   broke: number;
   /**
-   * Cases the model actually answered — `cases` minus `broke`. THE DENOMINATOR
-   * UNDER `passRate`, and the reason this field exists.
-   *
-   * A measured run of deepseek-v4-flash passed 15 of 22 while breaking
-   * mid-stream on 6 of them. Over `cases` that reads as 68% and puts the model
-   * near the bottom of the quality axis; over answered cases it is 15 of 16,
-   * and the reliability problem is a separate fact reported beside it. Scoring
-   * a dropped stream as a wrong answer is the exact confusion the rest of this
-   * codebase is built to avoid, and it must not be reintroduced by a chart.
+   * Cases the model actually answered: `cases` minus `broke`. This is the
+   * denominator under `passRate`, so a dropped stream counts against
+   * reliability (`breakRate`), not quality. A deepseek-v4-flash run that passed
+   * 15 of 22 while breaking mid-stream on 6 scores 15 of 16, not 68%.
    */
   answered: number;
   passRate: number | null;
@@ -141,7 +122,7 @@ export type ModelRow = {
   verified: number;
   /** The verdict split behind `verified`, where the run published one. */
   verdicts: CitationVerdicts | null;
-  /** Withheld under MIN_CLAIMS_FOR_RATE — same policy Sprint 6 set. */
+  /** Withheld under MIN_CLAIMS_FOR_RATE, the same floor as the site-wide figure. */
   groundedRate: Maybe<number>;
   ttftMs: PublishedSample;
   durationMs: PublishedSample;
@@ -203,16 +184,13 @@ export function toRow(run: PublishedRun): ModelRow {
 }
 
 /**
- * Groundedness per model, under Sprint 6's floor.
- *
- * Imported rather than re-derived so one model's rate can never be computed by
- * a rule the site-wide figure doesn't use. Kept local (not re-exported from
- * measurements.ts) because the floor there is documented against the aggregate.
+ * Groundedness per model, withheld under the same floor as the site-wide
+ * figure. A per-model rate over a handful of claims is, if anything, more
+ * misleading than the aggregate.
  */
 function groundedRateFor(claims: number, verified: number): Maybe<number> {
   if (claims === 0) return { value: null, reason: "not-measured" };
-  // Deliberately the same constant as the aggregate. A per-model rate over a
-  // handful of claims is if anything more misleading, not less.
+  // Must equal MIN_CLAIMS_FOR_RATE in lib/measurements.ts.
   if (claims < 20) return { value: null, reason: "too-few" };
   return { value: verified / claims, reason: null };
 }
@@ -234,21 +212,17 @@ export type FrontierPoint = {
   x: number;
   /** Pass rate — higher is better. */
   y: number;
-  /** Nothing measured here is both cheaper/faster AND better. */
+  /** No other point is both cheaper or faster and better. */
   onFrontier: boolean;
 };
 
 /**
- * Pareto frontier over (lower x, higher y).
+ * Pareto frontier over (lower x, higher y): a point is on it when no other point
+ * is at least as good on both axes and strictly better on one, so two identical
+ * points both stay on.
  *
- * This is the only place the page decides which models to emphasise, and it is
- * arithmetic rather than opinion: a point is on the frontier when no other point
- * beats it on both axes. Ties count as beaten only when the other point is
- * strictly better somewhere — otherwise two identical models would knock each
- * other off and the chart would emphasise nothing.
- *
- * A model missing either axis is not plotted at all. It is not a point at the
- * origin, and it is not silently dropped either — the caller reports it.
+ * A row missing either axis is not plotted, neither drawn at the origin nor
+ * dropped: it comes back in `unplotted` for the caller to report.
  */
 export function frontier(
   rows: ModelRow[],
@@ -353,28 +327,21 @@ export type Ranked = {
   value: number;
   /** 0..1 against the largest value in the panel. Bar length. */
   fraction: number;
-  /** Best on this metric — the one bar that wears the accent. */
+  /** Best on this metric, and the only bar drawn in the accent. */
   best: boolean;
 };
 
 /**
- * Which end of a metric is good — or neither.
- *
- * `"none"` is not a formality. "Output tokens per turn" has no winner: a longer
- * answer is not a better one, and it is also the output side of the bill. A
- * panel that painted the longest bar with the accent would be asserting a
- * preference the measurement does not contain, which is the quiet way a chart
- * starts lying.
+ * Which end of a metric is good, or neither. `"none"` is for a metric with no
+ * winner, like output tokens per turn: a longer answer isn't a better one, so
+ * no bar gets the accent.
  */
 export type Direction = "lower" | "higher" | "none";
 
 /**
- * Sorts a metric best-first and normalises it for a bar length.
- *
- * `direction` only changes the ORDER and which bar is emphasised, never the bar
- * length: length always encodes the raw magnitude against the panel's maximum,
- * so a 4-second bar is visibly four times a 1-second bar whether the metric is
- * one where less is better or more is.
+ * Sorts a metric best-first and normalises it for a bar length. `direction`
+ * changes only the order and which bar is emphasised: length always encodes
+ * the raw value against the panel's maximum, whichever end is good.
  */
 export function rank(
   rows: ModelRow[],
@@ -397,12 +364,9 @@ export function rank(
       : direction === "higher"
         ? Math.max(...bars.map((b) => b.value))
         : null;
-  // Emphasis is for a winner, and a value four models share is not one. The
-  // reliability panel is where this showed: four of five broke on zero turns,
-  // so four of five bars wore the accent and read "most reliable" — the accent
-  // spread across the majority, pointing at nothing, while the one model that
-  // actually differed sat in context grey. A tie is communicated by the
-  // ordering and the printed values; it does not need a colour.
+  // Only a unique best gets the accent. A value several models share is shown
+  // by the order and the printed numbers; colouring it would highlight the
+  // majority and point at nothing.
   const unique = bestValue != null && bars.filter((b) => b.value === bestValue).length === 1;
 
   return {
@@ -420,22 +384,17 @@ export function rank(
 // --- What the sample supports ----------------------------------------------
 
 /**
- * Whether a run is big enough for the page to print medians from it.
- *
- * Same floor as the latency panel. A bake-off with one sample per case has no
- * business printing a 95th percentile, which is why nothing here computes one.
+ * Whether a sample is big enough to print a median from: the same floor as the
+ * latency panel. Nothing here computes a 95th percentile, which a bake-off with
+ * one sample per case can't support.
  */
 export function supportsMedian(sample: PublishedSample): boolean {
   return !!sample && sample.n >= MIN_TURNS_FOR_P50;
 }
 
 /**
- * The median a sample is allowed to report, or null.
- *
- * The gate and the read belong together. Written apart they were four inline
- * copies of `supportsMedian(s) ? s!.p50 : null` plus a local helper, and the
- * failure mode of dropping the gate in a fifth copy is a median over three
- * turns printed in the same type as a median over twenty.
+ * The median a sample is allowed to report, or null. Read medians through this
+ * rather than `p50` directly, so no caller can skip the floor.
  */
 export function median(sample: PublishedSample): number | null {
   return supportsMedian(sample) ? sample!.p50 : null;
@@ -448,18 +407,14 @@ export type BakeoffSummary = {
   turnsGraded: number;
   /** Turns that never produced an answer. */
   turnsBroke: number;
-  /** Cases in the first run — only meaningful when `uniformCorpus`. */
+  /** Cases in the first run; only meaningful when `uniformCorpus`. */
   casesEach: number;
   /** Every model answered the same number of cases, so they are comparable. */
   uniformCorpus: boolean;
   /**
-   * What the whole comparison cost at list price, or NULL if any one row's
-   * cost is unknown.
-   *
-   * A partial sum is the failure this file exists to prevent: it has the
-   * typography of a total and the content of "some of it", and it would read as
-   * an unusually cheap afternoon rather than as a missing price. The unpriced
-   * model is named in the table's price column instead.
+   * What the whole comparison cost at list price, or null if any row's cost is
+   * unknown. A partial sum would read as a cheap total rather than a missing
+   * price; the unpriced model is named in the table's price column instead.
    */
   totalCost: number | null;
   /** Run dates, earliest first. Undated runs are not in here. */
@@ -491,11 +446,9 @@ export function bakeoffSummary(rows: ModelRow[]): BakeoffSummary {
 }
 
 /**
- * How the page says when this was measured.
- *
- * One afternoon reads as a date; runs published on different days read as a
- * span, because a bake-off spread over a week is a weaker claim than one run
- * back to back and the sentence should not flatten the two together.
+ * How the page says when this was measured: one date, or a span when runs were
+ * published on different days, since a bake-off spread over a week is a weaker
+ * claim than runs back to back.
  */
 export function measuredRange(dates: string[]): string {
   if (!dates.length) return "on an unknown date";
@@ -513,14 +466,9 @@ export function formatCost(usd: number | null, decimals = 4): string {
 }
 
 /**
- * What one turn cost, at the precision that turn needs.
- *
- * Four decimals is the scale of a turn on most of these models, and it is a row
- * of zeroes on the cheapest — which reads as free rather than as a tenth of a
- * cent. Under $0.001 the fifth decimal is the whole number. This was the same
- * ternary written in three places, one of them with a `?? 1` standing in for a
- * cost nobody measured; there is no stand-in here, an unpriced turn is an em
- * dash and the precision it would have had is moot.
+ * What one turn cost, at the precision it needs: four decimals, or five under
+ * $0.001, where four would print zeroes and read as free. An unpriced turn is
+ * an em dash, never a stand-in number.
  */
 export function formatTurnCost(usd: number | null): string {
   return formatCost(usd, usd != null && usd < 0.001 ? 5 : 4);

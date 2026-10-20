@@ -3,12 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { track, type AnalyticsEvent } from "@/lib/analytics";
 
-// Copy-to-clipboard affordance. The site stores nothing server-side, so the
-// clipboard is how a useful answer leaves the page — into an email, a Slack
-// thread, an ATS note.
-//
-// Labels here are UI affordances, not site copy (same standing as the slash
-// commands in shell-data.ts).
+// Copy-to-clipboard button. Its labels are UI affordances, not site copy.
 
 type Props = {
   /** Called at click time, so a streaming message is serialized when copied. */
@@ -19,11 +14,7 @@ type Props = {
   /** PostHog event name. */
   event?: AnalyticsEvent;
   className?: string;
-  /**
-   * Fires only on a copy that actually reached the clipboard — the actions
-   * strip's post-action emphasis (#27) hangs off this, and emphasising a copy
-   * that silently failed would be the site lying about its own state.
-   */
+  /** Fires only on a copy that actually reached the clipboard. */
   onCopied?: () => void;
 };
 
@@ -50,9 +41,8 @@ export function CopyButton({
     try {
       await navigator.clipboard.writeText(text);
     } catch {
-      // Insecure context, denied permission, or no clipboard API. Nothing
-      // useful to say — silently leave the label unchanged rather than
-      // claiming a copy that didn't happen.
+      // Insecure context, denied permission, or no clipboard API: leave the
+      // label unchanged rather than claim a copy that didn't happen.
       return;
     }
     if (event) track(event, { chars: text.length });

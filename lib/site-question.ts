@@ -1,31 +1,25 @@
-// Recognising a question about the site itself (roadmap Sprint 7, #8/#9).
+// Recognising a question about the site itself.
 //
-// WHY THIS EXISTS
+// The second corpus, this repo chunked under `repo:` ids, can't ride in the
+// system prompt on every turn. The base prompt is byte-identical across requests
+// so the provider's cache hits, and carrying the repo on every turn would bill
+// for it on turns that never asked. So it is appended only on turns that need
+// it, and this decides, server-side, which those are.
 //
-// The second corpus — this repo, chunked under `repo:` ids — cannot ride in the
-// system prompt on every turn. The knowledge base is concatenated
-// byte-identically into the prompt precisely so the provider's cache hits, and
-// doubling that string to answer a question nobody asked would show up as real
-// money in Sprint 2's cost meter on every ordinary turn.
-//
-// So the corpus is appended only on the turns that need it, and something has
-// to decide, server-side, that a turn is one of those. Same shape as
-// lib/job-posting.ts, and the same asymmetry: a false positive costs a bigger
-// prompt on one turn, a false negative costs an answer that either declines a
+// Same shape as lib/job-posting.ts, and the same asymmetry: a false positive
+// costs a bigger prompt on one turn, a false negative an answer that declines a
 // legitimate question or answers it with nothing behind it. Fire eagerly.
 //
-// The deliberate paths — the `/roast` and `/site` slash commands — are covered
-// by a static test asserting the exact message each one sends is detected here,
-// rather than by a magic prefix. Sprint 4 needed a prefix because a pasted
-// posting looks like anything; a question about the site says so in words.
+// The `/roast` and `/site` commands send fixed messages, and
+// evals/recursion.test.mjs asserts both are detected here, so neither needs a
+// magic prefix.
 
 /**
  * Any one of these, anywhere in the message, makes it a site turn.
  *
- * Deliberately about THIS artifact — "this site", "your prompt", "the repo" —
- * rather than about software in general. "How do you handle rate limiting?" as
- * a general engineering question is still out of scope and still declined; the
- * same words about this site are not.
+ * About this site ("this site", "your prompt", "the repo") rather than software
+ * in general: "how do you handle rate limiting?" as a general engineering
+ * question is still out of scope and still declined.
  */
 const SIGNALS: RegExp[] = [
   /\b(?:this|the|your) (?:site|website|page|app|chat|chatbot|assistant|codebase|repo|repository)\b/i,
@@ -39,7 +33,7 @@ const SIGNALS: RegExp[] = [
   /\b(?:prompt cache|token budget|rate limit(?:ing|s)?|cost meter|citation checker)\b/i,
 ];
 
-/** Below this, one signal still counts — questions about the site are short. */
+/** True when any signal matches. No length floor: questions about the site are short. */
 export function looksLikeSiteQuestion(text: string): boolean {
   const t = text.trim();
   if (!t) return false;
@@ -47,10 +41,9 @@ export function looksLikeSiteQuestion(text: string): boolean {
 }
 
 /**
- * The message `/roast` sends, shown in the conversation as the visitor's own
- * turn — so it is written as a question a person would ask, not as a prompt
- * fragment. The hard part of a roast is asking for specifics; the model will
- * happily produce affectionate nonsense otherwise.
+ * The message `/roast` sends. It shows in the conversation as the visitor's own
+ * turn, so it reads as a question a person would ask. It asks for specifics
+ * because without them the model produces affectionate nonsense.
  */
 export const ROAST_REQUEST =
   "Roast this site. Use the repo — name the specific choices, files and trade-offs that are actually weak, not the flattering kind of criticism.";

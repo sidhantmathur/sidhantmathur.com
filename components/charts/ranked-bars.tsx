@@ -2,16 +2,11 @@ import { ChartFrame, shortNames } from "./chart-frame";
 import { BAR_PX, CONTEXT, MARK } from "./chart-tokens";
 import type { RankResult } from "@/lib/model-comparison";
 
-// A single-series ranked bar panel (Sprint 8).
+// A single-series ranked bar panel.
 //
-// HTML and CSS rather than SVG, on purpose. These panels have to reflow from an
-// 80ch document down into the shell's ~380px context panel, and an SVG that
-// scales to fit takes its type down with it — an 11px axis label becomes 6px in
-// the panel. Divs keep the labels as real text at a real size at every width,
-// and a bar is a box, which is the one mark HTML draws natively.
-//
-// One series per panel, so there is no legend: the heading names what is
-// plotted, which is the whole job a one-swatch legend box would do.
+// HTML and CSS rather than SVG, so the labels stay real text at a real size at
+// any width: an SVG that scales to fit a narrow column takes its type down
+// with it. One series per panel, so the heading does the job of a legend.
 
 export type RankedBarsProps = {
   heading: string;
@@ -47,28 +42,21 @@ export function RankedBars({
           {bars.map(({ row, value, fraction, best }) => (
             <div key={row.model}>
               <div className="flex items-baseline justify-between gap-2">
-                {/* Not truncated, for the reason spelled out on the heatmap's
-                    row headers: a clipped model name on a touch surface has no
-                    second way to be read, since the `title` beside it is a
-                    hover affordance. It wraps instead.
-                    (Nothing is clipped at any width these panels currently
-                    render at — they live on /measurements/models only. This is
-                    the same fix applied to the same shape of bug, ahead of the
-                    narrow column the file header is written for.) */}
+                {/* Wraps rather than truncates: `title` is a hover affordance,
+                    so a clipped name on a touch screen could not be read. */}
                 <span className="t-meta min-w-0 break-words text-text-soft" title={row.model}>
                   {row.short}
                 </span>
-                {/* The value is direct-labelled on every bar here rather than
-                    selectively: five rows is a readable number of labels, and
-                    it removes the tooltip from the critical path entirely. */}
+                {/* Every bar is direct-labelled: a handful of rows is a
+                    readable number of labels, and it keeps the tooltip off the
+                    critical path. */}
                 <span className="t-meta shrink-0 tabular-nums text-text">
                   {format(value)}
                   {best && <span className="ml-1.5 text-accent">{bestLabel}</span>}
                 </span>
               </div>
-              {/* The track is not a second data mark — it is the panel's
-                  maximum drawn as space, so bar lengths are comparable across
-                  rows without a printed axis. */}
+              {/* The track is the panel's maximum drawn as space, so bar
+                  lengths compare across rows without a printed axis. */}
               <div
                 className="mt-1 w-full bg-raised"
                 style={{ height: BAR_PX }}
@@ -77,11 +65,10 @@ export function RankedBars({
                 <div
                   className="h-full"
                   style={{
-                    // Never below a hairline: a genuine near-zero must still be
-                    // visible as "measured and tiny", not read as missing.
+                    // Never below a hairline: a near-zero must read as
+                    // "measured and tiny", not as missing.
                     width: `${Math.max(1.5, fraction * 100)}%`,
                     background: best ? MARK : CONTEXT,
-                    // 4px rounded data-end, square at the baseline.
                     borderRadius: "0 4px 4px 0",
                   }}
                 />

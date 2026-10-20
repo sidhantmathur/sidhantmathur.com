@@ -1,43 +1,26 @@
-// The job-description assessment, made honest after the fact (roadmap Sprint 4:
-// S1 / bank §6 Stage 1, and the schema half of #11's `requirementTable`).
-//
-// WHERE THE JUDGMENT LIVES
-//
-// The model extracts the posting's requirements in one step and judges them in
-// the next. This module runs after both and is the only thing that decides what
-// a reader finally sees:
+// The job-description assessment, reconciled after the model produces it. The
+// model extracts a posting's requirements in one step and judges them in the
+// next; this module runs after both and decides what a reader sees:
 //
 //   1. Every extracted requirement gets a row. One the judgment skipped is
-//      added as `unclear`, so coverage is a property of the code rather than of
-//      the model's diligence. Sprints 1 and 3 both ended with the same failing
-//      assertion — an honest assessment that quietly skipped one labeled
-//      requirement — and this is the structural fix for it.
-//   2. A row claiming a fit (`met` / `partial`) that cites nothing valid is
-//      downgraded to `unclear`. Not flagged, not softened: the verdict changes,
-//      and the reason for the change is recorded next to it.
-//   3. A row that DOES cite gets Sprint 3's checker run over its evidence, so a
-//      row's sentence is held to the same standard as a sentence of prose.
-//   4. Gaps cannot come out empty while an `unmet` row exists — if the model
-//      supplies none, they are derived from the rows themselves.
+//      added as `unclear`, so coverage doesn't depend on the model's diligence.
+//   2. A `met` or `partial` row that cites nothing valid is downgraded to
+//      `unclear`, and the reason is recorded next to it.
+//   3. A row that does cite has its evidence run through the citation checker
+//      (lib/verify.ts), the same standard as a sentence of prose.
+//   4. Gaps can't come out empty while an `unmet` row exists: if the model
+//      supplies none, they are derived from the rows.
 //
-// WHY A CITATION IS ONLY REQUIRED OF A POSITIVE CLAIM
+// Only a positive verdict needs a citation. `unmet` and `unclear` assert an
+// absence, which has no chunk to point at; demanding one would make claiming a
+// fit the cheapest way to satisfy the checker.
 //
-// `unmet` and `unclear` are assertions about ABSENCE, and an absence has no
-// chunk to point at. Demanding a source for them would make the cheapest way to
-// satisfy the checker "claim it instead", which is the exact failure this whole
-// sprint exists to make structurally hard.
+// The invariants are enforced here rather than in the Zod schema because a
+// rejected tool call is a broken turn with no assessment at all. The schema
+// stays generous, and the worst case here is a downgraded row.
 //
-// WHY IT RUNS HERE AND NOT IN THE SCHEMA
-//
-// Zod could reject a bad assessment, but a rejected tool call is a broken turn,
-// and Sprint 1 established that a broken turn reads exactly like the bug being
-// fixed. Validation that can throw the answer away is a failure path. So the
-// schema stays generous and the invariants are enforced on the far side of it,
-// where the worst case is a downgraded row rather than no assessment at all.
-//
-// Dependency-free apart from lib/verify (the caller passes the corpus in), so
-// `node --test` can exercise it against hand-written fixtures. Same reasoning as
-// lib/verify.ts and lib/transcript.ts.
+// Dependency-free apart from lib/verify.ts (the caller passes the corpus in),
+// so `node --test` can run it against hand-written fixtures.
 
 import { checkClaim, type VerifiableChunk } from "./verify.ts";
 
@@ -45,7 +28,7 @@ export type RequirementVerdict = "met" | "partial" | "unmet" | "unclear";
 
 const VERDICTS: RequirementVerdict[] = ["met", "partial", "unmet", "unclear"];
 
-/** A verdict that asserts something Sidhant HAS, and so has to point at it. */
+/** A verdict that asserts something Sidhant has, and so has to cite it. */
 function isPositive(v: RequirementVerdict): boolean {
   return v === "met" || v === "partial";
 }
@@ -53,7 +36,10 @@ function isPositive(v: RequirementVerdict): boolean {
 /** The tool's raw input, before any of this module has run. */
 export type RawRoleFit = {
   role?: unknown;
-  /** The assessment's rows. `requirements` is read too, for older shapes. */
+  /**
+   * The assessment's rows. `requirements` is the same list under the name the
+   * model sometimes slips into; the route's schema accepts both.
+   */
   rows?: unknown;
   requirements?: unknown;
   gaps?: unknown;
@@ -94,9 +80,8 @@ export type RoleFitResult = {
   downgraded: number;
 };
 
-// Bounds. A posting with forty bullet points is a posting with forty bullet
-// points, but a table that long stops being readable and the generation that
-// fills it stops fitting the output ceiling.
+// Bounds. A table longer than MAX_ROWS stops being readable, and the generation
+// that fills it stops fitting the output ceiling.
 const MAX_ROWS = 14;
 const MAX_REQUIREMENT_CHARS = 240;
 const MAX_EVIDENCE_CHARS = 400;
@@ -117,20 +102,14 @@ function toVerdict(value: unknown): RequirementVerdict {
 
 // --- What part of a row's sentence is checkable ---------------------------
 //
-// Sprint 3's checker reads PRESENCE: it asks whether a sentence's numbers and
-// names appear in the chunk it cited. On a row that states a shortfall, the
-// names in the sentence are the things deliberately NOT in the record — "he
-// owns SQL and DAX at Nokia, but there is no dbt, Snowflake, or BigQuery in the
-// knowledge base" is an honest sentence whose last three names are absent by
-// construction. Checking it whole put an unverified mark on the most honest
-// rows in the table, which is precisely the failure Sprint 3 spent its
-// calibration on: a mark on a correct sentence teaches the reader to ignore
-// every mark.
+// The checker reads presence: whether a sentence's numbers and names appear in
+// the chunk it cited. A row stating a shortfall names things that are absent by
+// construction ("SQL and DAX at Nokia, but no dbt or Snowflake"), so checking it
+// whole would mark the most honest rows unverified.
 //
-// So: a `met` row is checked whole. A `partial` row is checked up to its first
-// negation, which is where the claim ends and the shortfall begins. `unmet` and
-// `unclear` rows are not checked at all — they assert an absence, and this
-// checker has nothing to say about absences.
+// So a `met` row is checked whole, a `partial` row up to its first negation
+// (where the claim ends and the shortfall begins), and `unmet` and `unclear`
+// rows not at all.
 
 const NEGATION = /\b(?:but|though|although|however|while|whereas|no|not|none|nothing|never|lacks?|lacking|missing|absent|without|doesn'?t|does not|didn'?t|isn'?t|is not|aren'?t|hasn'?t|has not|haven'?t)\b/i;
 
@@ -164,13 +143,9 @@ function contentWords(text: string): string[] {
 }
 
 /**
- * Is this row about that requirement?
- *
- * Deliberately generous: the cost of a false match is a requirement the reader
- * sees answered once instead of twice, and the cost of a false MISS is a
- * duplicate row saying "the assessment didn't cover this" directly underneath
- * the place it covered it. The second is the one that makes the table look
- * broken, so the threshold leans toward matching.
+ * Is this row about that requirement? Leans toward matching: a false match
+ * means a requirement answered once instead of twice, while a false miss adds a
+ * duplicate "not covered" row right under the row that covered it.
  */
 export function sameRequirement(a: string, b: string): boolean {
   const left = contentWords(a);
@@ -187,10 +162,9 @@ export function sameRequirement(a: string, b: string): boolean {
 /**
  * Turns what the model produced into what the site will render.
  *
- * `extracted` is the verbatim requirement list from the extraction step, empty
- * when the turn was a question about a role rather than a pasted posting —
- * there is nothing to extract from a question, so coverage simply doesn't
- * apply and no rows are added.
+ * `extracted` is the verbatim requirement list from the extraction step. It is
+ * empty when the turn named a role rather than pasting a posting, and then
+ * coverage adds no rows.
  */
 export function reconcileRoleFit(
   raw: RawRoleFit,
@@ -202,12 +176,9 @@ export function reconcileRoleFit(
 
   const rows: RequirementRow[] = [];
   for (const entry of rawRows.slice(0, MAX_ROWS)) {
-    // A bare string is the shape a model falls into when it echoes the
-    // extraction instead of judging it — the failure that cost this sprint's
-    // first live run four of six postings, back when the schema rejected it
-    // and the whole assessment went with it. It is kept, and it is kept
-    // VISIBLY unjudged: a requirement with no verdict is worth more to a
-    // reader than a turn with no assessment, and worth less than a verdict.
+    // A bare string is what a model produces when it echoes the extraction
+    // instead of judging it. It is kept as a visibly unjudged row: a
+    // requirement with no verdict is worth more than a lost assessment.
     if (typeof entry === "string") {
       const requirement = str(entry, MAX_REQUIREMENT_CHARS);
       if (!requirement) continue;
@@ -236,8 +207,7 @@ export function reconcileRoleFit(
 
     rows.push({
       requirement,
-      // THE DOWNGRADE. A claim with no source to open is not a claim the site
-      // is willing to render as one.
+      // The downgrade: a positive claim with no valid source renders as unclear.
       verdict: uncited ? "unclear" : claimed,
       claimedVerdict: uncited ? claimed : null,
       downgrade: uncited ? "uncited" : null,
@@ -245,9 +215,8 @@ export function reconcileRoleFit(
       sources: check.ids,
       unknownSources: check.unknownIds,
       // A cited row whose numbers and names aren't in the chunk keeps its
-      // verdict and gets the mark instead. Sprint 3's leniency runs one way for
-      // a reason (its note 3): the checker reports absence, and a near-miss
-      // that silently rewrote a verdict would be an accusation, not a report.
+      // verdict and gets the mark instead: the checker reports absence, and
+      // rewriting a verdict on a near-miss would be an accusation, not a report.
       unverified: check.ids.length ? check.missing : [],
     });
   }
@@ -280,9 +249,8 @@ export function reconcileRoleFit(
   };
   for (const row of rows) counts[row.verdict] += 1;
 
-  // Gaps. The model's, or — if it supplied none while the table says otherwise
-  // — the posting's own words for every requirement it does not meet. There is
-  // no path here that produces an assessment with unmet rows and no gaps.
+  // Gaps are the model's or, if it supplied none, the posting's own words for
+  // every unmet row. No path returns unmet rows with no gaps.
   let gaps = strList(raw.gaps, MAX_EVIDENCE_CHARS);
   if (!gaps.length) gaps = rows.filter((r) => r.verdict === "unmet").map((r) => r.requirement);
 

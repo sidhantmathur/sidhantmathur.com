@@ -5,21 +5,18 @@ import { track } from "@/lib/analytics";
 import { useHydrated } from "@/components/shell/use-hydrated";
 import { EMAIL, LINKEDIN_URL, RESUME_PDF, RESUME_PDF_FILENAME } from "@/lib/site";
 
-// The three ways to act on this site — resume, email, LinkedIn — as one set of
-// controls, used by the front door, the end of every document page and the
-// contact panel (wave 2).
+// The three ways to act on this site (resume, email, LinkedIn) as one set of
+// controls, shared by every surface in ContactSurface.
 //
-// WHY THE EMAIL IS A BOX AND NOT A BUTTON. "Email me" used to be a bare
-// `mailto:`, which on a desktop with no mail client configured does nothing a
-// visitor can see. The council review called it a dead end. So the address is
-// on screen as text, it is still a mailto for the people it works for, and a
-// copy button beside it covers everyone else. If the clipboard is refused
-// (an insecure context, a denied permission) the address is selected instead,
-// so the next keystroke is Cmd-C rather than a guess.
+// The email is on screen as text rather than a bare mailto, which does nothing
+// visible on a desktop with no mail client. It is still a mailto link, and the
+// copy button beside it covers everyone else. If the clipboard is refused (an
+// insecure context, a denied permission) the address is selected instead, so
+// the next keystroke is Cmd-C.
 //
-// Every click is tracked with the surface it came from. The synthesis left
-// "PDF or HTML resume as the primary button?" open until PostHog could say
-// which one visitors actually take; these events are how it will.
+// Every click is tracked with the surface it came from: which resume format
+// visitors take is an open question until PostHog answers it (the CTA row note
+// in docs/site-copy.md).
 
 // "replay" is the banner over a replayed conversation — in practice, a fit
 // check sent with an application (docs/application-links.md).
@@ -88,9 +85,9 @@ export function EmailCopy({
   surface: ContactSurface;
   className?: string;
 }) {
-  // The copy button needs JavaScript, so it is disabled until it has it — the
-  // same gate as every other control on the site (see use-hydrated.ts). The
-  // address beside it is a plain mailto and works from the first paint.
+  // The copy button is disabled until hydration, like every other control
+  // that needs JavaScript (see use-hydrated.ts). The address beside it is a
+  // plain mailto and works from the first paint.
   const hydrated = useHydrated();
   const [state, setState] = useState<CopyState>("idle");
   const addressRef = useRef<HTMLAnchorElement>(null);

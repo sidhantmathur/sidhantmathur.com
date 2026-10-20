@@ -3,24 +3,19 @@ import { CONTEXT, GRID, MARK, SURFACE } from "./chart-tokens";
 import { formatPercent } from "@/lib/measurements";
 import { placeLabels, type FrontierResult } from "@/lib/model-comparison";
 
-// Quality against cost, and quality against latency (Sprint 8).
+// Quality against cost, or quality against latency: one dot per model, better
+// is up, cheaper or faster is left. Dots on the Pareto frontier (nothing
+// measured beats them on both axes) wear the accent; the rest are context
+// grey. Identity comes from the label beside each dot, so there is no
+// categorical palette.
 //
-// The Artificial Analysis move, and the single most useful frame for "which of
-// these should this site actually run": one dot per model, better is up, cheaper
-// and faster is left. Dots on the Pareto frontier — nothing measured is both
-// cheaper AND better — wear the accent; everything else is context grey. That is
-// emphasis, computed rather than chosen, and it is why this chart needs no
-// categorical palette: identity comes from the label beside each dot.
+// Two charts rather than one: cost and latency on one plot against a shared
+// quality axis would be a dual-axis chart, and the alignment between the two
+// scales would be arbitrary and imply a correlation.
 //
-// TWO CHARTS RATHER THAN ONE. Cost and latency are different scales, and putting
-// both on one plot against a shared quality axis would be a dual-axis chart —
-// the one construction this method rules out outright, because the alignment
-// between the two scales is arbitrary and invents a correlation.
-//
-// SVG here, unlike the bar panels: dots need two-dimensional positioning, which
-// CSS boxes cannot do honestly. The cost is that type scales with the chart, so
-// the figure sits in its own horizontally scrollable box with a floor width
-// rather than shrinking its axis labels into illegibility.
+// SVG, unlike the bar panels, because dots need two-dimensional positioning.
+// Type scales with an SVG, so the figure sits in a scrollable box with a floor
+// width rather than shrinking its labels.
 
 const W = 560;
 const H = 300;
@@ -43,12 +38,9 @@ export type FrontierScatterProps = {
   formatX: (value: number) => string;
 };
 
-// The y axis is not a parameter. `frontier()` is called with the pass rate at
-// both of this chart's call sites, and it is the axis the chart exists to hold
-// fixed: quality against cost and quality against latency are two views of one
-// trade, and they are only comparable because the vertical is the same measure
-// in both. It was three props — a label, a formatter for the dots and the
-// tooltip, and a rounder for the ticks — passed identical values twice.
+// The y axis is fixed rather than a prop: the two charts are two views of one
+// trade, comparable only because the vertical is the same measure (pass rate)
+// in both.
 const Y_LABEL = "pass rate (answered)";
 const formatY = formatPercent;
 /** Axis ticks want round numbers; the dots and tooltip carry the precision. */
@@ -100,11 +92,9 @@ export function FrontierScatter({
   const xs = points.map((p) => p.x);
   const ys = points.map((p) => p.y);
 
-  // Domains are padded outward so no dot sits on an axis, and the y domain is
-  // NOT pinned to zero: these pass rates cluster near the top, and a 0–100 axis
-  // would flatten every difference the chart exists to show. The ticks are
-  // printed, and the caption says the axis is zoomed — the honesty is in the
-  // labelling rather than in a rule that would make the chart useless.
+  // Domains are padded outward so no dot sits on an axis. The y domain is not
+  // pinned to zero: pass rates cluster near the top and a 0–100 axis would
+  // flatten every difference. The note says the axis is zoomed.
   const xPad = xScale === "log" ? 1.25 : (Math.max(...xs) - Math.min(...xs)) * 0.15 || 1;
   const xMin = xScale === "log" ? Math.min(...xs) / xPad : Math.min(...xs) - xPad;
   const xMax = xScale === "log" ? Math.max(...xs) * xPad : Math.max(...xs) + xPad;
@@ -121,9 +111,9 @@ export function FrontierScatter({
   };
   const sy = (v: number) => PLOT.y1 - ((v - yMin) / (yMax - yMin || 1)) * (PLOT.y1 - PLOT.y0);
 
-  // Ticks are clamped to the domain. `linearTicks` rounds outward to land on
-  // readable numbers, which can put the first tick BELOW the plot floor — it
-  // then renders under the x-axis title as a stray label pointing at nothing.
+  // Ticks are clamped to the domain: `linearTicks` rounds outward, which can
+  // put the first tick below the plot floor, as a stray label under the x-axis
+  // title.
   const inDomain = (lo: number, hi: number) => (v: number) => v >= lo && v <= hi;
   const xTicks = (xScale === "log" ? logTicks(xMin, xMax) : linearTicks(xMin, xMax)).filter(
     inDomain(xMin, xMax),
@@ -151,26 +141,18 @@ export function FrontierScatter({
         </>
       }
     >
-      {/* The fade earns its place below 560px — the SVG's floor width, and now
-          its viewBox width — where the box scrolls; at or above it the drawing
-          fits and a fade would only be dimming real data. */}
       <ScrollFade width={560} className="mt-3" label={heading}>
         <svg
           viewBox={`0 0 ${W} ${H}`}
-          // The floor width IS the viewBox width. It was 480 against a 560
-          // viewBox, which scales the whole drawing to 0.857 — so the 10px
-          // ticks and model labels rendered at 8.6px on the one device that
-          // hits the floor. A type size that only means what it says at one
-          // width is not a type size; pinning the two together makes 10px
-          // 10px, and the box scrolls the extra 80px like it was already
-          // scrolling the rest.
+          // The floor width is the viewBox width, so 10px labels render at
+          // 10px at the floor instead of scaling down; narrower boxes scroll.
           className={`h-auto w-full ${floorWidth(560)}`}
           role="img"
           aria-label={`${heading}. ${points
             .map((p) => `${p.row.short}: ${formatX(p.x)}, ${formatY(p.y)}`)
             .join("; ")}`}
         >
-          {/* Grid — hairline, solid, one step off the surface, recessive. */}
+          {/* Gridlines */}
           {yTicks.map((t) => (
             <line
               key={`y${t}`}
@@ -231,17 +213,16 @@ export function FrontierScatter({
             const spot = spots[i];
             return (
               <g key={p.row.model}>
-                {/* Hit target. The dot is 9px across; a pointer should not have
-                    to land dead-centre on it, so the interactive circle is the
-                    24px minimum and carries the tooltip. */}
+                {/* Hit target: the dot is 9px across, so a transparent 24px
+                    circle carries the tooltip. */}
                 <circle cx={cx} cy={cy} r={12} fill="transparent">
                   <title>
                     {`${p.row.model} — ${formatY(p.y)} on ${p.row.cases} cases, ${formatX(p.x)}` +
                       (p.onFrontier ? " · on the frontier" : "")}
                   </title>
                 </circle>
-                {/* 2px ring in the surface colour, so dots stay legible where
-                    they overlap. Not a border — a spacer. */}
+                {/* A 2px ring in the surface colour keeps overlapping dots
+                    legible. */}
                 <circle cx={cx} cy={cy} r={4.5} fill={fill} stroke={SURFACE} strokeWidth={2} />
                 <text
                   x={spot.x}

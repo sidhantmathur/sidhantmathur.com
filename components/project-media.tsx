@@ -1,23 +1,18 @@
 import Image from "next/image";
 import { ADARLE_MEDIA, FEATURE_SURFACE, type MediaSlot } from "@/content/adarle20-media";
 
-// The A Darle 20 media and feature surface (#19, Track B).
+// The A Darle 20 media and feature surface (#19): two pre-rendered sections
+// appended below the case study.
 //
-// Two sections appended below the case study. Both are pre-rendered — nothing
-// here fetches.
+// Only slots with a file render; an empty frame on the flagship case study
+// reads as unfinished work. The capture briefs for the rest stay in
+// content/adarle20-media.ts and the copy ledger, and a slot appears here once
+// its `asset` is filled in.
 //
-// ONLY SLOTS WITH A FILE RENDER. This component used to draw every slot in the
-// manifest, an empty one as a dashed frame carrying its capture brief and the
-// words "nothing here yet". That was honest, and on the flagship case study it
-// was also five empty boxes and a note to the editor, live, in front of every
-// recruiter who clicked through (council review, 2026-10-19). The briefs are
-// still the brief: they live in content/adarle20-media.ts and the copy ledger,
-// and a slot appears here the day its `asset` is filled in.
-//
-// The same goes for FEATURE_SURFACE_NOTE, which carries a `[VERIFY]` marker
-// and is not rendered until the missing features are written down. Markers
-// live in drafts and the ledger, never on a page — evals/static.test.mjs fails
-// the build if one renders.
+// FEATURE_SURFACE_NOTE carries a `[VERIFY]` marker, so it stays off the page
+// until the missing features are written down. evals/track-b.test.mjs fails if
+// this component renders it, and scripts/check-rendered-markers.mjs fails the
+// build if any marker reaches the served output.
 
 export function AdarleFeatureSurface() {
   return (

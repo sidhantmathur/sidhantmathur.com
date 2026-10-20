@@ -7,26 +7,17 @@ import {
   TLDR_LABEL,
 } from "@/content/recruiter";
 
-// The recruiter TL;DR (#25, Track B — promoted by the front-door pass).
+// The recruiter TL;DR (docs/idea-decisions.md #25): the facts a recruiter scans
+// for in the first few seconds, readable before anyone types. Values are set in
+// the sans face because they are sentences; the mono labels keep the readout
+// register.
 //
-// A chat-first site fails the six-second scan: there is nothing on it to read
-// until someone types. This is the answer to that. The front-door pass
-// (2026-08-23) promoted it from a caption-sized readout to body type — the
-// most important text on the page was the hardest to read on it — and set the
-// values in the sans face: they are sentences to be read, not machinery, and
-// the mono labels beside them keep the readout register.
-//
-// Constraints it lives under:
-//
-//   1. It renders in the EMPTY STATE ONLY. Once a conversation exists the
-//      reader has asked a better question than this block answers, and leaving
-//      it above the transcript would make it chrome. Asserted in
-//      evals/track-b.test.mjs.
-//   2. Every value is corpus text, not drafted prose (see content/recruiter.ts).
-//      Nothing here may say something the model could not also say and cite.
-//   3. It renders HERO_TLDR, not the full list — the `looking for` and `where`
-//      rows live in the hero subline now, and repeating them four lines apart
-//      would read as padding. The full six-row list stays exported and checked.
+//   1. Empty state only. Once a conversation exists it would be chrome above
+//      the transcript. Asserted in evals/track-b.test.mjs.
+//   2. Every value is corpus text, not drafted prose (see content/recruiter.ts):
+//      nothing the model couldn't also say and cite.
+//   3. It renders HERO_TLDR, not the full six-row RECRUITER_TLDR: the `looking
+//      for` and `where` rows are in the hero subline already.
 export function RecruiterTldr() {
   return (
     <section aria-label="Summary" className="max-w-[64ch] border-t border-line pt-4">
@@ -52,12 +43,10 @@ export function RecruiterTldr() {
   );
 }
 
-// The two case-study cards under the tl;dr (wave 2). One number each, set
-// large in the sans face because it is the thing to read, with the case
-// study's title over it and one link out. The whole card is not the link: a
-// card-sized anchor reads its every word as the link's name, and "Read the
-// case study" twice on one page needs the title appended for a screen reader
-// to tell the two apart.
+// The case-study cards under the TL;DR: one number each, the title over it, and
+// one link out. The whole card isn't the link because a card-sized anchor reads
+// every word as the link's name; the sr-only title tells the two "Read the case
+// study" links apart.
 export function CaseCards() {
   return (
     <section aria-label="Case studies" className="max-w-[64ch]">

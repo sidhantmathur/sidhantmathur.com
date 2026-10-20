@@ -1,28 +1,22 @@
-// Does the page tell the truth before its JavaScript arrives?
+// Checks what the homepage does before its JavaScript arrives.
+// scripts/perf.mjs measures how long that window is; this asserts what happens
+// inside it, on a heavily throttled mobile load, after confirming the page has
+// not hydrated yet:
 //
-// scripts/perf.mjs measures how long that window is. This asserts what happens
-// inside it, which is the half that actually bit someone: on a restaurant's
-// wifi the shell painted a composer, a send button and four question chips
-// several seconds before any of them worked, and every tap in between was
-// swallowed without a mark. The send button was worse than inert — a submit
-// inside a form with no action, so a press fired a native GET navigation that
-// threw away the load it was waiting on.
+//   - the composer, the send button and the suggested chips are disabled, and
+//     the status strip and placeholder say "loading"
+//   - a forced click or requestSubmit on send does not navigate (a native GET
+//     submit would throw away the load in progress)
+//   - nothing that needs JavaScript is reachable by Tab
 //
-// The checks below run against a real throttled load, at a moment chosen to be
-// inside the window rather than assumed to be:
-//
-//   1. the composer is disabled, so it cannot take a question nothing can send
-//   2. the send button is disabled, so no native submit is possible
-//   3. the suggested chips are disabled
-//   4. the status strip says "loading" rather than "ready"
-//   5. a forced click on the send button does not navigate the page
-//   6. after hydration, every one of those is live again
-//
-// Check 6 is not a formality. A gate that never opens is a worse bug than the
-// one it fixed, and it would pass checks 1–5 perfectly.
+// Then it waits for hydration and checks every control is live again: a gate
+// that never opens would pass all of the above.
 //
 // Usage:  node scripts/check-pre-hydration.mjs
 //         BASE=https://<preview>.vercel.app node scripts/check-pre-hydration.mjs
+//
+// Without BASE it runs `next start` on a free port from 3200 (PORT to change),
+// so it needs a production build. Exits 1 if any check fails.
 
 import { spawn } from "node:child_process";
 import { connect } from "node:net";
@@ -31,9 +25,8 @@ import { chromium } from "playwright";
 const PORT = Number(process.env.PORT ?? 3200);
 const external = Boolean(process.env.BASE);
 
-// Slower than the perf profile on purpose. The point here is to be standing
-// comfortably inside the pre-hydration window when the assertions run, not to
-// reproduce a representative connection.
+// Slower than the perf profile on purpose: the goal is to be well inside the
+// pre-hydration window when the assertions run, not to model a real connection.
 const NET = { latency: 300, down: (700 * 1024) / 8, up: (300 * 1024) / 8 };
 const CPU = 6;
 
@@ -56,12 +49,10 @@ async function freePort(from) {
   throw new Error("no free port");
 }
 
-// `npx` runs next through a shell, so killing the process spawned here used to
-// leave the server it started running on its port — every run of this script
-// left one behind (seven of them by the end of wave 1's verification). The
-// server is started as its own process group and the whole group is stopped.
-// A separate group no longer receives the terminal's Ctrl-C, so that is
-// forwarded by hand.
+// `npx` runs next through a shell, so killing only the spawned process leaves
+// the server holding its port. The server gets its own process group and the
+// whole group is stopped. A separate group doesn't receive the terminal's
+// Ctrl-C, so that is forwarded by hand.
 function stopServer(proc) {
   try {
     process.kill(-proc.pid, "SIGKILL");
@@ -134,14 +125,12 @@ await cdp.send("Emulation.setCPUThrottlingRate", { rate: CPU });
 
 console.log(`\npre-hydration checks against ${base}\n`);
 
-// Deliberately `domcontentloaded`: waiting for `load` would wait for the
-// JavaScript, which is the thing this file exists to run ahead of.
+// `domcontentloaded`, because `load` would wait for the JavaScript.
 await page.goto(`${base}/`, { waitUntil: "domcontentloaded", timeout: 120_000 });
 await page.waitForSelector("#ask", { state: "attached", timeout: 60_000 });
 
-// Confirm the window is actually still open. If hydration has already landed,
-// every assertion below would pass or fail for the wrong reason, and a green
-// run would mean nothing at all.
+// If hydration has already landed, every assertion below passes or fails for
+// the wrong reason.
 const stillCold = await page.evaluate(
   () => document.documentElement.dataset.hydrated !== "true",
 );
@@ -177,9 +166,8 @@ check(
   JSON.stringify(before.placeholder),
 );
 
-// The one that matters most: force the click past the disabled attribute's
-// pointer handling and confirm the page does not navigate. A disabled submit
-// should be incapable of it; this proves it rather than trusting the spec.
+// Click from script, past the disabled attribute's pointer handling, and
+// confirm the page does not navigate.
 const urlBefore = page.url();
 let navigated = false;
 page.once("framenavigated", (f) => {
@@ -189,8 +177,7 @@ await page
   .evaluate(() => {
     const form = document.getElementById("ask")?.closest("form");
     form?.querySelector('button[type="submit"]')?.click();
-    // And the harder version: ask the form to submit itself the way a stray
-    // Enter keypress would have.
+    // And submit the form directly, as an Enter keypress would.
     if (form && typeof form.requestSubmit === "function") {
       try {
         form.requestSubmit();
@@ -200,10 +187,8 @@ await page
     }
   })
   .catch(() => {});
-// Generous, and deliberately so: at 300ms RTT on a throttled connection a
-// same-URL GET takes well over half a second to commit, and a 500ms wait here
-// reported "did not navigate" for a page that was already navigating. The
-// check that catches a silent failure must not have one of its own.
+// Generous on purpose: at 300ms RTT a same-URL GET takes well over half a
+// second to commit, and a 500ms wait missed a navigation already under way.
 await page.waitForTimeout(3000);
 check(
   "clicking send before hydration does not navigate",
@@ -211,10 +196,9 @@ check(
   page.url() === urlBefore ? "" : `url became ${page.url()}`,
 );
 
-// THE KEYBOARD HALF OF THE GATE. `pointer-events: none` stops a tap and nothing
-// else — a control gated only in CSS stays in the tab order, so Enter on it is
-// still a keystroke that silently does nothing, for the people least able to
-// guess why. Nothing that needs JavaScript should be reachable by Tab yet.
+// The keyboard half of the gate. `pointer-events: none` stops only a tap: a
+// control gated in CSS alone stays in the tab order, where Enter silently does
+// nothing.
 const reachable = [];
 for (let i = 0; i < 25; i += 1) {
   await page.keyboard.press("Tab");
@@ -231,8 +215,7 @@ for (let i = 0; i < 25; i += 1) {
     };
   });
   if (!stop) break;
-  // An anchor is fine however it is gated: following it before hydration
-  // navigates to a real server-rendered page, which is a working outcome.
+  // A link is fine: before hydration it navigates to a server-rendered page.
   if (stop.js && !stop.href) reachable.push(stop.name || stop.tag);
 }
 check(
@@ -241,7 +224,7 @@ check(
   reachable.length ? `reached ${reachable.join(", ")}` : "",
 );
 
-// Now let it finish, and confirm the gate opens.
+// Let hydration finish and confirm the gate opens.
 await page.waitForFunction(
   () => document.documentElement.dataset.hydrated === "true",
   null,
@@ -258,9 +241,8 @@ const after = await page.evaluate(() => {
     askEnabled: ask && !ask.disabled,
     chipsEnabled: chips.length > 0 && chips.every((c) => !c.disabled),
     placeholder: ask?.getAttribute("placeholder") ?? "",
-    // Below sm the settled design shows the status as a dot rather than a
-    // word, so this asserts the word is GONE and the dot is what remains —
-    // the pre-hydration "loading" collapsing back is the behaviour under test.
+    // Below sm the hydrated status is a dot rather than a word, so this checks
+    // that "loading" is gone rather than that "ready" appears.
     ready: !document.body.innerText.toLowerCase().includes("loading"),
   };
 });
@@ -270,8 +252,6 @@ check("the chips are live after hydration", after.chipsEnabled);
 check("the placeholder returns to the question prompt", /Ask a question/i.test(after.placeholder));
 check("the loading label is gone after hydration", after.ready);
 
-// Typing into the live composer must enable the send button — the gate opening
-// is only half of it; the control has to work.
 await page.fill("#ask", "hello");
 const sendLive = await page.evaluate(() => {
   const form = document.getElementById("ask")?.closest("form");

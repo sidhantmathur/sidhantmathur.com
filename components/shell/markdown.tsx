@@ -3,27 +3,22 @@ import { Fragment, type ReactNode } from "react";
 import { splitBlocks, type AnswerBlock } from "@/lib/answer-blocks";
 import { downloadAs } from "@/lib/site";
 
-// A deliberately small markdown renderer for assistant turns.
-//
-// The model emits markdown; rendering it as plain text left literal `**bold**`
-// on screen. react-markdown would be a dependency (and a parser, and a
-// sanitizer) for a surface that only ever needs five constructs, so this
-// handles exactly the subset the system prompt permits:
+// A small markdown renderer for assistant turns. It handles exactly the subset
+// the system prompt permits, which is too little to justify react-markdown's
+// parser and sanitizer:
 //
 //   paragraphs · `- ` and `1. ` lists · **bold** · *italic* / _italic_
 //   · `code` · [text](url) · ```fenced``` blocks · | pipe | tables |
 //
-// Anything else falls through as literal text, which is the correct failure
-// mode: an unrendered character is a visible bug we can fix, whereas silently
-// dropping content is not. No raw HTML is ever interpreted — output is built as
-// React elements, so there is no injection surface.
+// Anything else falls through as literal text, which is the right failure: an
+// unrendered character is a visible bug, silently dropped content isn't. No raw
+// HTML is ever interpreted; output is built as React elements, so there is no
+// injection surface.
 
-// Bare site paths get linked even when the model writes them as plain text.
-// The prompt asks for [label](/path) and mostly gets it, but "download it at
-// /resume.pdf" is a dead string on a phone — an address to retype rather than
-// tap. An allowlist rather than a general /\S+ pattern: only paths that are
-// really routes here become links, so a sentence about "9/10 turns" or a
-// stray slash never turns into one.
+// Bare site paths are linked even when the model writes them as plain text,
+// because "download it at /resume.pdf" is otherwise an address to retype on a
+// phone. An allowlist rather than a general /\S+ pattern, so "9/10 turns" or a
+// stray slash never becomes a link.
 const SITE_PATHS = [
   "/resume.pdf",
   "/resume",
@@ -91,9 +86,8 @@ function inline(text: string, keyPrefix: string): ReactNode[] {
         ),
       );
     } else if (token.startsWith("/")) {
-      // A bare path the model wrote as prose. The label is the path itself —
-      // rewriting it into nicer words would be putting copy in the reader's
-      // mouth that the model didn't write.
+      // A bare path the model wrote as prose. The label stays the path itself
+      // rather than words the model didn't write.
       out.push(
         <a
           key={key}
@@ -132,18 +126,16 @@ const ORDERED = /^\s*\d+[.)]\s+/;
 // Fenced code blocks
 // ---------------------------------------------------------------------------
 //
-// The hard part isn't the rendering, it's the block indices. Blocks are split
-// on blank lines and `lib/verify.ts` indexes the citation gutter by the same
-// split, so the split itself is neither file's — it is `lib/answer-blocks.ts`,
-// which also classifies each line as prose, fence delimiter or code. A fence
-// containing a blank line spans two of those blocks, so the renderer joins them
+// The hard part is the block indices. `lib/verify.ts` indexes the citation
+// gutter by the same blank-line split, which lives in `lib/answer-blocks.ts`
+// along with each line's classification (prose, fence delimiter or code). A
+// fence containing a blank line spans two blocks, so the renderer joins them
 // for display while still reporting the original index to the gutter. Anything
-// that renumbers blocks here silently slides every citation one paragraph up.
+// that renumbers blocks here slides every citation one paragraph up.
 //
-// Streaming is the other constraint: half a fence arrives on its own, and an
-// unterminated fence renders as a code block rather than as three literal
-// backticks that turn into a code block a keystroke later. `splitBlocks` leaves
-// it open; the flush after the loop is what draws it.
+// While streaming, an unterminated fence renders as a code block rather than
+// as literal backticks: `splitBlocks` leaves it open and the flush after the
+// loop draws it.
 
 type Group =
   | { kind: "prose"; index: number; block: string }
@@ -198,17 +190,15 @@ function CodeBlock({ lang, code }: { lang: string; code: string }) {
   return (
     <div className="border border-line bg-raised">
       {/* The language, when the model wrote one. No syntax highlighting: it
-          means a parser dependency and a second palette to maintain, and this
-          site's whole type system is already one mono face on one background —
-          coloured tokens would be the loudest thing on the page. */}
+          would need a parser dependency and a second palette, and coloured
+          tokens would be the loudest thing on the page. */}
       {lang && (
         <div className="border-b border-line px-3 py-1 text-[12px] tracking-widest text-text-faint [font-family:var(--font-geist-mono)]">
           {lang.toLowerCase()}
         </div>
       )}
-      {/* Scrolls itself. A long line has to move inside this box rather than
-          widening the answer column and putting the whole page on a horizontal
-          scrollbar — which on a phone is how a chat stops being readable. */}
+      {/* Scrolls itself, so a long line can't widen the answer column and put
+          the whole page on a horizontal scrollbar. */}
       <pre className="overflow-x-auto px-3 py-2.5">
         <code className="text-[13px] leading-[1.6] text-text [font-family:var(--font-geist-mono)]">
           {code}
@@ -222,8 +212,8 @@ function CodeBlock({ lang, code }: { lang: string; code: string }) {
 // Pipe tables
 // ---------------------------------------------------------------------------
 //
-// The `roleFit` requirement table is its own component in the panel and stays
-// that way — this is for the tables the model writes into ordinary prose.
+// For tables the model writes into ordinary prose. The `roleFit` requirement
+// table is a separate component in the panel.
 const DELIMITER = /^\s*\|?[\s:|-]*-[\s:|-]*\|?\s*$/;
 
 function cells(row: string): string[] {
@@ -296,30 +286,24 @@ export function Markdown({
 }: {
   text: string;
   /**
-   * Optional marginalia (#12): whatever this returns is rendered beside the
-   * block, in a column that only exists at lg. Blocks are indexed by their
-   * position in the same split the citation checker uses, so the two agree on
-   * what "block 2" means.
+   * Optional marginalia: whatever this returns is rendered beside the block, in
+   * a column that only exists at lg. Blocks are indexed by their position in
+   * the same split the citation checker uses, so the two agree on what
+   * "block 2" means.
    */
   gutter?: (blockIndex: number) => ReactNode;
   /**
-   * Rendered at the very end of the last block — the streaming caret, and the
-   * only thing that has ever needed this.
+   * Rendered at the very end of the last block: the streaming caret.
    *
-   * An explicit prop rather than a `:last-child::after` rule on a wrapper,
-   * which is what it looked like this wanted to be. The blocks below render as
-   * bare Fragments when there is no gutter and as grid rows when there is, so
-   * "the last child" is a different element in the two cases and a selector
-   * that worked while streaming would silently stop working the moment the turn
-   * settled. It is also the exact structure the block-index contract with
-   * lib/verify.ts depends on, and a CSS hook would be one more reason not to
-   * touch it.
+   * A prop rather than a `:last-child::after` rule, because the blocks render
+   * as bare Fragments without a gutter and as grid rows with one. "The last
+   * child" is a different element in the two cases, so a selector that worked
+   * while streaming would stop working the moment the turn settled.
    */
   trailing?: ReactNode;
 }) {
-  // Blank lines separate blocks — literally the same function lib/verify.ts
-  // calls, so the two agree on what "block 2" means. Streaming means this runs
-  // on partial text, so every branch has to tolerate an unterminated block.
+  // The same split lib/verify.ts uses. This runs on partial text while
+  // streaming, so every branch has to tolerate an unterminated block.
   const groups = group(splitBlocks(text));
 
   // A block that produced both prose and a fence gets its margin note once,
@@ -341,16 +325,15 @@ export function Markdown({
     );
   };
 
-  // The caret belongs INSIDE the last paragraph, on the same line as the last
-  // word — that is the whole point of it. Only the paragraph and heading
-  // branches below can hold it; if the answer currently ends in a list, a table
-  // or a fence it becomes a line of its own underneath, rendered after the map.
+  // The caret belongs inside the last paragraph, on the same line as the last
+  // word. Only the paragraph and heading branches below can hold it; if the
+  // answer currently ends in a list, a table or a fence, it gets a line of its
+  // own after the map.
   //
-  // Decided up front rather than by flipping a flag inside the map: the same
-  // branch conditions, run once against the last group. That duplicates three
-  // predicates, which is the price of the map staying a pure render — a
-  // variable written during one iteration and read after the loop is exactly
-  // the pattern the React compiler refuses, and it is right to.
+  // Decided up front by running the same branch conditions against the last
+  // group, rather than by setting a flag inside the map: a variable written
+  // during one iteration and read after the loop is a pattern the React
+  // compiler rejects.
   const lastGroup = groups[groups.length - 1];
   const trailingInline =
     trailing != null &&
@@ -366,9 +349,8 @@ export function Markdown({
     })();
 
   return (
-    // The single most-read surface on the site, and it spent the whole build at
-    // 13px — a caption size carrying a conversation. `t-body` is 16px on a
-    // phone and 15px on a desktop.
+    // The most-read text on the site, so body size rather than caption size:
+    // `t-body` is 16px on a phone and 15px from 768px up.
     <div className="t-body space-y-3 text-text-soft">
       {groups.map((g, gi) => {
         const bi = g.index;

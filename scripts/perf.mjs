@@ -1,14 +1,11 @@
-// Throttled first-load measurement, so "it feels fine on my laptop" stops being
-// the standard this site is held to.
+// Throttled first-load measurement. On a slow connection the page paints long
+// before it hydrates and looks usable while every tap goes nowhere; the main
+// number here is that dead window, from first contentful paint to hydration.
+// scripts/check-pre-hydration.mjs asserts what the page does inside it.
 //
-// The restaurant-wifi incident is the reason this exists. On a slow connection
-// the page paints long before it hydrates, and for those seconds it LOOKS like
-// a finished interface — a composer, a send button, four question chips — while
-// every tap goes nowhere. This measures that window rather than guessing at it.
-//
-// What it drives: a real Chromium over CDP with CPU and network throttling
-// applied BEFORE the first navigation, against `next start` on the production
-// build. Numbers off a dev server measure Turbopack, not the site.
+// Drives Chromium over CDP with CPU and network throttling applied before the
+// first navigation, against `next start` on the production build. A dev server
+// would measure Turbopack, not the site.
 //
 // Usage:
 //   node scripts/perf.mjs                       # / and /resume, mobile profile
@@ -17,8 +14,10 @@
 //   node scripts/perf.mjs --json out.json       # machine-readable, for diffing
 //   BASE=https://<preview>.vercel.app node scripts/perf.mjs
 //
-// Requires the site to be built and served already when BASE is set; otherwise
-// it starts `next start` itself on port 3100.
+// With BASE set it measures that server; otherwise it starts `next start` on
+// the first free port from 3100 (PORT to change), which needs a production
+// build. RUNS sets loads per route (default 3; medians are reported) and
+// --files lists the largest scripts. It reports numbers and asserts nothing.
 
 import { spawn } from "node:child_process";
 import { connect } from "node:net";
@@ -40,10 +39,9 @@ const PORT = Number(process.env.PORT ?? 3100);
 const BASE = (process.env.BASE ?? `http://localhost:${PORT}`).replace(/\/$/, "");
 const external = Boolean(process.env.BASE);
 
-// The profile. "Slow 4G" as Lighthouse defines it (1.6 Mbps down, 750 Kbps up,
-// 150ms RTT) plus a 4× CPU slowdown, which is roughly a mid-tier Android. This
-// is the profile the acceptance criteria are stated against; changing it
-// invalidates every before/after number in the commit log, so don't, quietly.
+// The mobile profile is Lighthouse's "slow 4G" (1.6 Mbps down, 750 Kbps up,
+// 150ms RTT) plus a 4x CPU slowdown, roughly a mid-tier Android. Changing it
+// makes every earlier before/after number incomparable.
 const PROFILE = desktop
   ? {
       name: "desktop, fast 3G + 2x CPU",
@@ -63,25 +61,19 @@ const PROFILE = desktop
     };
 
 /**
- * Injected before any page script. Records the moment the document becomes
- * genuinely interactive, which React does not report and no Web Vital covers.
- *
- * TWO SIGNALS, and the reason there are two is that the measurement has to be
- * valid on both sides of the change it is measuring:
+ * Injected before any page script. Records when the document becomes
+ * interactive, which React does not report and no Web Vital covers, from two
+ * signals:
  *
  *   react   React writes `__reactProps$…` / `__reactFiber$…` onto a DOM node
- *           the moment it hydrates it. Server HTML carries no such key, so the
- *           frame this appears on the composer is the frame the composer's
- *           listeners started existing. Works on the unmodified site, which is
- *           what makes the "before" column real.
- *   flag    `<html data-hydrated="true">`, set by the app itself. Once the fix
- *           lands this is the same instant, and it is the signal the app's own
- *           behaviour is keyed to — so a regression that leaves the flag lying
- *           shows up here as the two marks disagreeing.
+ *           when it hydrates it, and server HTML carries no such key. Works on
+ *           any build, with or without the app's own flag.
+ *   flag    `<html data-hydrated="true">`, set by the app, which keys its own
+ *           pre-hydration gate to it. It should land on the same frame; the two
+ *           marks disagreeing means the flag is wrong.
  *
- * Polled on rAF rather than an interval: during hydration the main thread is
- * blocked, and a rAF callback resolves on the first frame after it clears,
- * which is exactly the moment being asked about.
+ * Polled on rAF rather than an interval: the main thread is blocked during
+ * hydration, and the first rAF after it clears is the moment being measured.
  */
 const PROBE = `
   window.__perf = { marks: {}, lcp: 0, lcpEl: '', longTasks: 0, longTaskMs: 0 };
@@ -146,25 +138,10 @@ function median(xs) {
 const fmt = (n) => (n == null ? "—" : `${Math.round(n)}`);
 const kb = (bytes) => `${(bytes / 1024).toFixed(1)} kB`;
 
-/**
- * Starts `next start` and returns the port it ACTUALLY bound to.
- *
- * The port matters more than it looks. When something is already listening on
- * the requested port — a server left behind by an earlier run of this very
- * script — Next quietly shifts to the next one and says so in a line that is
- * easy not to read. Point the browser at the requested port anyway and you
- * measure the stale server: an old build, or worse, an old build whose chunks
- * were deleted by the rebuild you are trying to measure. That produces a
- * complete set of plausible numbers describing nothing, which is the failure
- * mode this whole script exists to prevent. So the port is parsed back out of
- * Next's own output and everything downstream uses that.
- */
-// `npx` runs next through a shell, so killing the process spawned here used to
-// leave the server it started running on its port — every run of this script
-// left one behind (seven of them by the end of wave 1's verification). The
-// server is started as its own process group and the whole group is stopped.
-// A separate group no longer receives the terminal's Ctrl-C, so that is
-// forwarded by hand.
+// `npx` runs next through a shell, so killing only the spawned process leaves
+// the server holding its port. The server gets its own process group and the
+// whole group is stopped. A separate group doesn't receive the terminal's
+// Ctrl-C, so that is forwarded by hand.
 function stopServer(proc) {
   try {
     process.kill(-proc.pid, "SIGKILL");
@@ -173,6 +150,12 @@ function stopServer(proc) {
   }
 }
 
+/**
+ * Starts `next start` and returns the port it actually bound to, parsed from
+ * Next's output. If the requested port is taken, Next silently moves to
+ * another, and measuring the requested one would measure whatever stale server
+ * holds it.
+ */
 async function startServer(port) {
   const proc = spawn("npx", ["next", "start", "-p", String(port)], {
     stdio: ["ignore", "pipe", "pipe"],
@@ -218,13 +201,11 @@ async function measure(browser, url) {
   await context.addInitScript(PROBE);
   const page = await context.newPage();
 
-  // Bytes over the wire, by type. Taken from `request.sizes()` on
-  // `requestfinished` — the encoded transfer size, which is the number that
-  // costs the visitor time, not the decompressed one.
+  // Bytes over the wire by type, from `request.sizes()` on `requestfinished`:
+  // the encoded size, which is what costs the visitor time.
   //
-  // NOT from a `response` handler awaiting `res.body()`: reading a body inside
-  // that event holds the response open, and on a throttled connection that
-  // deadlocks the very load being measured. It cost an hour to find once.
+  // Not from a `response` handler awaiting `res.body()`: reading a body inside
+  // that event holds the response open, which deadlocks a throttled load.
   const bytes = { js: 0, css: 0, image: 0, font: 0, doc: 0, other: 0 };
   const files = [];
   page.on("requestfinished", async (req) => {
@@ -264,26 +245,21 @@ async function measure(browser, url) {
   const t0 = Date.now();
   await page.goto(url, { waitUntil: "load", timeout: 120_000 });
 
-  // Wait for hydration, but bounded — a route that never hydrates is a result,
-  // not a hang.
+  // Bounded: a route that never hydrates is a result, not a hang.
   await page
     .waitForFunction(() => window.__perf?.marks?.hydrated != null, null, {
       timeout: 60_000,
     })
     .catch(() => {});
-  // A beat past hydration so the long-task tally covers the hydration work
-  // itself rather than stopping in the middle of it.
+  // Past hydration, so the long-task tally covers all of the hydration work.
   await page.waitForTimeout(1500);
 
   const m = await page.evaluate(() => {
     const nav = performance.getEntriesByType("navigation")[0] ?? {};
-    // THE BYTES THAT STAND BETWEEN A VISITOR AND A WORKING PAGE.
-    //
-    // Total transfer is the wrong number for this pass. Splitting a chunk out
-    // of the critical path does not delete it — the print document and the
-    // mobile sheets still arrive, just after the composer works — so a
-    // whole-load byte count barely moves while the thing being fixed halves.
-    // This counts only what finished downloading before the hydration mark.
+    // Bytes that finished downloading before the hydration mark. Total
+    // transfer hides a chunk split out of the critical path, since the chunk
+    // still arrives later; this is what stands between a visitor and a
+    // working page.
     const mark = window.__perf?.marks?.hydrated;
     const blocking = { js: 0, css: 0, image: 0, font: 0, all: 0 };
     if (mark != null) {
@@ -322,8 +298,8 @@ async function measure(browser, url) {
     };
   });
 
-  // THE NUMBER THIS SCRIPT EXISTS FOR: how long the page looks usable and
-  // isn't. From the first contentful paint to the frame hydration lands.
+  // How long the page looks usable and isn't: first contentful paint to
+  // hydration.
   m.deadWindow =
     m.fcp != null && m.hydrated != null ? Math.max(0, m.hydrated - m.fcp) : null;
   m.wall = Date.now() - t0;
@@ -335,11 +311,8 @@ async function measure(browser, url) {
 }
 
 async function portBusy(port) {
-  // A raw TCP connect, not a fetch. Node's fetch honours HTTPS_PROXY, and in a
-  // sandbox that proxies everything a request to localhost comes back answered
-  // by the proxy — so the check called every port busy, including the free
-  // ones. What is being asked here is "will something accept a connection on
-  // this port", and that is a socket question.
+  // A raw TCP connect, not a fetch: in a sandbox that sets HTTPS_PROXY, the
+  // proxy answers a fetch to localhost and every port looks busy.
   return new Promise((resolve) => {
     const socket = connect({ port, host: "127.0.0.1" });
     const done = (result) => {
@@ -354,16 +327,9 @@ async function portBusy(port) {
 }
 
 /**
- * The first port at or above `from` that nothing is listening on.
- *
- * Not a nicety. Next shifts to the next free port when the requested one is
- * taken and says so in a line that is easy not to read; point the browser at
- * the port that was ASKED for and you measure whatever else is there —
- * typically a server an earlier run left behind, serving a build whose chunk
- * files the rebuild has since deleted. That produced a full page of confident
- * numbers for a page that never hydrated, and they looked like a spectacular
- * improvement. Twice. So: start on a port nothing is on, and read back the one
- * Next actually bound (startServer).
+ * The first port at or above `from` that nothing is listening on. A server
+ * left on the requested port by an earlier run serves a build whose chunks may
+ * since have been deleted, which measures as a fast page that never hydrates.
  */
 async function freePort(from) {
   for (let port = from; port < from + 40; port += 1) {

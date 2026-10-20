@@ -1,24 +1,17 @@
 import type { ModelRow } from "@/lib/model-comparison";
 
-// The chrome every chart on /measurements/models wears (Sprint 8).
+// Shared chrome for the charts and the raw-numbers table on
+// /measurements/models: the scroll fade, the figure header, and the sentence
+// naming what is missing. The fade matters on touch devices with no visible
+// scrollbar, where a plot whose last label sits flush against the edge looks
+// like it ends there.
 //
-// Three charts and one raw-numbers table repeated the same three constructions
-// between them — the scroll fade, the figure header, and the sentence naming
-// what is missing — and the class strings in the first of those are not
-// decorative. `4a8e22d` and `3bdb481` exist because a plot whose rightmost
-// label sat flush against the edge looked like a plot that ended there, on the
-// one device with no scrollbar to say otherwise. Four copies of a fix like that
-// is three chances to lose it.
-//
-// WHY THE BREAKPOINTS ARE A TABLE RATHER THAN A PROP. The fade is gated on the
-// container's width against the content's floor width — 520px of heatmap, 560px
-// of scatter, 820px of table — so the number genuinely differs per instance. It
-// cannot be interpolated: Tailwind emits a class by finding its literal text in
-// the source, and `@[${n}px]:[mask-image:none]` is text no scanner will ever
-// see. A missing mask does not break the build or the DOM; it just quietly
-// stops fading. So the widths live here as a closed set of whole literal class
-// strings, and adding a fourth width means adding a row rather than passing a
-// number that silently does nothing.
+// The breakpoints are a table rather than a prop. The fade is gated on the
+// container's width against the content's floor width (520px of heatmap,
+// 560px of scatter, 820px of table), and the width can't be interpolated:
+// Tailwind emits a class only when it finds its literal text in the source, so
+// `@[${n}px]:[mask-image:none]` would silently compile to nothing. Adding a
+// width means adding a row.
 
 const SCROLLABLE = {
   520: {
@@ -52,10 +45,9 @@ export function floorWidth(width: FloorWidth): string {
 /**
  * A horizontally scrolling box whose right edge fades while there is more.
  *
- * A query container rather than a breakpoint, because the fade is a lie when
- * there is nothing to scroll and the thing that decides that is this box's
- * width, not the window's — a media query would get it right on a phone and
- * wrong in any narrow column on a wide screen.
+ * A container query rather than a media query, because whether there is more
+ * to scroll depends on this box's width, not the window's: a narrow column on
+ * a wide screen needs the fade too.
  */
 export function ScrollFade({
   width,
@@ -67,13 +59,10 @@ export function ScrollFade({
   /** Spacing for the scrolling box itself. */
   className?: string;
   /**
-   * Names the box for a screen reader. A scrolling box is a tab stop in
-   * Chrome, so the keyboard can reach it — and an unnamed stop announces
-   * nothing. The charts used to go without one on the grounds that the SVG
-   * carries its own `role="img"` label, but below their floor width the BOX
-   * scrolls, Chrome makes it the tab stop, and the mobile a11y audit counted
-   * three stops on /measurements/models that announced nothing. Every
-   * ScrollFade that can scroll passes one now.
+   * Names the box for a screen reader. Below its floor width the box scrolls,
+   * Chrome makes it a tab stop, and an unnamed stop announces nothing, even
+   * when the SVG inside has its own `role="img"` label. Pass one whenever the
+   * box can scroll.
    */
   label?: string;
   children: React.ReactNode;
@@ -90,14 +79,10 @@ export function ScrollFade({
 
 /**
  * A figure, its heading, its note, and the sentence underneath about what is
- * not in it.
- *
- * The trailer slot is the third repetition: every chart here has models it
- * could not draw, and saying so in the same place in the same voice is the
- * difference between a chart that is missing a model and a chart that is
- * hiding one. (The heatmap's em dash is NOT this: it marks one cell a model
- * never ran, inside a chart the model does appear in, which is a per-cell fact
- * the trailer cannot carry.)
+ * not in it. Every chart names the models it couldn't draw in the same place,
+ * so a missing model never reads as a hidden one. (The heatmap's em dash is
+ * different: it marks one cell a model never ran, inside a chart the model
+ * does appear in.)
  */
 export function ChartFrame({
   heading,
@@ -110,10 +95,9 @@ export function ChartFrame({
   /** What the number is and which direction is good. Sits under the heading. */
   note?: React.ReactNode;
   /**
-   * Caps the note and trailer at a reading measure. The full-width charts want
-   * it. The ranked panels sit two-up in a grid that is already narrower than
-   * 62ch, so capping them would only move where they wrap in the one column
-   * between 62ch and the grid's breakpoint.
+   * Caps the note and trailer at a reading measure, for the full-width charts.
+   * The ranked panels sit two-up in a grid already narrower than 62ch, so they
+   * leave it off.
    */
   measure?: boolean;
   /** Named models this chart left out, or anything else said after the mark. */

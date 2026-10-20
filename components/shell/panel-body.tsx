@@ -33,14 +33,14 @@ const CASE_STUDIES = {
   "dell-ml": DellMl,
 } as const;
 
-// Sits under the corpus index (Sprint 7, #8). Both halves are checkable in this
-// repo: the knowledge base is concatenated into every system prompt, and the
-// repo corpus is appended only when lib/site-question.ts recognises the turn.
+// Sits under the corpus index (docs/idea-decisions.md #8). Both halves are true
+// in code: the knowledge base is in every system prompt, and the repo corpus is
+// appended only when lib/site-question.ts recognises the turn.
 const CORPUS_NOTE =
   "Two corpora. The record above — the resume, the projects, the FAQ — rides inside the prompt on every turn. This site's own source is the second one, and it is only loaded when you ask about the site, so an ordinary answer never pays for it.";
 
-// Sprint 7's two published documents, as they read beside a conversation.
-// Both restate what the code does and neither says anything about Sidhant.
+// The prompt and refusals panels' framing. Both restate what the code does and
+// say nothing about Sidhant.
 const PROMPT_NOTE = {
   intro:
     "Everything the model was told before it read your question, in order. It is published in full, and this list is read out of the prompt itself rather than kept beside it.",
@@ -81,9 +81,8 @@ export function PanelBody({
     );
   }
 
-  // A cited chunk. The whole file renders rather than the one chunk, because a
-  // citation is an invitation to check the answer and checking means reading
-  // what sits around the sentence — the id is what gets highlighted.
+  // A cited chunk renders its whole file with the chunk highlighted: checking
+  // a citation means reading what sits around it.
   if (panel.kind === "source") {
     const chunk = ALL_CHUNKS_BY_ID[panel.id];
     if (!chunk) return null;
@@ -96,11 +95,8 @@ export function PanelBody({
     );
   }
 
-  // The whole corpus, by file, with the id each chunk answers to (Sprint 5,
-  // #13's `/sources`). The citation margin shows the ids an ANSWER used; this
-  // is the other direction — everything the site could ever cite, listed once,
-  // so "what is this built from" is a question with a visible answer rather
-  // than one you have to ask the model.
+  // Everything the site could cite, by file, with each chunk's id: the other
+  // direction from the citation margin, which shows what one answer used.
   if (panel.kind === "corpus") {
     const bySource = new Map<string, Chunk[]>();
     for (const chunk of ALL_CHUNKS) {
@@ -145,8 +141,6 @@ export function PanelBody({
             {l.label} →
           </Link>
         ))}
-        {/* Every other panel offers the standalone version of itself. This one
-            could not, because /projects was a 404 until the index was built. */}
         <div className="pt-1">
           <ActionLink href="/projects">Open as a page</ActionLink>
         </div>
@@ -155,9 +149,8 @@ export function PanelBody({
   }
 
   if (panel.kind === "contact") {
-    // Wave 2: the address on screen and copyable, as on the front door — the
-    // panel was three bordered links, one of them a bare mailto that does
-    // nothing on a desktop with no mail client.
+    // The address on screen and copyable, as on the front door: a bare mailto
+    // does nothing on a desktop with no mail client.
     return (
       <div className="space-y-2">
         <EmailCopy surface="contact-panel" />
@@ -178,8 +171,8 @@ export function PanelBody({
   }
 
   if (panel.kind === "project") {
-    // The same MDX the standalone route renders — one source of content, two
-    // presentations. mdx-components.tsx styles it for both.
+    // The same MDX the standalone route renders; mdx-components.tsx styles it
+    // for both.
     const project = PROJECTS[panel.slug];
     const Body = CASE_STUDIES[panel.slug];
     return (
@@ -209,7 +202,6 @@ export function PanelBody({
           <ActionLink href="/prompt">Its instructions</ActionLink>
           <ActionLink href="/refusals">What it won&apos;t do</ActionLink>
         </div>
-        {/* Folded in from its own panel in wave 2 — see WHY_CHATBOT. */}
         <h3 className="t-label pt-3 text-text-faint">{WHY_CHATBOT_HEADING}</h3>
         {WHY_CHATBOT.map((para, i) => (
           <p key={i} className="t-meta text-text-soft">
@@ -220,10 +212,9 @@ export function PanelBody({
     );
   }
 
-  // #7 in the panel. The full prompt is a 17 kB document and belongs on its own
-  // page; what sits beside a conversation is what it contains, in order, and the
-  // way in. The section list is read off the prompt itself rather than typed
-  // here, so a section that gets added or renamed shows up without an edit.
+  // The published prompt (#7) belongs on its own page; beside a conversation it
+  // is a list of its sections, read off the prompt itself so a renamed or added
+  // section shows up without an edit here.
   if (panel.kind === "prompt") {
     const sections = buildSystemPrompt()
       .split("\n")
@@ -245,8 +236,8 @@ export function PanelBody({
     );
   }
 
-  // #10 in the panel. The ledger is a list, so it renders here in full rather
-  // than as a teaser — what the page adds is the framing above it.
+  // The refusal ledger (#10) renders in full; the /refusals page adds the
+  // reasons.
   if (panel.kind === "refusals") {
     return (
       <div className="space-y-4">
@@ -276,18 +267,16 @@ export function PanelBody({
   return null;
 }
 
-// --- requirementTable (roadmap Sprint 4: #11, rendering bank §6 Stage 1) ----
+// --- RequirementTable -------------------------------------------------------
 //
-// The first named component in the generative-UI vocabulary, and the shape that
-// makes the honesty work visible: one row per requirement the posting stated,
-// each with a verdict the model can't quietly skip and a source it either has
-// or is marked for not having.
+// One row per requirement the posting stated, each with a verdict and a source
+// it either has or is marked for not having.
 //
-// THE RENDERING CONSTRAINT (decisions §3): four crisp tags look more precise
-// than the assessment underneath them. So there is no score, no percentage, no
-// weighting, and no ordering by verdict — the rows stay in the posting's order,
-// the counts are counts, and the line under them says what a tag is. A row that
-// code changed says who changed it and why, next to the row it changed.
+// Four crisp tags look more precise than the assessment under them
+// (docs/idea-decisions.md §3). So there is no score, percentage, weighting or
+// ordering by verdict: rows stay in the posting's order, the counts are counts,
+// and the line under them says what a tag is. A row that code changed says so
+// next to the row.
 
 const VERDICT_STYLE: Record<RequirementVerdict, string> = {
   met: "border-line-strong text-text",
@@ -311,20 +300,10 @@ function RequirementTable({
 }) {
   const partial = (fit ?? {}) as Partial<RoleFit>;
 
-  // A tool result that doesn't have the shape this renders is not a crash.
-  //
-  // It used to be. An assessment stored before Sprint 4 renamed these fields
-  // came back with no `counts`, and reading one off it threw during render —
-  // which in React takes down the whole shell, not the panel. The reader saw a
-  // blank page for a conversation they'd had a week earlier.
-  //
-  // This is Sprint 4's own rule arriving in the client: nothing may reject a
-  // payload by failing. The version bump in use-conversation.ts retires the
-  // stored conversations that land here, but a permalink carries the same
-  // object in a URL and never touches storage, so the shape still has to be
-  // checked at the point of use. Saying the assessment can't be shown is worth
-  // more than an empty panel — a reader who knows something was lost can go
-  // back and paste the posting again.
+  // A result without the shape this renders is a message, not a crash: a throw
+  // during render takes down the whole shell. Old stored conversations are
+  // retired by the storage-key bump in use-conversation.ts, but a permalink
+  // carries the same object in a URL, so the shape is checked here.
   if (!Array.isArray(partial.rows) || !partial.counts || !Array.isArray(partial.gaps)) {
     return <p className="t-meta text-text-faint">{ROLE_FIT_UNREADABLE}</p>;
   }
@@ -389,10 +368,9 @@ function RequirementTable({
                 {row.downgrade === "unjudged" && (
                   <span>the assessment restated this one without judging it</span>
                 )}
-                {/* Same split as an answer's marks (wave 2): a token the
-                    record holds under another chunk is a pointer problem and
-                    is said quietly; only one the record has nowhere keeps the
-                    accent. */}
+                {/* Same split as an answer's marks: a token the record holds
+                    under another chunk is a pointer problem and is said
+                    quietly; only one the record has nowhere keeps the accent. */}
                 {row.unverified.length > 0 && <RowMark row={row} />}
                 {row.unknownSources.length > 0 && (
                   <span className="text-accent">
@@ -461,9 +439,8 @@ function sourceTitle(id: string): string {
   return chunk ? `${chunk.sourceLabel} — ${chunk.heading}` : id;
 }
 
-// The route's cap on a user turn, less the prefix the shell sends ahead of the
-// posting — so the textarea enforces exactly the limit the server does, rather
-// than letting a long posting fail server-side or cutting it short for nothing.
+// The route's cap on a user turn less the prefix sent ahead of the posting, so
+// the textarea enforces exactly the server's limit.
 const JD_MAX = MAX_POSTING_TEXT;
 
 function JobDescriptionForm({ onSubmit }: { onSubmit?: (text: string) => void }) {
@@ -486,10 +463,8 @@ function JobDescriptionForm({ onSubmit }: { onSubmit?: (text: string) => void })
         onChange={(e) => setValue(e.target.value.slice(0, JD_MAX))}
         placeholder={JD_COPY.placeholder}
         rows={12}
-        // 16px below md for the same reason as the ask input: iOS Safari
-        // zooms into any field under 16px on focus and does not zoom back out.
-        // Pasting a job posting is the longest interaction on the site — it is
-        // the worst place to strand someone at 1.4x.
+        // 16px below md: iOS Safari zooms into any field under 16px on focus
+        // and doesn't zoom back out.
         className="w-full resize-y border border-line-strong bg-raised p-2 text-[16px] leading-relaxed text-text outline-none placeholder:text-text-faint focus:border-accent md:text-[14px]"
       />
       <div className="flex items-center justify-between">

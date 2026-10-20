@@ -1,15 +1,9 @@
-// Turn cost, in dollars (roadmap Sprint 2, #1 — the real cost meter).
+// Turn cost in dollars: the arithmetic behind the cost meter, which turns the
+// token counts the client already has into money, with cached input broken out.
 //
-// F1 already puts token counts on the client. This turns them into money, which
-// is the whole point of A8: the "17/20" strip asserts that someone thought about
-// cost; a per-turn dollar figure with the cached-input line broken out PROVES
-// it.
-//
-// This file is the ARITHMETIC. The per-model numbers it works on — prices, cache
-// rates, how far each is to be trusted, and the reasoning behind the allowlist
-// they belong to — are one table in `lib/models.ts`, which is also what the
-// route, the dropdown and the bake-off script read. Two views of that table are
-// re-exported here so that everything costing a turn keeps importing one module.
+// The per-model prices, cache rates and confidence it works on are one table in
+// `lib/models.ts`. Two views of that table are re-exported here so everything
+// that costs a turn imports one module.
 //
 // Anything rendering these must label the result as an estimate at list price.
 
@@ -28,9 +22,9 @@ type ModelPrice = {
   cacheWrite: number;
 };
 
-// Every allowlisted model, priced. An unknown model is priced as null rather
-// than guessed — see costOfTurn. The catalogue is what makes "allowlisted" and
-// "priced" the same set rather than two sets that agree today.
+// Every model in the catalogue, priced, so "allowlisted" and "priced" are the
+// same set. An unknown model is priced as null rather than guessed (see
+// costOfTurn).
 export const MODEL_PRICES: Record<string, ModelPrice> = Object.fromEntries(
   Object.entries(MODELS).map(([id, spec]) => [
     id,
@@ -57,8 +51,8 @@ export type TurnCost = {
   /** Sum of the four above. */
   total: number;
   /**
-   * What the cache-read tokens WOULD have cost at the full input price, minus
-   * what they actually cost. The number A8 wanted on the screen.
+   * What the cache-read tokens would have cost at the full input price, minus
+   * what they actually cost.
    */
   saved: number;
 };
@@ -125,9 +119,9 @@ export function sumCosts(costs: (TurnCost | null)[]): TurnCost {
 }
 
 /**
- * Money, to four decimals — A8's ask. A turn here costs a fraction of a cent,
- * so two decimals would render every honest number as $0.00, which reads as
- * "we didn't measure it".
+ * Money, to four decimals. A turn here costs a fraction of a cent, so two
+ * decimals would render every real number as $0.00, which reads as "not
+ * measured".
  */
 export function formatUsd(value: number, decimals = 4): string {
   if (!Number.isFinite(value)) return "—";

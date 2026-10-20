@@ -28,31 +28,20 @@ import { publishPhaseActivity } from "./phase-activity";
 /** Re-exported from lib/chat-transport, where the fetch that reads it lives. */
 export type { Budget };
 
-// Alias so the rest of this file (and its callers) read as before while every
-// message is the app's typed variant, carrying the F1 telemetry data part.
+// Every message is the app's typed variant, which carries the per-turn
+// telemetry data part.
 type UIMessage = ChatUIMessage;
 
 /** The same type, exported for the components that render a message. */
 export type ChatMessage = ChatUIMessage;
 
 
-// Bumped when a persisted message can no longer be rendered by the code that
-// reads it back. Sprint 4 changed the shape of a roleFit tool result, and a
-// conversation stored before that arrived here with no `rows` and no `counts` —
-// which threw inside the requirement table and took the whole shell down with
-// it. A returning visitor got a blank page and no way to recover but to clear
-// their own storage.
-//
-// The key is the version. Retiring the old one drops exactly the conversations
-// that can't be rendered, and it does so without sniffing message shapes: a
-// heuristic that guesses which stored parts are still readable is a second
-// implementation of every renderer, kept in step by hope. `removeItem` on the
-// retired keys keeps this from growing into an attic.
-//
-// The other half of the fix is that the requirement table no longer throws on a
-// payload it doesn't recognise (see panel-body.tsx) — a permalink carries the
-// same tool result and never touches storage at all, so the version bump alone
-// would have left that door open.
+// Bump the version when a stored message can no longer be rendered by the code
+// that reads it back. Retiring the old key drops exactly those conversations
+// without guessing at message shapes, and the retired keys are removed on
+// restore. A permalink carries the same tool results without touching storage,
+// so the role-fit table in panel-body.tsx also refuses a payload it doesn't
+// recognise rather than throwing.
 const STORAGE_KEY = "conversation.v2";
 const RETIRED_STORAGE_KEYS = ["conversation.v1"];
 
@@ -60,10 +49,8 @@ const RETIRED_STORAGE_KEYS = ["conversation.v1"];
 // react-hooks/purity even from an event handler.
 const nowMs = () => performance.now();
 
-// What a panel is now lives in ./panels — one record per kind, carrying the
-// title, the path, the slash command, the tool and who renders it. Both types
-// are re-exported here because most of the shell reaches for them through the
-// hook that owns the panel state.
+// Re-exported from ./panels for the components that get panel state from this
+// hook.
 export type { PanelView, RoleFit };
 
 export type ToolOut = { type: string; state?: string; output?: unknown };
@@ -76,11 +63,10 @@ export function textOf(message: UIMessage): string {
 }
 
 // Tool calls with no surface of their own. `extractRequirements` is the first
-// half of a job-description turn (Sprint 4): its output is the input to the
-// assessment that follows and is rendered inside it, so surfacing it separately
-// would put a chip on the page that opens the same table twice. The set lives
-// in the transport, which reads it to tell a turn that said nothing from one
-// that showed a card.
+// half of a job-posting turn: its output feeds the assessment that follows and
+// is rendered inside it, so a chip of its own would open the same table twice.
+// The set is defined in lib/chat-transport.ts, which also uses it to tell an
+// empty turn from one that showed a card.
 const INTERNAL_PARTS = new Set([...INTERNAL_TOOLS].map((name) => `tool-${name}`));
 
 export function toolOutputs(message: UIMessage): ToolOut[] {
@@ -96,19 +82,14 @@ export function toolOutputs(message: UIMessage): ToolOut[] {
     );
 }
 
-// --- What the turn is doing right now --------------------------------------
-//
-// The step, and what the stream is doing inside it, are read in
-// lib/turn-phase.ts, where the evals can reach them. Re-exported so callers of
-// this hook read them from where they always have.
+// What the turn is doing right now is read in lib/turn-phase.ts, where the
+// evals can import it.
 export { OPENING_PHASE, phaseOf } from "@/lib/turn-phase";
 
 /**
- * First tool output in a turn wins the panel.
- *
- * Which tool opens which panel is the registry's `fromTool`; what stays here is
- * only the part a table can't hold — building the payload for the two kinds
- * that carry one. Everything else is fully described by its name.
+ * The panel a turn's tool outputs open; the first output that maps to one wins.
+ * Which tool opens which kind is the registry's `fromTool`. This only builds
+ * the payload for the two kinds that carry one.
  */
 export function panelForTool(outs: ToolOut[]): PanelView | null {
   for (const out of outs) {
@@ -129,12 +110,10 @@ export function panelForTool(outs: ToolOut[]): PanelView | null {
 }
 
 /**
- * One turn's telemetry as the client holds it (F1).
- *
- * `clientTtftMs` is deliberately kept alongside the server's `timing.ttftMs`
- * rather than replacing it: the server measures model latency, the client
- * measures what the reader waited through, and the gap between them is the
- * network. Sprint 2's instruments want both.
+ * One turn's telemetry as the client holds it. `clientTtftMs` sits beside the
+ * server's `timing.ttftMs` rather than replacing it: the server measures model
+ * latency, the client measures what the reader waited through, and the gap
+ * between them is the network.
  */
 export type TurnRecord = TurnTelemetry & {
   clientTtftMs: number | null;
@@ -148,20 +127,16 @@ export function useConversation(model: string) {
   const [ttft, setTtft] = useState<number | null>(null);
   const [budget, setBudget] = useState<Budget | null>(null);
   // One entry per turn, oldest first. In-memory only: the telemetry data part
-  // does persist on the message, but the derived log is cheap to rebuild and
-  // nothing yet reads it across a reload.
+  // persists on the message, but nothing reads the log across a reload.
   const [turnLog, setTurnLog] = useState<TurnRecord[]>([]);
 
-  // The transport closes over the fetch wrapper, and the wrapper closes over
-  // setBudget. Both are stable, so the transport is built once.
+  // Built once: the fetch wrapper closes over setBudget, and both are stable.
   //
-  // `?simulate=<class>` on the PAGE is forwarded to the chat endpoint, which
-  // already understands it (Sprint 2's failure theatre). The panel's buttons
-  // fire one request and report what came back; this makes the whole shell
-  // enter the state instead — which is the only way to look at what a
-  // rate-limited visitor actually sees (Sprint 7, #15) without waiting for one.
-  // It cannot produce an answer, cost a token, or bypass anything: the route
-  // looks the value up in a closed list of failures and ignores anything else.
+  // `?simulate=<class>` on the page is forwarded to the chat endpoint, so the
+  // whole shell enters that failure state, not just one fetch in the instrument
+  // deck. It is the only way to see the rate-limited view without spending the
+  // budget. It can't produce an answer or cost a token: the route accepts only
+  // a value from its closed list of simulatable failures.
   const [transport] = useState(() => {
     const simulate =
       typeof window === "undefined"
@@ -173,23 +148,22 @@ export function useConversation(model: string) {
     });
   });
 
-  // The selected model has to reach the request body. Kept in a ref so changing
-  // it never rebuilds the transport mid-conversation. Synced in an effect
-  // rather than during render — writing a ref while rendering is a tearing
-  // hazard under concurrent rendering.
+  // The selected model goes in each request body. Kept in a ref so changing it
+  // never rebuilds the transport mid-conversation, and synced in an effect
+  // because writing a ref during render is a tearing hazard under concurrent
+  // rendering.
   const modelRef = useRef(model);
   useEffect(() => {
     modelRef.current = model;
   }, [model]);
 
-  // `hydrated` gates BOTH halves of persistence. Reading localStorage during
-  // render makes the server emit an empty conversation while the client emits
-  // the restored one — a hydration mismatch. The first client render must match
-  // the server exactly, so: start empty, restore after mount.
+  // Gates both halves of persistence. Reading localStorage during render would
+  // make the first client render differ from the server's, a hydration
+  // mismatch, so the conversation starts empty and is restored after mount.
   const [hydrated, setHydrated] = useState(false);
 
-  // True when this conversation came out of a URL fragment rather than out of
-  // this browser. Drives the banner, and switches persistence off — see below.
+  // True when this conversation came from a URL fragment rather than from this
+  // browser. Drives the banner and switches persistence off.
   const [replayed, setReplayed] = useState(false);
 
   // The client's own stopwatch, kept so the record can carry both latencies.
@@ -200,21 +174,20 @@ export function useConversation(model: string) {
     sendMessage,
     status,
     setMessages,
-    // The recovery surface. `regenerate` resends the last turn — it slices a
-    // partial assistant message off first, so a turn that died mid-answer is
-    // retried rather than continued — and `stop` aborts one in flight. The SDK
-    // treats an abort as a non-event: status goes back to "ready" and onError
-    // never fires, which is exactly right. Pressing stop is not a failure.
+    // `regenerate` resends the last turn, dropping a partial assistant message
+    // first, so a turn that died mid-answer is retried rather than continued.
+    // `stop` aborts one in flight; the SDK treats that as a non-event (status
+    // returns to "ready" and onError never fires), so stopping isn't a failure.
     regenerate,
     stop,
     clearError,
   } = useChat<UIMessage>({
     transport,
-    // F1's channel. The route writes ONE `data-turn` part per turn under a
-    // fixed id: an opening write with the model and budget, then a
-    // closing write with the measurements. The SDK reconciles them into a
-    // single part, but fires this for both — so the opening write (no usage,
-    // no error) appends a record and the closing one replaces it.
+    // The route writes one `data-turn` part per turn under a fixed id: an
+    // opening write with the model and budget, then a closing write with the
+    // measurements. The SDK merges them into one part but calls onData for
+    // both, so the opening write (no usage, no error) appends a record and the
+    // closing one replaces it.
     onData: (part) => {
       if (part.type !== "data-turn") return;
       const data = part.data;
@@ -270,18 +243,17 @@ export function useConversation(model: string) {
       // The transport already knows the class it threw. Anything the SDK
       // raised itself still has to be read out of the message.
       const cls = error instanceof TurnFailure ? error.cls : toTurnErrorClass(error.message);
-      // An aborted turn renders nothing — and that has to hold for the class
-      // arriving over a live stream as well as for the SDK's own abort path,
-      // which never gets here. Reported as analytics; shown as silence.
+      // An aborted turn renders nothing, including when the abort arrives as a
+      // class over the stream rather than through the SDK's own abort path
+      // (which never reaches onError). It is still tracked.
       if (isSilentClass(cls)) {
         track("chat_error", { error_class: cls, model: modelRef.current });
         return;
       }
-      // A turn that finished empty was measured by the route as a turn with
-      // usage, and the route marks its record with the class. If that record
-      // somehow arrived unmarked, the transport's reading wins: it is the one
-      // that knows nothing reached the page, and an unmarked record is priced
-      // and logged as an answer.
+      // The route marks an empty turn's record with the class itself. If the
+      // record arrives unmarked anyway, the transport's reading wins: it knows
+      // nothing reached the page, and an unmarked record is priced and logged
+      // as an answer.
       if (cls === "empty_answer") {
         setTurnLog((prev) => {
           const last = prev[prev.length - 1];
@@ -312,11 +284,8 @@ export function useConversation(model: string) {
   const sentAt = useRef<number | null>(null);
   const sentCount = useRef(0);
 
-  // Restore once, after mount. One conversation, not a history sidebar.
-  //
-  // A permalink wins over local storage (Sprint 5, #18). Someone who opened a
-  // link came to read THAT conversation, and the fragment is decoded before
-  // anything is read back from the browser.
+  // Restore once, after mount. A permalink in the fragment wins over local
+  // storage: someone who opened a link came to read that conversation.
   useEffect(() => {
     let cancelled = false;
 
@@ -347,9 +316,8 @@ export function useConversation(model: string) {
 
     void decodeSnapshot(payload).then((restored) => {
       if (cancelled) return;
-      // A fragment that doesn't decode is a link an email client cut in half.
-      // Falling through to the reader's own conversation is the quiet answer;
-      // an error screen for a bad link would be the loud wrong one.
+      // A fragment that doesn't decode is most likely a link an email client
+      // truncated. Fall back to the reader's own conversation, not an error.
       if (!restored?.length) {
         restoreLocal();
         return;
@@ -374,11 +342,9 @@ export function useConversation(model: string) {
   // Persist only once restore has run, so the empty first render can't wipe
   // the stored conversation before it's read back.
   //
-  // A REPLAYED CONVERSATION IS NEVER PERSISTED. Someone reading a link they
-  // were sent has their own conversation sitting in this browser, and
-  // overwriting it with a stranger's would be the rudest possible reading of
-  // "no storage". The replay lives in memory until the tab closes or the
-  // reader starts a fresh one.
+  // A replayed conversation is never persisted: the reader may have their own
+  // conversation in this browser, and a link they were sent must not overwrite
+  // it. The replay lives in memory until the tab closes or they start afresh.
   useEffect(() => {
     if (!hydrated || replayed) return;
     try {
@@ -403,20 +369,15 @@ export function useConversation(model: string) {
   }, [status]);
 
   // Route tool output into the context panel rather than rendering it inline:
-  // the assistant answers in prose and the evidence opens beside it.
+  // the answer is prose and the evidence opens beside it.
   //
-  // Setting panel state is enough for desktop, where the panel is visible
-  // whenever a view is set. On mobile the panel is a sheet that stays CLOSED
-  // until the reader taps a citation chip — a sheet covering half the screen
-  // mid-answer is hostile. That asymmetry is intentional; don't "fix" it by
-  // opening the sheet here.
+  // On desktop the panel shows whenever a view is set. On mobile it is a sheet
+  // that stays closed until the reader taps a citation chip, because a sheet
+  // covering half the screen mid-answer is hostile. That asymmetry is
+  // intentional; don't open the sheet here.
   //
-  // The one exception is the instrument deck: it is only ever opened
-  // deliberately, and having a tool call yank it away mid-reading would make
-  // the instruments feel like they belong to the model rather than the reader.
-  // The citation chip under the answer is still there to open the evidence.
-  // That exception is `stealable` in the registry rather than a name checked
-  // here, so a second panel that needs it doesn't have to find this line.
+  // A panel marked `stealable: false` in the registry (the instrument deck) is
+  // never replaced while open. The citation chip still opens the evidence.
   const lastToolKey = useRef<string>("");
   const panelRef = useRef(panel);
   useEffect(() => {
@@ -461,16 +422,13 @@ export function useConversation(model: string) {
   }
 
   /**
-   * Send the last turn again, after it failed.
+   * Send the last turn again after it failed. Restarts the stopwatch as
+   * `submit` does, so the ttft measures the wait the reader is sitting through
+   * now, not the one that failed.
    *
-   * The stopwatch is restarted exactly as `submit` does it, because from the
-   * reader's side this IS a send — the ttft it produces should measure the wait
-   * they're actually sitting through, not the one that failed.
-   *
-   * `withModel` is the other way out of a turn that finished empty: the same
-   * question to a different model. It is passed in rather than read from the
-   * ref because the caller changes the selection in the same tap, and the ref
-   * only catches up after the next render.
+   * `withModel` asks the same question of a different model. It is passed in
+   * rather than read from the ref because the caller changes the selection in
+   * the same tap, and the ref only catches up after the next render.
    */
   function retry(withModel?: string) {
     if (isBusy) return;
@@ -506,23 +464,18 @@ export function useConversation(model: string) {
   return {
     messages,
     submit,
-    /** Resend the turn that just failed. Rendered by TurnError. */
+    /** Resend the turn that just failed. Wired to TurnError's buttons. */
     retry,
-    /** Abort the turn in flight. Renders nothing — see the note above. */
+    /** Abort the turn in flight. Not treated as a failure. */
     stop,
     reset,
     isBusy,
-    /**
-     * One line naming the step in flight — see phaseOf. Replaced
-     * `awaitingReply`, which could only say "a turn is open" and went quiet
-     * for the whole middle of a tool-calling one.
-     */
+    /** One line naming the step in flight, or null once prose is on screen. */
     phase: phaseOf(status, messages),
     errorKind,
-    // True while the conversation on screen was rebuilt from a link (#18).
+    // True while the conversation on screen was rebuilt from a permalink.
     replayed,
-    // The class behind `errorKind`. Nothing renders it yet — #6 (Sprint 2) is
-    // what it's here for; F1's job is that the number exists to be read.
+    // The class behind `errorKind`. TurnError renders its copy.
     errorClass,
     ttft,
     panel,

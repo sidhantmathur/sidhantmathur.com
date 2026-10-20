@@ -64,33 +64,21 @@ import {
 } from "./use-conversation";
 
 // ---------------------------------------------------------------------------
-// What does NOT ship in the entry chunk
+// Loaded on demand
 // ---------------------------------------------------------------------------
-// Measured on the throttled mobile profile, the homepage's first load was
-// bandwidth-bound rather than CPU-bound: three quarters of a megabyte on the
-// wire, and 3.8 seconds between the page painting and the page working. Most of
-// what was arriving in that window could not be used in it.
+// The homepage's first load on a throttled phone is bandwidth-bound, so
+// anything a visitor can't reach without first doing something (opening a
+// panel, failing a turn, raising a sheet) stays out of the entry chunk.
+// `ssr: false` throughout: each one renders only behind client state, so
+// pre-rendering would add markup nobody can see yet.
 //
-// So everything below loads on demand. The test each one passes is the same:
-// can a visitor reach it without first doing something? If the answer is no —
-// a panel has to be opened, a turn has to fail, a sheet has to be raised — it
-// has no business being in the bytes that stand between the visitor and a
-// working composer.
-//
-// `ssr: false` throughout, and not as an afterthought. These render nothing on
-// the server today (every one of them is behind client state), so pre-rendering
-// them would add markup for something the visitor cannot yet see, which is the
-// whole problem this pass exists to fix.
-//
-// The two DELIBERATE exceptions, so nobody re-splits them by reflex:
-//   answer.tsx    on the streaming path. A lazy chunk fetched at the moment the
-//                 first token lands is a stall in the one place the site is
-//                 asking to be judged.
-//   recruiter-tldr / the empty state generally — it IS the first screen.
+// Two deliberate exceptions, so nobody re-splits them by reflex:
+//   answer.tsx      on the streaming path; a lazy chunk fetched as the first
+//                   token lands is a visible stall.
+//   recruiter-tldr  part of the empty state, which is the first screen.
 
-// The panel's content. The heaviest module in the shell by a wide margin:
-// three MDX case studies, the knowledge base, the repo corpus and the
-// system-prompt builder. Nothing here is reachable without opening a panel.
+// The panel's content and the heaviest module in the shell: three MDX case
+// studies, the knowledge base, the repo corpus and the system-prompt builder.
 const PanelBody = dynamic(() => import("./panel-body").then((m) => m.PanelBody), {
   ssr: false,
 });
@@ -110,62 +98,49 @@ const ManualMode = dynamic(() => import("./manual-mode").then((m) => m.ManualMod
   ssr: false,
 });
 
-// Radix's dialog, and below lg only. Mounted on the first sheet-opening tap,
-// or at idle, whichever comes first — so the chunk is warm long before anyone
-// reaches for it, and a desktop never fetches it at all. See mobile-sheets.tsx.
+// Radix's dialog. Mounted on the first sheet-opening tap or at idle, whichever
+// comes first, so the chunk is warm before anyone reaches for it.
 const MobileSheets = dynamic(
   () => import("./mobile-sheets").then((m) => m.MobileSheets),
   { ssr: false },
 );
 
-// The print document. Mounted once the page has gone idle rather than on an
-// interaction: nothing can reliably intercept Cmd-P, so it has to already be in
-// the DOM when the dialog opens — it just doesn't have to be there before the
-// composer works. See use-idle-ready.ts.
+// The print document. Mounted at idle rather than on an interaction: nothing
+// can reliably intercept Cmd-P, so it has to be in the DOM before the dialog
+// opens, just not before the composer works. See use-idle-ready.ts.
 const PrintSheet = dynamic(() => import("./print-sheet").then((m) => m.PrintSheet), {
   ssr: false,
 });
 
 // ---------------------------------------------------------------------------
-// Copy — verbatim from docs/site-copy.md.
+// Copy. Final strings come from docs/site-copy.md; drafted ones are logged in
+// docs/copy-ledger.md.
 // ---------------------------------------------------------------------------
 const HERO = "I learn what the problem needs, then I build the thing.";
-// The front-door pass (2026-08-23) moved this line from under the headline
-// into the composer it was pointing at: it is the empty state's desktop
-// placeholder now. The subline's job — say what he wants — is done by
+// The empty state's desktop placeholder. The subline under the headline is
 // POSITIONING from content/recruiter.ts, where the citation checker covers it.
 const HERO_SUB = "Ask what you'd ask on a call";
-// The composer's fine print, one line at each width (wave 2). Logged in
-// docs/copy-ledger.md; DISCLAIMER in lib/site.ts still travels with exports.
+// The composer's fine print, one line at each width. The full DISCLAIMER in
+// lib/site.ts travels with exports.
 const DISCLAIMER_SHORT = "AI answers can be wrong.";
 const DISCLAIMER_LONG =
   "Answers cite their sources and can be wrong — the resume is the authoritative version.";
-// DISCLAIMER, SITE_NAME and SITE_URL used to sit here and be threaded into the
-// export deck, the print document and the transcript serializer as props. They
-// are in `lib/site.ts` now: the deck and the document import them, and the two
-// surfaces that used to be handed a name and a URL no longer take one. See the
-// note there on why the serializer still takes its arguments.
-// The error state used to be one string, here. It is now one string per error
-// class, in `lib/chat-telemetry.ts` beside the classes themselves, rendered by
-// TurnError — a dropped connection on a phone and a misconfigured server are
-// not the same news, and the site already knew which one it was.
+// Per-class error copy lives in lib/chat-telemetry.ts, rendered by TurnError.
 const RATE_LIMIT_STATE =
   "You've hit the message limit for now — the resume has everything in the meantime.";
-// Drafted for Sprint 5 (#18) and logged in docs/copy-ledger.md. Says three
-// things, all of them checkable in this repo: this is a replay, it came out of
-// the link rather than off a server, and it stopped being live when it was
-// made.
+// Says three things, all checkable in this repo: this is a replay, it was
+// rebuilt from the link rather than fetched from a server, and it stopped
+// being live when it was made.
 const REPLAY_BANNER =
   "Replayed conversation. It was rebuilt from the link you opened — the site stored nothing, and this is a snapshot of what the model said then, not a live session.";
-// Application links (docs/application-links.md): a fit check is sent to people
-// who have never seen this site, so a replayed one says what it is in a line
-// before anything else. Both claims are enforced by lib/role-fit.ts — a match
-// without a source is downgraded, and gaps can't come out empty while a row is
-// unmet. Logged in docs/copy-ledger.md.
+// A fit check is sent to people who have never seen the site
+// (docs/application-links.md), so a replayed one says what it is first. Both
+// claims are enforced by lib/role-fit.ts: a match without a source is
+// downgraded, and gaps can't be empty while a row is unmet.
 const REPLAY_FIT_LINE =
   "A fit check: the assistant on Sidhant Mathur's site read one job posting against his record, citing a source for every match and listing the gaps.";
-// Only when the posting really was left out, which every link built since
-// application links is (lib/transcript.ts → toSnapshot). Older links carry it.
+// Only when the posting really was left out, as it is in every link
+// lib/transcript.ts (toSnapshot) builds now; older links carry it.
 const REPLAY_POSTING_LEFT_OUT =
   "The posting itself is left out of the link; the table quotes the requirements it judged.";
 
@@ -180,11 +155,10 @@ const PANEL_MAX = 640;
 const PANEL_DEFAULT = 380;
 
 export function AppShell() {
-  // Everything on this page that needs JavaScript is gated on this. See
-  // use-hydrated.ts for what the ungated version looked like on slow wifi.
+  // Every control that needs JavaScript is gated on this; see use-hydrated.ts.
   const hydrated = useHydrated();
-  // The two things that must exist before they are asked for, but must not be
-  // part of what the visitor waits for. See use-idle-ready.ts.
+  // The print document and the sheets must exist before they're asked for, but
+  // not delay the composer. See use-idle-ready.ts.
   const idleReady = useIdleReady();
   const [model, setModel] = useState<string>(MODEL_IDS[0]);
 
@@ -209,35 +183,33 @@ export function AppShell() {
 
   usePanelUrl(panel, setPanel);
 
-  // What the replay banner says (application links). Read off the decoded
-  // conversation rather than off the link, so it is true of whatever arrived.
+  // What the replay banner says. Read off the decoded conversation rather than
+  // the link, so it's true of whatever arrived.
   const replayedFit = replayed && latestRoleFit(messages) != null;
   const postingLeftOut =
     replayedFit && messages.some((m) => m.role === "user" && textOf(m).trim() === JD_PREFIX);
 
-  // ---- Instruments (Sprint 2) ----------------------------------------------
+  // ---- Instruments ---------------------------------------------------------
   //
-  // All three of these read the SAME string: the text of the streaming answer.
-  // The seismograph samples how fast it grows, the teletype ticks when it does,
-  // and neither needs a channel of its own. Nothing here can change what the
-  // model does or what the reader has to do — see the note at the top of
-  // instruments.tsx.
+  // Both read the same string, the text of the streaming answer: the rate
+  // meter samples how fast it grows and the teletype ticks when it does.
+  // Nothing here can change what the model does or what the reader has to do;
+  // see the note at the top of instruments.tsx.
   const lastMessage = messages[messages.length - 1];
   const streamingText = lastMessage?.role === "assistant" ? textOf(lastMessage) : "";
   const rate = useTokenRate(streamingText, isBusy);
   const { teletype, toggleTeletype } = useTeletype(streamingText, isBusy);
-  // The fourth reading of the same event. Unlike the three above it survives
-  // the turn ending, because the finished duration is the interesting number.
+  // Unlike the two above, this survives the turn ending, because the finished
+  // duration is the interesting number.
   const elapsed = useElapsed(isBusy);
-  // Past this, the wait has become a question and the reader gets a way out of
-  // it. See the button beside the phase line.
+  // Past this, the wait has become a question and the reader gets a way out
+  // (the stop button beside the phase line).
   const stallable = isBusy && elapsed != null && elapsed >= STALL_HINT_SECONDS;
   const sessionCost = useMemo(
     () => sumCosts(turnLog.map((t) => (t.error ? null : costOfTurn(t.model, t.usage)))),
     [turnLog],
   );
-  // The four session numbers, as numbers, for the rail sheet on a phone — see
-  // readouts.ts. The desktop status strip shows only the receipt now (wave 2).
+  // The four session numbers for the index sheet; see readouts.ts.
   const readouts: ReadoutState = { turns, ttft, cost: sessionCost.total, model };
   // What the last answer cost: the newest turn that finished and was priced.
   // A failed turn is skipped rather than reported as free.
@@ -266,31 +238,21 @@ export function AppShell() {
 
   // ---- What assistive tech is told ----------------------------------------
   //
-  // A streamed answer arrives silently. The prose appears in the transcript a
-  // token at a time, which is exactly the wrong thing to put in a live region —
-  // a screen reader would read the answer over itself for the length of the
-  // turn — so nothing was in one, and the result was that a turn finished with
-  // no announcement of any kind. A blind visitor had to guess when to go and
-  // read, or tab away and back to find out.
+  // Streamed prose can't go in a live region (a screen reader would read the
+  // answer over itself for the length of the turn), so each completed turn
+  // gets one polite announcement instead, and the answer is read once, when
+  // the reader navigates to it. The turn number makes each announcement a
+  // distinct string: a live region doesn't re-announce text identical to what
+  // it already holds.
   //
-  // So: one polite announcement per completed turn, and the answer itself stays
-  // out of the region so it is read once, on purpose, when the reader navigates
-  // to it. The turn number rides along because it makes each announcement a
-  // distinct string — a live region does not re-announce text identical to what
-  // it already holds, so "Answer complete." twice in a row would be said once.
-  //
-  // Failures do NOT come through here. TurnError carries role="alert", which is
-  // the assertive counterpart and interrupts rather than waits, which is right
-  // for a turn that did not happen.
+  // Failures don't come through here. TurnError carries role="alert", which
+  // interrupts rather than waits, as a turn that didn't happen should.
   const [announcement, setAnnouncement] = useState("");
-  // Counted, not edge-triggered. The first version watched `isBusy` for a
-  // true→false transition and missed the announcement entirely on a fast turn,
-  // where the whole answer arrives inside one render batch and there is no
-  // intermediate commit to observe — caught by the mocked-stream check in
-  // scripts/a11y-audit.mjs, which is exactly the case a live model on a good
-  // connection produces and a developer on localhost never notices. Counting
-  // settled answers has no such window: whenever the shell is idle and there is
-  // one more finished answer than was last announced, that is the event.
+  // Counted rather than edge-triggered: on a fast turn the whole answer can
+  // arrive inside one render batch, leaving no true→false `isBusy` transition
+  // to observe. Whenever the shell is idle with one more finished answer than
+  // was last announced, that is the event. The mocked-stream check in
+  // scripts/a11y-audit.mjs covers the fast case.
   const announcedCount = useRef(0);
   useEffect(() => {
     if (isBusy) return;
@@ -302,13 +264,10 @@ export function AppShell() {
       return;
     }
     announcedCount.current = answered;
-    // The error block and the rate-limit block announce themselves; an aborted
-    // turn was the reader's own doing and renders nothing on purpose.
-    //
-    // `!== "none"`, and the string is the whole point: errorKind is a union of
-    // three STRINGS, so a truthiness test on it is true even when nothing has
-    // gone wrong. The first version of this guard read `if (errorKind) return`
-    // and silently suppressed every announcement the feature exists to make.
+    // The error and rate-limit blocks announce themselves; an aborted turn was
+    // the reader's own doing and renders nothing on purpose. errorKind is a
+    // string union, so this has to compare with "none": a truthiness test
+    // passes even when nothing has gone wrong.
     if (errorKind !== "none") return;
     queueMicrotask(() => setAnnouncement(`Answer ${answered} complete.`));
   }, [isBusy, errorKind, messages]);
@@ -317,12 +276,8 @@ export function AppShell() {
   const [railOpen, setRailOpen] = useState(false);
   // ---- Where focus goes when a sheet closes --------------------------------
   //
-  // Measured, not assumed: closing the rail sheet dropped focus on <body>, which
-  // strands a keyboard user at the top of the document with no idea the sheet
-  // ever existed. The dialog primitive is supposed to hand focus back to
-  // whatever opened it and did not, so the shell does it itself — it is two
-  // refs, and it is the difference between a modal a keyboard can use and one
-  // it can only fall out of.
+  // The dialog primitive doesn't hand focus back to whatever opened it (closing
+  // the rail sheet dropped focus on <body>), so the shell restores it itself.
   const railTriggerRef = useRef<HTMLButtonElement>(null);
   const panelOpenerRef = useRef<HTMLElement | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -330,16 +285,13 @@ export function AppShell() {
   const [panelWidth, setPanelWidth] = useState(PANEL_DEFAULT);
   const [linkCopied, setLinkCopied] = useState(false);
 
-  // ---- Export and the actions strip (Sprint 5) -----------------------------
+  // ---- Export and the actions strip ----------------------------------------
   //
-  // The link is held here rather than inside the export panel because the print
-  // document carries it too, and because it has to be dropped the moment the
-  // conversation moves on: a permalink describes the turns it was built from,
-  // and one left on screen after another answer would be quietly wrong.
-  // Derived rather than invalidated in an effect: the link is remembered with
-  // the turn count it was built at, and stops being the current link the moment
-  // another turn lands. No cascading render, and no window where the panel
-  // shows a link that describes a shorter conversation.
+  // The link is held here rather than in the export panel because the print
+  // document carries it too. A permalink describes the turns it was built
+  // from, so it's remembered with that turn count and stops being current the
+  // moment another turn lands. Derived rather than cleared in an effect, so
+  // there's no window where the panel shows a link to a shorter conversation.
   const [builtLink, setBuiltLink] = useState<{ link: string; at: number } | null>(null);
   const permalink = builtLink && builtLink.at === messages.length ? builtLink.link : null;
   const setPermalink = useCallback(
@@ -347,9 +299,8 @@ export function AppShell() {
     [messages.length],
   );
 
-  // #27's answer to the trigger problem: nothing appears, the strip that was
-  // always there just gains a little weight — right after an action, which is
-  // the highest-intent moment available and needs no guess at an ending.
+  // After an action, the always-present strip gains a little weight for a few
+  // seconds. Nothing new appears, and nothing has to guess when a visit ends.
   const [emphasis, setEmphasis] = useState(false);
   const emphasisTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const bumpStrip = useCallback(() => {
@@ -364,10 +315,9 @@ export function AppShell() {
     [],
   );
 
-  // Below lg the rail and panel become sheets. Rendering them only on mobile
-  // keeps Radix from mounting a portal + overlay over the desktop layout.
-  // Starts false so the first client render matches the server; both sheets are
-  // closed at mount, so there is nothing to flash.
+  // Below lg the panel is a bottom sheet instead of the resizable aside.
+  // Starts false so the first client render matches the server; both sheets
+  // are closed at mount, so there's nothing to flash.
   const [isMobile, setIsMobile] = useState(false);
   useEffect(() => {
     const mq = window.matchMedia("(max-width: 1023px)");
@@ -392,16 +342,14 @@ export function AppShell() {
   // use-conversation.ts about why they must not open the sheet.
   const openPanel = useCallback(
     (view: PanelView) => {
-      // Whatever was focused when the panel was asked for. Read before any
-      // state changes, because the element may be inside a sheet that is about
-      // to close — in which case it will fail the isConnected test on the way
-      // back and focus lands on the composer instead, which is the honest
-      // fallback rather than a guess.
+      // Whatever had focus when the panel was asked for, read before any state
+      // changes. If it's inside a sheet that's about to close, it fails the
+      // isConnected check on the way back and focus lands on the composer.
       const opener = document.activeElement;
       panelOpenerRef.current =
         opener instanceof HTMLElement && opener !== document.body ? opener : null;
-      // Opening a citation is the other post-action moment the decisions doc
-      // names — someone checking a source is someone taking this seriously.
+      // Opening a citation counts as an action too: someone checking a source
+      // is taking this seriously.
       if (view.kind === "source") bumpStrip();
       setPanel(view);
       setRailOpen(false);
@@ -424,37 +372,26 @@ export function AppShell() {
   const stick = useRef(true);
   useEffect(() => {
     const el = scrollRef.current;
-    // Not when there's nothing to stick to. The empty state is taller than a
-    // phone, so this fired on first paint and landed the visitor halfway down
-    // the tl;dr with the headline scrolled off — the one screen the site gets
-    // to make its case, skipped, and only on mobile.
-    //
-    // Not onto a replay, either. A replayed conversation is a page someone was
-    // sent (application links), and it opened scrolled to its last line, with
-    // the banner that says what it is — and the contact actions in it — above
-    // the fold. It starts at the top; the first question the reader asks of it
-    // is a new message, and sticking resumes from there.
+    // Not when there's nothing to stick to: the empty state is taller than a
+    // phone, and pinning it would land the visitor halfway down with the
+    // headline scrolled off. Not onto a replay either: it's a page someone was
+    // sent, so it opens at the top with its banner and contact actions in
+    // view. Sticking resumes with the reader's first new message.
     const replaying = replayed && messages[messages.length - 1]?.id.startsWith("replay-");
     if (el && stick.current && messages.length && !replaying) el.scrollTop = el.scrollHeight;
   }, [messages, replayed]);
 
-  // The composer sizes itself to its content. Measurement, not a CSS trick:
-  // reset to auto first, because scrollHeight of an already-tall textarea
-  // reports the height it currently has, so a field that grew for a long paste
-  // would never shrink back when the paste was cleared.
+  // The composer sizes itself to its content. Reset to auto first, because an
+  // already-tall textarea reports its current height as scrollHeight and would
+  // never shrink back after a paste is cleared. Runs on `input` rather than in
+  // onChange so values set through setInput (slash commands, suggested
+  // questions) get resized too.
   //
-  // Runs on `input` rather than in onChange so the slash commands and the
-  // suggested questions — which set the value straight through setInput — get
-  // resized too, instead of leaving a one-line box holding six lines of text.
-  //
-  // The floor is Math.max rather than the raw scrollHeight, and the field
-  // carries a min-height in CSS to back it. An empty textarea can report a
-  // scrollHeight computed against no content at all — measured before the font
-  // has swapped, or on the first paint of a hydrated field — and writing that
-  // number back as an explicit height locks the composer to a box shorter than
-  // its own placeholder. `auto` resolves against the min-height; offsetHeight
-  // reads what that resolved to, so the measurement can never shrink the field
-  // below the size CSS already guaranteed it.
+  // Math.max with offsetHeight, backed by a CSS min-height: an empty textarea
+  // can report a scrollHeight computed against no content (before the font
+  // swaps, or on a hydrated field's first paint), and writing that back would
+  // lock the composer shorter than its placeholder. `auto` resolves against
+  // the min-height, so the measurement never shrinks the field below it.
   const inputRef = useRef<HTMLTextAreaElement>(null);
   useEffect(() => {
     const el = inputRef.current;
@@ -583,10 +520,10 @@ export function AppShell() {
     [messages, isBusy, lastId],
   );
 
-  // The four recruiter chips (#26), built once and rendered in two places by
-  // width: in the dock above the composer from md up — grouped with the
-  // interview they start — and in the hero column below md, after the facts,
-  // where a phone's fold belongs to the headline and the CTAs.
+  // The suggested-question chips, built once and rendered in two places by
+  // width: in the dock above the composer from md up, grouped with the
+  // interview they start, and in the hero column below md, after the facts,
+  // where a phone's fold belongs to the headline and the actions.
   const chipButtons = SUGGESTED.map((q) => (
     <button
       key={q}
@@ -604,13 +541,11 @@ export function AppShell() {
     </button>
   ));
 
-  // Two panel views aren't built from content — the export surface is
-  // conversation state and the deck is instrument state — so they're rendered
-  // here rather than inside PanelBody, which would otherwise need every
-  // instrument threaded through it. The registry says which ones (`surface`);
-  // this record says how, and being keyed by ShellPanelKind it can't be missing
-  // one. The bodies are thunks so only the selected element is ever built, and
-  // both components stay behind the lazy imports at the top of this file.
+  // Two panel views aren't built from content (export is conversation state,
+  // the deck is instrument state), so they render here rather than inside
+  // PanelBody, which would otherwise need every instrument threaded through
+  // it. The registry in panels.ts says which ones; keyed by ShellPanelKind,
+  // this record can't miss one. Thunks, so only the selected body is built.
   const shellPanel: Record<ShellPanelKind, () => React.ReactNode> = {
     export: () => (
       <ExportDeck
@@ -646,40 +581,26 @@ export function AppShell() {
   return (
     <>
       {/* ---- Print document --------------------------------------------
-          A SIBLING of the shell, not a child: print hides the shell subtree
-          entirely, so a document nested inside it would go with its parent
-          and every print would come out blank. It lives in the DOM at all
-          times and is display:none until print (the print block in
-          app/globals.css), so Cmd-P — which nothing can reliably intercept —
-          prints the document rather than the app, and the dialog never opens
-          over a layout that hasn't happened yet. */}
+          A sibling of the shell, not a child: print hides the shell subtree,
+          so a nested document would print blank. From idle onwards it's in
+          the DOM, display:none until print (app/globals.css), so Cmd-P, which
+          nothing can reliably intercept, prints the document, not the app. */}
       {idleReady && (
         <PrintSheet messages={messages} permalink={permalink} />
       )}
-      {/* Announcements only. Visually nothing, and in three ways deliberately
-          placed:
-
-          outside the transcript, so the answer text is never itself inside a
-          live region and never read twice;
-
-          outside `.screen-only`, and this one was learned by measurement. When
-          a sheet opens, Radix hides everything behind it from assistive tech by
-          marking the dialog's siblings aria-hidden — except that the library
-          doing the marking deliberately spares any subtree containing an
-          [aria-live] element, so parking this paragraph inside the shell left
-          THE ENTIRE PAGE reachable behind an open modal. `npm run a11y` caught
-          it as "the sheet is a modal dialog: FAIL";
-
-          and outside the print document, which is where it would otherwise have
-          landed by symmetry — a status line is not part of the paper. */}
+      {/* Announcements only, deliberately outside three things: the
+          transcript, so answer text is never inside a live region; the
+          `.screen-only` shell, because Radix's aria-hidden marking spares any
+          subtree containing an [aria-live] element, so inside the shell it
+          left the whole page reachable behind an open sheet (`npm run a11y`
+          checks this); and the print document, which a status line isn't
+          part of. */}
       <p role="status" aria-live="polite" className="sr-only">
         {announcement}
       </p>
       <div className="screen-only flex h-dvh flex-col bg-bg text-text [font-family:var(--font-geist-mono)]">
-      {/* Skip link. The header carries the index control and four nav stops
-          before the content, and the empty state adds three CTAs — this jumps
-          a keyboard user straight to the question box. Visually hidden until
-          focused. */}
+      {/* Skip link past the header and the front door's actions to the
+          question box. Visually hidden until focused. */}
       <a
         href="#ask"
         className="sr-only focus:not-sr-only focus:absolute focus:left-3 focus:top-3 focus:z-50 focus:border focus:border-accent focus:bg-panel focus:px-3 focus:py-1.5 focus:text-[12px] focus:text-text focus:no-underline"
@@ -689,28 +610,17 @@ export function AppShell() {
 
       {/* ---- Status strip ------------------------------------------------- */}
       <header className="flex h-11 shrink-0 items-center gap-3 border-b border-line bg-panel px-3 text-[12px] md:px-4">
-        {/* Tap target, not a glyph. The bare ☰ character rendered at the
-            header's own size was an ~11px target — well under the 44px iOS asks
-            for, and it read as thin besides. The strip is 44px tall now, so
-            this finally fills it at spec instead of a shade under. Drawn as an
-            SVG because the Unicode trigram renders inconsistently across
-            platforms, hairline-thin on iOS in particular.
-
-            AT EVERY WIDTH since the front-door pass: the permanent desktop
-            rail is gone, so this is the one way into the full index
-            everywhere, and it opens the same sheet on a desktop that it
-            always opened on a phone. */}
+        {/* The one way into the full index, at every width. A full 44px
+            target, drawn as an SVG because the Unicode trigram renders
+            inconsistently across platforms and hairline-thin on iOS. */}
         <button
           ref={railTriggerRef}
           type="button"
           onClick={() => setRailOpen(true)}
           aria-label="Open the index"
-          // `disabled` as well as the CSS gate, and the difference is the
-          // keyboard. `pointer-events: none` stops a tap and nothing else: the
-          // button stayed in the tab order before hydration, so Enter on it was
-          // still a keystroke that silently did nothing — the exact bug this
-          // pass exists to remove, surviving for the people least able to guess
-          // what happened. A disabled button leaves the tab order entirely.
+          // `disabled` as well as the CSS gate: `pointer-events: none` stops a
+          // tap but leaves the button in the tab order, where Enter before
+          // hydration would silently do nothing.
           disabled={!hydrated}
           data-js-control
           className="-ml-1.5 flex h-11 w-11 shrink-0 touch-manipulation items-center justify-center text-text-soft hover:text-accent"
@@ -728,8 +638,8 @@ export function AppShell() {
             <path d="M2.5 4.5h12M2.5 8.5h12M2.5 12.5h12" />
           </svg>
         </button>
-        {/* Fills the strip for the same reason the hamburger beside it does —
-            a 12px line of text is not a touch target. */}
+        {/* Fills the strip for the same reason the index button does: a 12px
+            line of text isn't a touch target. */}
         <Link
           href="/"
           className="-mx-2 flex h-full touch-manipulation items-center px-2 text-text no-underline hover:text-accent"
@@ -739,17 +649,11 @@ export function AppShell() {
         <span className="hidden text-text-faint lg:inline">Toronto, ON</span>
 
         <div className="ml-auto flex items-center gap-2 text-text-faint sm:gap-4">
-          {/* Wave 2: the nav no longer gives way to telemetry. The front-door
-              pass swapped destinations for readouts the moment a conversation
-              started, which took the resume and the contact links off the
-              header at exactly the point a visitor had shown interest — the
-              council review's "nav replaced by telemetry after the first
-              turn". So the nav is permanent, at every width (a phone gets it
-              in tighter type, and drops Projects below 380px, where the ☰
-              index still carries it), and what the strip used to show — time
-              to first token, the rate needle, the session total, the hourly
-              budget and the model picker — lives in the instruments panel.
-              The header keeps one line of it: the receipt below. */}
+          {/* The nav stays at every width, conversation or not, so the resume
+              and contact links are there once a visitor shows interest. A
+              phone drops Projects below 380px, where the index still carries
+              it. Live readouts belong to the instruments panel; the header
+              keeps only the receipt below. */}
           <nav aria-label="Site" className="flex items-center">
             {HEADER_NAV.map((n) => (
               <Link
@@ -789,28 +693,18 @@ export function AppShell() {
             </button>
           )}
           <span className="flex items-center gap-1.5">
-            {/* The strip said "ready" from the first paint, which on a slow
-                connection was the single most confident lie on the page — the
-                one readout a visitor would check to find out why nothing was
-                happening, agreeing that everything was fine. It now says what
-                is true. */}
+            {/* Grey while the page is still loading, so it never says "ready"
+                before it is. */}
             <span
               aria-hidden="true"
               className={`inline-block h-1.5 w-1.5 rounded-full ${
                 !hydrated ? "bg-text-dim" : isBusy ? "bg-accent" : "bg-signal"
               }`}
             />
-            {/* The word is normally sm-and-up, because on a phone the dot
-                carries it and the header is tight. Not while the page is still
-                arriving: a grey dot alone is not an explanation, and the phone
-                is the device this whole pass is about. So it shows at every
-                width until hydration and then collapses back to the settled
-                design. */}
-            {/* sr-only rather than hidden below sm: the dot beside it is
-                decorative, so a screen reader at phone width was being told
-                nothing at all about whether the page was working. The word is
-                in the accessibility tree at every width; only its visibility
-                changes. */}
+            {/* Visible at every width until hydration, because a grey dot alone
+                explains nothing; after that, visible from sm up. Below sm it's
+                sr-only rather than hidden, since the dot is decorative and a
+                screen reader still needs the state. */}
             <span className={!hydrated ? "inline" : "sr-only sm:not-sr-only sm:inline"}>
               {!hydrated ? "loading" : isBusy ? "streaming" : "ready"}
             </span>
@@ -819,34 +713,19 @@ export function AppShell() {
       </header>
 
       {/* ---- Body --------------------------------------------------------- */}
-      {/* No permanent rail since the front-door pass. The 224px column of
-          links was chrome standing ahead of engagement — thirteen destinations
-          a visitor met before the page had said who this is. The same index is
-          a sheet behind the header's ☰ at every width now, and the four
-          destinations that earn the first screen are in the header itself. */}
       <div className="flex min-h-0 flex-1">
-        {/* Conversation.
-            A <main> rather than a <div>: the shell had a banner and a nav and
-            no main landmark at all, so the one region a screen reader user
-            jumps to first did not exist. The skip link already covered getting
-            past the rail; this is the same idea expressed as structure, and it
-            is what the header and the nav were implicitly claiming to be
-            beside. */}
+        {/* Conversation. */}
         <main className="relative flex min-w-0 flex-1 flex-col">
-          {/* Ambient backdrop (extends #14): under the empty state, back
-              during idle, gone while a conversation is on screen. It sits
-              behind the scroll area rather than inside it so it doesn't
-              scroll with the transcript. */}
+          {/* Under the empty state, back during idle, gone while a
+              conversation is on screen. Behind the scroll area rather than
+              inside it, so it doesn't scroll with the transcript. */}
           <AmbientBackdrop visible={!hasMessages || idle} />
           <div
             ref={scrollRef}
             onScroll={onScroll}
-            // The old fold arithmetic that lived here (disclaimer trims, chip
-            // row budgets) measured a layout the front-door pass replaced.
-            // The fold target now is simpler and checked with `npm run shot`:
-            // headline, subline and all three CTAs above the fold at 1280×800
-            // and on a 390×844 phone. The tl;dr may break the fold — it is
-            // the scroll's first reward, not the pitch.
+            // Fold target, checked with `npm run shot`: headline, subline and
+            // all three actions above the fold at 1280×800 and on a 390×844
+            // phone. The tl;dr may break the fold.
             className="relative min-h-0 flex-1 overflow-y-auto px-4 py-6 md:px-10 md:py-5"
           >
             {/* Idle dims the column rather than covering it. The conversation
@@ -857,14 +736,10 @@ export function AppShell() {
                 idle ? "opacity-90" : "opacity-100"
               }`}
             >
-              {/* A replayed conversation says so, once, at the top of the
-                  thing it is describing (#18). It must never be mistaken for
-                  a live session, and the honest version of that is a line the
-                  reader passes on the way in — not a badge in the chrome. */}
-              {/* A replay is also a standalone page: application links send
-                  it to someone who has never seen the site. So it says what
-                  it is, and carries the three ways to act that the front door
-                  would have shown them (wave 2's contact actions). */}
+              {/* A replay says so once, at the top, so it can't be mistaken for
+                  a live session. It's also a standalone page sent to people
+                  who have never seen the site, so it carries the same three
+                  contact actions as the front door. */}
               {replayed && (
                 <div className="mb-6 space-y-3 border-l-2 border-accent bg-raised px-3 py-3">
                   {replayedFit && (
@@ -893,21 +768,15 @@ export function AppShell() {
               )}
 
               {!hasMessages && (
-                // The front door (2026-08-23): who, what he wants, and three
-                // ways to act — all before any engagement, in source order at
-                // every width. The headline and the facts read in the sans
-                // face because they are prose to be read; everything
-                // actionable keeps the mono register of the controls around
-                // it. The old fold arithmetic (chip order swaps, disclaimer
-                // trims) went with the layout it measured.
+                // The front door: who, what he wants, and three ways to act,
+                // before any engagement and in source order at every width.
+                // Prose reads in the sans face; everything actionable keeps
+                // the mono register of the controls around it.
                 <div className="flex flex-col gap-4">
-                  {/* Who and what, above his headline (wave 2). The name was
-                      a 13px label in the header and the role was nowhere on
-                      the first screen; this line says both in the words a
-                      recruiter searches for. The photo is small on purpose —
-                      a marker of a person beside his name, not a portrait —
-                      and slightly settled into the dark ground (see the
-                      headshot rule in app/globals.css). */}
+                  {/* Name and role in the words a recruiter searches for. The
+                      photo is small on purpose, a marker beside the name
+                      rather than a portrait (see the headshot rule in
+                      app/globals.css). */}
                   <div className="flex items-center gap-3">
                     <Image
                       src={HEADSHOT}
@@ -936,22 +805,19 @@ export function AppShell() {
                   <p className="t-body max-w-[52ch] text-text-soft [font-family:var(--font-geist-sans)]">
                     {POSITIONING.value}
                   </p>
-                  {/* The ways to act (wave 2). The resume PDF is primary —
-                      it is the file a recruiter attaches to an ATS record —
-                      with the HTML resume a text link beside the chat's.
-                      That choice is one the council left open until PostHog
-                      can say which one visitors take; both are tracked. The
-                      email is on screen and copyable, because a bare mailto:
-                      is a dead end on a desktop with no mail client. */}
+                  {/* The resume PDF is primary: it's the file a recruiter
+                      attaches to an ATS record. Which format visitors take is
+                      still open, so both are tracked. The email is on screen
+                      and copyable because a bare mailto: is a dead end without
+                      a mail client. */}
                   <div className="flex flex-col gap-2.5 pt-2 sm:flex-row sm:flex-wrap">
                     <ResumePdfButton surface="front-door" primary />
                     <EmailCopy surface="front-door" />
                     <LinkedInButton surface="front-door" />
                   </div>
-                  {/* Two text links. "Interview this site" was a third equal
-                      button; it only focuses the composer, so it is demoted
-                      to the register of a link and still gated on hydration
-                      like every control that needs JavaScript. */}
+                  {/* "Interview this site" only focuses the composer, so it's
+                      styled as a link, and gated on hydration like every
+                      control that needs JavaScript. */}
                   <div className="-mt-1.5 flex flex-wrap items-center gap-x-5 text-[14px] md:text-[13px]">
                     <Link
                       href="/resume"
@@ -970,14 +836,11 @@ export function AppShell() {
                       Interview this site ↓
                     </button>
                   </div>
-                  {/* #25 — the six-second scan, at body scale. See the notes
-                      in recruiter-tldr.tsx. */}
+                  {/* The six-second scan; see recruiter-tldr.tsx. */}
                   <div>
                     <RecruiterTldr />
                   </div>
-                  {/* Two case studies, one number each (wave 2). Before this
-                      no project was linked from the front door's body at any
-                      width. */}
+                  {/* Two case studies, one number each. */}
                   <CaseCards />
                   {/* Below md the chips live here, after the facts; from md
                       up they sit in the dock, grouped with the composer they
@@ -997,26 +860,16 @@ export function AppShell() {
                     .slice(0, mi + 1)
                     .filter((x) => x.role === "user").length;
                   return (
-                    // A turn resolves in rather than appearing: opacity plus a
-                    // 4px blur clearing over 400ms. Ported from beautiful-ui's
-                    // `stream-in`, and the one place its instinct beat ours —
-                    // messages used to pop into a static column, which on a
-                    // fast turn reads as a layout jump rather than an arrival.
-                    //
-                    // Mount-only by construction: a CSS animation restarts when
-                    // the animation property changes, not when React re-renders,
-                    // so the streaming turn is not re-blurred on every token.
+                    // A turn resolves in (opacity plus a 4px blur clearing over
+                    // 400ms) rather than popping into the column. A CSS
+                    // animation restarts only when the animation property
+                    // changes, not on re-render, so the streaming turn isn't
+                    // re-blurred on every token.
                     <div key={m.id} className="animate-stream-in space-y-2">
                       {m.role === "user" ? (
-                        // A ledger entry, not a chat bubble: full width, a
-                        // numbered mono rule on top, no floating-right box.
-                        // The right-aligned bubble is the single strongest
-                        // "this is a ChatGPT clone" signal, and this site is
-                        // an instrument log, not a messaging app.
-                        //
-                        // A replayed turn is not the reader's: "you" over a
-                        // fit check Sidhant sent with an application put his
-                        // request in the recruiter's mouth. So it says "asked".
+                        // A ledger entry, not a chat bubble: full width with a
+                        // numbered mono rule on top. A replayed turn isn't the
+                        // reader's own question, so it says "asked", not "you".
                         <div className={mi > 0 ? "border-t border-line pt-4" : ""}>
                           <p className="mb-2 text-[12px] tracking-widest text-text-faint [font-family:var(--font-geist-mono)]">
                             {String(exchange).padStart(2, "0")} ·{" "}
@@ -1030,17 +883,15 @@ export function AppShell() {
                         <>
                           {/* The answer owns its own sources: markers out of
                               the prose, into the margin, and a source row
-                              under it once the turn settles (Sprint 3). */}
+                              under it once the turn settles. */}
                           <Answer
                             text={text}
                             settled={!isBusy || m.id !== lastId}
                             onOpenSource={openPanel}
                           />
-                          {/* Tool citations and the copy affordance share one row.
-                              The copy button stays visible rather than
-                              hover-revealed — hover doesn't exist on touch,
-                              and this is the only way an answer leaves the
-                              page. */}
+                          {/* Tool citations and the copy button share one row.
+                              The copy button is always visible, not revealed
+                              on hover, because touch has no hover. */}
                           <div className="flex flex-wrap items-center gap-2 pt-1">
                             {outs.map((o, i) => (
                               <Fragment key={i}>
@@ -1049,13 +900,10 @@ export function AppShell() {
                                   latest={m.id === lastId}
                                   onOpen={openPanel}
                                 />
-                                {/* The resume chip opens the panel, where the
-                                    PDF link sits below the chunks. Asking for
-                                    the resume and being handed a panel to
-                                    scroll is a step too many, so the file gets
-                                    its own chip — a real anchor, so it works
-                                    whether or not the model remembered to
-                                    write a link in its sentence. */}
+                                {/* The resume citation opens the panel; the
+                                    file also gets its own chip, a real
+                                    anchor, so it works whether or not the
+                                    model wrote a link. */}
                                 {o.type === "tool-showResume" && (
                                   <a
                                     href={RESUME_PDF}
@@ -1091,29 +939,17 @@ export function AppShell() {
                   );
                 })}
 
-                {/* One line, and it names the step rather than the wait. The
-                    key restarts the entry when the step changes, so a turn that
-                    moves from extracting to judging looks like it moved — a
-                    string swapping under a continuous animation reads as a
-                    glitch. The elapsed count is NOT keyed, so it measures the
-                    whole turn rather than restarting at each step. */}
+                {/* Names the step rather than the wait. Keyed by phase so a step
+                    change restarts the entry animation; the elapsed count isn't
+                    keyed, so it measures the whole turn. */}
                 {(phase || stallable) && (
                   <div className="flex items-center gap-3">
                     {phase && <PhaseLine key={phase} phase={phase} elapsed={elapsed} />}
-                    {/* A way out of a turn that is taking too long, and only
-                        then: offering "stop" against a two-second answer is
-                        noise, and the reader has nothing to decide yet. Eight
-                        seconds is roughly double a normal turn's wait, so it
-                        appears when the wait has become a question. Quiet by
-                        construction — same faint-until-hover vocabulary as the
-                        actions strip, no border, no box.
-
-                        It outlives the phase line. That line goes away the
-                        moment prose arrives, and the button used to go with it,
-                        so it only existed between eight seconds and the first
-                        token — a window a healthy turn never opens. A
-                        job-description answer streams for most of a minute, and
-                        that is when a reader wants out (followups #3). */}
+                    {/* A way out of a turn that's taking too long, and only then:
+                        offering stop against a two-second answer is noise. It
+                        outlives the phase line, because a job-posting answer
+                        can stream for most of a minute after its first token,
+                        and that's when a reader wants out. */}
                     {stallable && (
                       <button
                         type="button"
@@ -1126,9 +962,6 @@ export function AppShell() {
                     )}
                   </div>
                 )}
-                {/* Was one grey sentence for every way a turn can fail. The
-                    class has always been measured; this is the first thing to
-                    render it, and to offer the turn back. */}
                 {errorKind === "error" && (
                   <TurnError
                     errorClass={errorClass}
@@ -1140,10 +973,8 @@ export function AppShell() {
                     }}
                   />
                 )}
-                {/* Out of turns is the one state where the thing this page is
-                    for stops working, and it used to be one grey sentence.
-                    Manual mode (#15) puts the corpus itself in its place — no
-                    model, no tokens, the same material. */}
+                {/* Out of turns: manual mode puts the corpus itself in the
+                    chat's place, with no model and no tokens. */}
                 {errorKind === "rate_limited" && (
                   <ManualMode headline={RATE_LIMIT_STATE} onOpenSource={openPanel} />
                 )}
@@ -1154,8 +985,7 @@ export function AppShell() {
           </div>
 
           {/* Input. The bottom padding keeps the row clear of the home
-              indicator on notched iPhones, where it otherwise sits directly
-              under the bar; it resolves to 0 everywhere else. */}
+              indicator on notched iPhones; it resolves to 0 elsewhere. */}
           <div className="relative shrink-0 border-t border-line bg-panel pb-[env(safe-area-inset-bottom)]">
             {slashMatches.length > 0 && (
               <div className="absolute bottom-full left-0 right-0 border-t border-line bg-panel">
@@ -1185,33 +1015,18 @@ export function AppShell() {
               </div>
             )}
             <form
-              // NO NATIVE SUBMIT, EVER — not "not while disabled".
-              //
-              // A <form> with no action is a live navigation waiting for a
-              // submit event: the browser GETs the current URL with the fields
-              // in the query string and throws away the page. Disabling the
-              // submit button closes every path a person has to that, which was
-              // the fix, and then the pre-hydration check reached the form
-              // through `requestSubmit()` and navigated anyway. Nothing on this
-              // page calls that — but "no user can reach it" is a weaker claim
-              // than the one worth making, and it stops being true the moment
-              // an extension, a bookmarklet or a future line of our own code
-              // touches this form.
-              //
-              // method="dialog" is the whole fix. Per the HTML submit
-              // algorithm, a dialog-method form that is not inside a <dialog>
-              // does nothing at all on submit — no request, no navigation —
-              // while still firing the submit event that the handler below
-              // listens for. So Enter still sends a question, and the browser
-              // has no way to navigate off this page whether the JavaScript
-              // arrived, hasn't yet, or threw.
+              // No native submit, ever. A form with no action submits by
+              // navigating to the current URL with the fields in the query
+              // string, and disabling the button doesn't stop
+              // `requestSubmit()` from an extension or future code. Per the
+              // HTML submit algorithm, a method="dialog" form outside a
+              // <dialog> does nothing on submit but still fires the submit
+              // event, so Enter still sends and the page can't navigate
+              // whether the JavaScript has arrived, hasn't yet, or threw.
               method="dialog"
-              // Was a fixed h-12 row around a single-line input. The composer
-              // grows now, so the height is a floor rather than a size, and the
-              // prompt and the hints align to the FIRST line instead of the
-              // centre — on a ten-line pasted job description, a vertically
-              // centred ">" sits in the middle of the paste with nothing to do
-              // with it.
+              // The composer grows, so the height is a floor, and the prompt
+              // aligns to the first line rather than the middle of a long
+              // paste.
               className="flex min-h-12 items-start px-4 text-[15px] md:px-10"
               onSubmit={(e) => {
                 e.preventDefault();
@@ -1225,9 +1040,7 @@ export function AppShell() {
                 rows={1}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => {
-                  // Enter still sends — this is a chat composer, not an
-                  // editor. Shift+Enter is the newline, which is what makes a
-                  // multi-line question writable at all.
+                  // Enter sends; Shift+Enter is a newline.
                   if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
                     e.preventDefault();
                     trySend();
@@ -1235,23 +1048,15 @@ export function AppShell() {
                   if (e.key === "Escape") setInput("");
                 }}
                 id="ask"
-                // Disabled rather than dimmed, and the attribute is doing two
-                // jobs. It is the honest state — an unfocusable field cannot
-                // take a question the page has no way to send — and it is half
-                // of what makes the native submit below impossible, since a
-                // disabled field cannot be typed into and so Enter cannot fire
-                // an implicit submit.
+                // Disabled until hydration: the page can't send a question
+                // yet, and a field that can't be typed into can't fire an
+                // implicit submit on Enter.
                 disabled={!hydrated}
-                // Short enough to survive a 320px phone intact. The long
-                // version — "Ask a question, or type / for commands" — was
-                // clipped mid-word at every width a phone actually has, and the
-                // half of it that got cut was the half doing the teaching. The
-                // slash menu advertises itself the moment a "/" is typed.
-                // The empty state's desktop placeholder is the old hero
-                // subline — the invitation moved into the input it was
-                // pointing at. Phones keep the short one: the long version
-                // clips on a 320px screen (see the note this replaced), and
-                // isMobile is settled by the time hydration lifts this gate.
+                // Phones and conversations get the short placeholder, which
+                // survives a 320px screen; the empty state on a desktop gets
+                // HERO_SUB. isMobile is settled by the time hydration lifts
+                // this gate. The slash menu advertises itself once "/" is
+                // typed.
                 placeholder={
                   !hydrated
                     ? "Loading the conversation…"
@@ -1261,44 +1066,24 @@ export function AppShell() {
                 }
                 aria-label="Ask a question"
                 enterKeyHint="send"
-                // 16px below md is not a style choice: iOS Safari zooms the
-                // viewport into any field it focuses whose font-size is under
-                // 16px, and it does not zoom back out. The row's other text
-                // stays 13px, so this only shows up on the phone — where the
-                // input wanted the extra size anyway. The alternative fix,
-                // maximum-scale=1 in the viewport, also kills pinch-zoom for
-                // everyone; that is not a trade worth making.
-                // The field carries the row's vertical padding rather than the
-                // form doing it, so the full 48px of a one-line composer is
-                // still a tap target — the reason the old input was h-full.
-                // That trick doesn't survive auto-sizing, since a height set in
-                // CSS is exactly what the measurement has to override.
+                // 16px below md because iOS Safari zooms into any focused field
+                // under 16px and doesn't zoom back out; maximum-scale=1 would
+                // fix that only by disabling pinch-zoom for everyone.
                 //
-                // max-h caps the growth at eight lines and scrolls past that.
-                // A pasted job description is the case this exists for, and one
-                // of those can be sixty lines long; without a cap it eats the
-                // conversation it was supposed to be asking about.
+                // The field carries the row's vertical padding, so a one-line
+                // composer is a full 48px tap target. max-h caps growth at
+                // eight lines and scrolls past that, so a long pasted posting
+                // doesn't swallow the conversation.
                 className="ml-2 max-h-[216px] min-h-[48px] min-w-0 flex-1 resize-none bg-transparent py-3 text-[16px] leading-[1.6] text-text outline-none placeholder:text-text-faint disabled:cursor-progress disabled:placeholder:text-text-dim md:text-[15px]"
               />
-              {/* One send control at every width.
-                  It used to be two half-controls: an "enter ↵" hint on desktop
-                  and a bare ↵ glyph below sm, so the widest screens had no
-                  button at all and the narrowest had a 36px unlabelled one at
-                  30% opacity when disabled — which reads as a rendering bug
-                  rather than as a state. This is a real button: bordered,
-                  labelled, 44px tall, and legible in both states.
-                  my-1.5 centres it against the first line of a growing field
-                  rather than against the whole composer. */}
+              {/* One send control at every width: bordered, labelled, 44px
+                  tall and legible when disabled. my-1.5 centres it on the
+                  first line of a growing field. */}
               <button
                 type="submit"
-                // `!hydrated` first, and it is the whole point of this pass.
-                // A submit button inside a <form> with no action is a live
-                // control the moment the HTML lands: pressed before the
-                // JavaScript arrives it fired a native GET submit, which
-                // navigated the page to itself with the question in the query
-                // string and threw away the load that was nearly finished. A
-                // disabled submit cannot do that, and it cannot silently do
-                // nothing either — it says so.
+                // Disabled until hydration, so a press before the JavaScript
+                // arrives shows it can't send yet rather than silently doing
+                // nothing.
                 disabled={!hydrated || !input.trim() || isBusy}
                 className="-mr-1.5 my-1.5 ml-2 disabled:cursor-progress flex h-11 min-w-[44px] shrink-0 touch-manipulation items-center justify-center border border-line-strong bg-raised px-3 text-[14px] text-text-soft transition-colors hover:border-accent hover:text-accent disabled:border-line disabled:text-text-dim"
               >
@@ -1306,21 +1091,11 @@ export function AppShell() {
               </button>
             </form>
 
-            {/* The proof line (front-door pass). It replaces the empty
-                state's mistakes-disclaimer and still carries it — same
-                honesty, but the line now also does the credibility work,
-                and every claim in it is checkable on this site: citations
-                ship since Sprint 3, /prompt since Sprint 7, /measurements
-                since Sprint 6, the cost meter since Sprint 2. Gone once a
-                conversation starts: answers then carry their own sources,
-                and the strip takes this row. Logged in docs/copy-ledger.md. */}
-            {/* Wave 2: one line plus a link, at every width. The four-line
-                version took about a fifth of a phone's viewport, permanently,
-                and pushed the tl;dr below the fold. The honesty survives (the
-                answers can be wrong); the credibility claims it carried —
-                published prompt, published evals, the cost meter — are on the
-                colophon, which the link opens. A phone gets the short
-                sentence because the long one is two lines at 390px. */}
+            {/* One line of fine print and a link to the colophon, which
+                carries the credibility claims. A phone gets the short
+                sentence because the long one wraps to two lines at 390px.
+                Gone once a conversation starts: answers then carry their own
+                sources, and the actions strip takes this row. */}
             {!hasMessages && (
               <p className="t-meta px-4 pb-3 text-text-faint md:px-10">
                 <span className="lg:hidden">{DISCLAIMER_SHORT}</span>
@@ -1334,26 +1109,22 @@ export function AppShell() {
               </p>
             )}
 
-            {/* ---- Actions strip (#27) ---------------------------------
-                Was a nudge fired at "session end", an event that doesn't
-                exist on this site — visitors close tabs, they don't finish.
-                So: a persistent one-line strip, quiet, present from the
-                first turn, that gains a little weight after an action
-                instead of interrupting. Nothing appears and nothing has to
-                detect an ending. Scrolls horizontally rather than wrapping
-                on a narrow phone, so the input row above it never moves. */}
+            {/* ---- Actions strip ---------------------------------------
+                Quiet and present from the first turn; it gains a little
+                weight after an action instead of interrupting. Scrolls
+                horizontally rather than wrapping on a narrow phone, so the
+                input row above never moves. */}
             <div
-              // The fade is the only thing that says this row scrolls. It has
-              // no scrollbar on a phone, so a strip whose last action sat
-              // exactly at the edge looked like a strip that ended there.
+              // The fade is the only sign this row scrolls; a phone shows no
+              // scrollbar.
               style={{
                 maskImage: "linear-gradient(to right, black 85%, transparent)",
                 WebkitMaskImage: "linear-gradient(to right, black 85%, transparent)",
               }}
-              // Conversation-only since the front-door pass: the empty state's
-              // dock carries the chips and the proof line instead, and pasting
-              // a posting straight into the composer works — the route's
-              // detector, not this entry, is what makes the JD flow fire.
+              // Conversation-only: the empty state's dock carries the chips and
+              // the fine print instead. Pasting a posting straight into the
+              // composer works too; the route's detector, not this entry,
+              // starts the job-posting flow.
               className={`h-11 items-center gap-4 overflow-x-auto whitespace-nowrap border-t px-4 text-[13px] transition-colors md:px-10 ${
                 hasMessages ? "flex" : "hidden"
               } ${emphasis ? "border-accent" : "border-line"}`}
@@ -1396,9 +1167,7 @@ export function AppShell() {
                 emphasis={emphasis}
                 onClick={() => openPanel({ kind: "jd" })}
                 disabled={!hydrated}
-                // Strip-worthy on desktop, where the strip is idle real estate;
-                // on a phone it was the only thing under the composer and not
-                // worth that space. The rail item is the mobile way in.
+                // Desktop only; on a phone the index entry is the way in.
                 className="hidden md:flex"
               />
               {hasMessages && (
@@ -1411,12 +1180,9 @@ export function AppShell() {
         {/* Context panel — desktop, resizable */}
         {panelOpen && (
           <>
-            {/* A splitter, and until now a pointer-only one: it announced
-                itself as a separator and then offered a keyboard no way to
-                move it. Arrows nudge, shift-arrows jump, Home and End go to the
-                stops, Enter restores the default — the same set the double
-                click already had. aria-valuenow makes the width audible rather
-                than something to discover by listening to the layout. */}
+            {/* Keyboard-operable splitter: arrows nudge, shift-arrows jump,
+                Home and End go to the stops, and Enter (like a double click)
+                restores the default. aria-valuenow makes the width audible. */}
             <div
               role="separator"
               aria-orientation="vertical"
@@ -1450,9 +1216,8 @@ export function AppShell() {
               }}
               className="hidden w-1 shrink-0 cursor-col-resize bg-line transition-colors hover:bg-accent focus-visible:bg-accent lg:block"
             />
-            {/* Named, so it is a landmark a screen reader can jump to and
-                identify rather than an unlabelled complementary region — and
-                named with the same string its own header shows. */}
+            {/* Labelled with the title its header shows, so it's an
+                identifiable landmark rather than an unnamed region. */}
             <aside
               aria-label={panelTitle(panel)}
               style={{ width: panelWidth }}
@@ -1477,14 +1242,9 @@ export function AppShell() {
       </div>
 
       {/* ---- Sheets -------------------------------------------------------
-          Loaded on demand. Radix's dialog — portal, overlay, focus trap,
-          scroll lock — is a real chunk of JavaScript, fetched at idle or on
-          the first thing that needs a sheet, whichever comes first. Since the
-          front-door pass the index sheet opens at EVERY width — it replaced
-          the permanent desktop rail — so desktops fetch this too now. The
-          bottom panel sheet is still mobile-only by construction: `sheetOpen`
-          is only ever set where `isMobile` holds, and the desktop panel stays
-          the resizable aside. */}
+          Fetched at idle or on the first thing that needs a sheet. The index
+          sheet opens at every width; the bottom panel sheet is mobile-only
+          because `sheetOpen` is only set where `isMobile` holds. */}
       {(idleReady || railOpen || panelOpen) && (
         <MobileSheets
           rail={{
@@ -1516,9 +1276,8 @@ export function AppShell() {
   );
 }
 
-// The index — the full destination list, rendered inside the sheet that
-// replaced the permanent rail (the sheet's own header carries the "Index"
-// title, so there is no heading here).
+// The index: the full destination list, rendered inside the index sheet,
+// whose header carries the title.
 function RailContent({
   onOpenPanel,
   hydrated,
@@ -1540,10 +1299,8 @@ function RailContent({
   return (
     <>
       {group(RAIL_WORK)}
-      {/* Contact is the shell's to draw rather than a list of links: the
-          address is on screen and copyable here too, for the same reason it
-          is on the front door. GitHub sits with LinkedIn rather than in a
-          footer row of its own. */}
+      {/* Drawn by the shell rather than listed: the address is on screen and
+          copyable here too, as on the front door. */}
       <section aria-label={RAIL_CONTACT_LABEL} className="mt-5">
         <h2 className="t-label text-text-faint">{RAIL_CONTACT_LABEL}</h2>
         <div className="mt-2 flex flex-col">
@@ -1575,9 +1332,8 @@ function RailLink({
   onOpenPanel: (v: PanelView) => void;
   hydrated: boolean;
 }) {
-  // A rail item is a row of text, and a row of text is not a target. min-h
-  // plus items-center makes each one a full 44px band without changing what it
-  // looks like — the border sits where the padding already put it.
+  // min-h plus items-center makes each row a full 44px target without changing
+  // how it looks.
   const cls =
     "flex min-h-[44px] items-center border-b border-line py-2 text-left text-text-soft no-underline transition-colors hover:text-accent";
 
@@ -1621,10 +1377,9 @@ function RailLink({
 
   if (view) {
     return (
-      // The rail entries with no page of their own. The anchors above are
-      // untouched — a click on those before hydration navigates, which is a
-      // working outcome rather than a no-op — but these four can only open a
-      // panel, and that needs JavaScript.
+      // Entries with no page of their own can only open a panel, which needs
+      // JavaScript. The anchors above still work before hydration by
+      // navigating.
       <button
         type="button"
         onClick={() => onOpenPanel(view)}
@@ -1644,9 +1399,8 @@ function RailLink({
   );
 }
 
-// One action in the strip. Emphasis is a colour step, not a new element —
-// the strip is the same shape before and after, which is the difference
-// between weight and a notification.
+// One action in the strip. Emphasis is a colour step, not a new element, so
+// the strip is the same shape before and after.
 function StripButton({
   label,
   emphasis,
@@ -1667,9 +1421,7 @@ function StripButton({
       onClick={onClick}
       disabled={disabled}
       data-js-control
-      // Full-height rather than text-height. The label is a single line, so
-      // the hit area used to be a 17px band inside a 32px strip — fine with a
-      // cursor, a coin toss with a thumb. The strip is 44px now.
+      // Full-height, so the hit area is the 44px strip rather than the text.
       className={`${className} focus-inset h-full shrink-0 touch-manipulation items-center transition-colors hover:text-accent ${
         emphasis ? "text-text-soft" : "text-text-faint"
       }`}
@@ -1679,11 +1431,9 @@ function StripButton({
   );
 }
 
-// The idle one-liner arrives settled — a fade, not a typewriter. It used to
-// type itself out character by character, which put a second motion on screen
-// against the ambient wave; the §4 policy allows one, and the wave is it. The
-// caret stays as punctuation, no longer pulsing. Deliberately the quietest
-// thing on the page: it sits below the conversation, never above it.
+// The idle one-liner fades in rather than typing itself out: one ambient motion
+// at a time, and the backdrop wave is it. The caret is punctuation and doesn't
+// pulse. The quietest thing on the page, below the conversation.
 function IdleLine({ line }: { line: string }) {
   return (
     <p className="t-meta animate-idle-line pt-6 text-text-faint">
@@ -1693,8 +1443,9 @@ function IdleLine({ line }: { line: string }) {
   );
 }
 
-// Sits under an answer and reopens the evidence it was built from. On mobile
-// this is the ONLY way into the panel, so the newest turn's chips are marked.
+// Sits under an answer and reopens the evidence it was built from. On mobile,
+// where tool calls don't raise the panel sheet, this is the way into it, so
+// the newest turn's chips are marked.
 function CitationChip({
   out,
   latest,
@@ -1710,7 +1461,7 @@ function CitationChip({
   if (out.type === "tool-showProject") {
     const o = out.output as { slug?: string; title?: string };
     label = o?.title ?? "Project";
-    // Dell has no resume section of its own, so it falls back to the list.
+    // A slug without a SLUG_TO_RESUME entry (Dell) opens the projects list.
     const focus = SLUG_TO_RESUME[o?.slug ?? ""];
     view = focus ? { kind: "resume", focus } : { kind: "projects" };
   } else if (out.type === "tool-showResume") {

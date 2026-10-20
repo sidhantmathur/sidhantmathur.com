@@ -1,21 +1,15 @@
-// The refusal ledger (roadmap Sprint 7, #10).
+// The refusal ledger: what the assistant won't do, why, and what it does
+// instead. Hand-curated. Every entry describes a rule that exists in this repo
+// and names the file holding it; `evals/recursion.test.mjs` fails if an entry's
+// anchor text is no longer in that file, so an entry can't outlive its rule.
 //
-// Hand-curated content, not a generated feature: this file lists what the
-// assistant will not do, why, and what it does instead. Every entry describes a
-// rule that already exists somewhere in this repo, and every entry names the
-// file that holds it — `evals/recursion.test.mjs` opens each of those files and
-// fails if the anchor text has moved, so an entry cannot quietly become a
-// description of a rule the site stopped enforcing.
-//
-// WHY `enforcedBy` IS THE INTERESTING COLUMN. A refusal written into the system
-// prompt is a request: it holds because the model cooperates, and a determined
-// visitor may eventually talk around it. A refusal written into the route or a
-// reconciler is a property of the code: no wording changes it. Publishing a
-// ledger that hid the difference would be claiming more than the site can
-// support — which is the same rule Sprint 3 set for the word "verified".
+// `enforcedBy` is the column that matters. A refusal in the system prompt holds
+// only while the model cooperates, and a determined visitor may talk around it.
+// A refusal in the route or a reconciler holds whatever the wording. A ledger
+// that hid the difference would claim more than the site can support.
 //
 // Nothing here asserts anything about Sidhant. The one entry that came from him
-// rather than from the code quotes the decision that recorded it.
+// rather than from the code points at the decision that recorded it.
 
 export type RefusalEnforcement =
   /** Written into the system prompt. The model's cooperation is load-bearing. */

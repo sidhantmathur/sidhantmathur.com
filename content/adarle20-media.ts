@@ -1,30 +1,18 @@
-// The A Darle 20 media and feature surface (#19, Track B).
+// The A Darle 20 media and feature surface (#19), as a manifest rendered by
+// components/project-media.tsx.
 //
-// WHY THIS FILE IS A MANIFEST AND NOT A PAGE
+// Each media slot says what belongs in it, at what shape, and what the file
+// has to show. Only a slot with an `asset` renders; the rest are capture
+// briefs, kept here and in the copy ledger until a file exists. Adding one is
+// dropping a file in public/images and filling in `asset`.
 //
-// The decisions doc asks for screen recordings, video, screenshots and "the
-// full feature surface" on this page, and Sidhant's line about it is that
-// "there's a shit ton of features buried up there". Almost none of that exists
-// as a file yet — one screenshot does, and it is the only asset in this repo.
-//
-// So this file holds the FRAMES as well as the media. Each slot below says what
-// belongs in it, at what shape, and what the file has to show. Only a slot with
-// an `asset` renders on the page; the rest are the capture brief, kept here and
-// in the copy ledger until a file exists (wave 1, 2026-10-19 — empty frames on
-// the flagship case study read as unfinished work). Nothing here describes
-// footage nobody has seen, and no `alt` text is written ahead of the file it
-// describes — which is why `asset` carries `src` and `alt` together rather than
-// as two optional fields. Adding one is dropping a file in `public/images` and
-// filling in one object, and the frame appears.
-//
-// The rule this enforces is the copy rule one level out from prose: a caption
-// is a claim about something a visitor can check by looking. `docs/roadmap.md`
-// Track B says do not fake a screenshot; this is the shape of not faking one.
+// A caption is a claim a visitor can check by looking, so nothing here
+// describes footage nobody has seen.
 
 export type MediaSlot = {
   id: string;
   kind: "screenshot" | "screen recording" | "video";
-  /** Short title, shown above the frame whether or not the file exists. */
+  /** Short title, shown above the frame. */
   title: string;
   /**
    * What the file must show, written for the person who has to capture it.
@@ -36,10 +24,9 @@ export type MediaSlot = {
   /** Tailwind aspect-ratio class matching `aspect`. */
   aspectClass: string;
   /**
-   * How wide the frame is allowed to get. A phone screenshot held to the
-   * column width becomes a 1,100-pixel-tall rectangle — which is silly when
-   * it holds an image and absurd when it is an empty placeholder — so
-   * portrait slots are capped and everything else fills the column.
+   * How wide the frame is allowed to get. A phone screenshot at full column
+   * width would be over 1,100px tall, so portrait slots are capped and
+   * everything else fills the column.
    */
   width: "column" | "narrow";
   /**
@@ -60,7 +47,7 @@ export const ADARLE_MEDIA: MediaSlot[] = [
     aspect: "152:69",
     aspectClass: "aspect-[152/69]",
     width: "column",
-    // The one asset that exists. Description written from the file itself.
+    // Alt text and caption written from the file itself.
     asset: {
       src: "/images/adarle20-listings.png",
       alt: "Three A Darle 20 session listing cards side by side, each with cover art, a title, tags, a weekly time, a price in Mexican pesos, the number of seats filled, and the host's name and review score.",
@@ -130,14 +117,12 @@ export const ADARLE_MEDIA: MediaSlot[] = [
   },
 ];
 
-// The feature surface.
-//
-// EVERY entry is a capability named in content/knowledge/projects-adarle20.md
-// or in the resume, and `source` says which. This list is deliberately NOT a
-// guess at what a marketplace probably has — a plausible feature is a factual
-// claim about a product a hiring manager can go and use, which makes it exactly
-// the kind of invention CLAUDE.md rules out. The gap between this list and the
-// real product is recorded in FEATURE_SURFACE_NOTE rather than filled in.
+// The feature surface. Every entry is a capability named in
+// content/knowledge/projects-adarle20.md or the resume, and `source` says
+// which. It is not a guess at what a marketplace probably has: a plausible
+// feature is a factual claim about a product a hiring manager can go and use.
+// The gap between this list and the real product is recorded in
+// FEATURE_SURFACE_NOTE rather than filled in.
 export type Feature = {
   group: string;
   items: string[];
@@ -184,9 +169,9 @@ export const FEATURE_SURFACE: Feature[] = [
   },
 ];
 
-// NOT RENDERED while it carries a `[VERIFY]` marker. Kept as the draft the
+// Not rendered while it carries a `[VERIFY]` marker. It is the draft the
 // ledger's pending row points at; once the missing features are written into
-// content/knowledge, the marker goes and the sentence can go back on the page.
+// content/knowledge/, the marker goes and the sentence can go on the page.
 export const FEATURE_SURFACE_NOTE =
   "This list is everything the written record names, which is not the same as everything the product does — [VERIFY: the features that exist in A Darle 20 but appear in no source file. Sidhant's own note on this page was that there is a lot buried up there; nothing can be added here until it is written down somewhere checkable.]";
 

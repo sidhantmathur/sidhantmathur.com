@@ -11,25 +11,19 @@ export const size = {
 export const contentType = "image/png";
 
 // The role line splits at its colon: the role on one line, the sentence that
-// says what that means under it. Read once, from the same checked string the
-// front door renders (content/recruiter.ts), so the card can't drift from it.
+// says what that means under it. It is the same checked string the front door
+// renders (content/recruiter.ts), so the card can't drift from it.
 const [ROLE, ROLE_DETAIL] = ROLE_LINE.value.split(": ");
 
-// Instrument palette, matching app/globals.css: --bg #0B0A09, --text #EFEBE4,
-// --text-soft #C4BCB4, --line-strong #6B6259, --accent #E4522B. This is what
-// renders when the link is pasted into Slack or LinkedIn, so it has to read as
-// the same object as the site.
-//
-// WAVE 2: NAME AND ROLE, NOT NAME AND TAGLINE. The card used to carry "I learn
-// what the problem needs, then I build the thing." — a good line that says
-// nothing about what he does, on the one surface a recruiter forwards to a
-// hiring manager. It now says the role, and carries the headshot beside the
-// name the way the front door does: checked at link-preview size (about 500px
-// wide in Slack) before it was kept.
+// Colours match app/globals.css: --bg #0B0A09, --text #EFEBE4, --text-soft
+// #C4BCB4, --line-strong #6B6259, --accent #E4522B. This is the card a link
+// shows when pasted into Slack or LinkedIn, so it carries the name, role and
+// headshot the way the front door does. Check changes at link-preview size,
+// about 500px wide in Slack.
 export default async function Image() {
-  // Satori can't use CSS font stacks — without real font data the mono
-  // families silently fall back to its default sans. These TTFs are the same
-  // Geist Mono the site loads via next/font.
+  // Satori can't use CSS font stacks: without real font data the mono family
+  // silently falls back to its default sans. These TTFs are the same Geist
+  // Mono the site loads (app/fonts.ts).
   const [geistMonoRegular, geistMonoMedium, headshot] = await Promise.all([
     readFile(join(process.cwd(), "assets/fonts/GeistMono-Regular.ttf")),
     readFile(join(process.cwd(), "assets/fonts/GeistMono-Medium.ttf")),

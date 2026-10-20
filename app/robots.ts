@@ -1,9 +1,8 @@
 import type { MetadataRoute } from "next";
 import { SITE_URL } from "@/lib/site";
 
-// Everything here is meant to be found — this is a portfolio during a job
-// hunt, so the only disallow is the chat endpoint, which is a POST-only route
-// that a crawler can do nothing useful with and which costs money per call.
+// Everything is meant to be found except the chat endpoint: it is POST-only,
+// a crawler can do nothing useful with it, and every call costs money.
 export default function robots(): MetadataRoute.Robots {
   return {
     rules: {

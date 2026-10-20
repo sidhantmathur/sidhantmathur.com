@@ -35,31 +35,26 @@ import {
   type ModelId,
 } from "@/lib/models";
 
-// Node runtime: both @upstash/ratelimit and the in-memory fallback work fine on
-// Node, and there's no edge-specific requirement here.
+// Node runtime: @upstash/ratelimit and the in-memory fallback both work there,
+// and nothing here needs the edge.
 export const runtime = "nodejs";
 
-// The platform's own ceiling on a turn. A job-posting turn spends three model
-// steps and can legitimately run well past the default, and a function killed
-// mid-stream is indistinguishable, from the browser, from the stall this
-// sprint's client-side watchdog exists to catch. Ninety seconds is above
-// anything measured here and still bounded — an unbounded turn bills for a
-// reader who closed the tab.
+// The platform's ceiling on a turn. A job-posting turn runs three model steps
+// and can go well past the default, and a function killed mid-stream looks the
+// same to the browser as a stall. Ninety seconds is above anything measured
+// and still bounded: an unbounded turn keeps billing after the reader leaves.
 export const maxDuration = 90;
 
 // --- Request validation --------------------------------------------------
 //
-// useChat (@ai-sdk/react v4 / ai v7, v5-era wire format) POSTs UIMessages:
-// each has an `id`, a `role`, and a `parts` array. We accept only user/assistant
-// roles from the client (no `system`). The 500-char text cap applies to USER
-// messages only — assistant turns are the model's own prior output (up to 600
-// tokens, routinely past 500 chars) echoed back as history; capping them made
-// every follow-up after one long answer fail with a 400. Assistant text gets a
-// generous abuse ceiling instead. `parts` may contain non-text entries in
-// principle; we validate the text ones and sum their length.
-
-// Non-text parts are passed through untouched (schema-permissive) but only text
-// parts count toward the per-role limit.
+// useChat (@ai-sdk/react v4, ai v7, v5-era wire format) POSTs UIMessages: an
+// `id`, a `role` and a `parts` array. Only user and assistant roles are
+// accepted from the client, never `system`. Text parts are summed against a
+// per-role cap; other parts pass through untouched.
+//
+// Assistant turns are the model's own earlier output echoed back as history,
+// so they get a loose abuse ceiling rather than the user cap. Capping them
+// tightly would turn every follow-up after a long answer into a 400.
 const messageSchema = z
   .object({
     id: z.string().optional(),
@@ -74,66 +69,50 @@ const messageSchema = z
             p.type === "text" && typeof p.text === "string",
         )
         .reduce((sum, p) => sum + p.text.length, 0);
-      // MAX_USER_TEXT (4000) for user turns: the JD-paste flow sends a whole
-      // job description as one message, and 500 truncated every real posting.
-      // Abuse is bounded by the hourly budget, not by this cap. The
-      // paste panel reads the same constant, so the two can't disagree.
+      // MAX_USER_TEXT is sized for a whole pasted job posting in one message.
+      // Abuse is bounded by the hourly budget, not by this cap. The paste
+      // panel reads the same constant, so the two can't disagree.
       return textLength <= (msg.role === "user" ? MAX_USER_TEXT : 8000);
     },
     { message: "Message text exceeds the allowed length." },
   );
 
-// History cap: must fit the full intended conversation — MAX_USER_MESSAGES user
-// turns (enforced below with the graceful 429) plus their assistant replies —
-// with headroom, so exceeding that cap reaches the rate-limit copy instead of
-// dying on a schema 400.
 // --- Model policy ---------------------------------------------------------
 //
-// WHICH models exist, what they cost, and why the allowlist is what it is: all
-// of that is `lib/models.ts`, imported above, and this route is one of its four
-// readers. The hourly budget and the conversation cap live there too
-// (`HOURLY_LIMIT`, `MAX_USER_MESSAGES`) — this route enforces them, the status
-// strip renders them, and the chat's own prompt states them in words, so they
-// stopped being one endpoint's private policy. What lives here is enforcement,
-// and what to do with an id that isn't on the list.
-//
-// The client picks a model, so the allowlist is a security AND a cost boundary:
-// the id from the request is never passed through to the Gateway, only used to
-// look up an entry in the catalogue. An unknown id falls back to the default
-// rather than erroring, so a stale client can't break the chat.
+// Which models exist, what they cost, and the visitor limits (HOURLY_LIMIT,
+// MAX_USER_MESSAGES) all live in lib/models.ts; this route enforces them. The
+// requested id is only a lookup key into the catalogue, never passed to the
+// Gateway, and an unknown id falls back to the default rather than erroring,
+// so a stale client can't break the chat.
 
 function resolveModel(requested: string | undefined): ModelId {
   return requested && requested in MODELS ? (requested as ModelId) : DEFAULT_MODEL;
 }
 
 const bodySchema = z.object({
+  // Room for MAX_USER_MESSAGES visitor turns plus their replies, with
+  // headroom, so a long conversation reaches the graceful 429 below rather
+  // than a schema 400.
   messages: z.array(messageSchema).min(1).max(30),
-  // Free-form string, validated by lookup rather than by enum, so adding a
-  // model here never requires a client deploy to avoid 400s.
+  // Validated by lookup rather than as an enum, so a client sending an id the
+  // catalogue has dropped gets the default instead of a 400.
   model: z.string().max(100).optional(),
 });
 
 // --- Rate limiting -------------------------------------------------------
 //
-// Per-IP, 20 messages/hour, sliding window. Upstash-backed when the env vars are
-// present; otherwise an in-memory Map fallback so `npm run dev` and the local
-// build run with zero external services.
-//
-// NOTE: the in-memory fallback is PER-INSTANCE and NOT shared across serverless
-// instances. It exists only so the site runs locally with an empty .env.local.
-// Real production rate limiting requires UPSTASH_REDIS_REST_URL /
-// UPSTASH_REDIS_REST_TOKEN to be set (README morning-checklist step 5).
+// Per IP, HOURLY_LIMIT turns on a sliding one-hour window. Upstash-backed when
+// its env vars are set; otherwise an in-memory Map, so `npm run dev` and a
+// local build need no external services. The fallback is per instance and not
+// shared across serverless instances, so production rate limiting needs
+// UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN.
 
-const WINDOW_MS = 60 * 60 * 1000; // 1 hour
+const WINDOW_MS = 60 * 60 * 1000;
 
 const hasUpstash =
   !!process.env.UPSTASH_REDIS_REST_URL &&
   !!process.env.UPSTASH_REDIS_REST_TOKEN;
 
-// One limiter for every model. There were two, one per tier, until the
-// premium tier was removed on 2026-10-19 (see lib/models.ts). The prefix is
-// new rather than the old `chat:standard`, so the first deploy starts every
-// visitor on a full bucket.
 const upstashLimiter = hasUpstash
   ? new Ratelimit({
       redis: Redis.fromEnv(),
@@ -142,7 +121,6 @@ const upstashLimiter = hasUpstash
     })
   : null;
 
-// Module-scope in-memory store for the fallback (per-instance, dev-only).
 const memoryStore = new Map<string, { count: number; resetAt: number }>();
 
 function inMemoryConsume(key: string, limit: number): { ok: boolean; remaining: number } {
@@ -166,7 +144,7 @@ async function consumeBudget(ip: string): Promise<{ ok: boolean; remaining: numb
 }
 
 function getClientIp(req: Request): string {
-  // Vercel sets x-forwarded-for; take the first entry (the original client).
+  // Vercel sets x-forwarded-for; the first entry is the original client.
   const forwarded = req.headers.get("x-forwarded-for");
   if (forwarded) return forwarded.split(",")[0]!.trim();
   return req.headers.get("x-real-ip") ?? "unknown";
@@ -183,23 +161,16 @@ function jsonError(error: TurnErrorClass, status: number): Response {
 
 // --- Per-turn output ceiling ---------------------------------------------
 //
-// 600 tokens is right for a conversational answer. A job-posting turn has to
-// fit a whole `roleFit` object AND the sentence that follows it, and a turn
-// truncated mid-tool-call loses the tool call entirely — the exact failure this
-// sprint is fixing, arriving by a different road.
+// 600 tokens suits a conversational answer. A job-posting turn has to fit an
+// extraction, a whole `roleFit` object and the sentence after it, and a turn
+// truncated mid-tool-call loses the tool call entirely.
 //
-// The JD ceiling is high because of a measured failure, not a guess. At 1000,
-// `openai/gpt-5-mini` finished three of five postings with
-// `finishReason: "length"` and NOTHING to show — a reasoning model spends the
-// per-step budget on reasoning tokens before it ever emits the tool call. On a
-// forced-tool turn that reads exactly like the abandonment bug Sprint 1 fixed,
-// which is why the eval runner prints the finish reason.
-//
-// Sprint 4 raised it again, 2500 → 4000, for the same reason one step earlier:
-// a job-posting turn now spends a step EXTRACTING before it assesses, and the
-// same model burned 2,496 tokens of reasoning on that first step and stopped on
-// `length` having emitted nothing. Non-reasoning models are unaffected — this
-// is a ceiling, not a target, and they still answer in ~500.
+// The posting ceiling comes from measurement: a reasoning model spends the
+// per-step budget on reasoning before it emits the tool call. At 1000,
+// `openai/gpt-5-mini` finished three of five postings on
+// `finishReason: "length"` with nothing to show; at 2500 it spent 2,496 tokens
+// reasoning on the extraction step alone and emitted nothing. It's a ceiling,
+// not a target: non-reasoning models still answer in about 500.
 const MAX_OUTPUT_TOKENS = 600;
 const MAX_OUTPUT_TOKENS_JD = 4000;
 
@@ -232,7 +203,7 @@ function hardenPosting(messages: z.infer<typeof bodySchema>["messages"]) {
   };
 }
 
-/** The last user turn's text, which is what the JD detector reads. */
+/** The last user turn's text, which is what the job-posting detector reads. */
 function lastUserText(messages: z.infer<typeof bodySchema>["messages"]): string {
   for (let i = messages.length - 1; i >= 0; i -= 1) {
     const msg = messages[i]!;
@@ -250,36 +221,30 @@ function lastUserText(messages: z.infer<typeof bodySchema>["messages"]): string 
 
 // --- Chat tools ----------------------------------------------------------
 //
-// Tools the model can call to render visual UI in the chat (Phase 4, 04 §2).
-// NOTE: `ai@7` uses the v5-era `tool()` API — schemas go under `inputSchema`
-// (NOT `parameters`). Each `execute` does no I/O beyond reading static,
-// build-time-bundled copy — no new fetches, no new dependencies.
+// Tools the model can call to render cards in the chat. The client renders each
+// as a typed `tool-<name>` part once `part.state === "output-available"`.
+// `ai@7` uses the v5-era `tool()` API: schemas go under `inputSchema`, not
+// `parameters`. No `execute` does I/O beyond reading bundled static content.
 //
-// Client renders these as typed `tool-<name>` message parts, switching on
-// `part.state === 'output-available'`.
-//
-// SPRINT 4 — the job-description flow is now TWO calls, not one:
+// A pasted job posting takes two calls:
 //
 //   extractRequirements  the posting's requirements, verbatim, before anything
 //                        has an opinion about them
 //   roleFit              a verdict per requirement, each positive one citing a
 //                        chunk id, plus the gaps
 //
-// Splitting them is bank §6 Stage 1's fourth change and the only place on this
-// site where a multi-step loop earns its keep: asked to extract and judge at
-// once, a model compresses toward a flattering summary and quietly drops the
-// requirements it would have to say no to. Extracting first fixes the list
-// before the judging starts, and `lib/role-fit.ts` then holds the judgment to
-// it — every extracted requirement gets a row, whether the model wrote one or
-// not.
+// Asked to extract and judge at once, a model compresses toward a flattering
+// summary and quietly drops the requirements it would have to say no to.
+// Extracting first fixes the list before judging starts, and lib/role-fit.ts
+// holds the judgment to it: every extracted requirement gets a row, whether
+// the model wrote one or not.
 
 /**
- * One assessed requirement, as loosely as it can be stated and still be useful.
+ * One assessed requirement, typed as loosely as it can be and still be useful.
  *
- * A bare string is accepted because that is the shape a model falls into when
- * it echoes the extraction step instead of judging it, and a rejected tool call
- * costs the whole assessment (Sprint 1's lesson, met again on this sprint's
- * first live run). `lib/role-fit.ts` normalizes whatever arrives and marks what
+ * A bare string is accepted because models fall into that shape when they echo
+ * the extraction step instead of judging it, and a rejected tool call loses the
+ * whole assessment. lib/role-fit.ts normalizes whatever arrives and marks what
  * doesn't hold up.
  */
 const rowSchema = z.array(
@@ -310,16 +275,13 @@ const rowSchema = z.array(
   ]),
 );
 
-// Built per request rather than at module scope (Sprint 4): the two halves of a
-// job-description turn are separate tool calls, and the judging half has to see
-// what the extracting half produced. `extraction` is that hand-off — one
-// request's requirement list, closed over by both tools, never shared between
-// requests.
+// Built per request because the judging tool has to see what the extracting
+// tool produced. `extraction` is that hand-off: one request's requirement list,
+// closed over by both tools and never shared between requests.
 function buildChatTools(extraction: { requirements: string[] }) {
   return {
-    // 2.1 — visual card for one of the three projects. The model only picks the
-    // slug; all card content comes from the shared content/projects.ts module
-    // (no model generation of card copy).
+    // The model only picks the slug; all card copy comes from
+    // content/projects.ts, never from the model.
     showProject: tool({
       description: "Show a visual card for one of Sidhant's three projects.",
       inputSchema: z.object({
@@ -341,8 +303,7 @@ function buildChatTools(extraction: { requirements: string[] }) {
       },
     }),
 
-    // 2.2 — resume card. Zero-arg tool; returns a fixed object. pdfAvailable is
-    // true — resume.pdf ships in public/.
+    // resume.pdf ships in public/, so the PDF is always available.
     showResume: tool({
       description: "Show a card to download or view the resume.",
       inputSchema: z.object({}),
@@ -353,9 +314,8 @@ function buildChatTools(extraction: { requirements: string[] }) {
       }),
     }),
 
-    // 2.3a — extraction. No judgment, no evidence, no verdicts: this call only
-    // copies out what the posting asks for. Its output is not rendered; it is
-    // the input to the next call and to the coverage check after it.
+    // Extraction only: no verdicts, no evidence. Its output isn't rendered; it
+    // feeds the roleFit call and the coverage check after it.
     extractRequirements: tool({
       description:
         "Read a pasted job posting and list the requirements it states, verbatim. Extraction only — do not assess anything here, do not skip a requirement because Sidhant does not meet it, and do not merge two requirements into one line.",
@@ -393,11 +353,11 @@ function buildChatTools(extraction: { requirements: string[] }) {
       },
     }),
 
-    // 2.3b — the assessment. The CONTENT is model-generated; what happens to it
-    // afterwards is not. `reconcileRoleFit` adds a row for any requirement this
+    // The content is model-generated; what happens to it afterwards isn't.
+    // `reconcileRoleFit` (lib/role-fit.ts) adds a row for any requirement this
     // call skipped, downgrades any positive verdict that cites nothing valid,
-    // runs Sprint 3's checker over each row's evidence, and refuses to return an
-    // assessment that has unmet rows and no gaps. See lib/role-fit.ts.
+    // runs the claim checker in lib/verify.ts over each row's evidence, and
+    // refuses an assessment that has unmet rows and no gaps.
     roleFit: tool({
       description:
         "Show a structured, per-requirement assessment of Sidhant against a role — a pasted job posting, or a role the user names (e.g. GTM engineer, solutions engineer, RevOps). One row per requirement, each with a verdict and, where it claims a fit, the chunk ids it stands on.",
@@ -407,35 +367,29 @@ function buildChatTools(extraction: { requirements: string[] }) {
           .describe(
             "The role as the posting titles it, or as the user phrased it — e.g. 'GTM engineer', 'RevOps analyst'.",
           ),
-        // NAMED `rows`, NOT `requirements`, AND TYPED LOOSELY ON PURPOSE.
+        // Named `rows`, not `requirements`, and typed loosely on purpose. Both
+        // tool calls share a context, and the extraction filled a field called
+        // `requirements` with strings. Asked for a field of the same name, real
+        // models hand back the same array, and the validation error arrives as
+        // a prose answer with no assessment behind it (four of six postings on
+        // the first live run). So the field has a different name, `verdict` is
+        // a plain string rather than an enum, and a row may be a bare string.
+        // Nothing here can reject a generation: lib/role-fit.ts normalizes and
+        // downgrades instead, where failing means a marked row rather than a
+        // lost answer.
         //
-        // Both halves of a job-description turn are in the same context, and
-        // the first one filled a field called `requirements` with strings. Ask
-        // the second for a field of the same name and a real model will hand
-        // back the same array — measured, not guessed: the first live run of
-        // this sprint failed four of six postings with an input-validation
-        // error, which arrives as a turn that answers in prose with no
-        // assessment behind it. That is the Stage 0 bug, rebuilt by hand.
-        //
-        // So the field has a different name, `verdict` is a plain string rather
-        // than an enum, and a row may arrive as a bare string. Nothing here can
-        // reject a generation. lib/role-fit.ts normalizes what comes back and
-        // downgrades whatever doesn't hold up — enforcement lives there, where
-        // failing means a marked row instead of a lost answer.
-        // Optional, like everything else here: a missing key must not cost the
-        // turn. When the assessment arrives empty, coverage still fills the
-        // table from the extraction — every requirement as an unanswered row,
-        // which is a visible degradation rather than a silent one.
+        // Optional too, because a missing key must not cost the turn. When the
+        // assessment arrives empty, coverage still fills the table from the
+        // extraction, one unanswered row per requirement.
         rows: rowSchema
           .optional()
           .describe(
             "One object per requirement, in the posting's order — NOT a list of strings, and not a copy of the extraction. Answer every requirement that was extracted, including the ones he does not meet.",
           ),
-        // The same list under the name the model reaches for when it slips back
-        // into the extraction's vocabulary. Measured, again: a run after the
-        // rename still lost one posting to a missing `rows` key, because the
-        // object arrived under `requirements`. Accepting both costs a line;
-        // rejecting one costs the assessment.
+        // The same list under the name models reach for when they slip back
+        // into the extraction's vocabulary; a run after the rename still lost a
+        // posting that way. Accepting both costs a line; rejecting one costs
+        // the assessment.
         requirements: rowSchema
           .optional()
           .describe("Alias for `rows`. Prefer `rows`."),
@@ -458,13 +412,12 @@ function buildChatTools(extraction: { requirements: string[] }) {
       }),
       // The model's object goes in; what the site is prepared to render comes
       // out. `extraction.requirements` is empty on a turn that was a question
-      // rather than a posting, which is exactly when coverage does not apply.
+      // rather than a posting, which is exactly when coverage doesn't apply.
       execute: async (raw) => reconcileRoleFit(raw, extraction.requirements, CHUNK_BY_ID),
     }),
 
-    // 2.4 — contact card. Zero-arg tool; returns the fixed footer links. Salary
-    // and address stay private; the phone number now appears on /resume, but
-    // this card keeps contact routed through email and social.
+    // The fixed footer links. Contact goes through email and social here; the
+    // phone number is on /resume, and salary and address stay private.
     contactCard: tool({
       description: "Show a card with ways to contact Sidhant.",
       inputSchema: z.object({}),
@@ -477,42 +430,32 @@ function buildChatTools(extraction: { requirements: string[] }) {
   };
 }
 
-// --- Failure theatre (roadmap Sprint 2, #6) ------------------------------
+// --- Failure theatre ------------------------------------------------------
 //
-// The careful degradation in this route — 400 for a bad body, 429 for the
-// conversation cap and again for the hourly budget, 502 for a missing key, and
-// a mid-stream failure that arrives as an error chunk on an HTTP 200 — is the
-// most reliable signal of production experience on the site and the least
-// visible, because it only shows up when something breaks.
+// `?simulate=<class>` reproduces each failure path on demand: 400 for a bad
+// body, 429 for the conversation cap and the hourly budget, 502 for a missing
+// key, a mid-stream failure that arrives as an error chunk on an HTTP 200, and
+// a turn that finishes with nothing in it. Three rules make it safe to leave
+// on in production:
 //
-// `?simulate=<class>` makes each path reproducible on demand. Three rules, and
-// they're the reason this is safe to leave on in production:
-//
-//   1. It NEVER calls the model and never consumes the visitor's budget. A
-//      simulated failure costs zero tokens and zero turns.
-//   2. It is not a bypass. It can only produce failures, never an answer, and
-//      the class is looked up in a closed list — an unrecognised value is
-//      ignored and the request proceeds as a normal turn.
-//   3. It takes the SAME exits as the real thing: `jsonError` for the early
-//      classes, and for the mid-stream ones an actual throw inside
-//      `createUIMessageStream`, so the response is genuinely an HTTP 200 whose
-//      stream carries an error chunk. Faking the shape would defeat the point.
+//   1. It never calls the model and never consumes the visitor's budget.
+//   2. It can only produce failures, never an answer, and the class is looked
+//      up in a closed list. An unrecognised value is ignored and the request
+//      proceeds as a normal turn.
+//   3. It takes the same exits as the real thing: `jsonError` for the early
+//      classes, and a real throw inside `createUIMessageStream` for the
+//      mid-stream ones, so the response is genuinely a 200 whose stream
+//      carries an error chunk.
 
-// Both lists are derived from the one table in lib/chat-telemetry.ts rather
-// than restated here. `SIMULATABLE_CLASSES` is every class the table marks
-// simulatable, which excludes `network`: that one is raised in the browser
-// before the request reaches this file, so there is no exit here to take.
+// The classes come from the table in lib/chat-telemetry.ts. SIMULATABLE_CLASSES
+// excludes `network`: that one is raised in the browser before the request
+// reaches this file, so there's no exit here to take.
 function simulatedClass(req: Request): TurnErrorClass | null {
   const value = new URL(req.url).searchParams.get("simulate");
   const match = SIMULATABLE_CLASSES.find((c) => c === value);
   return match ?? null;
 }
 
-/**
- * The mid-stream half: HTTP 200, a real stream, a real throw. `createUIMessageStream`'s
- * `onError` classifies it exactly as it would a Gateway failure, so the client
- * receives the same error chunk and the same closing telemetry record.
- */
 /** The opening record of a simulated turn: full budget, nothing measured yet. */
 function simulatedTelemetry(model: ModelId): TurnTelemetry {
   return {
@@ -530,29 +473,29 @@ function simulatedTelemetry(model: ModelId): TurnTelemetry {
   };
 }
 
+/**
+ * The mid-stream half: HTTP 200, a real stream, a real throw. The client
+ * receives the same error chunk and the same closing telemetry record as it
+ * would for a Gateway failure.
+ */
 function simulateStreamFailure(cls: TurnErrorClass, model: ModelId): Response {
   const startedAt = Date.now();
   const telemetry = simulatedTelemetry(model);
 
   const stream = createUIMessageStream<ChatUIMessage>({
-    // Returned verbatim rather than run through `classifyTurnError`. The
-    // classifier's job is to map an unknown upstream error onto the vocabulary;
-    // here the class is the input, and round-tripping it through pattern
-    // matching would only introduce a way for the demo to show the wrong one.
-    // What's being exercised is the TRANSPORT — an HTTP 200 whose stream ends
-    // in an error chunk — and that is real.
+    // Returned as is rather than run through `classifyTurnError`: the class is
+    // the input here, and pattern-matching it again could only show the wrong
+    // one. What's exercised is the transport, a 200 whose stream ends in an
+    // error chunk, and that part is real.
     onError: () => cls,
     execute: async ({ writer }) => {
       writer.write({ type: "start" });
-      // A COPY PER FRAME, not the live object. Both writes used to hand over
-      // the same reference, and here — unlike the real path below, which awaits
-      // a model between its two writes — nothing yields in between, so the
-      // opening frame was still unserialised when the next line set `error` on
-      // it. The client saw an opening frame that already carried an error,
-      // decided it was a CLOSING write, and replaced the previous turn's record
-      // in the instrument log instead of appending this one: a two-turn
-      // conversation lost a turn. `usage == null && error == null` is the whole
-      // test for "opening", so the opening frame has to be true when it is read.
+      // A copy per frame, not the live object. Nothing yields between these
+      // writes (the real path awaits the model in between), so a shared
+      // reference would still be unserialised when the next line sets `error`.
+      // The client tests `usage == null && error == null` for an opening frame,
+      // so it would read this one as a closing write and replace the previous
+      // turn's record in the instrument log instead of appending this one.
       writer.write({ type: "data-turn", id: TURN_PART_ID, data: { ...telemetry } });
       telemetry.error = { class: cls, detail: "simulated" };
       telemetry.timing = { ttftMs: null, durationMs: Date.now() - startedAt, tokensPerSecond: null };
@@ -605,8 +548,7 @@ function simulateEmptyTurn(model: ModelId): Response {
 }
 
 export async function POST(req: Request): Promise<Response> {
-  // (0) Failure theatre, ahead of everything: no body parsing, no budget, no
-  // model. See the block comment above.
+  // (0) Failure theatre comes first: no body parsing, no budget, no model.
   const simulate = simulatedClass(req);
   if (simulate) {
     // A status means an early exit — a JSON body before a stream exists. Null
@@ -623,7 +565,7 @@ export async function POST(req: Request): Promise<Response> {
     const body = await req.json();
     parsed = bodySchema.parse(body);
   } catch {
-    // Malformed request — generic 400, NOT the rate-limit copy.
+    // Malformed request: a generic 400, not the rate-limit state.
     return jsonError("invalid_request", 400);
   }
 
@@ -643,43 +585,36 @@ export async function POST(req: Request): Promise<Response> {
     return jsonError("rate_limited", 429);
   }
 
-  // (d) Stream the model response through the Vercel AI Gateway.
-  //
-  // Missing AI_GATEWAY_API_KEY (or any upstream failure) is returned as a
-  // structured 502 — never a raw stack trace / 500. Distinct status/body from
-  // the 429 above so the client can tell "capped" from "broken".
-  //
-  // The Gateway's auth failure surfaces lazily (mid-stream) rather than at the
-  // streamText() call, so we check the key up front to guarantee a real 502
-  // response for the missing-key case instead of a 200 with an error buried in
-  // the stream. This is also the graceful-degradation path for an empty
-  // .env.local: the /chat UI maps this 502 to the copy's error state.
+  // (d) A missing AI_GATEWAY_API_KEY returns a structured 502, never a stack
+  // trace or a 500, and distinct from the 429s so the client can tell "capped"
+  // from "broken". It's checked up front because the Gateway's auth failure
+  // only surfaces mid-stream, as a 200 with the error buried in it. This is
+  // also what a local run with an empty .env.local gets: the shell shows its
+  // error state.
   if (!process.env.AI_GATEWAY_API_KEY) {
     return jsonError("upstream_unconfigured", 502);
   }
 
-  // (e) Is this a pasted job description? Decided once, up front, because it
-  // changes both the output ceiling and whether `roleFit` is optional.
+  // (e) Is this a pasted job posting? Decided once, up front, because it
+  // changes the output ceiling and forces the tool sequence below.
   const turnText = lastUserText(messages);
   const jobPosting = looksLikeJobPosting(turnText);
 
-  // (e1) Is it a question about the site itself (Sprint 7, #8)? If so the
-  // second corpus — this repo — is appended to the system prompt for this turn
-  // only. Never on a posting turn: that turn already carries a 3.5 kB posting
-  // and spends three steps, and nobody pasting a job description is asking
-  // about the rate limiter.
+  // (e1) A question about the site itself gets this repo's corpus appended to
+  // the system prompt, for this turn only. Never on a posting turn: that turn
+  // already carries a long posting and three steps, and nobody pasting a job
+  // description is asking about the rate limiter.
   //
-  // The base prompt is byte-identical either way, and the appendix goes after
-  // it, so an ordinary turn sends exactly the string the provider already has
-  // cached. That is the whole reason this is a per-turn decision instead of a
-  // bigger prompt for everyone.
+  // The base prompt is byte-identical either way and the appendix goes after
+  // it, so an ordinary turn sends exactly the prefix the provider has cached.
+  // That is why this is decided per turn rather than giving everyone a bigger
+  // prompt.
   const siteQuestion = !jobPosting && looksLikeSiteQuestion(turnText);
 
-  // (e2) A posting goes to the model fenced, labeled as data, and with the
-  // untrusted-input rules restated underneath it (Sprint 4, bank §6 Stage 2).
-  // It happens HERE, on the user message, and never in the system prompt: that
-  // string has to stay byte-identical across requests or the cache that makes
-  // every turn cheap stops hitting.
+  // (e2) A posting goes to the model fenced, labelled as data, with the
+  // untrusted-input rules restated underneath it. That happens here, on the
+  // user message, never in the system prompt, which has to stay byte-identical
+  // across requests for the prompt cache to hit.
   const outgoing = jobPosting ? messages.map(hardenPosting(messages)) : messages;
 
   // This request's extraction, closed over by both job-description tools.
@@ -724,38 +659,26 @@ export async function POST(req: Request): Promise<Response> {
       writer.write({ type: "data-turn", id: TURN_PART_ID, data: { ...telemetry } });
 
       const result = streamText({
-        model, // allowlisted above — never the raw client string
-        // When the reader hits stop, or their phone drops the connection, the
-        // request aborts here — and without this the model kept generating (and
-        // billing) into a socket nobody was reading. The client now aborts
-        // deliberately in two cases besides stop: a connect timeout and a
-        // stalled stream. Each of those used to leave a turn running.
+        model, // resolved from the catalogue, never the raw client string
+        // Stop, a dropped connection, and the client's own connect timeout and
+        // stall watchdog all abort the request. Without this the model would
+        // keep generating, and billing, into a socket nobody reads.
         abortSignal: req.signal,
         maxOutputTokens: jobPosting ? MAX_OUTPUT_TOKENS_JD : MAX_OUTPUT_TOKENS,
-        // Per model and per kind of turn, from the catalogue. Undefined sends
-        // nothing, which leaves the provider on its default — every row
-        // without a `reasoning` key behaves exactly as it did before the key
-        // existed. GPT-6 Luna runs `low` on posting turns, where its hidden
-        // reasoning was most of the wait before the card (lib/models.ts).
+        // Per model and kind of turn, from the catalogue. Undefined sends
+        // nothing and leaves the provider on its default.
         reasoning: reasoningFor(model, { jobPosting }),
         tools: chatTools,
-        // The SDK's default stop condition is stepCountIs(1), which ends the
-        // stream at the tool call before the model can answer. Allow a second
-        // step so the model always follows a tool call with a short text answer
-        // (the tool is a visual aid, not a replacement for the answer — §2.5).
-        // Four, because a job-posting turn now spends three of them: extract,
-        // judge, then the sentence that follows.
+        // The SDK's default, stepCountIs(1), ends the stream at the tool call
+        // before the model can answer, and a tool card is a visual aid, not a
+        // replacement for the answer. Four, because a posting turn spends
+        // three: extract, judge, then the sentence that follows.
         stopWhen: stepCountIs(4),
-        // THE JD FIX (Sprint 1), now in two stages (Sprint 4). On a
-        // job-posting turn the structured assessment is the feature, so it is
-        // not left to the model's discretion: step 0 extracts the posting's
-        // requirements, step 1 judges them, and every step after that gets
-        // `toolChoice: "none"` — without that, a forced choice applies to every
-        // step and the model calls the tool again instead of writing the
-        // sentence that follows it.
-        //
-        // Non-JD turns are untouched: `undefined` means "use the outer
-        // setting", which is the default `auto`.
+        // On a posting turn the structured assessment is the feature, so it
+        // isn't left to the model: step 0 must extract, step 1 must judge, and
+        // every later step gets `toolChoice: "none"`. Otherwise a forced choice
+        // applies to every step and the model calls the tool again instead of
+        // writing the sentence after it. Other turns keep the default, `auto`.
         prepareStep: jobPosting
           ? ({ stepNumber }) => {
               if (stepNumber === 0) {
@@ -767,9 +690,9 @@ export async function POST(req: Request): Promise<Response> {
               return { toolChoice: "none" };
             }
           : undefined,
-        // System prompt supplied as a message so we can attach cache_control.
-        // The prompt is byte-identical across requests, so ephemeral caching
-        // hits on every request after the first.
+        // Supplied as a message so it can carry cache_control. The base prompt
+        // is byte-identical across requests, so ephemeral caching hits after
+        // the first.
         allowSystemInMessages: true,
         messages: [
           {
@@ -806,9 +729,9 @@ export async function POST(req: Request): Promise<Response> {
           reasoningTokens: usage.outputTokenDetails?.reasoningTokens ?? null,
           totalTokens: usage.totalTokens ?? null,
         };
-        // Rounded: the SDK reports fractional milliseconds, and sub-millisecond
-        // precision on a network measurement is noise that reads as false
-        // exactness once it's on screen next to a dollar figure.
+        // Rounded: the SDK reports fractional milliseconds, and that precision
+        // on a network measurement is noise that reads as false exactness on
+        // screen.
         const ttftMs = steps[0]?.performance?.timeToFirstOutputMs;
         telemetry.timing = {
           ttftMs: ttftMs != null ? Math.round(ttftMs) : null,
@@ -822,12 +745,12 @@ export async function POST(req: Request): Promise<Response> {
         telemetry.toolsCalled = steps.flatMap((s) => s.toolCalls.map((c) => c.toolName));
         telemetry.finishReason = finishReason;
 
-        // A turn that finished and said nothing — usually a reasoning model
-        // that spent the whole ceiling thinking and stopped on "length". It
-        // billed tokens and produced no answer, so its record says so rather
-        // than being priced and logged as one. The browser's transport is what
-        // shows the reader the failure (see `answerWatcher`); this is the
-        // record agreeing with it.
+        // A turn that finished and said nothing: usually a reasoning model that
+        // spent the whole ceiling thinking and stopped on "length". It billed
+        // tokens and produced no answer, so its record says so rather than
+        // being priced and logged as an answer. The browser's transport shows
+        // the reader the failure (`answerWatcher` in lib/chat-transport.ts);
+        // this keeps the record in agreement.
         const said = steps.some(
           (s) =>
             s.text.trim() !== "" ||
@@ -838,8 +761,8 @@ export async function POST(req: Request): Promise<Response> {
         }
       } catch (err) {
         // The merged stream has already surfaced the failure to the reader.
-        // What's added here is the CLASS, so #6 can render the difference
-        // between a timeout and a misconfiguration instead of one grey box.
+        // This adds the class, so the client can tell a timeout from a
+        // misconfiguration.
         console.error("[chat] turn failed", err);
         telemetry.error = {
           class: classifyTurnError(err),
@@ -857,8 +780,8 @@ export async function POST(req: Request): Promise<Response> {
     },
   });
 
-  // Headers stay: they're the pre-stream budget signal the status strip reads
-  // before a single token arrives, and the live eval harness reads them too.
+  // The status strip reads the budget from these headers before the first
+  // token arrives; the live eval harness reads them too.
   return createUIMessageStreamResponse({
     stream,
     headers: {

@@ -2,17 +2,15 @@ import { ScrollFade, floorWidth } from "./chart-frame";
 import { RAMP, inkOn, rampStep } from "./chart-tokens";
 import type { ModelRow } from "@/lib/model-comparison";
 
-// Model × eval group, cell = pass rate (Sprint 8).
+// Model × eval group, cell = pass rate.
 //
-// This exists instead of a composite "intelligence score". One number would
-// hide the only interesting thing in the grid: a model that answers grounded
-// questions well and folds under prompt injection is a different animal from
-// one that is mediocre at both, and an index cannot say so. The grid can.
+// A grid rather than a composite score: a model that answers grounded
+// questions well and folds under prompt injection is different from one that
+// is mediocre at both, and a single index can't say so.
 //
-// Magnitude, so: one hue, ordered steps, brighter is more — validated as an
-// ordinal ramp against the dark surface. The value is PRINTED IN EVERY CELL, so
-// colour is never the only way to read it, and the ink inside a cell is picked
-// by the fill's luminance so it always clears contrast.
+// One hue, ordered steps, brighter is more. The value is printed in every
+// cell, so colour is never the only way to read it, and inkOn picks whichever
+// ink contrasts more with the fill.
 
 export type ScorecardHeatmapProps = {
   rows: ModelRow[];
@@ -23,9 +21,8 @@ export function ScorecardHeatmap({ rows, groups }: ScorecardHeatmapProps) {
   if (!rows.length || !groups.length) return null;
 
   return (
-    // Gated on the table's own floor width: on a phone this grid is 358px wide
-    // and 520px of table, and it clipped the last column dead flat with nothing
-    // saying there was one.
+    // Below the table's 520px floor the box scrolls and fades, so a phone
+    // shows there are more columns instead of clipping them.
     <>
       <ScaleKey />
       <ScrollFade width={520} className="mt-3" label="Pass rate by model and eval group">
@@ -47,15 +44,9 @@ export function ScorecardHeatmap({ rows, groups }: ScorecardHeatmapProps) {
         <tbody>
           {rows.map((row) => (
             <tr key={row.model}>
-              {/* Wraps rather than truncates. Measured on a 390px phone, this
-                  header clipped "gemini-3.5-flash-lite" by 15px — and the only
-                  way to read the rest was the `title` below, which is a hover
-                  affordance and hover does not exist on the device that was
-                  clipping it. The row's own identity was the one thing a touch
-                  reader could not recover. Two lines on a narrow column costs
-                  nothing; a name is not a place to save 15px. The title stays as
-                  what it always should have been, an enhancement carrying the
-                  vendor prefix, rather than the only way in. */}
+              {/* Wraps rather than truncates: `title` is a hover affordance,
+                  so on a phone a clipped model name could not be read. The
+                  title adds the vendor prefix. */}
               <th
                 scope="row"
                 className="max-w-[150px] px-1 text-left font-normal break-words text-text-soft"
@@ -81,9 +72,8 @@ export function ScorecardHeatmap({ rows, groups }: ScorecardHeatmapProps) {
 }
 
 /**
- * The scale, stated. Colour carries a value in this one chart, so the reader is
- * told which direction the ramp runs — and the value is printed in every cell
- * anyway, so the key supplements the numbers rather than gating them.
+ * The scale, stated: colour carries a value in this one chart, so the key says
+ * which way the ramp runs. The printed values don't depend on it.
  */
 function ScaleKey() {
   return (
@@ -110,9 +100,9 @@ function Cell({
   total?: number;
   strong?: boolean;
 }) {
-  // Not measured is NOT the bottom of the ramp. A group a model never ran is
-  // the surface with an em dash on it — the same distinction the rest of
-  // /measurements makes between "zero" and "nothing here".
+  // Not measured is not the bottom of the ramp. A group a model never ran is
+  // the surface with an em dash on it, the same distinction the rest of
+  // /measurements makes between zero and nothing.
   if (rate == null) {
     return (
       <td className="border border-line px-1 py-1.5 text-center tabular-nums text-text-faint">—</td>

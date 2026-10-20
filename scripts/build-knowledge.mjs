@@ -1,31 +1,22 @@
-// Builds two artifacts from content/knowledge/*.md, both git-ignored:
+// Builds two git-ignored files from content/knowledge/*.md:
 //
-//   1. KNOWLEDGE_BASE — the corpus rendered as labeled chunks and injected into
-//      the system prompt. Byte-identical across builds so the Anthropic prompt
-//      cache stays stable.
-//   2. CHUNKS — the same chunks as structured data, addressed by the SAME ids
-//      that appear in (1).
+//   lib/knowledge.generated.ts   KNOWLEDGE_BASE, the corpus rendered as labeled
+//                                chunks for the system prompt. Byte-identical
+//                                for identical input, so a rebuild doesn't
+//                                break the provider's prompt cache.
+//   lib/chunks.generated.ts      CHUNKS, the same chunks as structured data
+//                                under the same ids.
 //
-// (2) exists so the panel, the model, and the verifier read the SAME source.
-// The panel used to hold a hand-maintained copy of the resume's sections, which
-// meant the evidence shown beside an answer could silently drift from the
-// evidence the answer was built from. Editing the markdown now updates all
-// three.
+// The model, the evidence panel and lib/verify.ts all read these, so editing
+// the markdown updates all three. Each chunk's id is printed on the line above
+// its text in the knowledge base; there is no separate id list to drift.
 //
-// SPRINT 3 (F2). Two changes to what this script used to do:
+// Ids are what the model cites and what the verifier checks, so they must be
+// stable: they derive from the markdown headings, and renaming a heading
+// changes a public id (evals/citations.test.mjs asserts the ids the shell
+// hardcodes still exist). Fails the build on a duplicate id.
 //
-//   * It chunks the WHOLE corpus, not just resume.md. Six files, one id space.
-//   * Every chunk's id is rendered INTO the knowledge base, so the model reads
-//     the vocabulary and the text it names in the same breath. There is no
-//     separate "here are the ids" list to fall out of sync — if a chunk exists,
-//     its id is on the line above it.
-//
-// The ids are what the model cites and what lib/verify.ts checks a claim
-// against, so they have to be stable across builds: they're derived from the
-// markdown headings, and a heading rename is a deliberate act with a visible
-// consequence (the static evals assert the ids the shell hardcodes still exist).
-//
-// Run as `predev` and `prebuild`.
+// Runs as `predev` and `prebuild`.
 
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -33,11 +24,11 @@ import { fileURLToPath } from "node:url";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
-// Fixed order — do not reorder without re-checking the token budget (~8k target).
+// Fixed order; re-check the ~8k token budget (asserted in evals/static.test.mjs)
+// before reordering or adding a file.
 //
-// `source` is the id namespace for the file's chunks, so it is part of the
-// public id vocabulary and changing one invalidates every citation that names
-// it. `label` is what a reader sees on a chip in the panel.
+// `source` is the id namespace for the file's chunks, so changing one
+// invalidates every citation that names it. `label` is the panel chip text.
 const FILES = [
   { file: "resume.md", source: "resume", label: "Resume" },
   { file: "bio.md", source: "bio", label: "About" },
@@ -93,15 +84,13 @@ function renderLines(body) {
 
 // --- Chunking -------------------------------------------------------------
 //
-// One chunk per `##` section, plus one per `###` block inside a section that
-// has them (only the resume's Experience does today). Anything before the first
-// `##` — the file's `# Title` and any lead paragraph — becomes an `overview`
-// chunk, which is where projects-dell.md's entire body lives.
+// One chunk per `##` section, or one per `###` block in a section that has
+// them (the resume's Experience). Anything before the first `##` becomes an
+// `overview` chunk, which is all of projects-dell.md.
 //
-// Granularity is a real decision, not an accident of the markdown: a chunk is
-// the smallest unit a claim can honestly be checked against. Finer (per bullet)
-// would make a two-fact sentence uncitable without listing four ids; coarser
-// (per file) would make "it's in there somewhere" pass verification.
+// A chunk is the smallest unit a claim is checked against. Per bullet would
+// make a two-fact sentence need several ids; per file would let "it's in there
+// somewhere" pass verification.
 
 function chunkFile({ file, source, label }) {
   const raw = readFileSync(join(root, "content", "knowledge", file), "utf8");
@@ -117,13 +106,10 @@ function chunkFile({ file, source, label }) {
       heading,
       meta,
       lines,
-      // The text a claim is checked against. It is EXACTLY what the model sees
-      // for this chunk in the knowledge base below, minus the id itself — the
-      // label and dateline included, because "A Darle 20" and "Jun 2024" live
-      // in those lines and nowhere else, and a sentence citing this chunk for
-      // one of them is citing correctly. Any gap between what the model reads
-      // and what the checker searches shows up as a false "unverified", which
-      // is the most expensive kind of wrong this feature can be.
+      // The text a claim is checked against: what the model sees for this chunk
+      // in the knowledge base, minus the id. The heading line and dateline are
+      // included because an employer name or a date may appear only there. Any
+      // gap between the two shows up as a false "unverified".
       text: [`${label} — ${heading}`, meta, ...lines].filter(Boolean).join("\n"),
     });
   };
@@ -153,10 +139,8 @@ function chunkFile({ file, source, label }) {
         const blockHeading = (bnl === -1 ? block : block.slice(0, bnl)).trim();
         const bbody = bnl === -1 ? "" : block.slice(bnl + 1);
         // The first `**bold**` line is the role/dateline. An employer with more
-        // than one role has more than one — Nokia does — and those later
-        // datelines become lines of the chunk rather than being dropped. They
-        // carry dates nothing else in the resume carries, and a claim citing
-        // this chunk for one of them has to find it here.
+        // than one role (Nokia) has more; those become lines of the chunk, since
+        // their dates appear nowhere else.
         const roleMatch = bbody.match(/\*\*(.+?)\*\*/);
         const withRoles = bbody
           .replace(roleMatch?.[0] ?? "", "")
@@ -185,24 +169,16 @@ const allChunks = FILES.flatMap(chunkFile);
 // --- Held back: a chunk with an unresolved marker ---------------------------
 //
 // A `[TODO` or `[VERIFY` in content/knowledge is a question for Sidhant, not
-// part of the record. Shipped, it was worse than a gap: the model read "stated
-// nowhere; do not guess" as if it were a line about him, and /prompt publishes
-// the prompt verbatim, so the marker was live on a public page (council review,
-// 2026-10-19). Manual mode already filtered these out on its own; the prompt
-// didn't, and the static check that should have caught it looked for the
-// literal string "[TODO]", which a marker with a note inside never is.
-//
-// So the chunk stays in the markdown, where it IS the question, and out of
-// both artifacts until it has an answer. Dropped from both rather than one, so
-// the ids the model is shown and the ids the panel can open stay one set — the
-// static suite asserts exactly that.
+// part of the record. The model would read it as a line about him, and /prompt
+// publishes the prompt verbatim. So the chunk stays in the markdown and out of
+// both generated files until it has an answer. Both rather than one, so the
+// ids the model is shown and the ids the panel can open stay one set
+// (evals/static.test.mjs checks both files).
 const MARKER = /\[(TODO|VERIFY)\b/;
 const heldBack = allChunks.filter((c) => MARKER.test(c.text));
 const chunks = allChunks.filter((c) => !MARKER.test(c.text));
 
-// An id collision would make two different pieces of the record answer to the
-// same citation, which is exactly the failure the verifier exists to prevent.
-// Fail the build rather than ship an ambiguous id space.
+// A collision would make one citation point at two pieces of the record.
 const seen = new Set();
 for (const c of chunks) {
   if (seen.has(c.id)) {
@@ -216,9 +192,9 @@ for (const c of chunks) {
 // --- The knowledge base ---------------------------------------------------
 //
 // Rendered from the chunks rather than by concatenating the files, so what the
-// model reads and what the verifier checks are the same bytes. The `[id]` on
-// the heading line IS the vocabulary — see lib/system-prompt.ts, which tells
-// the model what to do with it.
+// model reads and what the verifier checks are the same text. The `## Citing`
+// section of lib/system-prompt.ts tells the model how to use the `[id]` on
+// each heading line.
 
 const knowledge = chunks
   .map((c) => {
@@ -227,8 +203,8 @@ const knowledge = chunks
   })
   .join("\n\n");
 
-// JSON.stringify escapes backticks, ${, backslashes, and newlines safely —
-// avoids the fragility of hand-escaping a template literal.
+// JSON.stringify rather than a template literal, so backticks, `${` and
+// backslashes in the markdown need no hand-escaping.
 const out = `// AUTO-GENERATED by scripts/build-knowledge.mjs — do not edit by hand.
 export const KNOWLEDGE_BASE = ${JSON.stringify(knowledge)};
 `;
