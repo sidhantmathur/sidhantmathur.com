@@ -10,6 +10,6 @@ representing an estimated $129M in pipeline, based on segment-level average
 deal sizes. The model was hosted on Azure so sales and marketing teams could
 get predictions and feed back new training data.
 
-It was an internship project, so he keeps the claims modest — but it's where he
-first saw that the interesting work is usually where data, revenue, and tooling
-meet, and he's been working in that intersection since.
+It was an internship project, but it's where he first got interested in work
+that combines data, revenue, and tooling, and he's been doing that kind of work
+since.

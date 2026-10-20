@@ -6,7 +6,7 @@ Sidhant's role: co-founder and CTO (solo developer).
 ## The problem
 
 Tabletop roleplaying games are big in Latin America, but finding a good game
-master — and paying one — was informal and unreliable. Hosts had no clean way to
+master and paying one was informal and unreliable. Hosts had no clean way to
 take bookings or get paid, especially in a market where many players prefer cash.
 Two friends and Sidhant decided to build the marketplace themselves.
 
@@ -15,17 +15,16 @@ Two friends and Sidhant decided to build the marketplace themselves.
 He architected and shipped the product end to end: host profiles, session
 listings, bookings and reservations, real-time chat, email notifications,
 refunds, and authentication. Payments run on Stripe Connect, handling host
-payouts and platform fees — including OXXO integration so players in Mexico can
-pay in cash at a convenience store, which matters in a market where card
-penetration is low. The funnel is instrumented end to end — bookings,
-conversion, cancellations, refunds, host activation — and that data steers
-product and monetization decisions.
+payouts and platform fees, including OXXO integration so players in Mexico can
+pay in cash at a convenience store. That matters in a market where card
+penetration is low. The funnel is instrumented end to end (bookings, conversion,
+cancellations, refunds, host activation), and that data steers product and
+monetization decisions.
 
-The build itself is part of the story. He runs an AI-agent-heavy development
-workflow in Claude Code — agents write most of the code, while he keeps
-hands-on ownership of architecture, product decisions, code review, and
-release. Later he set up a multi-agent workflow that reviews, refactors, and
-regression-tests the codebase on its own.
+He runs an AI-agent-heavy development workflow in Claude Code. Agents write
+most of the code, and he keeps hands-on ownership of architecture, product
+decisions, code review, and release. Later he set up a multi-agent workflow
+that reviews, refactors, and regression-tests the codebase on its own.
 
 ## What it runs on
 
@@ -37,14 +36,14 @@ Resend for transactional email, deployed on Vercel.
 Development started in August 2025; the platform launched in March 2026. Four
 months in, it has 1,400+ registered users, 127 hosts, and 2,100+ bookings, with
 200–400 unique visitors a day. The biggest single test so far was a flagship
-251-player event at a 19,000-attendee convention — he built the technology
-behind it; his co-founder ran the event on the ground — rated 4.96/5 by
-attendees. Running it has taught Sidhant as much about unit economics as about
-code: they've tested a commission model against direct event ticket sales and
-made real decisions about where the margin actually is.
+251-player event at a 19,000-attendee convention, rated 4.96/5 by attendees. He
+built the technology behind it, and his co-founder ran the event on the ground.
+Running A Darle 20 has taught Sidhant as much about unit economics as about code.
+They've tested a commission model against direct event ticket sales and made
+decisions about where the margin is.
 
 ## What he'd tell a hiring manager
 
-This is the project that proves he can take an ambiguous idea to a
-revenue-generating product — including the unglamorous parts like refunds,
-payment edge cases, and infrastructure costs.
+This project shows he can take an ambiguous idea to a revenue-generating
+product and handle the refunds, payment edge cases, and infrastructure costs
+that come with it.
