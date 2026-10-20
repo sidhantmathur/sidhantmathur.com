@@ -30,23 +30,23 @@ import type { ChatMessage } from "./use-conversation";
 // not encryption. The scorecard is the assessment itself, not a summary.
 
 const EXPORT_COPY = {
-  empty: "Ask something first — there's nothing to export yet.",
+  empty: "There's nothing to export yet. Ask something first.",
   markdown:
     "The conversation as markdown, with each answer's sources listed under it. Pastes into Gmail, Slack, or an ATS note.",
   print:
-    "Opens your browser's print dialog. “Save as PDF” there gives a typeset document with working links — not a screenshot of this page.",
+    "Opens your browser's print dialog. “Save as PDF” there gives a document laid out for paper, with working links.",
   link:
-    "The conversation is compressed into the part of the URL after the #, which browsers never send to a server. There is no database: the link is the storage.",
+    "The conversation is compressed into the part of the URL after the #, which browsers never send to a server. The site has no database, so it doesn't keep a copy.",
   linkCaveat:
-    "It is encoding, not encryption — anyone holding the link can read the conversation — and it is frozen at the moment you made it.",
+    "The link isn't encrypted. Anyone who has it can read the conversation. It's frozen at the moment you made it.",
   linkTooLong:
-    "Past the length some mail clients cut. Paste it somewhere that doesn't rewrite URLs, or export the markdown instead.",
-  unsupported: "This browser can't build a link — the markdown and print options still work.",
+    "Some mail clients cut links this long. Paste it somewhere that doesn't rewrite URLs, or use the markdown instead.",
+  unsupported: "This browser can't build a link. The markdown and print options still work.",
   scorecard:
     "The assessment in scorecard shape: the verdict, the counts, the strongest cited rows, and every gap.",
   // The short fit link (docs/application-links.md). Logged in the ledger.
   shortLink:
-    "The same scorecard as a link, with the answer's summary — short enough for an application form or a plain-text email. The posting itself stays out of it.",
+    "The same scorecard as a link, with the answer's summary. It's short enough for an application form or a plain-text email, and it leaves the posting out.",
   mail: "Opens a draft in your mail client with the condensed version already in the body.",
 };
 
@@ -191,7 +191,7 @@ export function ExportDeck({
             <p className="t-meta text-text-faint">
               <span className="tabular-nums text-text-soft">{permalink.length}</span> characters
               {permalink.length > PERMALINK_SAFE_CHARS && (
-                <span className="text-accent"> — {EXPORT_COPY.linkTooLong}</span>
+                <span className="text-accent">. {EXPORT_COPY.linkTooLong}</span>
               )}
             </p>
             <p className="t-meta text-text-faint">{EXPORT_COPY.linkCaveat}</p>
@@ -260,7 +260,7 @@ export function ExportDeck({
               <p className="t-meta text-text-faint">
                 <span className="tabular-nums text-text-soft">{shortLink.length}</span> characters
                 {shortLink.length > PERMALINK_SAFE_CHARS && (
-                  <span className="text-accent"> — {EXPORT_COPY.linkTooLong}</span>
+                  <span className="text-accent">. {EXPORT_COPY.linkTooLong}</span>
                 )}
               </p>
             </div>

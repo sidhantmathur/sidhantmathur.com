@@ -105,7 +105,7 @@ function PrintedFit({ fit }: { fit: RoleFit }) {
         <tbody>
           {fit.rows.map((row, i) => (
             <tr key={i} className="doc-block align-top">
-              <td className="w-[64px] border-t border-line py-1.5 pr-2 uppercase tracking-[0.06em]">
+              <td className="w-[64px] border-t border-line py-1.5 pr-2 tracking-[0.06em]">
                 {row.verdict}
               </td>
               <td className="border-t border-line py-1.5">

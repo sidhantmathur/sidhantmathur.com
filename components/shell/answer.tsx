@@ -245,13 +245,21 @@ function claimDetail(claim: Claim): string {
   if (claim.verdict === "uncited") {
     return `no source cited for "${clip(claim.text)}"`;
   }
-  if (claim.unknownIds.length) {
-    return `cited ${claim.unknownIds.join(", ")}, which isn't a source on this site`;
-  }
+  if (claim.unknownIds.length) return unknownSources(claim.unknownIds);
   if (claim.verdict === "miscited") {
-    return `${claim.missing.join(", ")} — not in ${claim.ids.join(", ")}, but in ${claim.elsewhere.join(", ")}`;
+    return `${claim.missing.join(", ")} ${isAre(claim.missing)} in ${claim.elsewhere.join(", ")}, not ${claim.ids.join(", ")}`;
   }
-  return `${claim.absent.join(", ")} — not in any source on this site`;
+  return `${claim.absent.join(", ")} ${isAre(claim.absent)}n't in any source on this site`;
+}
+
+function isAre(tokens: string[]): string {
+  return tokens.length === 1 ? "is" : "are";
+}
+
+function unknownSources(ids: string[]): string {
+  return ids.length === 1
+    ? `cited ${ids[0]}, which isn't a source on this site`
+    : `cited ${ids.join(", ")}, which aren't sources on this site`;
 }
 
 /** The line under the answer for the two verdicts that are listed one by one. */
@@ -259,9 +267,7 @@ function rowDetail(claim: Claim): string {
   if (claim.verdict === "uncited") {
     return `no source cited for "${clip(claim.text)}"`;
   }
-  if (claim.unknownIds.length) {
-    return `cited ${claim.unknownIds.join(", ")}, which isn't a source on this site`;
-  }
+  if (claim.unknownIds.length) return unknownSources(claim.unknownIds);
   return `${claim.absent.join(", ")}, in "${clip(claim.text, 60)}"`;
 }
 
