@@ -1,44 +1,38 @@
 ### The problem
 
-Tabletop roleplaying games are big in Latin America, but finding a good game
-master — and paying one — was informal and unreliable. Hosts had no clean way to
-take bookings or get paid, especially in a market where many players prefer cash.
+Tabletop roleplaying games are big in Latin America, but finding and paying a
+good game master was informal and unreliable. Hosts had no clean way to take
+bookings or get paid, especially in a market where many players prefer cash.
 Two friends and I decided to build the marketplace ourselves.
 
 ### What I built
 
-I architected and shipped the product end to end: host profiles, session
-listings, bookings and reservations, real-time chat, email notifications,
-refunds, and authentication. Payments run on Stripe Connect, handling host
-payouts and platform fees — including OXXO integration so players in Mexico
-can pay in cash at a convenience store, which matters in a market where card
-penetration is low.
+I architected and shipped the whole product: host profiles, session listings,
+bookings and reservations, payments, real-time chat, email notifications,
+automated refunds, and authentication.
 
-The build itself is part of the story. I run an AI-agent-heavy development
-workflow in Claude Code — agents write most of the code, while I keep hands-on
-ownership of architecture, product decisions, code review, and release. Later I
-set up a multi-agent workflow that reviews, refactors, and regression-tests the
-codebase on its own.
+I build it with AI agents in Claude Code. They write most of the code, and I
+handle the architecture, product decisions, code review, and release myself.
+Later I set up a multi-agent workflow that reviews, refactors, and
+regression-tests the codebase on its own.
 
 ### The unit economics
 
-Payment runs through the site rather than around it: Stripe Connect handles the
-host payouts and the platform fee, OXXO lets a player with no card pay in cash
-at a convenience store, and refunds are automated rather than handled by hand.
+I integrated Stripe Connect for host payouts, the platform fee, and OXXO cash
+payments. OXXO lets a player with no card pay in cash at a convenience store,
+which matters in Mexico, where card penetration is low.
 
-Running it has taught me as much about unit economics as about code: we've
-tested a commission model against direct event ticket sales and made real
-decisions about where the margin actually is — and the unglamorous parts,
-refunds, payment edge cases and infrastructure costs, are part of that
-arithmetic.
+Running A Darle 20 has taught me as much about unit economics as about code. We
+tested a commission model against direct event ticket sales and made decisions
+about where the margin is.
 
 ### The funnel, instrumented
 
-The funnel is instrumented end to end — bookings, conversion, cancellations,
-refunds, host activation — so there is a number for every stage on both sides
-of the marketplace: players who visit, register and book, and hosts who
-activate. That data steers product and monetization decisions, which is how
-the question above gets answered with evidence rather than instinct.
+I instrumented the funnel end to end: bookings, conversion, cancellations,
+refunds and host activation. That covers both sides of the marketplace, so I
+can see how many players visit, register and book, and how many hosts
+activate. I use that data to make product and monetization decisions,
+including the commission question above.
 
 ### What it runs on
 
@@ -47,29 +41,27 @@ Resend for transactional email, deployed on Vercel.
 
 ### Where it stands
 
-Development started in August 2025; the platform launched in March 2026. Four
-months in, it has 1,400+ registered users, 127 hosts, and 2,100+ bookings, with
-200–400 unique visitors a day. The biggest single test so far was a flagship
-251-player event at a 19,000-attendee convention — I built the technology
-behind it; my co-founder ran the event on the ground — rated 4.96/5 by
-attendees.
+I started building in August 2025, and the platform launched in March 2026.
+Four months in, it has 1,400+ registered users, 127 hosts, and 2,100+ bookings,
+with 200–400 unique visitors a day. The biggest single test so far was a
+flagship 251-player event at a 19,000-attendee convention, rated 4.96/5 by
+attendees. I built the technology behind it, and my co-founder ran the event on
+the ground.
 
 ### In plain terms
 
 Tabletop roleplaying games are played in groups, and somebody has to run the
-game for everyone else. Finding a good one — and paying them — was word of
-mouth and a private arrangement. A Darle 20 is where that arrangement happens
-instead: a host lists a session, a player books a seat, the payment goes
-through the site, and both sides get an email about it.
+game for everyone else. Finding a good one, and paying them, came down to word
+of mouth and private arrangements. On A Darle 20, a host lists a session, a
+player books a seat, the payment goes through the site, and both sides get an
+email about it.
 
-The booking form is the easy part. The hard part is money. It has to reach the
-host rather than sit with the company, some players have no card at all and pay
-cash at a convenience store instead, and any of it can be cancelled or refunded
-by someone who isn't you. Most of what's described above is the machinery for
-handling that without a person in the middle.
+Money is the hard part. It has to get to the host, some players have no card
+and pay cash at a convenience store, and bookings get cancelled and refunded.
+Most of what I built handles that automatically.
 
 ### What I'd tell a hiring manager
 
-This is the project that proves I can take an ambiguous idea to a
-revenue-generating product — including the unglamorous parts like refunds,
-payment edge cases, and infrastructure costs.
+A Darle 20 shows I can take an ambiguous idea to a revenue-generating product
+and handle the refunds, payment edge cases, and infrastructure costs that come
+with it.
