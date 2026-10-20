@@ -172,6 +172,18 @@ function summariseLive(raw, ranAt) {
     verified: cited.reduce((n, r) => n + r.citations.verified, 0),
     inventedIds: cited.reduce((n, r) => n + r.citations.unknownIds.length, 0),
   };
+  // The verdict split, published only when every answer in the run carries
+  // one. A results file from before the runner recorded it has none, and a
+  // split covering some of the answers beside a total covering all of them
+  // would not add up.
+  if (cited.length && cited.every((r) => r.citations.verdicts)) {
+    citations.verdicts = Object.fromEntries(
+      ["verified", "miscited", "unverified", "uncited"].map((v) => [
+        v,
+        cited.reduce((n, r) => n + (r.citations.verdicts[v] ?? 0), 0),
+      ]),
+    );
+  }
 
   return {
     model,

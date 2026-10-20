@@ -322,11 +322,21 @@ function scoreRoleFit(testCase, result) {
  */
 function summarizeCitations(answer) {
   const check = verifyAnswer(answer, CHUNK_BY_ID);
+  const count = (verdict) => check.claims.filter((c) => c.verdict === verdict).length;
   return {
     citedIds: check.citedIds,
     unknownIds: check.unknownIds,
     claims: check.claims.length,
     verified: check.verified,
+    // Every claim by verdict, so the publisher can say what happened to the
+    // ones that weren't verified. "Not verified" as one number read as "false"
+    // when most of it was a real fact cited to the wrong section.
+    verdicts: {
+      verified: count("verified"),
+      miscited: count("miscited"),
+      unverified: count("unverified"),
+      uncited: count("uncited"),
+    },
     downgraded: check.downgraded.map((c) =>
       c.verdict === "uncited"
         ? `uncited: "${c.text.slice(0, 60)}"`

@@ -192,6 +192,49 @@ describe("publishing archives runs instead of replacing them", () => {
   });
 });
 
+describe("publishing the citation verdicts", () => {
+  const publishCitations = (results) => {
+    const d = mkdtempSync(join(tmpdir(), "bakeoff-verdicts-"));
+    writeFileSync(join(d, "live.json"), JSON.stringify({ startedAt: "2026-10-20T02:00:00.000Z", results }));
+    execFileSync(
+      process.execPath,
+      ["--experimental-strip-types", "--disable-warning=ExperimentalWarning", "scripts/publish-evals.mjs"],
+      {
+        cwd: ROOT,
+        encoding: "utf8",
+        env: {
+          ...process.env,
+          EVALS_LIVE_IN: relative(ROOT, join(d, "live.json")),
+          EVALS_PUBLISHED_OUT: relative(ROOT, join(d, "out.json")),
+          EVALS_STATIC_IN: relative(ROOT, join(d, "absent.json")),
+        },
+      },
+    );
+    const out = JSON.parse(readFileSync(join(d, "out.json"), "utf8"));
+    rmSync(d, { recursive: true, force: true });
+    return out.live.runs[0].citations;
+  };
+  const cited = (verdicts) => ({
+    ...turn(),
+    citations: { claims: 4, verified: 1, unknownIds: [], ...(verdicts ? { verdicts } : {}) },
+  });
+
+  it("sums each verdict across the run's answers", () => {
+    const c = publishCitations([
+      cited({ verified: 1, miscited: 2, unverified: 1, uncited: 0 }),
+      cited({ verified: 1, miscited: 0, unverified: 0, uncited: 3 }),
+    ]);
+    assert.deepEqual(c.verdicts, { verified: 2, miscited: 2, unverified: 1, uncited: 3 });
+    assert.equal(c.claims, 8, "and the split adds up to the claims");
+  });
+
+  it("publishes no split when any answer lacks one", () => {
+    const c = publishCitations([cited({ verified: 1, miscited: 2, unverified: 1, uncited: 0 }), cited(null)]);
+    assert.equal(c.verdicts, undefined);
+    assert.equal(c.claims, 8, "the totals still publish");
+  });
+});
+
 // --- 2. a missing measurement is null, never zero ---------------------------
 
 describe("performance aggregation never invents a measurement", () => {

@@ -81,6 +81,23 @@ export type PublishedCase = {
   performance?: PublishedTurnPerformance;
 };
 
+/**
+ * The four verdicts lib/verify.ts can give a checkable sentence, counted. They
+ * sum to `claims`. Split out because "not verified" used to be one number, and
+ * a reader takes it to mean "false" when most of it is a real fact cited to the
+ * wrong section.
+ */
+export type CitationVerdicts = {
+  /** Every name and number was in the source the sentence cited. */
+  verified: number;
+  /** Not in the cited source, but in another part of the record. */
+  miscited: number;
+  /** A name or number the record doesn't contain anywhere, or an invented source. */
+  unverified: number;
+  /** A checkable sentence that cited nothing. */
+  uncited: number;
+};
+
 export type PublishedRun = {
   model: string;
   ranAt: string | null;
@@ -89,7 +106,18 @@ export type PublishedRun = {
   total: number;
   /** Turns that failed in transport rather than in judgment (Sprint 1's lesson). */
   broke: number;
-  citations: { answers: number; claims: number; verified: number; inventedIds: number };
+  citations: {
+    answers: number;
+    claims: number;
+    verified: number;
+    inventedIds: number;
+    /**
+     * Every checkable sentence by the verdict lib/verify.ts gave it. Optional:
+     * runs published before 2026-10-20 carry only `verified` and `claims`, and
+     * nothing here reconstructs the rest for them.
+     */
+    verdicts?: CitationVerdicts;
+  };
   /** Optional for the same reason: the archive predates it. */
   performance?: PublishedPerformance;
   cases: PublishedCase[];
