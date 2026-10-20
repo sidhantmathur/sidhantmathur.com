@@ -72,7 +72,7 @@ const COPY = {
 
   latencyHeading: "Latency and reliability",
   latencyIntro:
-    "Time to the first token of an answer, and how often a turn finishes at all, measured on the server over visitors' conversations.",
+    "How long an answer takes to start, as the server timed it, and how often a turn finishes at all, counted from the events visitors' browsers report.",
   latencyNoCredentials:
     "This build had no analytics credentials, so it couldn't read the chat's events or tell whether any were recorded.",
   latencyNoEvents:
