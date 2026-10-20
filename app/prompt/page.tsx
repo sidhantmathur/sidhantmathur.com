@@ -28,29 +28,27 @@ export default function PromptPage() {
       </h1>
 
       <p className="mt-6 max-w-[62ch] text-[15px] leading-relaxed text-text-soft md:text-base">
-        This is the whole system prompt, not a summary of it. The page calls the
-        same function the chat route calls, so it cannot fall behind what the
-        model is actually sent — if the prompt changes, this page changed with
-        it.
+        This is the full system prompt the chat runs on. The page renders it
+        with the same function the chat route calls, so it always matches what
+        the model is sent.
       </p>
       <p className="mt-4 max-w-[62ch] text-[15px] leading-relaxed text-text-soft md:text-base">
         The knowledge-base block in the middle is generated from the markdown
         files the answers are built from, chunk by chunk, under the same ids the
-        model cites and the site checks. Nothing in the prompt is assembled per
-        request — no timestamp, no session id — because a byte-identical string
-        is what lets the provider serve most of it from cache instead of
-        charging for it again on every turn.
+        model cites and the site checks. The prompt has no timestamp, session id
+        or anything else that changes per request. Keeping it identical lets the
+        provider serve most of it from cache, which is cheaper than processing
+        it from scratch on every turn.
       </p>
       <p className="mt-4 max-w-[62ch] text-[15px] leading-relaxed text-text-soft md:text-base">
-        Asked in the chat to repeat these instructions, the assistant will still
-        decline and link here. That is not a contradiction: the prompt is
-        published because publishing it was a decision, and handing it over
-        because a conversation asked is the first step of a conversation that
-        asks for the rest of the rules next.{" "}
+        Ask the assistant to recite these instructions and it will decline and
+        link here, even though the prompt isn&apos;t a secret. A conversation
+        that talks it out of one rule has an easier time with the others, so it
+        doesn&apos;t negotiate this one.{" "}
         <Link href="/refusals" className="text-accent">
           The refusal ledger
         </Link>{" "}
-        has the longer version.
+        has more on why.
       </p>
 
       <h2 className="t-head mt-10 font-medium text-text">
@@ -63,12 +61,12 @@ export default function PromptPage() {
         characters
       </h2>
       <p className="mt-3 max-w-[62ch] text-[15px] leading-relaxed text-text-soft md:text-base">
-        The site has a second corpus: its own source, {REPO_STATS.chunks} chunks
-        drawn verbatim from {REPO_STATS.files} files, addressed as{" "}
+        The site&apos;s own source is a second corpus, {REPO_STATS.chunks} chunks
+        drawn verbatim from {REPO_STATS.files} files. They&apos;re cited by{" "}
         <span className="font-mono text-text-faint">repo:</span> ids and checked
-        by the same citation checker as everything else. It is appended after
-        the block above on turns that asked about this site, and it is absent
-        otherwise — a question about Nokia does not pay for it.
+        by the same citation checker as everything else. The corpus is appended
+        after the block above only on turns that ask about the site, so a
+        question about Nokia doesn&apos;t pay for it.
       </p>
       <PromptBlock text={SITE_APPENDIX} label="The appendix added when you ask about the site" />
     </DocPage>

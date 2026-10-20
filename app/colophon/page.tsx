@@ -23,14 +23,14 @@ export default function ColophonPage() {
             is Sidhant's decision, logged in the copy ledger; until then the
             page doesn't half-make the offer. */}
         <p className="t-body mt-4 max-w-[58ch] text-text-soft">
-          Most of the code was written by AI agents working from a build
-          spec; the decisions, copy, and mistakes are mine.
+          Most of the code was written by AI agents working from a build spec.
+          I made the decisions, so the mistakes are mine.
         </p>
         <p className="t-body mt-4 max-w-[58ch] text-text-soft">
-          The assistant is tested against a fixed corpus, and what it scores is
-          published rather than described.{" "}
+          The assistant is tested against a fixed set of questions, and the
+          results are published on the{" "}
           <Link href="/measurements" className="text-accent">
-            See the measurements
+            measurements page
           </Link>
           .
         </p>
@@ -38,22 +38,22 @@ export default function ColophonPage() {
           The site shows its workings
         </h2>
         <p className="t-body mt-4 max-w-[58ch] text-text-soft">
-          One rule holds everything here together: anything the machine does,
-          you can look at. The{" "}
+          The{" "}
           <Link href="/prompt" className="text-accent">
             instructions
           </Link>{" "}
-          it runs on are published. What it{" "}
+          the assistant runs on are published in full, and so is a list of
+          what it{" "}
           <Link href="/refusals" className="text-accent">
             won&apos;t answer
-          </Link>{" "}
-          is a page, not a surprise. What each turn costs is printed next to
-          the turn, and{" "}
+          </Link>
+          , with the reason for each. In the chat, the top bar shows what the
+          last answer cost, and the instruments panel lists the cost of every
+          turn. The eval results show{" "}
           <Link href="/measurements" className="text-accent">
             how often it&apos;s right
-          </Link>{" "}
-          is measured in public. A chatbot asking for a hiring manager&apos;s
-          trust should have to show its receipts.
+          </Link>
+          .
         </p>
         {/* Folded in from the index's "Why this site is a chatbot" panel in
             wave 2. The front door is portfolio-first now, so the argument

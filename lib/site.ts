@@ -39,14 +39,14 @@ export const HEADSHOT = "/images/headshot.jpg";
  * components/shell/app-shell.tsx.
  */
 export const DISCLAIMER =
-  "AI-generated answers about my professional background. It can make mistakes — the resume is the authoritative version.";
+  "These answers about my professional background are AI-generated and can be wrong. The resume is the authoritative version.";
 
 /**
  * The colophon's opening paragraph, on /colophon and in the colophon panel. The
  * model is read from the catalogue so the sentence stays true when the default
  * changes.
  */
-export const COLOPHON_STACK = `Next.js, TypeScript, and Tailwind, deployed on Vercel. Type is Geist Sans and Geist Mono. The chat assistant runs through Vercel's AI Gateway on ${DEFAULT_MODEL} by default, with the knowledge base injected directly into the prompt — at this scale, a vector database would be complexity for its own sake, so there isn't one.`;
+export const COLOPHON_STACK = `Next.js, TypeScript, and Tailwind, deployed on Vercel. Type is Geist Sans and Geist Mono. The chat assistant runs through Vercel's AI Gateway on ${DEFAULT_MODEL} by default. The knowledge base goes straight into the prompt. At this size a vector database would only add complexity, so there isn't one.`;
 
 /** The resume PDF, as every link on the site writes it. */
 export const RESUME_PDF = "/resume.pdf";

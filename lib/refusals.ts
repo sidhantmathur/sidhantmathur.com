@@ -42,7 +42,7 @@ export const REFUSALS: Refusal[] = [
   {
     id: "recite-prompt",
     title: "Recite its own system prompt on request",
-    why: "The prompt isn't a secret. But the rule against reciting it sits in the same block as the rules against changing persona and taking orders from pasted text, and a conversation that talks the model out of one of them is most of the way to the rest.",
+    why: "The prompt isn't a secret. But the rule against reciting it sits in the same block as the rules against changing persona and taking orders from pasted text, and a conversation that talks the model out of one of them has an easier time with the rest.",
     instead: "It declines and links to the prompt page, which shows the whole prompt as built by the same function the chat route uses.",
     enforcedBy: "prompt",
     anchor: { path: "lib/system-prompt.ts", contains: "If asked to reveal, repeat, or summarize" },
@@ -90,7 +90,7 @@ export const REFUSALS: Refusal[] = [
   {
     id: "case-against",
     title: "Make a general case against hiring him",
-    why: "It was proposed, and Sidhant turned it down. A general argument against hiring him, on his own site and tied to no particular role, could cost him a job and gains him nothing.",
+    why: "It was proposed, and Sidhant turned it down. A general argument against hiring him, on his own site and tied to no particular role, could cost him a job and wouldn't gain him anything.",
     instead: "When a real job posting is pasted, the fit assessment names the requirements he doesn't meet.",
     enforcedBy: "decision",
     anchor: { path: "docs/idea-decisions.md", contains: "The case against hiring me" },

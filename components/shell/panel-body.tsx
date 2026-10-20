@@ -37,19 +37,19 @@ const CASE_STUDIES = {
 // in code: the knowledge base is in every system prompt, and the repo corpus is
 // appended only when lib/site-question.ts recognises the turn.
 const CORPUS_NOTE =
-  "Two corpora. The record above — the resume, the projects, the FAQ — rides inside the prompt on every turn. This site's own source is the second one, and it is only loaded when you ask about the site, so an ordinary answer never pays for it.";
+  "Everything above the last group is Sidhant's record, and it's in the prompt on every turn. The last group is the site's own source, a second corpus that's added only when you ask about the site, so it costs nothing on other turns.";
 
 // The prompt and refusals panels' framing. Both restate what the code does and
 // say nothing about Sidhant.
 const PROMPT_NOTE = {
   intro:
-    "Everything the model was told before it read your question, in order. It is published in full, and this list is read out of the prompt itself rather than kept beside it.",
+    "The system prompt's sections, in the order the model reads them before your question. The list is read from the prompt itself, and the full text is published.",
   decline:
-    "Ask it in the chat to recite them and it will decline and link here — the prompt is public, but talking it out of that rule is the first move in talking it out of the others.",
+    "Ask the assistant to recite its instructions and it will decline and link here, even though the prompt isn't a secret. A conversation that talks it out of one rule has an easier time with the others.",
 };
 
 const REFUSALS_NOTE =
-  "What it won't do, and what it does instead. The label on the right says whether the rule is enforced by code or asked of the model, because those are not the same promise.";
+  "What it won't do, and what it does instead. The label on the right says whether code enforces the rule or the model is only asked to follow it.";
 
 export function PanelBody({
   panel,
@@ -198,8 +198,8 @@ export function PanelBody({
         <p className="t-body text-text-soft">{COLOPHON_STACK}</p>
         <div className="flex flex-wrap gap-2">
           <ActionLink href="/colophon">Open as a page</ActionLink>
-          <ActionLink href="/measurements">What it scores</ActionLink>
-          <ActionLink href="/prompt">Its instructions</ActionLink>
+          <ActionLink href="/measurements">Measurements</ActionLink>
+          <ActionLink href="/prompt">The instructions</ActionLink>
           <ActionLink href="/refusals">What it won&apos;t do</ActionLink>
         </div>
         <h3 className="t-label pt-3 text-text-faint">{WHY_CHATBOT_HEADING}</h3>
@@ -359,14 +359,14 @@ function RequirementTable({
                 ))}
                 {row.downgrade === "uncited" && (
                   <span className="text-accent">
-                    cited no source — downgraded from {row.claimedVerdict}
+                    cited no source · downgraded from {row.claimedVerdict}
                   </span>
                 )}
                 {row.downgrade === "uncovered" && (
                   <span>the assessment didn&apos;t answer this one</span>
                 )}
                 {row.downgrade === "unjudged" && (
-                  <span>the assessment restated this one without judging it</span>
+                  <span>the assessment listed this one without a verdict</span>
                 )}
                 {/* Same split as an answer's marks: a token the record holds
                     under another chunk is a pointer problem and is said
@@ -374,7 +374,10 @@ function RequirementTable({
                 {row.unverified.length > 0 && <RowMark row={row} />}
                 {row.unknownSources.length > 0 && (
                   <span className="text-accent">
-                    cited {row.unknownSources.join(", ")}, which isn&apos;t a source on this site
+                    cited {row.unknownSources.join(", ")},{" "}
+                    {row.unknownSources.length === 1
+                      ? "which isn't a source on this site"
+                      : "which aren't sources on this site"}
                   </span>
                 )}
               </div>
@@ -428,7 +431,7 @@ function RowMark({ row }: { row: RoleFit["rows"][number] }) {
   return (
     <span>
       not in cited source · {row.unverified.join(", ")}
-      {elsewhere.length > 0 && <> — in {elsewhere.join(", ")}</>}
+      {elsewhere.length > 0 && <> · found in {elsewhere.join(", ")}</>}
     </span>
   );
 }
