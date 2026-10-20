@@ -421,11 +421,11 @@ content/nokia.mdx verbatim. Rewrite in your own voice.]
 - **Quarterly executive reporting** — a self-serve Power App used by 80+
   stakeholders across seven regions. It replaced the manual collection process
   entirely.
-- **Time given back** — one finance analyst's entire workday, every day of
+- **Time saved** — one finance analyst's entire workday, every day of
   quarter-end close.
 - **Sales reporting** — all of it migrated from Salesforce Analytics to Power BI
-  for 150+ users, with the data model and the SQL and DAX transformation logic
-  owned end to end.
+  for 150+ users. I owned the data model and the SQL and DAX transformation
+  logic end to end.
 
 ### Before and after
 
@@ -441,7 +441,7 @@ logic I built and own.
 
 ### How I ran it
 
-For both tools I was the whole team.
+I did every part of both projects myself.
 
 - **Requirements** — vague requests from sales and finance leadership,
   translated into scoped requirements.
@@ -452,17 +452,17 @@ For both tools I was the whole team.
   zones.
 
 More recently I've been bringing LLMs and Python into these workflows where
-they earn their place.
+they help.
 
-Note: this work is internal to Nokia, so screenshots and specifics are limited
-by confidentiality. The numbers above are ones I can stand behind.
+This work is internal to Nokia, so confidentiality limits the screenshots and
+specifics I can share.
 
 ### Before this role
 
 I joined Nokia in October 2022 as a workforce management specialist, owning
-headcount reporting and forecasting for a 3,000–4,000-person organization.
-Analyzing lab and facility utilization data in that role identified $1.2M in
-real-estate cost savings.
+headcount reporting and forecasting for a 3,000–4,000-person organization. In
+that role I identified $1.2M in real-estate cost savings by analyzing lab and
+facility utilization data.
 
 ### In plain terms
 
@@ -472,16 +472,15 @@ the regions to send their numbers in, in whatever shape they kept them, and
 somebody assembling it by hand. Here that somebody was a finance analyst, and it
 took their entire workday, every day of the quarter-end close.
 
-The fix isn't clever, it's just the whole job: build something the regions can
-fill in themselves, get it in front of the people who have to use it, and keep
-it working when they run into trouble. The migration is the same job wearing
-different clothes — the company was moving off one reporting system, and every
-report and every user had to come out the other side.
+So I built something the regions could fill in themselves, got it in front of
+the people who had to use it, and kept it working when they ran into trouble.
+The migration was the same kind of work. The company was moving off one
+reporting system, and every report and every user had to move to the new one.
 
 ### What I'd tell a hiring manager
 
-This is what I mean by operator: I sit between the business and the tooling,
-and I close that gap myself rather than filing a ticket.
+I sit between the business and the tools it runs on. When the tools don't do
+what the team needs, I fix them myself.
 
 ---
 
@@ -497,15 +496,14 @@ caveats it names are the ones already in the paragraph below it. Rewrite in
 your own voice.]
 
 A big company already sells to a lot of customers. Some of them would buy a
-second product as well, and nobody knows which — so the sales team calls
-everyone, or it guesses. A propensity model is a way of ranking that list:
-you show it who bought what in the past, and it scores the customers who most
-resemble the ones who already said yes.
+second product as well, but nobody knows which ones, so the sales team calls
+everyone or guesses. A propensity model ranks that list. You show it who bought
+what in the past, and it scores the customers who look most like the ones who
+already said yes.
 
-That's what this was, and it's worth reading with the caveats attached. It was
-an internship, the model was one piece of a much larger sales machine, and the
-pipeline figure below is an estimate built from average deal sizes rather than
-money anybody collected.
+I built one of these as an intern at Dell. The model was one piece of a much
+bigger sales process, and the pipeline figure below is an estimate from average
+deal sizes, not money anyone collected.
 
 ### The project
 
@@ -516,9 +514,8 @@ representing an estimated $129M in pipeline, based on segment-level average
 deal sizes. The model was hosted on Azure so sales and marketing teams could
 get predictions and feed back new training data.
 
-It was an internship project, so I'll keep the claims modest — but it's where
-I first saw that the interesting work is usually where data, revenue, and
-tooling meet, and I've been working in that intersection since.
+The internship is where I first got interested in work that combines data,
+revenue and tooling, and it's the kind of work I've done since.
 
 ---
 
