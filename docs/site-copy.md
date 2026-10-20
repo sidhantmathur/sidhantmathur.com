@@ -511,7 +511,7 @@ facility utilization data.
 A large company sells in a lot of places, and every quarter its executives need
 one picture of how that went. Getting to that picture meant asking people across
 the regions to send their numbers in, in whatever shape they kept them, and
-somebody assembling it by hand. Here that somebody was a finance analyst, and it
+somebody assembling it by hand. That fell to a finance analyst, and it
 took their entire workday, every day of the quarter-end close.
 
 So I built something the regions could fill in themselves, got it in front of
