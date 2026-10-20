@@ -54,7 +54,7 @@ Paste a 3,000+ character posting, get an assessment, build a link — then actua
 email it to yourself and open it.
 
 **Correct:** the character count is shown; over 2,000 an accent-coloured
-"past the length some mail clients cut" warning appears. The mailed link still
+"Some mail clients cut links this long" warning appears. The mailed link still
 works when clicked.
 
 **Why:** the size estimate in the design doc was right for ordinary transcripts
@@ -82,9 +82,9 @@ a measurement nobody has taken.
    contains a `## This site` section; the second starts `---SITE-SOURCE---`. **An
    empty block means the page lost its binding to the live prompt.**
 5. **`/refusals`** — eleven entries, each with a right-aligned label. Correct:
-   five "enforced by code", five "asked of the model", one "a decision, not a
-   mechanism".
-6. **`/colophon`** → the "See the measurements" link works. **`/sitemap.xml`**
+   five "enforced by code", five "asked of the model", one "decided by
+   Sidhant".
+6. **`/colophon`** → the "measurements page" link works. **`/sitemap.xml`**
    lists `/measurements`, `/prompt`, `/refusals`.
 
 ### The chat
@@ -124,7 +124,7 @@ a measurement nobody has taken.
     then four chips, then the disclaimer. All above the fold at 1440×900.
 18. **Ask anything** — the TL;DR should **disappear** once a message exists, and
     not come back until reset.
-19. **`/projects/adarle20`** — below the case study: "Everything in it" (feature
+19. **`/projects/adarle20`** — below the case study: "What's in it" (feature
     grid), then "What it looks like" — one real screenshot and six **dashed**
     empty frames with briefs inside. Correct: dashed outlines, not grey filled
     blocks; a filled block would read as a broken image.

@@ -51,7 +51,7 @@ Heading:
 I learn what the problem needs, then I build the thing.
 
 Subline:
-Looking for a RevOps / GTM systems role at an AI-forward company. Toronto, ON —
+Looking for a RevOps / GTM systems role at an AI-forward company. Toronto, ON.
 Canadian citizen, no visa sponsorship needed.
 
 [Front-door pass, 2026-08-23 — Sidhant's call, from
@@ -117,9 +117,14 @@ link opens.]
 
 Composer fine print (empty state only, wave 2):
 - Below lg: AI answers can be wrong. How it works
-- lg and up: Answers cite their sources and can be wrong — the resume is the
+- lg and up: Answers cite their sources but can be wrong. The resume is the
   authoritative version. How it works
 ("How it works" links to /colophon.)
+
+[Copy pass 2026-10-20: reworded to read less like AI-generated text. No fact
+changed. See the copy-pass section of docs/copy-ledger.md. In this section: the
+subline and the lg fine print lost their dashes. The heading, CTA row, header
+and index are unchanged.]
 
 ### Recruiter TL;DR (#25)
 
@@ -149,13 +154,17 @@ and a Salesforce Analytics to Power BI migration for 150+ users."]
 | Row label | Value | From |
 | --- | --- | --- |
 | now | Sales operations specialist at Nokia since Jun 2024, building internal tools and automation for global sales and finance teams. | `resume.md` |
-| shipped | A self-serve Power App used by 80+ stakeholders across 7 regions, which ended a manual process that took one finance analyst's entire workday, every day of quarter-end close — and the migration of all sales reporting from Salesforce Analytics to Power BI for 150+ users. | `resume.md` |
+| shipped | A self-serve Power App used by 80+ stakeholders across 7 regions, replacing a manual process that took one finance analyst's entire workday, every day of quarter-end close. He also migrated all sales reporting from Salesforce Analytics to Power BI for 150+ users. | `resume.md` |
 | also | Co-founder and CTO of A Darle 20, a two-sided marketplace he architected and shipped solo: 1,400+ registered users, 127 hosts and 2,100+ bookings in its first four months. | `resume.md` |
-| how he builds | An AI-agent-heavy workflow in Claude Code — agents write most of the code, he keeps architecture, code review and release. | `projects-adarle20.md` |
+| how he builds | AI agents in Claude Code write most of the code. He owns architecture, code review and release. | `projects-adarle20.md` |
 | looking for | A RevOps / GTM systems role at an AI-forward company. | `faq.md`, `resume.md` |
 | where | Toronto, ON. Canadian citizen, no visa sponsorship needed. | `faq.md` |
 
-Footer link (to /resume): The resume has the rest, and so does the box below.
+Footer link (to /resume): The resume has the rest.
+
+[Copy pass 2026-10-20: reworded to read less like AI-generated text. No fact
+changed. See the copy-pass section of docs/copy-ledger.md. Rows "shipped" and
+"how he builds" and the footer link changed; the other four rows did not.]
 
 ### Case-study cards (under the tl;dr)
 
@@ -182,10 +191,10 @@ is unchanged.]
 
 **Card 1 — A Darle 20**
 A marketplace connecting tabletop game hosts with paying players across Latin
-America. I designed and shipped the whole product solo — bookings, payments,
-chat, refunds, notifications — running an AI-agent-heavy development
-workflow. Four months after launch: 1,400+ registered users, 127 hosts, and
-2,100+ bookings.
+America. I designed and shipped the whole product solo (bookings, payments,
+chat, refunds and notifications) with an AI-agent-heavy development workflow.
+Four months after launch it had 1,400+ registered users, 127 hosts and 2,100+
+bookings.
 
 Role: Co-Founder & CTO
 Stack: TypeScript, Next.js, Supabase, Stripe Connect
@@ -194,9 +203,9 @@ Link: Read the case study
 
 **Card 2 — Reporting tools at Nokia**
 Self-serve reporting tools for a global sales organization. A Power App used by
-80+ stakeholders across seven regions replaced a manual quarterly process, and a
-migration from Salesforce Analytics to Power BI moved 150+ users onto reporting
-I model and maintain.
+80+ stakeholders across seven regions replaced a manual quarterly process. I
+also moved all sales reporting from Salesforce Analytics to Power BI for 150+
+users, and I model and maintain it.
 
 Role: Sales operations specialist
 Stack: Power Apps, Power BI, SQL, DAX, Salesforce
@@ -206,7 +215,7 @@ Stat column (display numeral): 150+ / users across seven regions
 
 **Card 3 — Sales prediction model at Dell**
 As an intern, I built a propensity model on Dell's historical customer
-database to find cross-sell targets for a high-margin software product — it
+database to find cross-sell targets for a high-margin software product. It
 surfaced about 20,000 qualified accounts representing an estimated $129M in
 pipeline.
 
@@ -217,6 +226,13 @@ language. It comes back if Sidhant confirms it.]
 Status: 2018
 Link: Read the case study
 Stat column (display numeral): $129M / estimated pipeline
+
+[Copy pass 2026-10-20: reworded to read less like AI-generated text. No fact
+changed. See the copy-pass section of docs/copy-ledger.md. All three card
+descriptions changed. The `/projects` page around them now reads: intro "Three
+case studies. The assistant on the homepage can summarize any of them.";
+metadata description "Three case studies: reporting tools at Nokia, the A Darle
+20 marketplace, and a sales prediction model at Dell."]
 
 ### Chat panel (homepage teaser)
 
@@ -246,8 +262,14 @@ into different questions.
 
 Input placeholder: Ask a question
 Send button: send ↵
-Disclaimer (small, mono): AI-generated answers about my professional background.
-It can make mistakes — the resume is the authoritative version.
+Disclaimer (small, mono; `DISCLAIMER` in `lib/site.ts`, now the footer of
+copied, exported and printed transcripts and scorecards): These answers about my
+professional background are AI-generated and can be wrong. The resume is the
+authoritative version.
+
+[Copy pass 2026-10-20: reworded to read less like AI-generated text. No fact
+changed. See the copy-pass section of docs/copy-ledger.md. Only the disclaimer
+changed in this section; the chips are unchanged.]
 
 ---
 
@@ -263,47 +285,48 @@ kept. Every number and name is in content/knowledge/projects-adarle20.md or
 resume.md, and evals/track-b.test.mjs checks each paragraph against them. The
 text below is content/adarle20.mdx verbatim. Rewrite in your own voice.]
 
+[Copy pass 2026-10-20: reworded to read less like AI-generated text. No fact
+changed. See the copy-pass section of docs/copy-ledger.md. The body below is
+re-copied from content/adarle20.mdx. The Stripe Connect and OXXO details now
+sit once, in "The unit economics", instead of twice. The page's metadata
+description now reads "A marketplace for tabletop game sessions in Latin
+America, with 2,100+ bookings in its first four months."]
+
 ### The problem
 
-Tabletop roleplaying games are big in Latin America, but finding a good game
-master — and paying one — was informal and unreliable. Hosts had no clean way to
-take bookings or get paid, especially in a market where many players prefer cash.
+Tabletop roleplaying games are big in Latin America, but finding and paying a
+good game master was informal and unreliable. Hosts had no clean way to take
+bookings or get paid, especially in a market where many players prefer cash.
 Two friends and I decided to build the marketplace ourselves.
 
 ### What I built
 
-I architected and shipped the product end to end: host profiles, session
-listings, bookings and reservations, real-time chat, email notifications,
-refunds, and authentication. Payments run on Stripe Connect, handling host
-payouts and platform fees — including OXXO integration so players in Mexico
-can pay in cash at a convenience store, which matters in a market where card
-penetration is low.
+I architected and shipped the whole product: host profiles, session listings,
+bookings and reservations, payments, real-time chat, email notifications,
+automated refunds, and authentication.
 
-The build itself is part of the story. I run an AI-agent-heavy development
-workflow in Claude Code — agents write most of the code, while I keep hands-on
-ownership of architecture, product decisions, code review, and release. Later I
-set up a multi-agent workflow that reviews, refactors, and regression-tests the
-codebase on its own.
+I build it with AI agents in Claude Code. They write most of the code, and I
+handle the architecture, product decisions, code review, and release myself.
+Later I set up a multi-agent workflow that reviews, refactors, and
+regression-tests the codebase on its own.
 
 ### The unit economics
 
-Payment runs through the site rather than around it: Stripe Connect handles the
-host payouts and the platform fee, OXXO lets a player with no card pay in cash
-at a convenience store, and refunds are automated rather than handled by hand.
+I integrated Stripe Connect for host payouts, the platform fee, and OXXO cash
+payments. OXXO lets a player with no card pay in cash at a convenience store,
+which matters in Mexico, where card penetration is low.
 
-Running it has taught me as much about unit economics as about code: we've
-tested a commission model against direct event ticket sales and made real
-decisions about where the margin actually is — and the unglamorous parts,
-refunds, payment edge cases and infrastructure costs, are part of that
-arithmetic.
+Running A Darle 20 has taught me as much about unit economics as about code. We
+tested a commission model against direct event ticket sales and made decisions
+about where the margin is.
 
 ### The funnel, instrumented
 
-The funnel is instrumented end to end — bookings, conversion, cancellations,
-refunds, host activation — so there is a number for every stage on both sides
-of the marketplace: players who visit, register and book, and hosts who
-activate. That data steers product and monetization decisions, which is how
-the question above gets answered with evidence rather than instinct.
+I instrumented the funnel end to end: bookings, conversion, cancellations,
+refunds and host activation. That covers both sides of the marketplace, so I
+can see how many players visit, register and book, and how many hosts
+activate. I use that data to make product and monetization decisions,
+including the commission question above.
 
 ### What it runs on
 
@@ -312,42 +335,47 @@ Resend for transactional email, deployed on Vercel.
 
 ### Where it stands
 
-Development started in August 2025; the platform launched in March 2026. Four
-months in, it has 1,400+ registered users, 127 hosts, and 2,100+ bookings, with
-200–400 unique visitors a day. The biggest single test so far was a flagship
-251-player event at a 19,000-attendee convention — I built the technology
-behind it; my co-founder ran the event on the ground — rated 4.96/5 by
-attendees.
+I started building in August 2025, and the platform launched in March 2026.
+Four months in, it has 1,400+ registered users, 127 hosts, and 2,100+ bookings,
+with 200–400 unique visitors a day. The biggest single test so far was a
+flagship 251-player event at a 19,000-attendee convention, rated 4.96/5 by
+attendees. I built the technology behind it, and my co-founder ran the event on
+the ground.
 
 ### In plain terms
 
 Tabletop roleplaying games are played in groups, and somebody has to run the
-game for everyone else. Finding a good one — and paying them — was word of
-mouth and a private arrangement. A Darle 20 is where that arrangement happens
-instead: a host lists a session, a player books a seat, the payment goes
-through the site, and both sides get an email about it.
+game for everyone else. Finding a good one, and paying them, came down to word
+of mouth and private arrangements. On A Darle 20, a host lists a session, a
+player books a seat, the payment goes through the site, and both sides get an
+email about it.
 
-The booking form is the easy part. The hard part is money. It has to reach the
-host rather than sit with the company, some players have no card at all and pay
-cash at a convenience store instead, and any of it can be cancelled or refunded
-by someone who isn't you. Most of what's described above is the machinery for
-handling that without a person in the middle.
+Money is the hard part. It has to get to the host, some players have no card
+and pay cash at a convenience store, and bookings get cancelled and refunded.
+Most of what I built handles that automatically.
 
 ### What I'd tell a hiring manager
 
-This is the project that proves I can take an ambiguous idea to a
-revenue-generating product — including the unglamorous parts like refunds,
-payment edge cases, and infrastructure costs.
+A Darle 20 shows I can take an ambiguous idea to a revenue-generating product
+and handle the refunds, payment edge cases, and infrastructure costs that come
+with it.
 
-### Everything in it (#19 — the feature surface)
+### What's in it (#19 — the feature surface)
 
 [DRAFT 2026-07-27 — assembled by Claude for Track B. Every line item is a
 capability already named in `content/knowledge/projects-adarle20.md` or the
 resume. Nothing was added because a marketplace probably has it.]
 
-Section heading: Everything in it
-Intro: The prose above is the story. This is the surface area — what a host or
-a player can actually do.
+[Copy pass 2026-10-20: reworded to read less like AI-generated text. No fact
+changed. See the copy-pass section of docs/copy-ledger.md. The heading was
+"Everything in it" and the intro was "The prose above is the story. This is the
+surface area — what a host or a player can actually do." "Everything"
+overclaimed, since the list holds only what the record names. The Operations
+item's dash became parentheses. The unrendered note was reworded; its marker is
+untouched.]
+
+Section heading: What's in it
+Intro: The main features, grouped by area.
 
 - Discovery: Host profiles · Session listings
 - Booking: Bookings and reservations · Cancellations · Automated refunds
@@ -355,15 +383,15 @@ a player can actually do.
   at a convenience store
 - Communication: Real-time chat · Transactional email on Resend
 - Accounts: Authentication
-- Operations: End-to-end funnel instrumentation — bookings, conversion,
-  cancellations, refunds, host activation
+- Operations: End-to-end funnel instrumentation (bookings, conversion,
+  cancellations, refunds, host activation)
 
 Closing note (draft, NOT RENDERED since wave 1, 2026-10-19 — it carries a
-marker, and markers never ship on a page): This list is everything the written
-record names, which is not the same as everything the product does — [VERIFY:
-the features that exist in A Darle 20 but appear in no source file. Sidhant's
-own note on this page was that there is a lot buried up there; nothing can be
-added here until it is written down somewhere checkable.]
+marker, and markers never ship on a page): These are the features written down
+so far, and the product has more. [VERIFY: the features that exist in A Darle
+20 but appear in no source file. Sidhant's own note on this page was that there
+is a lot buried up there; nothing can be added here until it is written down
+somewhere checkable.]
 
 ### What it looks like (#19 — the media surface)
 
@@ -392,9 +420,13 @@ capture briefs. Summary:
 | The funnel, instrumented | screenshot | 16:9 | whatever he actually watches — live numbers, so check before sending |
 | The 251-player event | video | 16:9 | footage or photographs from the convention |
 
-Caption for the filled slot: Session listings. Each card carries the host,
-their rating, the price in pesos, the schedule and how many seats are still
-open.
+Caption for the filled slot: Each card shows the host and their rating, the
+price in pesos, the schedule, and how many seats are filled.
+
+[Copy pass 2026-10-20: the caption no longer repeats the frame title "Session
+listings", and it says "filled" because the cards show seats filled out of the
+total ("0/6 spots"), as the alt text already did. See the copy-pass section of
+docs/copy-ledger.md.]
 
 ---
 
@@ -410,6 +442,11 @@ moved below the results. Every number and name is in
 content/knowledge/projects-nokia.md, resume.md or bio.md, and
 evals/track-b.test.mjs checks each paragraph against them. The text below is
 content/nokia.mdx verbatim. Rewrite in your own voice.]
+
+[Copy pass 2026-10-20: reworded to read less like AI-generated text. No fact
+changed. See the copy-pass section of docs/copy-ledger.md. The body below is
+re-copied from content/nokia.mdx. "For both tools I was the whole team." was
+reworded and then put back, so it is unchanged.]
 
 ### At a glance
 
@@ -441,7 +478,7 @@ logic I built and own.
 
 ### How I ran it
 
-I did every part of both projects myself.
+For both tools I was the whole team.
 
 - **Requirements** — vague requests from sales and finance leadership,
   translated into scoped requirements.
@@ -495,11 +532,15 @@ Subtitle: A propensity model for cross-sell targeting, built as an intern.
 caveats it names are the ones already in the paragraph below it. Rewrite in
 your own voice.]
 
-A big company already sells to a lot of customers. Some of them would buy a
-second product as well, but nobody knows which ones, so the sales team calls
-everyone or guesses. A propensity model ranks that list. You show it who bought
-what in the past, and it scores the customers who look most like the ones who
-already said yes.
+[Copy pass 2026-10-20: reworded to read less like AI-generated text. No fact
+changed. See the copy-pass section of docs/copy-ledger.md. The body below is
+content/dell-ml.mdx verbatim. The internship caveat is now said once, here,
+instead of twice.]
+
+Some of a big company's customers would buy a second product, but nobody knows
+which ones, so the sales team calls everyone or guesses. A propensity model
+ranks that list. You show it who bought what in the past, and it scores the
+customers who look most like the ones who already said yes.
 
 I built one of these as an intern at Dell. The model was one piece of a much
 bigger sales process, and the pipeline figure below is an estimate from average
@@ -515,22 +556,29 @@ deal sizes. The model was hosted on Azure so sales and marketing teams could
 get predictions and feed back new training data.
 
 The internship is where I first got interested in work that combines data,
-revenue and tooling, and it's the kind of work I've done since.
+revenue and tooling, and I've been doing it since.
 
 ---
 
 ## About (short section or page)
 
 I'm a sales operations specialist at Nokia in Toronto and the co-founder and
-CTO of A Darle 20. I don't have a computer science degree — I have a business degree,
-a bootcamp, and eight years of teaching myself whatever the next problem
+CTO of A Darle 20. I don't have a computer science degree. I have a business
+degree, a bootcamp, and eight years of teaching myself whatever the next problem
 required: React, SQL, the Power Platform, Stripe, and lately, building with
 LLMs and coding agents.
 
-The through line is that I like turning vague business problems into working
-software, and I like owning the result — support, bugs, and all.
+I like turning vague business problems into working software, then owning it,
+including the support and the bug fixes.
 
 Outside work: basketball, chess, cooking, and slowly learning three languages.
+
+[Copy pass 2026-10-20: reworded to read less like AI-generated text. No fact
+changed. See the copy-pass section of docs/copy-ledger.md. No page renders this
+section today; it is the first-person mirror of `content/knowledge/bio.md`.
+The pass reworded bio.md's "The through line is that… support, bugs, and all"
+paragraph, and this section follows it. The degree sentence now breaks at a full
+stop, as bio.md's always has.]
 
 ---
 
@@ -545,8 +593,8 @@ the contact block at the end of the page)
 
 Contact block, at the end of every document page:
 Label: Contact
-Body: Open to new roles — the resume, an email or LinkedIn, whichever is
-quickest.
+Body: I'm open to new roles. Download the resume, or reach me by email or
+LinkedIn.
 Then: Download resume (PDF) · hello@sidhantmathur.com [copy] · LinkedIn ↗
 
 Case studies end instead on:
@@ -554,6 +602,10 @@ Label: Contact
 Body: If this is the kind of work you're hiring for, the resume has the rest.
 Then the same three controls, and a bordered link: "Next case study" ·
 {next title} → · {its status line}. Order: Nokia → A Darle 20 → Dell → Nokia.
+
+[Copy pass 2026-10-20: reworded to read less like AI-generated text. No fact
+changed. See the copy-pass section of docs/copy-ledger.md. Only the contact
+block's body changed; the case-study ending is unchanged.]
 
 ---
 
@@ -563,10 +615,14 @@ Label: Resume
 Heading: Sidhant Mathur
 [Wave 2: the heading was "Resume", so the page carried no name above the
 contact line.]
-Body: The current version, last updated July 2026. A plain-text
-version lives at /resume.md if you'd rather feed it to an AI — I won't take
-it personally.
+Body: The current version, last updated July 2026. There's a plain-text
+version at /resume.md if you'd rather feed it to an AI. I won't take it
+personally.
 Button: Download PDF
+
+[Copy pass 2026-10-20: reworded to read less like AI-generated text. No fact
+changed. See the copy-pass section of docs/copy-ledger.md. The joke stays; the
+dash went.]
 
 ---
 
@@ -576,22 +632,44 @@ Heading: How this site was built
 Body:
 Next.js, TypeScript, and Tailwind, deployed on Vercel. Type is Geist Sans and
 Geist Mono. The chat assistant runs through Vercel's AI Gateway on
-{DEFAULT_MODEL} by default, with the knowledge base injected directly into the
-prompt — at this scale, a vector database would be complexity for its own
-sake, so there isn't one.
+{DEFAULT_MODEL} by default. The knowledge base goes straight into the prompt.
+At this size a vector database would only add complexity, so there isn't one.
 
 [Wave 1, 2026-10-19: "runs on Claude" stopped being true when the default moved
 to DeepSeek in August. The model id is now read from `DEFAULT_MODEL` in
 `lib/models.ts` (`COLOPHON_STACK` in `lib/site.ts`), so the sentence stays true
 whichever model is the default.]
 
-Most of the code was written by AI agents working from a build spec; the
-decisions, copy, and mistakes are mine.
+Most of the code was written by AI agents working from a build spec. I made the
+decisions, so the mistakes are mine.
 
 [Wave 1, 2026-10-19: cut from the page, pending a decision — "The spec, design
 brief, and source are on GitHub. [TODO: confirm repo is public before
 linking]". The repo is public, and so is `docs/`, so whether to link it is
 Sidhant's call.]
+
+The assistant is tested against a fixed set of questions, and the results are
+published on the measurements page. (Link text: "measurements page", to
+/measurements.)
+
+Section heading: The site shows its workings
+Body: The instructions the assistant runs on are published in full, and so is a
+list of what it won't answer, with the reason for each. In the chat, the top
+bar shows what the last answer cost, and the instruments panel lists the cost
+of every turn. The eval results show how often it's right. (Links:
+"instructions" to /prompt, "won't answer" to /refusals, "how often it's right"
+to /measurements.)
+
+Then "Why there's a chat on a portfolio" (below).
+
+[Copy pass 2026-10-20: reworded to read less like AI-generated text. No fact
+changed. See the copy-pass section of docs/copy-ledger.md. The last two
+paragraphs were not recorded here before (the ledger has had them since Sprint
+6 and the 2026-07-28 pass); they are added so the page is here whole. Two
+things changed beyond style: "copy" left the credit line,
+because almost all of the site's copy is still Claude's draft, and the cost
+sentence no longer says each turn's cost is "printed next to the turn", which
+it isn't.]
 
 ---
 
@@ -607,11 +685,13 @@ mono label reading "turn failed · <class>", above a "try again" button.
 
 - connection: The connection dropped before the answer made it through. Check
   your signal and try again.
-- server timeout: The server stopped responding partway through. Give it another
-  try.
-- upstream / unknown: Something went wrong on my end. Give it another try in a
-  moment.
-- misconfigured: The chat backend is misconfigured — this one is on me, not you.
+- server timeout: The server took too long to respond. Give it another try.
+- upstream: Something went wrong on the server. Give it another try in a moment.
+- unknown (also the fallback for any class without its own sentence): Something
+  went wrong. Give it another try in a moment.
+- misconfigured: The chat server is misconfigured. Your message is fine.
+- no answer: The model hit the site's output limit before it got to an answer.
+  There's nothing wrong with your question.
 - bad request: That message couldn't be sent as written. Try shortening it.
 
 Two classes render no sentence at all: the rate limit gets the state below
@@ -621,8 +701,21 @@ someone what they just did is not information.
 Chat stop affordance, beside the status line once a turn passes eight seconds:
 stop
 
-Chat rate-limit state: You've hit the message limit for now — the resume has
+Chat rate-limit state: You've hit the message limit for now. The resume has
 everything in the meantime.
+
+Error page (`app/error.tsx`, when the conversation fails to start in the
+browser): Something broke in the browser and the conversation didn't start.
+That's a bug in the site.
+
+[Copy pass 2026-10-20: reworded to read less like AI-generated text. No fact
+changed. See the copy-pass section of docs/copy-ledger.md. The error sentences
+no longer speak in the first person ("on my end", "on me, not you"), which in
+the chat column read as the assistant talking. "Upstream" and "unknown" now
+have different sentences. "no answer" was missing from this list (it was added
+in wave 1) and is here now. The timeout sentence dropped "partway through",
+because the class also covers a request that never started. The error page
+line was not recorded here before.]
 
 ---
 
@@ -640,25 +733,27 @@ The body below is unchanged.]
 
 Panel heading (until wave 2): Why this site is a chatbot
 
+[Copy pass 2026-10-20: reworded to read less like AI-generated text. No fact
+changed. See the copy-pass section of docs/copy-ledger.md. The second paragraph
+now names the assistant, so the chat no longer reads as Sidhant ("The better
+version is talking to me… You can do this.").]
+
 Body:
 Most software is turning into a conversation. I don't build my own PostHog
-dashboards anymore — I describe what I want and the product's assistant builds
-it, because it knows the platform better than I do. That pattern is going to
-take over a lot of interfaces, and I don't see why a portfolio would be the
-exception.
+dashboards anymore. I describe what I want and the product's assistant builds
+it, because it knows the platform better than I do. I think a lot of interfaces
+will go the same way, portfolios included.
 
-A portfolio is a list standing in for a conversation you can't have. The better
-version is talking to me — about what I built, why, what it took, whether any
-of it maps to what you need. You can't do that at eleven at night while you're
-going through a stack of candidates. You can do this.
+A portfolio is a list standing in for a conversation you can't have. If you're
+going through a stack of candidates at eleven at night, you can't call me, but
+you can ask the assistant whether any of my work maps to what you need.
 
-So come with the specific question. How the payments work. What the Nokia
-rollout actually involved. What I'd do in the first ninety days of the role
-you're hiring for. Skip everything you don't care about.
+So come with a specific question, like how the payments work, what the Nokia
+rollout involved, or what I'd do in the first ninety days of the role you're
+hiring for.
 
-Every answer is built from the same source files as the resume, and it will
-show you which one, so you can open the long version whenever something is
-worth more than a paragraph.
+Every answer is built from the same source files as the resume and shows which
+ones it drew on, so you can open the file when a paragraph isn't enough.
 
 ---
 
@@ -668,13 +763,22 @@ worth more than a paragraph.
 
 Rail item: Paste a job description
 Panel heading: Paste a job description
-Panel body: Paste the posting and I'll map my experience onto it — including
-the parts I don't match.
+Panel body: Paste the posting and the assistant will check it against
+Sidhant's record and list the requirements he doesn't meet.
 Textarea placeholder: Paste the job description here
 Submit button: Check the fit
 Message sent to the assistant (prefix before the pasted text):
-Here's a job description. Map my experience onto it, and be straight about
-where I don't match.
+Here's a job description. Where does Sidhant match it, and where doesn't he?
+
+[Copy pass 2026-10-20: reworded to read less like AI-generated text. No fact
+changed. See the copy-pass section of docs/copy-ledger.md. Both strings used to
+speak as Sidhant ("I'll map my experience", "Map my experience onto it, and be
+straight about where I don't match"), and the prefix is sent as the visitor's
+own turn, so a recruiter's message said "my experience". The old prefix is kept
+as `LEGACY_JD_PREFIXES` in `lib/job-posting.ts`, so fit links sent before the
+change still replay with the posting-left-out line. The shorter prefix (78
+characters with its blank-line separator, was 97) raises the form's posting cap
+from 3,903 to 3,922.]
 
 ### Replayed fit check and the short link (application links, 2026-10-19)
 
@@ -684,16 +788,26 @@ for.]
 Banner line, over a replayed fit check: A fit check: the assistant on Sidhant
 Mathur's site read one job posting against his record, citing a source for
 every match and listing the gaps.
-Added to the replay banner when the posting was left out: The posting itself is
-left out of the link; the table quotes the requirements it judged.
+The replay banner itself (every replayed conversation, `REPLAY_BANNER`):
+Replayed conversation, rebuilt from the link you opened. The site stored
+nothing. This is a snapshot of what the model said at the time, not a live
+session.
+Added to the replay banner when the posting was left out: The link leaves out
+the posting. Each requirement in the table is quoted from it.
 Then, in the banner: Download resume (PDF) · hello@sidhantmathur.com [copy] ·
 LinkedIn ↗
 Replayed turn label: 01 · asked (a live turn is still "01 · you")
-Over an excerpt table: Showing 3 of 14 requirements: the strongest cited ones.
+Over an excerpt table: Showing 3 of 14 requirements, the strongest cited ones.
 The counts cover all 14, and every gap is listed below.
 (With no rows: This link carries the counts for all 14 requirements and every
 gap, but none of the rows.)
 Export panel, "Short link": The same scorecard as a link, with the answer's
-summary — short enough for an application form or a plain-text email. The
-posting itself stays out of it. Buttons: build a short link · rebuild the short
+summary. It's short enough for an application form or a plain-text email, and
+it leaves the posting out. Buttons: build a short link · rebuild the short
 link · copy the short link.
+
+[Copy pass 2026-10-20: reworded to read less like AI-generated text. No fact
+changed. See the copy-pass section of docs/copy-ledger.md. The replay banner
+keeps all four of its claims (a replay, rebuilt from the link, the site stored
+nothing, a snapshot and not a live session); it was not recorded here before.
+The fit-check banner line is unchanged.]
