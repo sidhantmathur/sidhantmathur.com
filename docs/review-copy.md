@@ -19,7 +19,9 @@ it can be skimmed. Part 6 is a shopping list, not copy.
 You asked for a pass on copy that "sounds super AI". Eleven lanes reworded the
 site, each checked by a reviewer; no fact about you changed. Every new string,
 with its old wording, is in `docs/copy-ledger.md` → "Copy pass, 2026-10-20".
-These are the calls the pass left for you.
+These are the calls the pass left for you. A second pass the same day took out
+copy that was too "cute" (ledger → "Cute pass, 2026-10-20"); its items are in
+their own group below, and the items here are updated to match it.
 
 **Start with these four.**
 
@@ -27,17 +29,18 @@ These are the calls the pass left for you.
    on `/refusals`; §4.1 below has the new text). It paraphrases your decision, and
    the label now reads "decided by Sidhant" instead of "a decision, not a
    mechanism". If you'd rather not be named in a label, "not built" works.
-2. **The lines in your voice that Claude wrote.** The two "What I'd tell a hiring
-   manager" closings (`content/nokia.mdx`, `content/adarle20.mdx`, and their
+2. **The lines in your voice that Claude wrote.** The two case-study closings, now
+   under a "Summary" heading (`content/nokia.mdx`, `content/adarle20.mdx`, and their
    third-person copies in `content/knowledge/`), the Dell closing ("The internship
    is where I first got interested in work that combines data, revenue and
-   tooling…", `content/dell-ml.mdx`), and "you can't call me, but you can ask the
-   assistant" (`WHY_CHATBOT`, `components/shell/shell-data.ts`). Check each one
-   sounds like you.
-3. **The colophon credit line** (`app/colophon/page.tsx`): "I made the decisions,
-   so the mistakes are mine." "Copy" came out of it because nearly all the copy is
-   still Claude's draft. Add it back once you've rewritten it, or say outright that
-   AI drafted much of it.
+   tooling…", `content/dell-ml.mdx`), and "If you're going through candidates and
+   can't call me, you can ask the assistant…" (`WHY_CHATBOT`,
+   `components/shell/shell-data.ts`). Check each one sounds like you.
+3. **The colophon credit line** (`app/colophon/page.tsx`) now reads "Most of the code
+   was written by AI agents working from a build spec. I made the decisions." The
+   copy pass took "copy" out of it, because nearly all the copy is still Claude's
+   draft, and the cute pass took out "so the mistakes are mine". Add "copy" back
+   once you've rewritten it, or say outright that AI drafted much of it.
 4. **The A Darle 20 money section is short now** (`content/adarle20.mdx` → "The
    unit economics"). It would be much stronger with what the commission-versus-
    ticket-sales test decided and any take-rate, GMV or revenue figure you'd
@@ -49,7 +52,7 @@ These are the calls the pass left for you.
   section) keeps the old claim that funnel data fed the commission decision. Cut it
   if that isn't how it went. The same section's "how many players visit, register
   and book" is inferred from "conversion"; confirm you track those stages.
-- **"how he builds"** tl;dr row (`content/recruiter.ts`): sourced from A Darle 20 but
+- **"how he builds"** row in the summary block (`content/recruiter.ts`): sourced from A Darle 20 but
   read as how you build in general. Does it hold for Nokia too?
 - **Nokia card, "I model and maintain it"** (`content/projects.ts`): the record says
   you owned the data modeling. Confirm "maintain" is still current.
@@ -74,8 +77,6 @@ These are the calls the pass left for you.
   want it for keyword matching.
 - **"Time saved"** replaces "Time given back" (`content/nokia.mdx`, At a glance).
 - **"Proves" became "shows"** in the A Darle 20 closing and its knowledge file.
-- **"Interview this site ↓"** (`components/shell/app-shell.tsx`) was kept because you
-  picked it; the plainer option is "Ask about my work ↓".
 - **New idle line, "Type / to see the commands."** (`IDLE_LINES`), which replaces
   "The needle is at rest." It's new copy, not a reword.
 - **Manual mode** (`components/shell/manual-mode.tsx`) now names both limits and the
@@ -92,12 +93,12 @@ These are the calls the pass left for you.
 - **The model comparison no longer says it doesn't pick a winner**
   (`app/measurements/models/page.tsx`). "This page doesn't pick a winner." would put
   it back plainly.
-- **Labels left as they were, your call:** "Failure theatre" (rename it in the route
-  comment too, which the assistant quotes), "upstream" in "turn failed · upstream"
+- **Labels left as they were, your call:** "upstream" in "turn failed · upstream"
   ("server error" reads better to a recruiter), "ttft" in the phone readout ("first
   token"), and the index's "How it's built" against the colophon's "How this site was
   built".
-- **Repeats on the first screen, left alone:** the case cards repeat tl;dr numbers,
+- **Repeats on the first screen, left alone:** the case cards repeat numbers from the
+  summary block,
   "sales and finance teams" appears in both the role line and the "now" row, and
   "AI-forward company" is in both the subline and a chip. Fixing any of them is a
   content change.
@@ -118,6 +119,35 @@ These are the calls the pass left for you.
 - **The error page** now says "That's a bug in the site." instead of "That one is on
   me, not you." (`app/error.tsx`), matching the chat's error lines, which no longer
   say "on my end".
+
+### Cute pass: what you may want to undo
+
+- **"Interview this site ↓" is now "Ask the AI assistant ↓"** (the text link under
+  the front-door buttons, `components/shell/app-shell.tsx`). You picked the original
+  in the front-door mockup, so this one is most clearly yours to reverse.
+- **`/roast` is now `/critique`**, and the message it sends reads "Critique this site
+  using the repo. Name the specific choices, files and trade-offs that are weak."
+  (`shell-data.ts`, `lib/site-question.ts`). A visitor who types "roast" still gets
+  the site corpus, and the system prompt still asks for a hard critique.
+- **Both case-study closings are headed "Summary"**, not "What I'd tell a hiring
+  manager" (`content/nokia.mdx`, `content/adarle20.mdx`). A chat citation of the same
+  paragraph still shows the old heading, because the knowledge file's heading is a
+  chunk id.
+- **"Instruments" is now "Technical details"** (panel title, index entry, colophon).
+  You wrote in `docs/idea-decisions.md` §4 that you like the instrumentation giving
+  the site a technical feel, so this may be your word; the reason for the change is
+  that "Measurements · Instruments" read as synonyms in the index.
+- **The ninety-days example is still in `WHY_CHATBOT`** ("…or what I'd do in the first
+  ninety days of the role you're hiring for"). Nothing in the record answers it (see
+  (a)).
+- **Also gone, if you miss any of them:** the resume page's "I won't take it
+  personally" joke, "so the mistakes are mine", "tl;dr" (now "summary"), "Give me
+  the 30-second version" (now "Give me the short version"), "Failure theatre" (now
+  "Simulated failures"), the "teletype" toggle (now "sound"), "The funnel,
+  instrumented" (now "Funnel tracking"), "Five models, one corpus" (now "Model
+  comparison"), "slowly" in "slowly learning three languages", and the idle line
+  "Ask the question you'd ask on a call." The ledger's "Cute pass" section has every
+  before and after.
 
 ### Found along the way: code, not copy
 
@@ -195,7 +225,8 @@ already talks about its own source in some detail.
 **This is the highest-stakes copy on the site and the part I'd read twice.**
 
 Every string Track A wrote was a claim about *the site*. These are claims about
-*you*, on the homepage, above the fold, in a block labelled `tl;dr`. Each traces
+*you*, on the homepage, above the fold, in a block labelled `summary` (`tl;dr`
+until the cute pass). Each traces
 to a corpus file and the eval suite verifies it against that file on every build.
 
 | Label | Exact text | Traced to |
@@ -291,9 +322,9 @@ manners", your doc's phrase, is no longer on the page.
 The other ten entries describe code and prompt rules; they're on `/refusals` in
 full and worth a skim, but they don't put words in your mouth.
 
-### 4.2 The roast
-Typing `/roast` sends this as the visitor's own turn:
-> "Roast this site using the repo. Name the specific choices, files and trade-offs that are weak, and don't go easy on it."
+### 4.2 The critique (`/critique`, was `/roast`)
+Typing `/critique` sends this as the visitor's own turn:
+> "Critique this site using the repo. Name the specific choices, files and trade-offs that are weak."
 
 The prompt constrains it to criticise the *site*, never you. It cites the
 roadmap's own "what I didn't do" lists, so it will be uncomfortable in an
@@ -303,10 +334,11 @@ accurate way. **Read one and decide whether you like living with that.**
 Replacing "What did Sidhant build at Nokia?", "How does A Darle 20 work?",
 "Is he a fit for a solutions engineering role?" with:
 
-1. "Give me the 30-second version"
+1. "Give me the 30-second version" (now "Give me the short version", cute pass)
 2. "What has he shipped end to end?"
 3. "Is he a fit for a RevOps role at an AI-forward company?" — also what `/fit` sends
-4. "Does he need visa sponsorship?"
+4. "Does he need visa sponsorship?" (replaced in wave 2 by "What did he build at
+   Nokia?")
 
 Chip 4 is the one to think about. It's a real recruiter question and answering it
 up front is genuinely useful — but you're choosing to raise it yourself.
@@ -346,8 +378,9 @@ Most quotes here are the July wording; the copy pass (Part 0) reworded nearly al
 of them, and the ledger's copy-pass section has each one as it ships now.
 
 ### `/measurements` (Sprint 6)
-Title "What this assistant scores". Frame: "Every instrument on this site
-measures one conversation — yours. This page is the aggregate…" · "All three are
+Title "How the assistant is measured" (was "What this assistant scores"). Frame:
+"The readouts in the chat cover only your conversation. This page reports on the
+assistant as a whole…" · "All three are
 aggregated when the site is built, so they are exactly as old as the last
 deploy." · "Where a figure is derived, drawn from a small sample, or not measured
 at all, it says so beside itself rather than in a footnote."
@@ -390,12 +423,12 @@ the scorecard, the mail draft. Plus labels: "Markdown", "Print", "Link",
 
 ### Manual mode — what a rate-limited visitor sees (Sprint 7)
 Headline is **your existing** rate-limit line, unchanged. New below it:
-"Nothing is broken and nothing is lost — the limit is per IP and refills on a
-sliding hour… here is the same material it was reading, by hand: these are the
-source files the answers are built from, quoted rather than summarized."
-Sections "Straight answers, unassisted" and "The rest of the record". Footer:
-"No model was called to render this, and it cost nothing. The resume is the
-authoritative version either way."
+"Your conversation is still here. The hourly limit is per IP address and refills
+on a sliding hour. If this conversation has used all its turns, reset it to start
+a new one. Meanwhile, these are the source files the answers are built from,
+quoted word for word." Sections "Common questions" and "Everything else", with an
+"All sources" link. Footer: "No model was called to show this, so it cost nothing.
+The resume is the authoritative version."
 
 ### Project pages — "In plain terms" (Track B, #20)
 A plain-language opener on each case study, before "The problem". Restatement
@@ -418,8 +451,8 @@ product."
 ### Navigation and slash commands
 Rail: "The instructions" (`/prompt`), "What it won't do" (`/refusals`).
 Slash hints: "/prompt — Read the instructions it was given" · "/refusals — What
-it won't do, and why" · "/site — How this site is built" · "/roast — Ask it
-what's wrong with this site" · "/jd — Paste a job description" · "/budget —
+it won't do, and why" · "/site — How this site is built" · "/critique — Ask it
+what's wrong with this site" (was "/roast") · "/jd — Paste a job description" · "/budget —
 Turns, tokens and what they cost" · "/sources — Every source the answers are
 built from" · "/pdf — Export — markdown, print, link".
 
@@ -438,7 +471,7 @@ and fill in one `asset: { src, alt, caption }` object in
 | Paying in cash | screenshot | 9:16 | The OXXO path at the moment the player gets a payment reference for the convenience store. The part nobody outside Mexico has seen. |
 | What a host sees | screenshot | 16:9 | A host's own view — profile, upcoming sessions, payouts. Test host account. |
 | Host and player chat | screenshot | 9:16 | A real thread, long enough to read as a conversation and not a contact form. Redact or use test accounts. |
-| The funnel, instrumented | screenshot | 16:9 | Whatever you actually watch to run the business. **Check this one before sending — it's the slot that would carry live numbers, and anything in it is published.** |
+| Funnel tracking | screenshot | 16:9 | Whatever you actually watch to run the business. **Check this one before sending — it's the slot that would carry live numbers, and anything in it is published.** |
 | The 251-player event | video | 16:9 | Footage or photographs from the convention. The largest thing the platform has run, and there is currently nothing on the site to show for it. A caption gets written from what you send, not before. |
 
 **Already filled:** "Session listings" — the existing `public/images/adarle20-listings.png`.
