@@ -9,10 +9,30 @@ No taglines beyond what's written here. [TODO] items are placeholders for Sidhan
 
 Site title: Sidhant Mathur
 Homepage title (tab, search result, share card): Sidhant Mathur — RevOps and
-sales operations
-Meta description: Revenue and sales operations: I build the tools sales and
-finance teams run on. Sales operations specialist at Nokia, co-founder and CTO
-of A Darle 20, based in Toronto. Looking for a RevOps / GTM systems role.
+delivery operations
+Meta description: Sales operations at Nokia, open to RevOps and delivery
+operations roles. Replaced a manual quarter-end process with an app 80+
+stakeholders in 7 regions use.
+
+[DRAFT 2026-10-22, gauntlet pass. Sidhant now targets revenue operations and
+delivery operations roles (`faq.md`). The description names who he is, both
+role families and one proof point (the quarterly executive reporting Power App,
+`resume.md`) in 157 characters, so a search snippet or a link preview doesn't
+truncate the proof. Was: "Revenue and sales operations: I build the tools
+sales and finance teams run on. Sales operations specialist at Nokia,
+co-founder and CTO of A Darle 20, based in Toronto. Looking for a RevOps / GTM
+systems role." Same string in `og:description` and the Person JSON-LD.]
+
+llms.txt opening: "I'm a sales operations specialist at Nokia in Toronto, and
+co-founder and CTO of A Darle 20, a marketplace for tabletop game sessions in
+Latin America. I'm looking for a revenue operations (RevOps / GTM systems) or
+delivery operations role at an AI-forward company." Then: "At Nokia I built a
+self-serve Power App for quarterly executive reporting, used by 80+
+stakeholders across 7 regions. It replaced a manual process that took one
+finance analyst's entire workday, every day of quarter-end close. Before that I
+owned headcount reporting and forecasting for a 3,000–4,000-person
+organization." [DRAFT 2026-10-22; all from `resume.md`, target roles from
+`faq.md`.]
 
 [DRAFT 2026-10-19, wave 2 of the council plan. The previous description
 ("Sales operations specialist and builder. I make internal tools and revenue
@@ -22,9 +42,18 @@ months.") led with neither role and spent half its length on tabletop games.
 The same description is the Person JSON-LD's, and `llms.txt` opens with the
 role line.]
 
-Share card (OG image): the headshot beside "Sidhant Mathur" and "Revenue and
-sales operations", then "I build the tools sales and finance teams run on." —
-replacing the hero heading, which says nothing about the job.
+Share card (OG image): the headshot beside "Sidhant Mathur" and "Sales
+operations specialist at Nokia · Toronto, ON", then "I build and roll out the
+systems sales and finance teams run on.", then, in the accent, "Looking for a
+revenue operations or delivery operations role at an AI-forward company."
+Alt text: "Sidhant Mathur, sales operations specialist at Nokia, looking for a
+revenue operations or delivery operations role".
+
+[DRAFT 2026-10-22, gauntlet pass. The three lines are the front door's role
+line, hero and positioning (first sentence) from `content/recruiter.ts` as the
+front-door pass rewrites them, so the card and the page say the same thing.
+Was: "Revenue and sales operations" over "I build the tools sales and finance
+teams run on."]
 
 ---
 
