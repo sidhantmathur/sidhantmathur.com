@@ -88,7 +88,11 @@ async function growToContent(page) {
   return height;
 }
 
-const browser = await chromium.launch();
+// CHROMIUM_PATH points at a preinstalled browser when the pinned one isn't
+// downloaded, as in a cloud sandbox (/opt/pw-browsers/chromium).
+const browser = await chromium.launch(
+  process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {},
+);
 const page = await browser.newPage({
   viewport,
   deviceScaleFactor: 2,

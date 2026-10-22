@@ -4,12 +4,16 @@ import { AnalyticsProvider } from "@/components/analytics-provider";
 import { EMAIL, GITHUB_URL, HEADSHOT, LINKEDIN_URL, SITE_NAME, SITE_URL } from "@/lib/site";
 import "./globals.css";
 
-// Leads with the role, in the words a recruiter searches for.
+// Who he is, both role families and one proof point, in ~155 characters so a
+// search snippet and a LinkedIn or Slack preview show all of it. The proof is
+// the resume's: a self-serve Power App for quarterly executive reporting, used
+// by 80+ stakeholders across 7 regions, that replaced a manual quarter-end
+// process. The work leads; the tool name stays on the case study.
 const DESCRIPTION =
-  "Revenue and sales operations: I build the tools sales and finance teams run on. Sales operations specialist at Nokia, co-founder and CTO of A Darle 20, based in Toronto. Looking for a RevOps / GTM systems role.";
+  "Sales operations at Nokia, open to RevOps and delivery ops roles. Replaced a manual quarter-end process with an app 80+ stakeholders in 7 regions use.";
 
 /** The homepage's tab, search result and share-card title. */
-const HOME_TITLE = `${SITE_NAME} — RevOps and sales operations`;
+const HOME_TITLE = `${SITE_NAME} — Sales operations, open to RevOps and delivery ops`;
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),

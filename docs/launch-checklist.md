@@ -39,10 +39,12 @@ forwarding exists, mail to it bounces.
 - [ ] FAQ "what he's NOT looking for" (`content/knowledge/faq.md`). **[→ Claude]**
 - [ ] Decide: is this repo public? (colophon either links it or drops the
       line). **[→ Claude]**
-- [ ] Export `resume.pdf` from `docs/resume/Sidhant_Mathur_Resume_GTM.docx`
-      into `public/`. Update the docx contact line first to
-      hello@sidhantmathur.com · sidhantmathur.com so PDF and site match.
-      No phone number on the web version.
+- [x] Export `resume.pdf` into `public/`. Done 2026-10-22: it is now built
+      from text, by `python3 docs/resume/drafts/build.py` (the `canonical`
+      variant) and `soffice --headless --convert-to pdf resume-canonical.docx`,
+      then copied to `public/resume.pdf` and `docs/Sidhant_Mathur_Resume.pdf`.
+      The stale `docs/resume/Sidhant_Mathur_Resume_GTM.docx` (old phone,
+      personal email, a typo'd domain) was deleted 2026-10-22.
 
 ## C. Design sign-offs (decisions only you can make)
 

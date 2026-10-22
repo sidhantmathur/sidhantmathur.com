@@ -45,6 +45,7 @@ import {
 import { track } from "@/lib/analytics";
 import { CaseCards, RecruiterTldr } from "./recruiter-tldr";
 import {
+  HERO,
   POSITIONING,
   ROLE_LINE,
   SUGGESTED_QUESTIONS as SUGGESTED,
@@ -121,7 +122,7 @@ const PrintSheet = dynamic(() => import("./print-sheet").then((m) => m.PrintShee
 // Copy. Final strings come from docs/site-copy.md; drafted ones are logged in
 // docs/copy-ledger.md.
 // ---------------------------------------------------------------------------
-const HERO = "I learn what the problem needs, then I build the thing.";
+// The H1 is HERO in content/recruiter.ts, beside the rows it introduces.
 // The empty state's desktop placeholder. The subline under the headline is
 // POSITIONING from content/recruiter.ts, where the citation checker covers it.
 const HERO_SUB = "Ask what you'd ask on a call";
@@ -595,8 +596,9 @@ export function AppShell() {
       onClick={() => ask(q)}
       disabled={isBusy || !hydrated}
       // py-2.5 keeps a chip over 44px on a phone, where it is a finger
-      // target; md:py-2 matches the header's pointer-sized controls.
-      className="border border-line-strong px-3 py-2.5 text-left t-meta text-text-soft transition-colors hover:border-accent hover:text-text disabled:border-line disabled:text-text-dim md:py-2"
+      // target; from md up the dock is pointer-sized and 36px tall, so it
+      // takes less of a 800px laptop screen from the front door.
+      className="border border-line-strong px-3 py-2.5 text-left t-meta text-text-soft transition-colors hover:border-accent hover:text-text disabled:border-line disabled:text-text-dim md:py-1.5"
     >
       {q}
     </button>
@@ -716,7 +718,9 @@ export function AppShell() {
         >
           {SITE_NAME}
         </Link>
-        <span className="hidden text-text-faint lg:inline">Toronto, ON</span>
+        {/* The front door says where he is two lines below, beside the
+            photo; the header carries it once a conversation replaces that. */}
+        {hasMessages && <span className="hidden text-text-faint lg:inline">Toronto, ON</span>}
 
         <div className="ml-auto flex items-center gap-2 text-text-faint sm:gap-4">
           {/* The nav stays at every width, conversation or not, so the resume
@@ -763,23 +767,10 @@ export function AppShell() {
               {receiptText(turns, lastAnswerCost)}
             </button>
           )}
-          <span className="flex items-center gap-1.5">
-            {/* Grey while the page is still loading, so it never says "ready"
-                before it is. */}
-            <span
-              aria-hidden="true"
-              className={`inline-block h-2 w-2 rounded-full ${
-                !hydrated ? "bg-text-dim" : isBusy ? "bg-accent" : "bg-signal"
-              }`}
-            />
-            {/* Visible at every width until hydration, because a grey dot alone
-                explains nothing; after that, visible from sm up. Below sm it's
-                sr-only rather than hidden, since the dot is decorative and a
-                screen reader still needs the state. */}
-            <span className={!hydrated ? "inline" : "sr-only sm:not-sr-only sm:inline"}>
-              {!hydrated ? "loading" : isBusy ? "streaming" : "ready"}
-            </span>
-          </span>
+          {/* No status light here any more (2026-10-22, Sidhant): with most of
+              the telemetry gone, a "ready" dot beside Contact read as noise.
+              The composer's placeholder says "loading" until hydration, and
+              the polite status region announces each turn. */}
         </div>
       </header>
 
@@ -830,7 +821,10 @@ export function AppShell() {
                 stays legible and every control stays live — this is a settle,
                 not a screensaver. */}
             <div
-              className={`mx-auto max-w-[68ch] transition-opacity duration-700 ${
+              // The front door is a little wider than the transcript: at 68ch
+              // its three actions wrapped LinkedIn onto a row of its own at
+              // 1280px. Every prose block inside it keeps its own measure.
+              className={`mx-auto ${hasMessages ? "max-w-[68ch]" : "max-w-[76ch]"} transition-opacity duration-700 ${
                 idle ? "opacity-90" : "opacity-100"
               }`}
             >
@@ -890,49 +884,41 @@ export function AppShell() {
                         {SITE_NAME}
                       </span>
                       <span className="block text-[15px] leading-snug text-text-soft">
-                        {ROLE_LINE.value}
+                        {/* One line from sm up; below it, title and city
+                            stack, so a phone never starts a line with the
+                            dot or breaks inside "Toronto, ON". */}
+                        {ROLE_LINE.value.split(" · ").map((part, i) => (
+                          <span key={part} className="block sm:inline">
+                            {i > 0 && <span className="hidden px-1.5 text-text-faint sm:inline">·</span>}
+                            {part}
+                          </span>
+                        ))}
                       </span>
                     </p>
                   </div>
-                  <h1 className="t-hero max-w-[24ch] font-semibold text-text [font-family:var(--font-geist-sans)]">
+                  <h1 className="t-hero max-w-[24ch] font-semibold text-text [font-family:var(--font-geist-sans)] [text-wrap:balance]">
                     {HERO}
                   </h1>
                   {/* Answers "what does he want" without a scroll. The string
                       lives in content/recruiter.ts under the same citation
                       check as the tl;dr rows — see POSITIONING. */}
-                  <p className="t-body max-w-[52ch] text-text-soft [font-family:var(--font-geist-sans)]">
-                    {POSITIONING.value}
+                  <p className="t-body max-w-[52ch] text-text-soft [font-family:var(--font-geist-sans)] [text-wrap:balance]">
+                    {/* A non-breaking hyphen, so a line never ends on "AI-". */}
+                    {POSITIONING.value.replace("AI-forward", "AI\u2011forward")}
                   </p>
                   {/* The resume PDF is primary: it's the file a recruiter
                       attaches to an ATS record. Which format visitors take is
                       still open, so both are tracked. The email is on screen
                       and copyable because a bare mailto: is a dead end without
                       a mail client. */}
+                  {/* On a phone: the resume full width, then the address and
+                      LinkedIn sharing one row, so the summary starts sooner. */}
                   <div className="flex flex-col gap-2.5 pt-2 sm:flex-row sm:flex-wrap">
                     <ResumePdfButton surface="front-door" primary />
-                    <EmailCopy surface="front-door" />
-                    <LinkedInButton surface="front-door" />
-                  </div>
-                  {/* "Interview this site" only focuses the composer, so it's
-                      styled as a link, and gated on hydration like every
-                      control that needs JavaScript. */}
-                  <div className="-mt-1.5 flex flex-wrap items-center gap-x-5 t-meta">
-                    <Link
-                      href="/resume"
-                      onClick={() => track("resume_open", { surface: "front-door" })}
-                      className="flex min-h-[44px] touch-manipulation items-center text-text-soft underline decoration-line-strong underline-offset-4 transition-colors hover:text-accent hover:decoration-accent"
-                    >
-                      Resume as a web page
-                    </Link>
-                    <button
-                      type="button"
-                      onClick={() => inputRef.current?.focus()}
-                      disabled={!hydrated}
-                      data-js-control
-                      className="flex min-h-[44px] touch-manipulation items-center text-text-soft underline decoration-line-strong underline-offset-4 transition-colors hover:text-accent hover:decoration-accent disabled:text-text-dim disabled:no-underline"
-                    >
-                      Ask the AI assistant ↓
-                    </button>
+                    <div className="flex gap-2.5">
+                      <EmailCopy surface="front-door" copyFromSm className="min-w-0 flex-1 sm:flex-none" />
+                      <LinkedInButton surface="front-door" className="shrink-0" />
+                    </div>
                   </div>
                   {/* The six-second scan; see recruiter-tldr.tsx. */}
                   <div>
@@ -1170,7 +1156,7 @@ export function AppShell() {
                 breakpoint, because the panel narrows the row without the
                 viewport changing. /fit still sends it. */}
             {!hasMessages && (
-              <div className="hidden px-4 pt-3 md:block md:px-10">
+              <div className="hidden px-4 pt-2.5 md:block md:px-10">
                 <div className="@container flex gap-2 [&>:last-child]:hidden @min-[1120px]:[&>:last-child]:block">
                   {chipButtons}
                 </div>
@@ -1266,7 +1252,7 @@ export function AppShell() {
                 Gone once a conversation starts: answers then carry their own
                 sources, and the actions strip takes this row. */}
             {!hasMessages && (
-              <p className="t-meta px-4 pb-3 text-text-faint md:px-10">
+              <p className="t-label px-4 pb-2.5 text-text-faint md:px-10">
                 <span className="lg:hidden">{DISCLAIMER_SHORT}</span>
                 <span className="hidden lg:inline">{DISCLAIMER_LONG}</span>{" "}
                 <Link

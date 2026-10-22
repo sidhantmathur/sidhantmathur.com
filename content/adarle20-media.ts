@@ -60,7 +60,7 @@ export const ADARLE_MEDIA: MediaSlot[] = [
     kind: "screen recording",
     title: "Booking a seat, end to end",
     brief:
-      "One unbroken take from the listing page through checkout to the confirmation — the flow described under “what I built”, without cuts. Use a test account; no real player's name or email on screen.",
+      "One unbroken take from the listing page through checkout to the confirmation — the flow described under “From booking to payout”, without cuts. Use a test account; no real player's name or email on screen.",
     aspect: "16:9",
     aspectClass: "aspect-video",
     width: "column",
@@ -70,7 +70,7 @@ export const ADARLE_MEDIA: MediaSlot[] = [
     kind: "screenshot",
     title: "Paying in cash",
     brief:
-      "The OXXO path at the point where a player is handed a payment reference to take to a convenience store. This is the part of the product nobody outside Mexico has seen, and it is the reason the payments section on this page is longer than the rest.",
+      "The OXXO path at the point where a player is handed a payment reference to take to a convenience store. This is the part of the product nobody outside Mexico has seen.",
     aspect: "9:16",
     aspectClass: "aspect-[9/16]",
     width: "narrow",
@@ -123,6 +123,12 @@ export const ADARLE_MEDIA: MediaSlot[] = [
 // feature is a factual claim about a product a hiring manager can go and use.
 // The gap between this list and the real product is recorded in
 // FEATURE_SURFACE_NOTE rather than filled in.
+//
+// It renders as one line per area (gauntlet pass, 2026-10-22). Decision #19
+// asks for the full feature surface, so the list stays; but every item is
+// already told in the case study above it, and a two-column grid of single
+// words was the longest block on the page. Item text is kept short for the
+// same reason: the prose carries the detail.
 export type Feature = {
   group: string;
   items: string[];
@@ -146,7 +152,7 @@ export const FEATURE_SURFACE: Feature[] = [
       "Stripe Connect",
       "Host payouts",
       "Platform fees",
-      "OXXO cash payments at a convenience store",
+      "OXXO cash payments",
     ],
     source: "projects-adarle20.md, resume.md",
   },
@@ -162,9 +168,7 @@ export const FEATURE_SURFACE: Feature[] = [
   },
   {
     group: "Operations",
-    items: [
-      "End-to-end funnel instrumentation (bookings, conversion, cancellations, refunds, host activation)",
-    ],
+    items: ["Funnel instrumentation"],
     source: "projects-adarle20.md, resume.md",
   },
 ];

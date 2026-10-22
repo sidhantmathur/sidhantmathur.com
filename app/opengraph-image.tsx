@@ -1,19 +1,24 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { ImageResponse } from "next/og";
-import { ROLE_LINE } from "@/content/recruiter";
+import { HERO, POSITIONING as POSITION, ROLE_LINE as ROLE } from "@/content/recruiter";
 
-export const alt = "Sidhant Mathur — revenue and sales operations";
+export const alt =
+  "Sidhant Mathur, sales operations specialist at Nokia, looking for a revenue operations or delivery operations role";
 export const size = {
   width: 1200,
   height: 630,
 };
 export const contentType = "image/png";
 
-// The role line splits at its colon: the role on one line, the sentence that
-// says what that means under it. It is the same checked string the front door
-// renders (content/recruiter.ts), so the card can't drift from it.
-const [ROLE, ROLE_DETAIL] = ROLE_LINE.value.split(": ");
+// The same checked strings the front door renders, so the card can't drift
+// from them.
+const ROLE_LINE = ROLE.value;
+const POSITIONING = POSITION.value;
+
+// The card carries the positioning's first sentence only: both role families,
+// without the work-authorization line a 500px preview has no room for.
+const LOOKING_FOR = POSITIONING.slice(0, POSITIONING.indexOf(". ") + 1);
 
 // Colours match app/globals.css: --bg #0B0A09, --text #EFEBE4, --text-soft
 // #C4BCB4, --line-strong #6B6259, --accent #E4522B. This is the card a link
@@ -42,7 +47,7 @@ export default async function Image() {
           alignItems: "flex-start",
           justifyContent: "center",
           background: "#0B0A09",
-          padding: "80px",
+          padding: "64px 80px",
         }}
       >
         {/* The prompt caret's underscore, as a mark. Same accent as the
@@ -52,7 +57,7 @@ export default async function Image() {
             width: 72,
             height: 6,
             background: "#E4522B",
-            marginBottom: 48,
+            marginBottom: 40,
           }}
         />
         <div style={{ display: "flex", alignItems: "center" }}>
@@ -61,16 +66,16 @@ export default async function Image() {
               Satori renders it, and next/image means nothing here. */}
           <img
             src={headshotSrc}
-            width={176}
-            height={176}
+            width={144}
+            height={144}
             alt=""
             style={{ border: "2px solid #6B6259", opacity: 0.9 }}
           />
-          <div style={{ display: "flex", flexDirection: "column", marginLeft: 48 }}>
+          <div style={{ display: "flex", flexDirection: "column", marginLeft: 40 }}>
             <div
               style={{
                 fontFamily: "Geist Mono",
-                fontSize: 64,
+                fontSize: 60,
                 fontWeight: 500,
                 letterSpacing: "-0.02em",
                 color: "#EFEBE4",
@@ -80,27 +85,40 @@ export default async function Image() {
             </div>
             <div
               style={{
-                marginTop: 16,
+                marginTop: 12,
                 fontFamily: "Geist Mono",
-                fontSize: 36,
-                fontWeight: 500,
-                color: "#E4522B",
+                fontSize: 28,
+                color: "#C4BCB4",
               }}
             >
-              {ROLE}
+              {ROLE_LINE}
             </div>
           </div>
         </div>
+        {/* The claim, then who it is for. The two role families take the
+            accent: they are what a recruiter scanning a feed matches on. */}
         <div
           style={{
-            marginTop: 48,
+            marginTop: 44,
             fontFamily: "Geist Mono",
-            fontSize: 32,
-            lineHeight: 1.4,
-            color: "#C4BCB4",
+            fontSize: 36,
+            fontWeight: 500,
+            lineHeight: 1.3,
+            color: "#EFEBE4",
           }}
         >
-          {ROLE_DETAIL}
+          {HERO}
+        </div>
+        <div
+          style={{
+            marginTop: 24,
+            fontFamily: "Geist Mono",
+            fontSize: 30,
+            lineHeight: 1.4,
+            color: "#E4522B",
+          }}
+        >
+          {LOOKING_FOR}
         </div>
       </div>
     ),

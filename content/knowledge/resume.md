@@ -5,13 +5,14 @@ linkedin.com/in/sidhantmathur · github.com/sidhantmathur · sidhantmathur.com
 
 ## Summary
 
-AI-native revenue operations builder who turns ambiguous business problems into
-shipped software. 3+ years owning sales reporting, forecasting, and
-quarter-end close infrastructure for global sales and finance teams at Nokia
-(150+ users across 7 regions). Co-Founder & CTO of A Darle 20, a live
-two-sided marketplace with 1,400+ users and 2,100+ bookings, architected and
-shipped solo with an AI-agent-heavy development workflow. Looking for a
-RevOps / GTM systems role at an AI-forward company.
+Sales operations specialist who turns ambiguous business problems into shipped
+software. 3+ years at Nokia: headcount reporting and forecasting for a
+3,000–4,000-person organization, then sales reporting for 150+ users and a
+quarterly executive reporting app used by 80+ stakeholders across 7 regions.
+Co-Founder & CTO of A Darle 20, a live two-sided marketplace with 1,400+ users
+and 2,100+ bookings, architected and shipped solo with an AI-agent-heavy
+development workflow (Claude Code). Looking for a revenue operations or
+delivery operations role at an AI-forward company.
 
 ## Experience
 

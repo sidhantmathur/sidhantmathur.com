@@ -21,7 +21,7 @@ export default function ProjectsPage() {
     <DocPage>
       <h1 className="t-title font-medium text-text">Projects</h1>
       <p className="t-body mt-3 max-w-[62ch] text-text-soft">
-        Three case studies. The assistant on the homepage can summarize any of them.
+        Three things I built: Nokia&apos;s quarter-end and sales reporting, A Darle 20, a live marketplace where I&apos;m the only developer, and the Dell sales model where this work started.
       </p>
 
       <div className="mt-10 space-y-10">
@@ -49,10 +49,17 @@ export default function ProjectsPage() {
               <dt className="text-text-faint">Status</dt>
               <dd className="text-text-soft">{project.status}</dd>
             </dl>
+            {/* The two current pieces of work get the bordered control; the
+                2018 internship gets a quiet link, so it reads as where the
+                work started rather than as a third peer. */}
             <Link
               href={project.caseStudyHref}
               // The same bordered 44px control as the panel's "Open as a page".
-              className="t-meta mt-3 inline-flex min-h-[44px] items-center border border-line-strong px-3 py-2 text-text-soft no-underline transition-colors hover:border-accent hover:text-accent"
+              className={
+                project.slug === "dell-ml"
+                  ? "t-meta mt-1 inline-flex min-h-[44px] items-center text-text-soft underline decoration-line-strong underline-offset-4 transition-colors hover:text-accent hover:decoration-accent"
+                  : "t-meta mt-3 inline-flex min-h-[44px] items-center border border-line-strong px-3 py-2 text-text-soft no-underline transition-colors hover:border-accent hover:text-accent"
+              }
             >
               Read the case study →
             </Link>

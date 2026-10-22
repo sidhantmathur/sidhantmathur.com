@@ -1,70 +1,65 @@
-### At a glance
+<div className="@container max-w-[68ch]">
+  <dl aria-label="Outcomes" className="[font-family:var(--font-geist-sans)] [text-wrap:pretty] grid grid-cols-1 border-y border-line @md:grid-cols-2">
+    <div className="py-3 @md:pr-4">
+      <dt className="text-[28px] font-semibold leading-none tracking-tight text-text">80+</dt>
+      <dd className="t-meta mt-1.5 text-text-soft">stakeholders in 7 regions on self-serve quarterly reporting</dd>
+    </div>
+    <div className="border-t border-line py-3 @md:border-t-0 @md:border-l @md:pl-4">
+      <dt className="text-[28px] font-semibold leading-none tracking-tight text-text">One workday</dt>
+      <dd className="t-meta mt-1.5 text-text-soft">of manual collection by a finance analyst, eliminated every day of quarter-end close</dd>
+    </div>
+    <div className="border-t border-line py-3 @md:pr-4">
+      <dt className="text-[28px] font-semibold leading-none tracking-tight text-text">150+</dt>
+      <dd className="t-meta mt-1.5 text-text-soft">users on the sales reporting I moved from Salesforce Analytics to Power BI</dd>
+    </div>
+    <div className="border-t border-line py-3 @md:border-l @md:pl-4">
+      <dt className="text-[28px] font-semibold leading-none tracking-tight text-text">$1.2M</dt>
+      <dd className="t-meta mt-1.5 text-text-soft">in real-estate cost savings identified from lab and facility utilization data, 2022–2024</dd>
+    </div>
+  </dl>
+  <p className="t-meta mt-3 text-text-faint">Nokia, Toronto. Sales operations specialist (internal tools and automation), Jun 2024 – present. Before that, workforce management specialist, Oct 2022 – Jun 2024.</p>
+</div>
 
-- **Role** — Sales operations specialist (internal tools and automation) at
-  Nokia, Toronto. June 2024 to present; the tools below have been in production
-  since 2024.
-- **Systems** — Power Apps, Power BI, SQL and DAX. Salesforce Analytics was the
-  system being retired.
-- **Quarterly executive reporting** — a self-serve Power App used by 80+
-  stakeholders across seven regions. It replaced the manual collection process
-  entirely.
-- **Time saved** — one finance analyst's entire workday, every day of
-  quarter-end close.
-- **Sales reporting** — all of it migrated from Salesforce Analytics to Power BI
-  for 150+ users. I owned the data model and the SQL and DAX transformation
-  logic end to end.
+### What changed
 
-### Before and after
+**Quarterly executive reporting.** Leadership needed one picture of the quarter
+from every region, and the inputs arrived by hand, in whatever format each
+region kept them. A finance analyst chased and assembled them. I replaced that
+process with a self-serve Power App the regions report through directly, and
+the manual collection is gone.
 
-**Before.** Quarterly executive reporting ran on manual data collection. Every
-day of quarter-end close, one finance analyst spent their entire workday chasing
-inputs across regions and formats. At the same time, sales reporting lived in
-Salesforce Analytics, which the organization was moving away from.
+**Sales reporting.** The organization was moving off Salesforce Analytics. I
+migrated all of its sales reporting to Power BI and owned the data model and
+the transformation logic, in SQL and DAX, end to end.
 
-**After.** The 80+ stakeholders across seven regions report through a
-self-serve Power App, and the manual collection process is gone. Sales
-reporting runs on Power BI for 150+ users, on a data model and transformation
-logic I built and own.
+Both tools have been in production since 2024. The work is internal to Nokia,
+so confidentiality limits the screenshots and specifics I can share.
+
+### Headcount and forecasting, 2022–2024
+
+I owned headcount reporting and forecasting for an organization of 3,000–4,000
+people. I also identified $1.2M in real-estate cost savings by analyzing lab and facility utilization data.
 
 ### How I ran it
 
-For both tools I was the whole team.
+For the quarterly reporting tool and the sales reporting migration, I was the
+whole team, from the first request to support after launch.
 
-- **Requirements** — vague requests from sales and finance leadership,
-  translated into scoped requirements.
-- **Build** — the Power App; the Power BI data model and its transformation
-  logic in SQL and DAX.
-- **Rollout** — executive demos, then a global rollout to the stakeholders.
-- **Support** — user support, bug triage and rapid iteration, across time
-  zones.
-
-More recently I've been bringing LLMs and Python into these workflows where
-they help.
-
-This work is internal to Nokia, so confidentiality limits the screenshots and
-specifics I can share.
-
-### Before this role
-
-I joined Nokia in October 2022 as a workforce management specialist, owning
-headcount reporting and forecasting for a 3,000–4,000-person organization. In
-that role I identified $1.2M in real-estate cost savings by analyzing lab and
-facility utilization data.
+- **Requirements** — sales and finance leadership came with open-ended requests,
+  and I turned each one into a scoped plan.
+- **Build** — the Power App, and the Power BI data model with its SQL and DAX
+  transformation logic.
+- **Demos and rollout** — I demoed each tool to leadership, then rolled it out
+  globally.
+- **Support** — I handle user support, bug triage and rapid iteration myself,
+  across time zones.
 
 ### In plain terms
 
-A large company sells in a lot of places, and every quarter its executives need
-one picture of how that went. Getting to that picture meant asking people across
-the regions to send their numbers in, in whatever shape they kept them, and
-somebody assembling it by hand. That fell to a finance analyst, and it
-took their entire workday, every day of the quarter-end close.
+Most of this job is making sure a number means the same thing to everyone who
+reads it. When each region sends its figures in its own shape, somebody has to
+reconcile them by hand before leadership can trust the total. A self-serve tool
+moves that work to the source: people put their numbers in once, in one place,
+and nobody has to chase them.
 
-So I built something the regions could fill in themselves, got it in front of
-the people who had to use it, and kept it working when they ran into trouble.
-The migration was the same kind of work. The company was moving off one
-reporting system, and every report and every user had to move to the new one.
-
-### Summary
-
-I sit between the business and the tools it runs on. When the tools don't do
-what the team needs, I fix them myself.
+A reporting migration is the same problem one level down. Every report carries logic about what its numbers mean, and rebuilt on the new system, that logic is the data model and its SQL and DAX.

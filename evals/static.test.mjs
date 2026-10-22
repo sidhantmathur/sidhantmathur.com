@@ -180,6 +180,41 @@ describe("system prompt", () => {
     }
   });
 
+  // Two target role families since 2026-10-22 (faq.md). The section that maps
+  // his record to delivery operations is advocacy, so these are the sentences
+  // that keep it honest: the $1.2M stays "identified", the event he built the
+  // technology for stays his co-founder's to have run, and the gaps a delivery
+  // posting will ask about are named when a role asks, not hidden.
+  test("advocates for both role families without overstating either", () => {
+    const src = readSystemPromptSource().replace(/\s+/g, " ");
+    for (const rule of [
+      "## Making his case",
+      "revenue operations (RevOps / GTM systems) and delivery operations",
+      'identified, never "saved"',
+      "Don't say he ran it.",
+      "never with a motive you supplied",
+      "no PSA tools, statements of work, billable utilization, project accounting, or time on a professional services team",
+      "it is an unmet row and a named gap like any other",
+      "never present adjacent work as the same thing",
+    ]) {
+      assert.ok(src.includes(rule), `system prompt lost "${rule}"`);
+    }
+  });
+
+  test("every chunk id the prompt names exists in the knowledge base", () => {
+    // A hand-typed id that drifts from a heading would teach the model to cite
+    // a chunk the verifier can't find.
+    const src = readSystemPromptSource();
+    const kb = readKnowledgeBase();
+    const named = [...src.matchAll(/\b(resume|bio|adarle20|nokia|dell|faq):[a-z0-9-]+[a-z0-9]/g)].map(
+      (m) => m[0],
+    );
+    assert.ok(named.length > 0, "found no chunk ids in the prompt — did the pattern break?");
+    for (const id of named) {
+      assert.ok(kb.includes(`[${id}]`), `system prompt names "${id}", which is not a chunk id`);
+    }
+  });
+
   test("documents every tool the route defines", () => {
     const src = readSystemPromptSource();
     for (const name of readToolNames()) {

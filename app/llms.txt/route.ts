@@ -2,10 +2,16 @@ export const dynamic = "force-static";
 
 const CONTENTS = `# Sidhant Mathur
 
-Revenue and sales operations: I build the tools sales and finance teams run
-on. Sales operations specialist at Nokia, and co-founder and CTO of A Darle
-20, a marketplace for tabletop game sessions in Latin America. Looking for a
-RevOps / GTM systems role.
+I'm a sales operations specialist at Nokia in Toronto, and co-founder and CTO
+of A Darle 20, a marketplace for tabletop game sessions in Latin America. I'm
+looking for a revenue operations (RevOps / GTM systems) or delivery operations
+role at an AI-forward company.
+
+At Nokia I built a self-serve Power App for quarterly executive reporting, used
+by 80+ stakeholders across 7 regions. It replaced a manual process that took one
+finance analyst's entire workday, every day of quarter-end close. Before that I
+owned headcount reporting and forecasting for a 3,000–4,000-person
+organization.
 
 ## Pages
 
@@ -15,7 +21,7 @@ questions about my work.
 organization.
 /projects/adarle20 — A Darle 20: a marketplace for tabletop game sessions in
 Latin America.
-/projects/dell-ml — Sales prediction at Dell: a propensity model for
+/projects/dell-ml — Sales prediction model at Dell: a propensity model for
 cross-sell targeting, built as an intern.
 /resume — Resume, with a plain-text version at /resume.md.
 /colophon — How this site was built.

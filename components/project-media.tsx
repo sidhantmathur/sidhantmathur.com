@@ -2,7 +2,9 @@ import Image from "next/image";
 import { ADARLE_MEDIA, FEATURE_SURFACE, type MediaSlot } from "@/content/adarle20-media";
 
 // The A Darle 20 media and feature surface (#19): two pre-rendered sections
-// appended below the case study.
+// appended below the case study, screenshot first. They sit in the case
+// study's own rhythm (no rule, the same gap as an MDX section) so the page
+// reads as one document rather than a story with an appendix.
 //
 // Only slots with a file render; an empty frame on the flagship case study
 // reads as unfinished work. The capture briefs for the rest stay in
@@ -15,24 +17,17 @@ import { ADARLE_MEDIA, FEATURE_SURFACE, type MediaSlot } from "@/content/adarle2
 // build if any marker reaches the served output.
 
 export function AdarleFeatureSurface() {
+  // One line per area: the case study above already tells each of these, so
+  // the list is an index, not a second telling.
   return (
-    <section className="mt-12 border-t border-line pt-8">
-      <h2 className="t-head font-medium text-text">
-        What&apos;s in it
-      </h2>
-      <p className="t-body mt-3 max-w-[68ch] text-text-soft">
-        The main features, grouped by area.
-      </p>
-      <dl className="mt-6 grid gap-x-8 gap-y-5 sm:grid-cols-2">
+    <section className="mt-8">
+      <h2 className="t-head font-medium text-text">What&apos;s in it</h2>
+      <dl className="t-body mt-3 max-w-[68ch] space-y-1.5 sm:space-y-1">
         {FEATURE_SURFACE.map((group) => (
-          <div key={group.group}>
-            <dt className="t-label text-text-faint">{group.group}</dt>
-            <dd>
-              <ul className="t-body mt-1.5 space-y-1 text-text-soft">
-                {group.items.map((item) => (
-                  <li key={item}>{item}</li>
-                ))}
-              </ul>
+          <div key={group.group} className="sm:grid sm:grid-cols-[8rem_1fr] sm:gap-x-4">
+            <dt className="t-label pt-[3px] text-text-faint">{group.group}</dt>
+            <dd className="text-text-soft [font-family:var(--font-geist-sans)]">
+              {group.items.join(" · ")}
             </dd>
           </div>
         ))}
@@ -47,30 +42,25 @@ export function AdarleMediaSurface() {
   const captured = ADARLE_MEDIA.filter((slot): slot is CapturedSlot => slot.asset != null);
   if (!captured.length) return null;
   return (
-    <section className="mt-12 border-t border-line pt-8">
-      <h2 className="t-head font-medium text-text">
-        What it looks like
-      </h2>
-      <div className="mt-6 space-y-8">
+    <section className="mt-8">
+      <h2 className="t-head font-medium text-text">What it looks like</h2>
+      <div className="mt-3 space-y-8">
         {captured.map((slot) => (
-          <MediaFrame key={slot.id} slot={slot} />
+          <MediaFrame key={slot.id} slot={slot} titled={captured.length > 1} />
         ))}
       </div>
     </section>
   );
 }
 
-function MediaFrame({ slot }: { slot: CapturedSlot }) {
+// With one file the section heading names it, so the frame carries no title of
+// its own; once a second slot is filled, each frame is titled.
+function MediaFrame({ slot, titled }: { slot: CapturedSlot; titled: boolean }) {
   const width = slot.width === "narrow" ? "max-w-[300px]" : "max-w-[68ch]";
   return (
     <figure className={width}>
-      <div className="t-meta flex items-baseline justify-between gap-3">
-        <span className="text-text-soft">{slot.title}</span>
-        <span className="shrink-0 text-text-faint">
-          {slot.kind} · {slot.aspect}
-        </span>
-      </div>
-      <div className={`relative mt-2 border border-line ${slot.aspectClass}`}>
+      {titled && <div className="t-meta mb-2 text-text-soft">{slot.title}</div>}
+      <div className={`relative border border-line ${slot.aspectClass}`}>
         <Image
           src={slot.asset.src}
           alt={slot.asset.alt}
