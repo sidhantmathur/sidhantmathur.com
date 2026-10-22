@@ -119,3 +119,28 @@ All fixed the same hour.
 
 Checks: build, lint, 497 static tests, marker check, a11y audit (0 problems),
 pre-hydration load check (13/13).
+
+### Round 2 critique — Fable, blind
+
+Scores: home 7, home mobile 6, /projects 6, Nokia 7, A Darle 20 7 (up from 5),
+Dell 4, web resume 6, RevOps draft 6, delivery draft 7. Top gaps: the
+canonical PDF still says "RevOps / GTM systems" while the site says both role
+families; on a phone three stacked actions push the proof down; a few padding
+clauses; citizenship stranded under the resume drafts' skills.
+
+### Round 3 — lead
+
+- Phone front door: address and LinkedIn share a row (copy button from `sm`
+  up; a phone has a mail client).
+- "7 regions" everywhere a number is scanned; two padding clauses cut.
+- Resume drafts: citizenship in the header, freelance trimmed to two bullets.
+- **The chat, probed on the Vercel preview** (no key in the sandbox, but the
+  preview has one). The delivery-ops answer is accurate and cited. Two
+  problems found and fixed:
+  - The fit chip had been renamed to name both role families, so the model
+    called `roleFit` twice in one step, hit the 600-token ceiling mid-JSON and
+    showed nothing. The chip names one role again, and the prompt allows one
+    assessment per answer.
+  - "Give me the short version" came back as one generic sentence that
+    blended the two Nokia jobs, inherited from the canonical resume summary.
+    The prompt now says what an overview carries and keeps the jobs apart.
