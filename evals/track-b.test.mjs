@@ -277,7 +277,7 @@ describe("#20 — plain-language prose", () => {
     // number. The explainer stays, below the outcomes. Dell keeps it first —
     // the caveats it carries are the point of that page.
     for (const [slug, results] of [
-      ["nokia", "### At a glance"],
+      ["nokia", "### What changed"],
       ["adarle20", "### At a glance"],
     ]) {
       const mdx = read(`content/${slug}.mdx`);
@@ -356,11 +356,17 @@ describe("the case studies make no claim the record lacks", () => {
     adarle20: ["content/knowledge/projects-adarle20.md", "content/knowledge/resume.md"],
   };
 
-  /** Paragraphs and list items outside the plain-language section; headings excluded. */
+  /**
+   * Paragraphs and list items outside the plain-language section; headings
+   * excluded. JSX tags (the Nokia outcome strip) are stripped to their visible
+   * text, so the strip's figures are checked like any other paragraph and its
+   * class names aren't mistaken for claims.
+   */
   function claims(mdx) {
     const plain = plainTerms(mdx) ?? "";
     return mdx
       .replace(plain, "")
+      .replace(/<[^>]+>/g, " ")
       .split(/\n\s*\n/)
       .flatMap((block) => (block.trimStart().startsWith("- ") ? block.split(/\n(?=- )/) : [block]))
       .map((s) => s.replace(/\s+/g, " ").trim())

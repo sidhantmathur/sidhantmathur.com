@@ -5,7 +5,8 @@ import CaseStudy from "@/content/nokia.mdx";
 export const metadata: Metadata = {
   alternates: { canonical: "/projects/nokia" },
   title: "Reporting tools at Nokia",
-  description: "Internal tools for a global sales organization.",
+  description:
+    "I eliminated a manual quarter-end reporting process and moved sales reporting for 150+ users onto a data model I own.",
 };
 
 export default function NokiaPage() {
@@ -13,7 +14,7 @@ export default function NokiaPage() {
     <CaseStudyLayout
       slug="nokia"
       title="Reporting tools at Nokia"
-      subtitle="Internal tools for a global sales organization."
+      subtitle="I eliminated a manual quarter-end reporting process and moved sales reporting for 150+ users onto a data model I own."
     >
       <CaseStudy />
     </CaseStudyLayout>
