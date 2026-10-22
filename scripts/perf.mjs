@@ -349,7 +349,11 @@ if (!external) {
   console.log("ready");
 }
 
-const browser = await chromium.launch();
+// CHROMIUM_PATH points at a preinstalled browser when the pinned one isn't
+// downloaded, as in a cloud sandbox (/opt/pw-browsers/chromium).
+const browser = await chromium.launch(
+  process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {},
+);
 const results = {};
 
 console.log(`\nprofile: ${PROFILE.name}, ${RUNS} runs per route, median reported`);

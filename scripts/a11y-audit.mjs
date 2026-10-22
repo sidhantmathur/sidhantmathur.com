@@ -151,7 +151,11 @@ if (!external) {
   base = `http://localhost:${started.port}`;
 }
 
-const browser = await chromium.launch();
+// CHROMIUM_PATH points at a preinstalled browser when the pinned one isn't
+// downloaded, as in a cloud sandbox (/opt/pw-browsers/chromium).
+const browser = await chromium.launch(
+  process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {},
+);
 const context = await browser.newContext({
   viewport: mobile ? { width: 390, height: 844 } : { width: 1280, height: 800 },
   isMobile: mobile,
