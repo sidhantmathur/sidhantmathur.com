@@ -8,6 +8,60 @@ gap is small.
 
 This file is the live progress page. Newest round at the bottom.
 
+## Sidhant, start here
+
+The loop ran three rounds of builders and blind critics, plus a fact audit and
+a smoothing pass. The last critic: "further polish buys less than sending the
+link." Everything is on PR #11; merge it and Vercel deploys.
+
+**Scores from the blind critic (Fable), per round**
+
+| Page | Round 1 | Round 2 | Round 3 |
+| --- | --- | --- | --- |
+| Home, desktop | 7 | 7 | 8 |
+| Nokia case study | 7 | 7 | 8 |
+| Resume page | 6 | 6 | 8 |
+| /projects | 6 | 6 | 7 |
+| A Darle 20 | 5 | 7 | 7 |
+| Dell | 4 | 4 | 6 |
+
+Round 0 had no scores; the critic's read of the old homepage was "a guy named
+Sidhant in Toronto, something about revenue ops, wants a job."
+
+**Ready to use today**
+
+- `docs/resume/drafts/resume-revops.pdf` and `resume-delivery-ops.pdf`: one
+  page each, same facts as your resume, tailored to each role family. The
+  README there lists every judgment call; skim it before sending.
+
+**Only you can decide these**
+
+1. **Your canonical resume summary contradicts the site.** The PDF a recruiter
+   downloads says "Looking for a RevOps / GTM systems role" and blends your two
+   Nokia jobs ("150+ users across 7 regions" mixes the Power BI users with the
+   Power App's regions). `docs/resume/drafts/summary-fix.md` has a paste-ready
+   fix. I didn't touch `public/resume.pdf`: it's your document and was built
+   from a file that isn't in the repo.
+2. **The headline changed.** "I learn what the problem needs, then I build the
+   thing." is now "I build and roll out the tools sales and finance teams run
+   on." Your line is quoted in `docs/site-copy.md` if you want it back.
+3. **"No visa sponsorship needed."** Two critics read it as covering US roles
+   too. If you mean Canada, say "Canadian citizen, based in Toronto"; if you
+   mean the US as well (TN status), keep it.
+4. **"What is he not looking for?"** in `content/knowledge/faq.md` is still
+   blank, so the chat says it doesn't know.
+5. **Don't send `docs/resume/Sidhant_Mathur_Resume_GTM.docx`.** It's stale: an
+   old phone number, your personal email, a typo'd domain, and claims the
+   current resume dropped.
+6. **Optional:** hiding the three chat chips until the composer is focused
+   would bring the whole summary above the fold on a laptop. It reverses your
+   2026-10-20 call, so I left it.
+
+Every drafted string is in `docs/copy-ledger.md` under "Gauntlet pass,
+2026-10-22". No fact was invented: an independent auditor checked about 115
+rendered claims against `content/knowledge/`, and the one new fact is yours
+("rev ops or delivery ops").
+
 ## Goal
 
 Make the site irresistible to a hiring manager screening for **revenue
@@ -144,3 +198,20 @@ clauses; citizenship stranded under the resume drafts' skills.
   - "Give me the short version" came back as one generic sentence that
     blended the two Nokia jobs, inherited from the canonical resume summary.
     The prompt now says what an overview carries and keeps the jobs apart.
+
+### Round 3 critique and smoothing pass
+
+Fable, blind: home 8, Nokia 8, resume 8, /projects 7, A Darle 20 7, Dell 6.
+"Is this site now at a level where further polish has small returns? Yes."
+
+A fresh smoothing reader found ten places where separately improved pages
+disagreed (the 150+ caption, date formats, a stale "for sales teams", two
+sentences implying more than the record) and a real chat bug: the corpus said
+"seven regions" while every answer says "7", so the citation checker marked
+correct answers miscited. All fixed in one commit, along with the critic's
+"how I work" row and the $1.2M strip cell.
+
+Also verified on the preview: the pasted-posting flow on a delivery ops
+analyst posting. It leads with matches, marks the closest-fit rows "partial"
+with honest limits, and names the real gaps (PSA tools, project margin,
+backlog).
