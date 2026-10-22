@@ -34,7 +34,7 @@ export const PROJECTS: Record<ProjectSlug, Project> = {
     index: "02",
     title: "A Darle 20",
     description:
-      "A live marketplace for tabletop game sessions in Latin America, which I built as its only developer and run as co-founder. Four months after launch: 1,400+ registered users, 127 hosts and 2,100+ bookings. I shipped bookings, payments, chat and refunds with an AI-agent-heavy development workflow.",
+      "A live marketplace for tabletop game sessions in Latin America, which I built as its only developer and run as co-founder. Four months after launch: 1,400+ registered users, 127 hosts and 2,100+ bookings. I shipped bookings, payments, chat and refunds, with AI agents in Claude Code writing most of the code.",
     role: "Co-founder and CTO",
     stack: ["TypeScript", "Next.js", "Supabase", "Stripe Connect"],
     status: "Live at adarle20.com",
