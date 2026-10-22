@@ -253,7 +253,7 @@ const rowSchema = z.array(
       requirement: z
         .string()
         .describe(
-          "The requirement in the POSTING's words, copied from the extraction step. When no posting was pasted, a requirement the named role genuinely implies.",
+          "The requirement in the POSTING's words, copied from the extraction step. When no posting was pasted, a short requirement the named role implies, phrased as a posting would list it (e.g. 'Own sales reporting and analytics'), never as a sentence about the role.",
         ),
       verdict: z
         .string()
