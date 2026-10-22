@@ -423,12 +423,33 @@ function sentencesOf(block: string): string[] {
   if (lines.length >= 2 && lines[0]!.includes("|") && TABLE_DELIMITER.test(lines[1]!)) {
     return lines.slice(2).map(rowSentence).filter(Boolean);
   }
-  return block
+  const pieces = block
     .split("\n")
     .flatMap((line) => line.split(/(?<=[.!?])\s+(?=[A-Z[])/))
     .map((s) => s.trim())
     .filter(Boolean);
+  // The split above breaks before any bracket, which is right for a sentence
+  // that opens with a markdown link and wrong for a citation: the prompt puts
+  // the marker after the full stop ("…7 regions. [resume:nokia]"), so a
+  // marker that opens a piece belongs to the piece before it. Left where the
+  // split put it, every cited sentence after the first was checked against its
+  // predecessor's chunk.
+  const sentences: string[] = [];
+  for (const piece of pieces) {
+    const lead = sentences.length ? LEADING_MARKERS.exec(piece) : null;
+    if (!lead) {
+      sentences.push(piece);
+      continue;
+    }
+    sentences[sentences.length - 1] += ` ${lead[0].trim()}`;
+    const rest = piece.slice(lead[0].length).trim();
+    if (rest) sentences.push(rest);
+  }
+  return sentences;
 }
+
+/** One or more citation markers at the very start of a piece. */
+const LEADING_MARKERS = new RegExp(String.raw`^(?:\s*${MARKER.source})+`);
 
 // --- The check ------------------------------------------------------------
 

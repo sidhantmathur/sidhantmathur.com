@@ -263,6 +263,36 @@ describe("the downgrade path", () => {
     assert.ok(result.claims.every((c) => c.verdict === "verified"));
   });
 
+  test("a marker after the full stop belongs to the sentence before it", () => {
+    // The prompt's own example puts the marker after the period ("…across 7
+    // regions. [resume:nokia]"). Split before the bracket, each marker opened
+    // the NEXT sentence, so in a paragraph of cited sentences every one after
+    // the first was checked against its predecessor's chunk. On 2026-10-22 the
+    // "short version" chip was marked miscited on five runs out of five that
+    // way: a correctly cited A Darle 20 sentence, read against resume:nokia.
+    const result = check(
+      "He built a Power App used by 80+ stakeholders. [resume:nokia] " +
+        "It has 1,400+ registered users and 127 hosts. [adarle20:where-it-stands]",
+    );
+    assert.deepEqual(
+      result.claims.map((c) => c.ids),
+      [["resume:nokia"], ["adarle20:where-it-stands"]],
+    );
+    assert.ok(result.claims.every((c) => c.verdict === "verified"));
+  });
+
+  test("two markers after one full stop both stay with that sentence", () => {
+    const result = check(
+      "He works at Nokia, and it has 127 hosts. [resume:nokia] [adarle20:where-it-stands] " +
+        "He built a Power App used by 80+ stakeholders. [resume:nokia]",
+    );
+    assert.deepEqual(
+      result.claims.map((c) => c.ids),
+      [["resume:nokia", "adarle20:where-it-stands"], ["resume:nokia"]],
+    );
+    assert.ok(result.claims.every((c) => c.verdict === "verified"));
+  });
+
   test("two chunks are checked as one haystack when both are cited", () => {
     const result = check(
       "He works at Nokia, and it has 127 hosts. [resume:nokia] [adarle20:where-it-stands]",
