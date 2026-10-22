@@ -92,3 +92,30 @@ lead before any critic saw them.
 | Metadata and chat | Title, description, llms.txt and share card name both role families. The system prompt gains "Making his case", mapping his record to delivery ops and naming the gaps only when a posting asks. |
 
 All green: build, lint, 497 static tests, marker check.
+
+### Round 1 critique — Fable, blind, plus an independent fact audit
+
+Scores: home 7, home mobile 7, Nokia 7, share card 7, /projects 6, resume 6,
+A Darle 20 5, Dell 4. Top gaps: delivery ops invisible above the fold; A Darle
+20 twice as long as it earns; chat dock eating 18% of a laptop viewport; resume
+summary contradicts the homepage and blends two roles; Dell apologises for its
+own number.
+
+The fact audit checked ~115 rendered claims: every number and date held; scope
+didn't. "The systems" for one app and one migration, "teams run on" for tools
+he built, the funnel credited with the pricing decision, "first four months"
+when building began before launch, a page title implying a delivery-ops job.
+All fixed the same hour.
+
+### Round 2 — wave 2 builders
+
+| Lane | What changed |
+| --- | --- |
+| Front door (lead) | The workforce row (headcount forecasting for 3,000–4,000 people, $1.2M identified) now reaches the first viewport at 1280×800: full-width summary, two trimmed rows, a shorter dock, no duplicate "Toronto, ON" in the header, no line ending on "AI-". |
+| /projects and footer (lead) | The 2018 internship is a quiet link, not a third peer. The AI claim is concrete. Doc pages name both role families in the contact line. |
+| Nokia and Dell | Nokia strip gains "3,000–4,000" as a 2×2; "Headcount and forecasting, 2022–2024" sits right after "What changed"; the unbacked LLM/Python line is cut. Dell's caveat is one clause. |
+| A Darle 20 | 28% shorter. The feature grid (decided item #19) is one line per area below the screenshot; pricing test and stack are one sentence each. |
+| Resume drafts | `docs/resume/drafts/`: one-page RevOps and delivery ops resumes (.md, .docx, .pdf) built from one source so formats can't drift, plus a paste-ready fix for the canonical summary's blended numbers. Not deployed; for Sidhant to send. |
+
+Checks: build, lint, 497 static tests, marker check, a11y audit (0 problems),
+pre-hydration load check (13/13).
