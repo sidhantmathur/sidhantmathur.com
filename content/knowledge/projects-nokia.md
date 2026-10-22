@@ -13,7 +13,7 @@ lived in Salesforce Analytics, which the organization was moving away from.
 ## What he built
 
 He built a self-serve Power App for quarterly executive reporting, now used by
-80+ stakeholders across seven regions. It replaced the manual collection
+80+ stakeholders across 7 regions. It replaced the manual collection
 process entirely. He also owned the migration of all sales reporting from
 Salesforce Analytics to Power BI for 150+ users: data modeling, transformation
 logic in SQL and DAX, and the global rollout.

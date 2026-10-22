@@ -10,7 +10,7 @@ import "./globals.css";
 // by 80+ stakeholders across 7 regions, that replaced a manual quarter-end
 // process. The work leads; the tool name stays on the case study.
 const DESCRIPTION =
-  "Sales operations at Nokia, open to RevOps and delivery operations roles. Replaced a manual quarter-end process with an app 80+ stakeholders in 7 regions use.";
+  "Sales operations at Nokia, open to RevOps and delivery ops roles. Replaced a manual quarter-end process with an app 80+ stakeholders in 7 regions use.";
 
 /** The homepage's tab, search result and share-card title. */
 const HOME_TITLE = `${SITE_NAME} — Sales operations, open to RevOps and delivery ops`;

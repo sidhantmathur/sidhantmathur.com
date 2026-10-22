@@ -60,7 +60,7 @@ export const ADARLE_MEDIA: MediaSlot[] = [
     kind: "screen recording",
     title: "Booking a seat, end to end",
     brief:
-      "One unbroken take from the listing page through checkout to the confirmation — the flow described under “what I built”, without cuts. Use a test account; no real player's name or email on screen.",
+      "One unbroken take from the listing page through checkout to the confirmation — the flow described under “From booking to payout”, without cuts. Use a test account; no real player's name or email on screen.",
     aspect: "16:9",
     aspectClass: "aspect-video",
     width: "column",
@@ -70,7 +70,7 @@ export const ADARLE_MEDIA: MediaSlot[] = [
     kind: "screenshot",
     title: "Paying in cash",
     brief:
-      "The OXXO path at the point where a player is handed a payment reference to take to a convenience store. This is the part of the product nobody outside Mexico has seen, and it is the reason the payments section on this page is longer than the rest.",
+      "The OXXO path at the point where a player is handed a payment reference to take to a convenience store. This is the part of the product nobody outside Mexico has seen.",
     aspect: "9:16",
     aspectClass: "aspect-[9/16]",
     width: "narrow",

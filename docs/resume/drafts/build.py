@@ -203,7 +203,7 @@ VARIANTS = {
                         "dates": "Aug 2025 – Present · launched Mar 2026",
                         "bullets": [
                             "Built the technology behind a flagship 251-player event at a 19,000-attendee "
-                            "convention, rated 4.96/5 by attendees; my co-founder ran the event on the ground.",
+                            "convention, rated 4.96/5 by attendees; a co-founder ran the event on the ground.",
                             "Integrated Stripe Connect for host payouts, platform fees, and OXXO cash "
                             "payments, designing payment flows for a Mexican customer base with low card "
                             "penetration, with automated refunds and transactional email.",

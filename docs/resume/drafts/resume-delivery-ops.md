@@ -26,7 +26,7 @@ linkedin.com/in/sidhantmathur · github.com/sidhantmathur · sidhantmathur.com
 
 **Co-founder & CTO (solo developer) · Aug 2025 – Present · launched Mar 2026**
 
-- Built the technology behind a flagship 251-player event at a 19,000-attendee convention, rated 4.96/5 by attendees; my co-founder ran the event on the ground.
+- Built the technology behind a flagship 251-player event at a 19,000-attendee convention, rated 4.96/5 by attendees; a co-founder ran the event on the ground.
 - Integrated Stripe Connect for host payouts, platform fees, and OXXO cash payments, designing payment flows for a Mexican customer base with low card penetration, with automated refunds and transactional email.
 - Instrumented the funnel end to end (bookings, conversion, cancellations, refunds, host activation) and use the data to steer product and monetization decisions.
 - Grew to 1,400+ registered users, 127 hosts, and 2,100+ bookings in the first four months after launch, with 200–400 unique visitors daily.

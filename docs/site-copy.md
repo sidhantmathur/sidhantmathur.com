@@ -12,8 +12,7 @@ Homepage title (tab, search result, share card): Sidhant Mathur — Sales
 operations, open to RevOps and delivery ops
 [Gauntlet audit, 2026-10-22: was "— RevOps and delivery operations", which
 reads as a discipline he has held. None of his titles is delivery operations.]
-Meta description: Sales operations at Nokia, open to RevOps and delivery
-operations roles. Replaced a manual quarter-end process with an app 80+
+Meta description: Sales operations at Nokia, open to RevOps and delivery ops roles. Replaced a manual quarter-end process with an app 80+
 stakeholders in 7 regions use.
 
 [DRAFT 2026-10-22, gauntlet pass. Sidhant now targets revenue operations and
@@ -214,11 +213,11 @@ and a Salesforce Analytics to Power BI migration for 150+ users."]
 
 | Row label | Value | From |
 | --- | --- | --- |
-| now | Sales operations at Nokia since Jun 2024. I build and own reporting tools for global sales and finance, from requirements to rollout and support. | `resume.md` |
-| shipped | A self-serve Power App for 80+ stakeholders in 7 regions, replacing manual quarter-end collection that took a finance analyst's entire workday, every day of close. | `resume.md` |
+| now | Sales operations at Nokia since Jun 2024, building and owning reporting tools for global sales and finance. | `resume.md` |
+| shipped | A self-serve quarterly reporting app for 80+ stakeholders in 7 regions, replacing manual quarter-end collection that took a finance analyst's entire workday, every day of close. | `resume.md` |
 | before that | Workforce management at Nokia, Oct 2022 – Jun 2024: headcount reporting and forecasting for a 3,000–4,000-person organization. I identified $1.2M in real-estate cost savings in lab and facility utilization data. | `resume.md` |
 | also | Co-founder and CTO of A Darle 20, a live two-sided marketplace I architected and shipped solo, payments, refunds and funnel instrumentation included. | `resume.md` |
-| how I build | At A Darle 20, AI agents in Claude Code write most of the code. I own architecture, code review and release. | `projects-adarle20.md` |
+| how I work | At Nokia I was the whole team on both tools: requirements, build, executive demos, global rollout and support across time zones. At A Darle 20, AI agents in Claude Code write most of the code; I own architecture, code review and release. | `resume.md`, `projects-nokia.md`, `projects-adarle20.md` |
 | looking for | A revenue operations or delivery operations role at an AI-forward company. | `faq.md` |
 | where | Toronto, ON. Canadian citizen, no visa sponsorship needed. | `faq.md` |
 
@@ -278,7 +277,7 @@ Role: Sales operations specialist
 Stack: Power Apps, Power BI, SQL, DAX, Salesforce
 Status: In production since 2024
 Link: Read the case study
-Stat column (display numeral): 150+ / users across seven regions
+Stat column (display numeral): 150+ / users on the sales reporting I moved from Salesforce Analytics to Power BI
 
 **Card 3 — Sales prediction model at Dell**
 A propensity model that surfaced about 20,000 qualified cross-sell accounts for
@@ -306,8 +305,7 @@ lead with the outcome in operating terms; same facts, reordered. Dell's status
 was "2018" and now reads as the internship it was (resume: May–Aug 2018). The
 `/projects` intro was meta (it pointed at the chatbot) and now says what the
 three are evidence of:
-"Three things I built for sales and revenue teams: Nokia's quarter-end and sales reporting, a live marketplace I built as its
-only developer, and the Dell sales model where this work started."]
+"Three things I built: Nokia's quarter-end and sales reporting, A Darle 20, a live marketplace where I'm the only developer, and the Dell sales model where this work started."]
 
 ### Chat panel (homepage teaser)
 
@@ -450,8 +448,7 @@ OXXO, a player with no card pays at a convenience store.
 ### Running it on its numbers
 
 I instrumented the funnel end to end, on both sides of the marketplace:
-bookings, conversion, cancellations, refunds and host activation. Those numbers
-steer product and monetization decisions. On unit economics, we also tested a commission model against direct event ticket sales.
+bookings, conversion, cancellations, refunds and host activation. Those numbers steer product and monetization decisions.
 
 ### How I build it
 
@@ -576,12 +573,11 @@ Outcome strip (top of the page, four cells, then a role line):
 
 - **80+** — stakeholders in 7 regions on self-serve quarterly reporting
 - **One workday** — of manual collection by a finance analyst, eliminated every day of quarter-end close
-- **150+** — users on sales reporting I rebuilt and moved to a new platform
-- **3,000–4,000** — people whose headcount reporting and forecasting I owned, 2022–2024
+- **150+** — users on the sales reporting I moved from Salesforce Analytics to Power BI
+- **$1.2M** — in real-estate cost savings identified from lab and facility utilization data, 2022–2024
 
 Role line: Nokia, Toronto. Sales operations specialist (internal tools and
-automation), June 2024 to present. Before that, workforce management
-specialist, October 2022 to June 2024.
+automation), Jun 2024 – present. Before that, workforce management specialist, Oct 2022 – Jun 2024.
 
 ### What changed
 
@@ -600,14 +596,14 @@ so confidentiality limits the screenshots and specifics I can share.
 
 ### Headcount and forecasting, 2022–2024
 
-I owned headcount reporting and forecasting for an organization of 3,000–4,000 people. I also analyzed lab and facility utilization data to see whether the space it pays for is used, and identified $1.2M in real-estate cost savings.
+I owned headcount reporting and forecasting for an organization of 3,000–4,000 people. I also identified $1.2M in real-estate cost savings by analyzing lab and facility utilization data.
 
 ### How I ran it
 
 For the quarterly reporting tool and the sales reporting migration, I was the
 whole team, from the first request to support after launch.
 
-- **Requirements** — sales and finance leadership came with vague requests,
+- **Requirements** — sales and finance leadership came with open-ended requests,
   and I turned each one into a scoped plan.
 - **Build** — the Power App, and the Power BI data model with its SQL and DAX
   transformation logic.
@@ -624,9 +620,7 @@ reconcile them by hand before leadership can trust the total. A self-serve tool
 moves that work to the source: people put their numbers in once, in one place,
 and nobody has to chase them.
 
-A reporting migration is the same problem one level down. Every report carries
-rules, like what counts as a sale or which region an account belongs to. Rebuilt
-on the new system, those rules are the data model.
+A reporting migration is the same problem one level down. Every report carries logic about what its numbers mean, and rebuilt on the new system, that logic is the data model and its SQL and DAX.
 
 ---
 
@@ -714,7 +708,7 @@ Then: Download resume (PDF) · hello@sidhantmathur.com [copy] · LinkedIn ↗
 
 Case studies end instead on:
 Label: Contact
-Body: If you're hiring for this kind of work, email me. The resume has the rest.
+Body: If you're hiring for revenue operations or delivery operations, email me. The resume has the rest.
 [Gauntlet pass 2026-10-22: was "If this is the kind of work you're hiring for,
 the resume has the rest." Tightened, and it now names the one action.]
 Then the same three controls, and a bordered link: "Next case study" ·

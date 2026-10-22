@@ -36,13 +36,13 @@ export const RECRUITER_TLDR: TldrRow[] = [
   {
     label: "now",
     value:
-      "Sales operations at Nokia since Jun 2024. I build and own reporting tools for global sales and finance, from requirements to rollout and support.",
+      "Sales operations at Nokia since Jun 2024, building and owning reporting tools for global sales and finance.",
     source: "content/knowledge/resume.md",
   },
   {
     label: "shipped",
     value:
-      "A self-serve Power App for 80+ stakeholders in 7 regions, replacing manual quarter-end collection that took a finance analyst's entire workday, every day of close.",
+      "A self-serve quarterly reporting app for 80+ stakeholders in 7 regions, replacing manual quarter-end collection that took a finance analyst's entire workday, every day of close.",
     source: "content/knowledge/resume.md",
   },
   {
@@ -58,10 +58,10 @@ export const RECRUITER_TLDR: TldrRow[] = [
     source: "content/knowledge/resume.md",
   },
   {
-    label: "how I build",
+    label: "how I work",
     value:
-      "At A Darle 20, AI agents in Claude Code write most of the code. I own architecture, code review and release.",
-    source: "content/knowledge/projects-adarle20.md",
+      "At Nokia I was the whole team on both tools: requirements, build, executive demos, global rollout and support across time zones. At A Darle 20, AI agents in Claude Code write most of the code; I own architecture, code review and release.",
+    source: "content/knowledge/resume.md",
   },
   {
     label: "looking for",
