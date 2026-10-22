@@ -67,3 +67,28 @@ The site advocates; it does not imply depth he hasn't claimed.
 - Look at it: `CHROMIUM_PATH=/opt/pw-browsers/chromium npm run shot`.
 
 ## Rounds
+
+### Round 0 — baseline critique
+
+A blind critic (Fable) read the live site as a RevOps / delivery ops hiring
+manager. The five-second read: "a guy named Sidhant in Toronto, something about
+revenue ops, wants a job." Missed: employer, what he ran, any number. Top gaps:
+the H1 was a motto, not a fact; the role line was small type beside the photo;
+five actions competed in the hero; the summary sat on glyph noise; inner pages
+said the same fact four times; inner H1s were mono at 40px and read as terminal
+output.
+
+### Round 1 — wave 1 builders
+
+Five lanes in parallel, each in its own worktree, merged and fact-checked by the
+lead before any critic saw them.
+
+| Lane | What changed |
+| --- | --- |
+| Front door (lead) | H1 now names the job: "I build and roll out the systems sales and finance teams run on." Role line is title, employer, city. Subline names both role families. One row of actions. First-person summary with a new "before that" row for the workforce role (the delivery-ops evidence). Chips ask what a screener asks. Reading column of the backdrop near-solid. |
+| Nokia and Dell | Outcome strip (80+ · one workday · 150+). Four repeating sections became "What changed" plus a five-stage "How I ran it". The workforce role got its own section. Dell is short and honest. |
+| A Darle 20 | Opens with "At a glance". The money flow, the pricing test and running on funnel numbers each get a section. Lead cut two overclaims ("quote to cash"; a sentence implying the audit workflow predated launch). |
+| Typography and index | Inner-page titles and section heads in Geist Sans. /projects intro and cards lead with outcomes. Resume screenshot no longer cropped. |
+| Metadata and chat | Title, description, llms.txt and share card name both role families. The system prompt gains "Making his case", mapping his record to delivery ops and naming the gaps only when a posting asks. |
+
+All green: build, lint, 497 static tests, marker check.
