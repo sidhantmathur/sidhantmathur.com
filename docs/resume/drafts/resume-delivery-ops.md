@@ -5,7 +5,7 @@ linkedin.com/in/sidhantmathur · github.com/sidhantmathur · sidhantmathur.com
 
 ## Summary
 
-3+ years in operations at Nokia: owned headcount reporting and forecasting for a 3,000–4,000-person organization, then moved to sales operations, taking internal tools from vague request to global rollout and support across time zones. Co-founder & CTO of A Darle 20, a live marketplace: built its payment and refund flows, instrumented its funnel, and built the technology behind a 251-player live event. Looking for a delivery or deployment operations role at an AI-forward company.
+3+ years in operations at Nokia: owned headcount reporting and forecasting for a 3,000–4,000-person organization, then moved to sales operations, taking internal tools from vague request to global rollout and support across time zones. Co-founder & CTO of A Darle 20, a live marketplace: built its payment and refund flows, instrumented its funnel, and built the technology behind a 251-player live event. Looking for a delivery operations role at an AI-forward company.
 
 ## Experience
 

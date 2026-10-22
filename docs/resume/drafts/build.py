@@ -84,8 +84,8 @@ VARIANTS = {
         "label": "RevOps / GTM systems / sales ops",
         "summary": (
             "Sales operations specialist at Nokia. Builds the sales reporting, data models, and "
-            "internal tools global sales and finance teams run on, and owns each one through rollout, "
-            "adoption, and support. Co-founder & CTO of A Darle 20, a live two-sided marketplace "
+            "internal tools for global sales and finance teams, and owns each one through rollout "
+            "and support. Co-founder & CTO of A Darle 20, a live two-sided marketplace "
             "(1,400+ users, 2,100+ bookings) built solo with an AI-agent-heavy workflow in Claude Code. "
             "Looking for a RevOps or GTM systems role at an AI-forward company."
         ),
@@ -163,7 +163,7 @@ VARIANTS = {
             "from vague request to global rollout and support across time zones. Co-founder & CTO of A Darle 20, a live marketplace: built its payment "
             "and refund flows, instrumented its funnel, and built the technology behind a 251-player "
             "live event. "
-            "Looking for a delivery or deployment operations role at an AI-forward company."
+            "Looking for a delivery operations role at an AI-forward company."
         ),
         "experience": [
             {

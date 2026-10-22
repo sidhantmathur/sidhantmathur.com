@@ -56,7 +56,7 @@ and checked: each is one page, with no orphaned words and no overflow.
    - It now leads with his title ("Sales operations specialist at Nokia") instead
      of "AI-native revenue operations builder".
    - It says what he builds (sales reporting, data models, internal tools) and that
-     he owns each one through rollout, adoption and support.
+     he owns each one through rollout and support.
    - It drops the blended "3+ years … (150+ users across 7 regions)" line.
    - It keeps A Darle 20 with its two numbers and the Claude Code workflow.
    - It ends "RevOps or GTM systems role".
@@ -88,7 +88,7 @@ and checked: each is one page, with no orphaned words and no overflow.
      rollout and support across time zones.
    - A Darle 20 is framed as operations: payment and refund flows, funnel
      instrumentation, and the technology behind a 251-player live event.
-   - It ends "delivery or deployment operations role".
+   - It ends "delivery operations role".
 2. **Nokia sales ops bullets reordered.**
    - The full-lifecycle bullet (requirements → executive demos → global rollout →
      support across time zones) now comes first.
