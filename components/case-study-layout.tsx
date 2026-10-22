@@ -16,7 +16,7 @@ type CaseStudyLayoutProps = {
 // prose is Sidhant's copy and is edited on its own schedule.
 export const CASE_END_LABEL = "Contact";
 export const CASE_END_LINE =
-  "If this is the kind of work you're hiring for, the resume has the rest.";
+  "If you're hiring for this kind of work, email me. The resume has the rest.";
 export const NEXT_CASE_LABEL = "Next case study";
 
 /** The next case study in the site's order, wrapping round. */
@@ -41,7 +41,9 @@ function CaseStudyEnd({ slug }: { slug: ProjectSlug }) {
         className="mt-8 block max-w-[62ch] border border-line-strong p-4 no-underline transition-colors hover:border-accent"
       >
         <span className="t-label block text-text-faint">{NEXT_CASE_LABEL}</span>
-        <span className="t-head mt-1 block font-medium text-text">{next.title} →</span>
+        <span className="t-head mt-1 block font-medium text-text [font-family:var(--font-geist-sans)]">
+          {next.title} →
+        </span>
         <span className="t-meta mt-1 block text-text-soft">{next.status}</span>
       </Link>
     </section>
@@ -53,7 +55,9 @@ export function CaseStudyLayout({ slug, title, subtitle, children }: CaseStudyLa
     <DocPage footer={<CaseStudyEnd slug={slug} />}>
       <h1 className="t-title font-medium text-text">{title}</h1>
       <p className="t-body mt-3 max-w-[62ch] text-text-soft">{subtitle}</p>
-      <div className="mt-10">{children}</div>
+      {/* `case-body` lets app/globals.css size the MDX section heads on the
+          page without touching how the same MDX reads in the shell's panel. */}
+      <div className="case-body mt-10">{children}</div>
     </DocPage>
   );
 }

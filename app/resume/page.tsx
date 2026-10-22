@@ -91,7 +91,7 @@ export default function ResumePage() {
             <div className="mt-4">
               <h3 className="t-head font-medium text-text">
                 Nokia — Toronto, ON{" "}
-                <Link href="/projects/nokia" className="-my-2 ml-1 py-2 t-meta font-normal text-text-faint no-underline hover:text-accent">
+                <Link href="/projects/nokia" className="-my-2 ml-1 py-2 font-mono t-meta font-normal text-text-faint no-underline hover:text-accent">
                   case study →
                 </Link>
               </h3>
@@ -136,7 +136,7 @@ export default function ResumePage() {
             <div className="mt-10">
               <h3 className="t-head font-medium text-text">
                 A Darle 20 (&quot;Let&apos;s Go 20&quot;) — adarle20.com{" "}
-                <Link href="/projects/adarle20" className="-my-2 ml-1 py-2 t-meta font-normal text-text-faint no-underline hover:text-accent">
+                <Link href="/projects/adarle20" className="-my-2 ml-1 py-2 font-mono t-meta font-normal text-text-faint no-underline hover:text-accent">
                   case study →
                 </Link>
               </h3>
@@ -176,13 +176,17 @@ export default function ResumePage() {
               </ul>
 
               <figure className="mt-6 max-w-[72ch]">
-                <div className="relative aspect-[16/10] border border-line">
+                {/* At the screenshot's own proportions (1520×690). A 16:10
+                    frame with object-cover cropped both sides, cutting the
+                    first listing's title mid-word. */}
+                <div className="border border-line">
                   <Image
                     src="/images/adarle20-listings.png"
                     alt="A Darle 20 session listings, showing hosted games available to book"
-                    fill
+                    width={1520}
+                    height={690}
                     sizes="(max-width: 768px) 100vw, 72ch"
-                    className="object-cover object-top"
+                    className="block h-auto w-full"
                   />
                 </div>
                 <figcaption className="t-meta mt-2 max-w-[72ch] text-text-faint">
