@@ -18,8 +18,8 @@ Two friends and I decided to build the marketplace ourselves.
 
 ### From booking to payout
 
-I own the marketplace's quote to cash: the listed price, the payment, the
-platform fee, the host's payout, and the refund when a booking is cancelled.
+I own the money side end to end: the listed price, the payment, the platform
+fee, the host's payout, and the refund when a booking is cancelled.
 
 Payments run on Stripe Connect, which handles host payouts and the platform
 fee. Refunds are automated, and transactional email keeps host and player
@@ -47,8 +47,7 @@ AI agents in Claude Code write most of the code. I own the architecture and
 the product decisions, review the code, and handle every release.
 
 I also set up a multi-agent workflow that reviews, refactors and
-regression-tests the production codebase on its own. That workflow is how one
-developer built, launched and keeps running the whole marketplace.
+regression-tests the production codebase on its own.
 
 ### What it runs on
 

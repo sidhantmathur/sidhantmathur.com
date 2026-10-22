@@ -359,7 +359,7 @@ shows the old name.]
 operations reader. The outcome comes first, in an "At a glance" list modelled on
 the Nokia page. "Where it stands" and "Summary" are cut: their facts now live
 once, in the list, and "Summary" restated the intro. The payments section is
-framed as the marketplace's quote to cash ("From booking to payout"); the
+framed as the money side end to end ("From booking to payout"); the
 commission test is named as a pricing experiment without inventing its result;
 the funnel section says the business is run on those numbers; the AI workflow
 has its own short section. The feature list left "What I built", because the
@@ -390,8 +390,8 @@ Two friends and I decided to build the marketplace ourselves.
 
 ### From booking to payout
 
-I own the marketplace's quote to cash: the listed price, the payment, the
-platform fee, the host's payout, and the refund when a booking is cancelled.
+I own the money side end to end: the listed price, the payment, the platform
+fee, the host's payout, and the refund when a booking is cancelled.
 
 Payments run on Stripe Connect, which handles host payouts and the platform
 fee. Refunds are automated, and transactional email keeps host and player
@@ -419,8 +419,7 @@ AI agents in Claude Code write most of the code. I own the architecture and
 the product decisions, review the code, and handle every release.
 
 I also set up a multi-agent workflow that reviews, refactors and
-regression-tests the production codebase on its own. That workflow is how one
-developer built, launched and keeps running the whole marketplace.
+regression-tests the production codebase on its own.
 
 ### What it runs on
 
