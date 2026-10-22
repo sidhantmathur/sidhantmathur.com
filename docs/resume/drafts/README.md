@@ -175,3 +175,15 @@ and checked: each is one page, with no orphaned words and no overflow.
 made from a newer file that isn't in the repo. `docs/launch-checklist.md` still says
 to export the PDF from this `.docx`. **Don't send that `.docx` to anyone.** Use the
 drafts here or `public/resume.pdf`.
+
+## Round 3 changes (2026-10-22)
+
+From a blind review of both PDFs:
+
+- "Canadian citizen" moved from a stranded line under the skills into the
+  header, beside the city, where a screener checks work authorization first.
+- The freelance block keeps two bullets; "Resolved a client security breach…"
+  is cut as the weakest line on the page. It is still on the canonical resume.
+- The RevOps summary no longer says "adoption" (nothing in the record measures
+  it) or "teams run on"; the delivery summary names "a delivery operations
+  role" (your words), not "deployment operations".

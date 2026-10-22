@@ -29,7 +29,7 @@ HERE = Path(__file__).resolve().parent
 HEADER = {
     "name": "Sidhant Mathur",
     "lines": [
-        "Toronto, ON | 613-795-9684 | hello@sidhantmathur.com",
+        "Toronto, ON | Canadian citizen | 613-795-9684 | hello@sidhantmathur.com",
         "linkedin.com/in/sidhantmathur | github.com/sidhantmathur | sidhantmathur.com",
     ],
 }
@@ -39,7 +39,9 @@ EDUCATION = [
     ("Software Engineering Immersive — General Assembly, Toronto", "2020 – 2021"),
 ]
 
-OTHER = "Canadian citizen"
+# Citizenship rides in the header, where a screener checks work authorization
+# first; a line of its own under the skills read as stranded.
+OTHER = None
 
 FREELANCE = {
     "org": "Freelance web development & consulting",
@@ -51,7 +53,6 @@ FREELANCE = {
             "bullets": [
                 "Advised a startup client on web-development strategy, saving $100k+ in agency fees.",
                 "Built custom client solutions: an integrated web ordering experience and an affiliate-marketing site.",
-                "Resolved a client security breach and restored their domains from email blacklists.",
             ],
         }
     ],
@@ -248,7 +249,10 @@ def to_markdown(v: dict) -> str:
     out += [f"- {what}, {when}" for what, when in EDUCATION]
     out += ["", "## Technical skills", ""]
     out += [f"- **{k}:** {val}" for k, val in v["skills"]]
-    out += ["", "## Other", "", f"- {OTHER}", ""]
+    if OTHER:
+        out += ["", "## Other", "", f"- {OTHER}", ""]
+    else:
+        out += [""]
     return "\n".join(out)
 
 
@@ -363,9 +367,10 @@ def to_docx(v: dict, path: Path):
         _spacing(p, 0, 1)
         _font(p.add_run(f"{k}: "), bold=True)
         _font(p.add_run(val))
-    p = doc.add_paragraph()
-    _spacing(p, 2, 0)
-    _font(p.add_run(OTHER), bold=True)
+    if OTHER:
+        p = doc.add_paragraph()
+        _spacing(p, 2, 0)
+        _font(p.add_run(OTHER), bold=True)
 
     doc.core_properties.author = "Sidhant Mathur"
     doc.core_properties.title = f"Sidhant Mathur — resume ({v['label']})"

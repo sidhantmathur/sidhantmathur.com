@@ -1,6 +1,6 @@
 # Sidhant Mathur
 
-Toronto, ON · 613-795-9684 · hello@sidhantmathur.com
+Toronto, ON · Canadian citizen · 613-795-9684 · hello@sidhantmathur.com
 linkedin.com/in/sidhantmathur · github.com/sidhantmathur · sidhantmathur.com
 
 ## Summary
@@ -39,7 +39,6 @@ Sales operations specialist at Nokia. Builds the sales reporting, data models, a
 
 - Advised a startup client on web-development strategy, saving $100k+ in agency fees.
 - Built custom client solutions: an integrated web ordering experience and an affiliate-marketing site.
-- Resolved a client security breach and restored their domains from email blacklists.
 
 ### Dell Technologies — Austin, TX
 
@@ -58,7 +57,3 @@ Sales operations specialist at Nokia. Builds the sales reporting, data models, a
 - **Internal tools & automation:** Power Apps / Power Automate, SharePoint, Python automation, ETL & data workflows
 - **AI-assisted development:** Claude Code, Anthropic API, LLM integration & agentic workflows, prompt engineering
 - **Engineering:** TypeScript, React, Next.js, Node.js, PostgreSQL, Supabase, Stripe, REST APIs
-
-## Other
-
-- Canadian citizen
