@@ -548,39 +548,38 @@ model, and that's the part I own.
 ## Case study — Sales prediction at Dell
 
 Title: Sales prediction at Dell
-Subtitle: A propensity model for cross-sell targeting, built as an intern.
+Subtitle: A propensity model that ranked accounts for cross-sell, built during a
+2018 internship.
+
+[Gauntlet pass 2026-10-22 — tightened by Claude. The internship caveat is said
+once, the plain-language section ends on what the model is for (which accounts
+to call first), and the close frames the project as where his revenue, data and
+tooling work started. No new facts: content/knowledge/projects-dell.md and
+resume.md. The body below is content/dell-ml.mdx verbatim. Rewrite in your own
+voice.]
 
 ### In plain terms
 
-[DRAFT 2026-07-27 — written by Claude for Track B (#20). Explanation only; the
-caveats it names are the ones already in the paragraph below it. Rewrite in
-your own voice.]
+Some customers would buy a second product, but nobody knows which ones, so the
+sales team calls everyone or guesses. A propensity model ranks the list. It
+learns from who bought what in the past and scores the customers who look most
+like the ones who already said yes, so sales knows which accounts to call
+first.
 
-[Copy pass 2026-10-20: reworded to read less like AI-generated text. No fact
-changed. See the copy-pass section of docs/copy-ledger.md. The body below is
-content/dell-ml.mdx verbatim. The internship caveat is now said once, here,
-instead of twice.]
-
-Some of a big company's customers would buy a second product, but nobody knows
-which ones, so the sales team calls everyone or guesses. A propensity model
-ranks that list. You show it who bought what in the past, and it scores the
-customers who look most like the ones who already said yes.
-
-I built one of these as an intern at Dell. The model was one piece of a much
-bigger sales process, and the pipeline figure below is an estimate from average
-deal sizes, not money anyone collected.
+The model was one piece of a much bigger sales process, and the pipeline figure
+below is an estimate from average deal sizes, not money anyone collected.
 
 ### The project
 
-During a summer internship in 2018, I built a propensity model (Azure ML) on
-Dell's historical customer database to identify cross-sell targets for a
-high-margin software product. It surfaced about 20,000 qualified accounts
-representing an estimated $129M in pipeline, based on segment-level average
-deal sizes. The model was hosted on Azure so sales and marketing teams could
-get predictions and feed back new training data.
+In a 2018 summer internship at Dell, I built a propensity model in Azure ML on
+Dell's historical customer database to find cross-sell targets for a
+high-margin software product. It surfaced about 20,000 qualified accounts, an
+estimated $129M in pipeline at segment-level average deal sizes. The model was
+hosted on Azure so sales and marketing teams could get predictions and feed back new
+training data.
 
-The internship is where I first got interested in work that combines data,
-revenue and tooling, and I've been doing it since.
+It's where the work I do now started: revenue questions answered with data, and
+delivered as a tool other teams use.
 
 ---
 
