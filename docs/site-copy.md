@@ -463,97 +463,85 @@ docs/copy-ledger.md.]
 ## Case study — Reporting tools at Nokia
 
 Title: Reporting tools at Nokia
-Subtitle: Internal tools for a global sales organization.
+Subtitle: I eliminated a manual quarter-end reporting process and moved sales
+reporting for 150+ users onto a data model I own.
 
-[DRAFT 2026-10-19 — restructured by Claude after the council review as a
-business-outcome page: results first, before and after, how it was run, the
-earlier Nokia role, and the plain-language explainer (#20, drafted 2026-07-27)
-moved below the results. Every number and name is in
-content/knowledge/projects-nokia.md, resume.md or bio.md, and
-evals/track-b.test.mjs checks each paragraph against them. The text below is
-content/nokia.mdx verbatim. Rewrite in your own voice.]
+[Gauntlet pass 2026-10-22 — restructured by Claude. The page said the same fact
+four times ("At a glance", "Before and after", "In plain terms", "Summary").
+Now: an outcome strip, one "What changed" section, "How I ran it" promoted to a
+five-stage delivery method, the workforce management role given its own
+section, and a plain-language section that explains the work instead of
+restating it. "Summary" is cut; its point is carried by "How I ran it". No new
+facts: every number and name is in content/knowledge/projects-nokia.md,
+resume.md or bio.md. The text below is content/nokia.mdx verbatim. Rewrite in
+your own voice.]
 
-[Copy pass 2026-10-20: reworded to read less like AI-generated text. No fact
-changed. See the copy-pass section of docs/copy-ledger.md. The body below is
-re-copied from content/nokia.mdx. "For both tools I was the whole team." was
-reworded and then put back, so it is unchanged.]
+Outcome strip (top of the page, three cells, then a role line):
 
-[Cute pass 2026-10-20: playful wording removed at Sidhant's request. No fact
-changed. "In plain terms" ¶1: "Here that somebody was a finance analyst" is now
-"That fell to a finance analyst". The closing heading "What I'd tell a hiring
-manager" is now "Summary" (the knowledge chunk keeps the old heading, as on A
-Darle 20).]
+- **80+** — stakeholders in seven regions on self-serve quarterly reporting
+- **One workday** — of a finance analyst's time back, every day of quarter-end
+  close
+- **150+** — users on sales reporting I rebuilt and moved to a new platform
 
-### At a glance
+Role line: Sales operations specialist (internal tools and automation), Nokia,
+Toronto. June 2024 to present. Both tools have been in production since 2024.
 
-- **Role** — Sales operations specialist (internal tools and automation) at
-  Nokia, Toronto. June 2024 to present; the tools below have been in production
-  since 2024.
-- **Systems** — Power Apps, Power BI, SQL and DAX. Salesforce Analytics was the
-  system being retired.
-- **Quarterly executive reporting** — a self-serve Power App used by 80+
-  stakeholders across seven regions. It replaced the manual collection process
-  entirely.
-- **Time saved** — one finance analyst's entire workday, every day of
-  quarter-end close.
-- **Sales reporting** — all of it migrated from Salesforce Analytics to Power BI
-  for 150+ users. I owned the data model and the SQL and DAX transformation
-  logic end to end.
+### What changed
 
-### Before and after
+**Quarterly executive reporting.** Leadership needed one picture of the quarter
+from every region, and the inputs arrived by hand, in whatever format each
+region kept them. A finance analyst chased and assembled them. I replaced that
+process with a self-serve Power App the regions report through directly, and
+the manual collection is gone.
 
-**Before.** Quarterly executive reporting ran on manual data collection. Every
-day of quarter-end close, one finance analyst spent their entire workday chasing
-inputs across regions and formats. At the same time, sales reporting lived in
-Salesforce Analytics, which the organization was moving away from.
-
-**After.** The 80+ stakeholders across seven regions report through a
-self-serve Power App, and the manual collection process is gone. Sales
-reporting runs on Power BI for 150+ users, on a data model and transformation
-logic I built and own.
-
-### How I ran it
-
-For both tools I was the whole team.
-
-- **Requirements** — vague requests from sales and finance leadership,
-  translated into scoped requirements.
-- **Build** — the Power App; the Power BI data model and its transformation
-  logic in SQL and DAX.
-- **Rollout** — executive demos, then a global rollout to the stakeholders.
-- **Support** — user support, bug triage and rapid iteration, across time
-  zones.
-
-More recently I've been bringing LLMs and Python into these workflows where
-they help.
+**Sales reporting.** The organization was moving off Salesforce Analytics. I
+migrated all of its sales reporting to Power BI and owned the data model and
+the transformation logic, in SQL and DAX, end to end.
 
 This work is internal to Nokia, so confidentiality limits the screenshots and
 specifics I can share.
 
-### Before this role
+### How I ran it
 
-I joined Nokia in October 2022 as a workforce management specialist, owning
-headcount reporting and forecasting for a 3,000–4,000-person organization. In
-that role I identified $1.2M in real-estate cost savings by analyzing lab and
-facility utilization data.
+For both tools I was the whole team, from the first request to support after
+launch.
+
+- **Requirements** — sales and finance leadership came with vague requests,
+  and I turned each one into a scoped plan.
+- **Build** — the Power App, and the Power BI data model with its SQL and DAX
+  transformation logic.
+- **Executive demos** — I showed each tool to leadership before it went out.
+- **Global rollout** — I rolled both out to stakeholders across regions.
+- **Support** — I handle user support, bug triage and rapid iteration myself,
+  across time zones.
+
+More recently I've been bringing LLMs and Python into these workflows where
+they help.
+
+### Before this: headcount and forecasting
+
+I joined Nokia in October 2022 as a workforce management specialist. Until June
+2024 I owned headcount reporting and forecasting for an organization of
+3,000–4,000 people.
+
+The questions were operating questions: how many people the organization has,
+how many it will have, and whether the space it pays for is being used. On that
+last one, I analyzed lab and facility utilization data and identified $1.2M in
+real-estate cost savings.
 
 ### In plain terms
 
-A large company sells in a lot of places, and every quarter its executives need
-one picture of how that went. Getting to that picture meant asking people across
-the regions to send their numbers in, in whatever shape they kept them, and
-somebody assembling it by hand. That fell to a finance analyst, and it
-took their entire workday, every day of the quarter-end close.
+Most of this job is making sure a number means the same thing to everyone who
+reads it. When each region sends its figures in its own shape, somebody has to
+reconcile them by hand before leadership can trust the total. A self-serve tool
+moves that work to the source: people put their numbers in once, in one place,
+and nobody has to chase them.
 
-So I built something the regions could fill in themselves, got it in front of
-the people who had to use it, and kept it working when they ran into trouble.
-The migration was the same kind of work. The company was moving off one
-reporting system, and every report and every user had to move to the new one.
-
-### Summary
-
-I sit between the business and the tools it runs on. When the tools don't do
-what the team needs, I fix them myself.
+A reporting migration is harder than it sounds. Every report carries rules
+inside it, like what counts as a sale or which region an account belongs to.
+Those rules have to be rebuilt on the new system, and the new numbers have to
+match the old ones before people trust them. The rebuilt rules are the data
+model, and that's the part I own.
 
 ---
 
