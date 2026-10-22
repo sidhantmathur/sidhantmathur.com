@@ -693,8 +693,7 @@ the contact block at the end of the page)
 
 Contact block, at the end of every document page:
 Label: Contact
-Body: I'm open to new roles. Download the resume, or reach me by email or
-LinkedIn.
+Body: I'm looking for a revenue operations or delivery operations role. Download the resume, or reach me by email or LinkedIn.
 Then: Download resume (PDF) · hello@sidhantmathur.com [copy] · LinkedIn ↗
 
 Case studies end instead on:
