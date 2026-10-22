@@ -278,7 +278,7 @@ describe("#20 — plain-language prose", () => {
     // the caveats it carries are the point of that page.
     for (const [slug, results] of [
       ["nokia", "### At a glance"],
-      ["adarle20", "### Where it stands"],
+      ["adarle20", "### At a glance"],
     ]) {
       const mdx = read(`content/${slug}.mdx`);
       const resultsAt = mdx.indexOf(results);

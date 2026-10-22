@@ -10,7 +10,7 @@ export const metadata: Metadata = {
   alternates: { canonical: "/projects/adarle20" },
   title: "A Darle 20",
   description:
-    "A marketplace for tabletop game sessions in Latin America, with 2,100+ bookings in its first four months.",
+    "A live marketplace I co-founded and built as the only developer: payments, payouts, refunds and funnel tracking, and 2,100+ bookings in its first four months.",
 };
 
 export default function AdarleTwentyPage() {
@@ -18,7 +18,7 @@ export default function AdarleTwentyPage() {
     <CaseStudyLayout
       slug="adarle20"
       title="A Darle 20"
-      subtitle="A marketplace for tabletop game sessions in Latin America."
+      subtitle="A live two-sided marketplace for tabletop game sessions in Latin America. I'm co-founder and CTO, and the only developer."
     >
       <CaseStudy />
       {/* #19 — the feature surface and the media frames. Both are appended
