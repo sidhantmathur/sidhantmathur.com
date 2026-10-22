@@ -31,8 +31,9 @@ export const MIN_TURNS_FOR_P50 = 10;
 export const MIN_TURNS_FOR_P95 = 50;
 
 /**
- * When the citation checker's rules last changed: the commit time of f7d7439,
- * the third of three changes to lib/verify.ts on 2026-10-19.
+ * When the citation checker's rules last changed: the commit time of 82117c5,
+ * 2026-10-22. Before it, the commit time of f7d7439, the third of three changes
+ * to lib/verify.ts on 2026-10-19.
  *
  *   - 0cd0372 splits a fact found elsewhere in the record (`miscited`) from one
  *     found nowhere (`unverified`). It moves nothing into or out of `verified`.
@@ -40,6 +41,9 @@ export const MIN_TURNS_FOR_P95 = 50;
  *     against "2024". Fewer sentences verify.
  *   - f7d7439 stops checking a clause that only names a gap. Fewer sentences
  *     count as claims at all.
+ *   - 82117c5 gives a marker written after the full stop to the sentence
+ *     before it, not the one after. Every cited sentence after the first in a
+ *     paragraph had been checked against the wrong chunk, so more verify.
  *
  * A run's citation counts are computed by the runner, with whatever checker the
  * tree had that day, and are never recomputed. So a run from before this moment
@@ -47,7 +51,7 @@ export const MIN_TURNS_FOR_P95 = 50;
  * compare with one after it. Anything that adds runs' counts together has to
  * keep the two sides apart.
  */
-export const CHECKER_REVISED = "2026-10-19T23:56:21Z";
+export const CHECKER_REVISED = "2026-10-22T20:57:45Z";
 
 /** Whether a run's citation counts come from today's checker rules. */
 export function checkedByCurrentRules(run: Pick<PublishedRun, "ranAt">): boolean {
