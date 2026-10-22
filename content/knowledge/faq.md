@@ -14,7 +14,8 @@ Yes, he's open to new roles.
 
 ## What roles is he targeting?
 
-RevOps / GTM systems roles at AI-forward companies.
+Revenue operations (RevOps / GTM systems) and delivery operations roles at
+AI-forward companies.
 
 ## What is he not looking for?
 
