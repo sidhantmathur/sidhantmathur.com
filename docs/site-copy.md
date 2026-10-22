@@ -214,8 +214,8 @@ and a Salesforce Analytics to Power BI migration for 150+ users."]
 
 | Row label | Value | From |
 | --- | --- | --- |
-| now | Sales operations at Nokia since Jun 2024. I build and own internal tools and reporting for global sales and finance teams, from requirements through executive demos, global rollout and support. | `resume.md` |
-| shipped | A self-serve Power App for 80+ stakeholders across 7 regions. It replaced a manual collection process that took one finance analyst's entire workday, every day of quarter-end close. | `resume.md` |
+| now | Sales operations at Nokia since Jun 2024. I build and own reporting tools for global sales and finance, from requirements to rollout and support. | `resume.md` |
+| shipped | A self-serve Power App for 80+ stakeholders in 7 regions, replacing manual quarter-end collection that took a finance analyst's entire workday, every day of close. | `resume.md` |
 | before that | Workforce management at Nokia, Oct 2022 – Jun 2024: headcount reporting and forecasting for a 3,000–4,000-person organization. I identified $1.2M in real-estate cost savings in lab and facility utilization data. | `resume.md` |
 | also | Co-founder and CTO of A Darle 20, a live two-sided marketplace I architected and shipped solo, payments, refunds and funnel instrumentation included. | `resume.md` |
 | how I build | At A Darle 20, AI agents in Claude Code write most of the code. I own architecture, code review and release. | `projects-adarle20.md` |

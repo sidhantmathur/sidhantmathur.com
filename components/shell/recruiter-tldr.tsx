@@ -20,7 +20,7 @@ import {
 //      for` and `where` rows are in the hero subline already.
 export function RecruiterTldr() {
   return (
-    <section aria-label="Summary" className="max-w-[64ch] border-t border-line pt-4">
+    <section aria-label="Summary" className="border-t border-line pt-4">
       <h2 className="t-label text-text-faint">{TLDR_LABEL}</h2>
       <dl className="mt-2 space-y-2 md:space-y-1.5">
         {HERO_TLDR.map((row) => (
@@ -28,7 +28,7 @@ export function RecruiterTldr() {
             <dt className="t-label shrink-0 pt-1 text-text-faint sm:w-[104px]">
               {row.label}
             </dt>
-            <dd className="t-body text-text-soft [font-family:var(--font-geist-sans)]">
+            <dd className="t-body text-text-soft [font-family:var(--font-geist-sans)] [text-wrap:pretty]">
               {row.value}
             </dd>
           </div>
@@ -49,7 +49,7 @@ export function RecruiterTldr() {
 // study" links apart.
 export function CaseCards() {
   return (
-    <section aria-label="Case studies" className="max-w-[64ch]">
+    <section aria-label="Case studies">
       <h2 className="t-label text-text-faint">{CASE_CARDS_LABEL}</h2>
       <div className="mt-2 grid gap-2.5 sm:grid-cols-2">
         {CASE_CARDS.map((card) => (

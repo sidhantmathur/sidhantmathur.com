@@ -36,13 +36,13 @@ export const RECRUITER_TLDR: TldrRow[] = [
   {
     label: "now",
     value:
-      "Sales operations at Nokia since Jun 2024. I build and own internal tools and reporting for global sales and finance teams, from requirements through executive demos, global rollout and support.",
+      "Sales operations at Nokia since Jun 2024. I build and own reporting tools for global sales and finance, from requirements to rollout and support.",
     source: "content/knowledge/resume.md",
   },
   {
     label: "shipped",
     value:
-      "A self-serve Power App for 80+ stakeholders across 7 regions. It replaced a manual collection process that took one finance analyst's entire workday, every day of quarter-end close.",
+      "A self-serve Power App for 80+ stakeholders in 7 regions, replacing manual quarter-end collection that took a finance analyst's entire workday, every day of close.",
     source: "content/knowledge/resume.md",
   },
   {

@@ -596,8 +596,9 @@ export function AppShell() {
       onClick={() => ask(q)}
       disabled={isBusy || !hydrated}
       // py-2.5 keeps a chip over 44px on a phone, where it is a finger
-      // target; md:py-2 matches the header's pointer-sized controls.
-      className="border border-line-strong px-3 py-2.5 text-left t-meta text-text-soft transition-colors hover:border-accent hover:text-text disabled:border-line disabled:text-text-dim md:py-2"
+      // target; from md up the dock is pointer-sized and 36px tall, so it
+      // takes less of a 800px laptop screen from the front door.
+      className="border border-line-strong px-3 py-2.5 text-left t-meta text-text-soft transition-colors hover:border-accent hover:text-text disabled:border-line disabled:text-text-dim md:py-1.5"
     >
       {q}
     </button>
@@ -717,7 +718,9 @@ export function AppShell() {
         >
           {SITE_NAME}
         </Link>
-        <span className="hidden text-text-faint lg:inline">Toronto, ON</span>
+        {/* The front door says where he is two lines below, beside the
+            photo; the header carries it once a conversation replaces that. */}
+        {hasMessages && <span className="hidden text-text-faint lg:inline">Toronto, ON</span>}
 
         <div className="ml-auto flex items-center gap-2 text-text-faint sm:gap-4">
           {/* The nav stays at every width, conversation or not, so the resume
@@ -912,8 +915,9 @@ export function AppShell() {
                   {/* Answers "what does he want" without a scroll. The string
                       lives in content/recruiter.ts under the same citation
                       check as the tl;dr rows — see POSITIONING. */}
-                  <p className="t-body max-w-[52ch] text-text-soft [font-family:var(--font-geist-sans)]">
-                    {POSITIONING.value}
+                  <p className="t-body max-w-[52ch] text-text-soft [font-family:var(--font-geist-sans)] [text-wrap:balance]">
+                    {/* A non-breaking hyphen, so a line never ends on "AI-". */}
+                    {POSITIONING.value.replace("AI-forward", "AI\u2011forward")}
                   </p>
                   {/* The resume PDF is primary: it's the file a recruiter
                       attaches to an ATS record. Which format visitors take is
@@ -1161,7 +1165,7 @@ export function AppShell() {
                 breakpoint, because the panel narrows the row without the
                 viewport changing. /fit still sends it. */}
             {!hasMessages && (
-              <div className="hidden px-4 pt-3 md:block md:px-10">
+              <div className="hidden px-4 pt-2.5 md:block md:px-10">
                 <div className="@container flex gap-2 [&>:last-child]:hidden @min-[1120px]:[&>:last-child]:block">
                   {chipButtons}
                 </div>
@@ -1257,7 +1261,7 @@ export function AppShell() {
                 Gone once a conversation starts: answers then carry their own
                 sources, and the actions strip takes this row. */}
             {!hasMessages && (
-              <p className="t-meta px-4 pb-3 text-text-faint md:px-10">
+              <p className="t-label px-4 pb-2.5 text-text-faint md:px-10">
                 <span className="lg:hidden">{DISCLAIMER_SHORT}</span>
                 <span className="hidden lg:inline">{DISCLAIMER_LONG}</span>{" "}
                 <Link
