@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { ImageResponse } from "next/og";
+import { HERO, POSITIONING as POSITION, ROLE_LINE as ROLE } from "@/content/recruiter";
 
 export const alt =
   "Sidhant Mathur, sales operations specialist at Nokia, looking for a revenue operations or delivery operations role";
@@ -10,14 +11,10 @@ export const size = {
 };
 export const contentType = "image/png";
 
-// MERGE NOTE: these three mirror exports that land in content/recruiter.ts in
-// the front-door pass (HERO, ROLE_LINE.value, POSITIONING.value), word for
-// word. When that merges, replace them with imports so the card reads the same
-// checked strings the front door renders and can't drift from them.
-const HERO = "I build and roll out the systems sales and finance teams run on.";
-const ROLE_LINE = "Sales operations specialist at Nokia · Toronto, ON";
-const POSITIONING =
-  "Looking for a revenue operations or delivery operations role at an AI-forward company. Canadian citizen, no visa sponsorship needed.";
+// The same checked strings the front door renders, so the card can't drift
+// from them.
+const ROLE_LINE = ROLE.value;
+const POSITIONING = POSITION.value;
 
 // The card carries the positioning's first sentence only: both role families,
 // without the work-authorization line a 500px preview has no room for.
