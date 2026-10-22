@@ -406,67 +406,67 @@ tabletop game sessions in Latin America." Metadata description is now "A live
 marketplace I co-founded and built as the only developer: payments, payouts,
 refunds and funnel tracking, and 2,100+ bookings in the four months after launch."]
 
+[Trim pass 2026-10-22 (gauntlet): the page was about 3,400px tall at 1280px
+and a blind critic called the feature grid padding. Cut to the facts that
+prove he runs the revenue machinery. "A pricing experiment" is folded into
+"Running it on its numbers" as one sentence, kept as the record words it: a
+test was run and margin decisions made, with no result claimed and no claim
+that the funnel data decided it. "What it runs on" is one sentence at the end
+of "How I build it". "The problem" lost its opening clause about how big the
+games are and the founding line (the subtitle already says co-founder). "From
+booking to payout" lost its opening line, which restated the "What I own"
+bullet. "At a glance" is tightened: "flagship" dropped, "after launch" became the label
+"First four months live", and
+"What I own" now ends "the funnel data behind monetization decisions" (the
+record: the data steers product and monetization decisions). "In plain terms"
+is one paragraph and no longer says what email goes out. The "unit economics"
+line keeps its idea as the lead-in to the pricing sentence. No new fact. The
+text below is content/adarle20.mdx verbatim.]
+
 ### At a glance
 
 - **Launched** — March 2026. I started building in August 2025.
-- **First four months** — 1,400+ registered users, 127 hosts and 2,100+
-  bookings after launch, with 200–400 unique visitors a day.
-- **Biggest test** — a flagship 251-player event at a 19,000-attendee
-  convention, rated 4.96/5 by attendees. I built the technology behind it, and
-  my co-founder ran the event on the ground.
-- **What I own** — the whole product, including the money flow from payment to
-  host payout and the funnel data that steers product and monetization decisions.
+- **First four months live** — 1,400+ registered users, 127 hosts and 2,100+
+  bookings, with 200–400 unique visitors a day.
+- **Biggest test** — a 251-player event at a 19,000-attendee convention, rated
+  4.96/5 by attendees. I built the technology; my co-founder ran it on the ground.
+- **What I own** — the product end to end, including the money flow from
+  payment to host payout and the funnel data behind monetization decisions.
 
 ### The problem
 
-Tabletop roleplaying games are big in Latin America, but finding and paying a
-good game master was informal and unreliable. Hosts had no clean way to take
-bookings or get paid, especially in a market where many players prefer cash.
-Two friends and I decided to build the marketplace ourselves.
+Finding and paying a good game master in Latin America was informal and
+unreliable. Hosts had no clean way to take bookings or get paid, in a market
+where many players prefer cash.
 
 ### From booking to payout
 
-I own the money side end to end: the payment, the platform fee, the host's payout, and the refund when a booking is cancelled.
-
-Payments run on Stripe Connect, which handles host payouts and the platform
-fee. Refunds are automated, and transactional email keeps host and player
-informed.
-
-Card penetration in Mexico is low, so I designed the payment flows around cash
-as well. With OXXO, a player with no card pays at a convenience store.
-
-### A pricing experiment
-
-Running A Darle 20 has taught me as much about unit economics as about code. We
-ran a monetization test, a commission model against direct event ticket sales,
-and made decisions about where the margin is.
+Payments run on Stripe Connect, which handles the platform fee and the host's
+payout. Refunds are automated, and transactional email keeps both sides
+informed. Card penetration in Mexico is low, so I designed for cash too: with
+OXXO, a player with no card pays at a convenience store.
 
 ### Running it on its numbers
 
 I instrumented the funnel end to end, on both sides of the marketplace:
-bookings, conversion, cancellations, refunds and host activation. Those numbers steer product and monetization decisions.
+bookings, conversion, cancellations, refunds and host activation. Those numbers
+steer product and monetization decisions. On unit economics, we tested a
+commission model against direct event ticket sales and made decisions about
+where the margin is.
 
 ### How I build it
 
 AI agents in Claude Code write most of the code. I own the architecture and
-the product decisions, review the code, and handle every release.
-
-I also set up a multi-agent workflow that reviews, refactors and
-regression-tests the production codebase on its own.
-
-### What it runs on
-
-TypeScript, React and Next.js, Supabase (PostgreSQL) with Prisma, Stripe Connect,
-Resend for transactional email, deployed on Vercel.
+product decisions, review the code, and handle every release. A multi-agent
+workflow I set up reviews, refactors and regression-tests the production
+codebase on its own. The stack is TypeScript, React and Next.js, Supabase
+(PostgreSQL) with Prisma, Stripe Connect and Resend, on Vercel.
 
 ### In plain terms
 
-A host lists a game session with a price. A player
-books a seat and pays, by card or in cash at a convenience store. The site takes
-its fee, pays the host, and sends both sides an email about it.
-
-If a booking is cancelled, the money goes back to the player without anyone
-handling it by hand. Money is the hard part, so fees, payouts and refunds run without anyone handling them by hand.
+A host lists a game session. A player books a seat and pays by card or in cash.
+The site takes its fee, pays the host, and refunds a cancelled booking without
+anyone handling the money by hand.
 
 ### What's in it (#19 — the feature surface)
 
@@ -482,17 +482,22 @@ overclaimed, since the list holds only what the record names. The Operations
 item's dash became parentheses. The unrendered note was reworded; its marker is
 untouched.]
 
+[Trim pass 2026-10-22 (gauntlet): decision #19 asks for the full feature
+surface, so the list stays, but as one line per area below the screenshot,
+with no rule above it and no intro line (the intro was "The main features,
+grouped by area."). Two items shortened because the prose above carries their
+detail: "OXXO cash payments at a convenience store" is now "OXXO cash
+payments", and "End-to-end funnel instrumentation (bookings, conversion,
+cancellations, refunds, host activation)" is now "Funnel instrumentation".]
+
 Section heading: What's in it
-Intro: The main features, grouped by area.
 
 - Discovery: Host profiles · Session listings
 - Booking: Bookings and reservations · Cancellations · Automated refunds
 - Payments: Stripe Connect · Host payouts · Platform fees · OXXO cash payments
-  at a convenience store
 - Communication: Real-time chat · Transactional email on Resend
 - Accounts: Authentication
-- Operations: End-to-end funnel instrumentation (bookings, conversion,
-  cancellations, refunds, host activation)
+- Operations: Funnel instrumentation
 
 Closing note (draft, NOT RENDERED since wave 1, 2026-10-19 — it carries a
 marker, and markers never ship on a page): These are the features written down
@@ -530,6 +535,11 @@ capture briefs. Summary:
 
 Caption for the filled slot: Each card shows the host and their rating, the
 price in pesos, the schedule, and how many seats are filled.
+
+[Trim pass 2026-10-22 (gauntlet): the section now sits above "What's in it".
+With one file on the page, the frame's own title row ("Session listings ·
+screenshot · 152:69") is gone; the section heading names it. Once a second
+slot has a file, each frame shows its slot title again.]
 
 [Copy pass 2026-10-20: the caption no longer repeats the frame title "Session
 listings", and it says "filled" because the cards show seats filled out of the
