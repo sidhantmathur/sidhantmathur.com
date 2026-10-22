@@ -43,8 +43,8 @@ forwarding exists, mail to it bounces.
       from text, by `python3 docs/resume/drafts/build.py` (the `canonical`
       variant) and `soffice --headless --convert-to pdf resume-canonical.docx`,
       then copied to `public/resume.pdf` and `docs/Sidhant_Mathur_Resume.pdf`.
-      `docs/resume/Sidhant_Mathur_Resume_GTM.docx` is stale (old phone, personal
-      email, a typo'd domain): don't export from it.
+      The stale `docs/resume/Sidhant_Mathur_Resume_GTM.docx` (old phone,
+      personal email, a typo'd domain) was deleted 2026-10-22.
 
 ## C. Design sign-offs (decisions only you can make)
 

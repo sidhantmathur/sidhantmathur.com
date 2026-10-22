@@ -4,7 +4,7 @@
 // not hydrated yet:
 //
 //   - the composer, the send button and the suggested chips are disabled, and
-//     the status strip and placeholder say "loading"
+//     the composer placeholder says "loading"
 //   - a forced click or requestSubmit on send does not navigate (a native GET
 //     submit would throw away the load in progress)
 //   - nothing that needs JavaScript is reachable by Tab
@@ -154,8 +154,6 @@ const before = await page.evaluate(() => {
     chipsDisabled: chips.length > 0 && chips.every((c) => c.disabled),
     formAction: form?.getAttribute("action") ?? null,
     formMethod: form?.getAttribute("method") ?? null,
-    // innerText, so a string hidden by a media query does not count as shown.
-    statusText: document.body.innerText.toLowerCase().includes("loading"),
     placeholder: ask?.getAttribute("placeholder") ?? "",
   };
 });
@@ -163,7 +161,6 @@ const before = await page.evaluate(() => {
 check("the composer is disabled", before.askDisabled);
 check("the send button is disabled", before.sendDisabled, "no native submit possible");
 check("the suggested chips are disabled", before.chipsDisabled, `${before.chipCount} found`);
-check("the status strip says loading, not ready", before.statusText);
 check(
   "the composer says what it is doing",
   /loading/i.test(before.placeholder),
@@ -245,16 +242,12 @@ const after = await page.evaluate(() => {
     askEnabled: ask && !ask.disabled,
     chipsEnabled: chips.length > 0 && chips.every((c) => !c.disabled),
     placeholder: ask?.getAttribute("placeholder") ?? "",
-    // Below sm the hydrated status is a dot rather than a word, so this checks
-    // that "loading" is gone rather than that "ready" appears.
-    ready: !document.body.innerText.toLowerCase().includes("loading"),
   };
 });
 
 check("the composer is live after hydration", Boolean(after.askEnabled));
 check("the chips are live after hydration", after.chipsEnabled);
 check("the placeholder returns to the question prompt", /Ask a question/i.test(after.placeholder));
-check("the loading label is gone after hydration", after.ready);
 
 await page.fill("#ask", "hello");
 const sendLive = await page.evaluate(() => {

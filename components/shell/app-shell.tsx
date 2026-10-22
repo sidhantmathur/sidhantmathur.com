@@ -767,23 +767,10 @@ export function AppShell() {
               {receiptText(turns, lastAnswerCost)}
             </button>
           )}
-          <span className="flex items-center gap-1.5">
-            {/* Grey while the page is still loading, so it never says "ready"
-                before it is. */}
-            <span
-              aria-hidden="true"
-              className={`inline-block h-2 w-2 rounded-full ${
-                !hydrated ? "bg-text-dim" : isBusy ? "bg-accent" : "bg-signal"
-              }`}
-            />
-            {/* Visible at every width until hydration, because a grey dot alone
-                explains nothing; after that, visible from sm up. Below sm it's
-                sr-only rather than hidden, since the dot is decorative and a
-                screen reader still needs the state. */}
-            <span className={!hydrated ? "inline" : "sr-only sm:not-sr-only sm:inline"}>
-              {!hydrated ? "loading" : isBusy ? "streaming" : "ready"}
-            </span>
-          </span>
+          {/* No status light here any more (2026-10-22, Sidhant): with most of
+              the telemetry gone, a "ready" dot beside Contact read as noise.
+              The composer's placeholder says "loading" until hydration, and
+              the polite status region announces each turn. */}
         </div>
       </header>
 

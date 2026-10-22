@@ -49,11 +49,11 @@ Sidhant in Toronto, something about revenue ops, wants a job."
    negotiation and screen you out of roles that pay more; if you want one
    anyway, it's a one-line change in `content/knowledge/faq.md`.
 
+5. **The stale `.docx` is deleted,** and the "ready" status light is gone from
+   the header: with most of the telemetry removed, it wasn't needed.
+
 **Still open**
 
-5. **Don't send `docs/resume/Sidhant_Mathur_Resume_GTM.docx`.** It's stale: an
-   old phone number, your personal email, a typo'd domain, and claims the
-   current resume dropped. Say the word and I'll delete it.
 6. **Optional:** hiding the three chat chips until the composer is focused
    would bring the whole summary above the fold on a laptop. It reverses your
    2026-10-20 call, so I left it.

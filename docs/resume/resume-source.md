@@ -1,4 +1,4 @@
-# Resume source — extracted from Sidhant_Mathur_Resume_GTM.docx (2026-07)
+# Resume source — extracted 2026-07 from Sidhant_Mathur_Resume_GTM.docx (since deleted; this file is the source now)
 
 Canonical source for `/resume`, `/resume.md`, and `content/knowledge/resume.md`.
 Facts here are authoritative for resume/experience content; `docs/site-copy.md`

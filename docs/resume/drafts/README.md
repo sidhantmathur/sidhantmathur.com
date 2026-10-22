@@ -158,7 +158,7 @@ and checked: each is one page, with no orphaned words and no overflow.
 
 ## Found on the way (not fixed here)
 
-**`docs/resume/Sidhant_Mathur_Resume_GTM.docx` is stale.** It does not match
+**`docs/resume/Sidhant_Mathur_Resume_GTM.docx` was stale** (deleted 2026-10-22 at Sidhant's word). It does not match
 `resume-source.md` or `public/resume.pdf`. Differences:
 
 - Phone 512-808-9684.
