@@ -270,8 +270,7 @@ Status: Live at adarle20.com
 Link: Read the case study
 
 **Card 2 — Reporting tools at Nokia**
-A self-serve app I built replaced a manual quarter-end process for 80+
-stakeholders in seven regions. That process took one finance analyst's entire
+A self-serve app I built replaced a manual quarter-end process for 80+ stakeholders in 7 regions. That process took one finance analyst's entire
 workday, every day of close. I also moved sales reporting for 150+ users from
 Salesforce Analytics to Power BI, and I own it from data model to user support.
 
@@ -449,9 +448,7 @@ OXXO, a player with no card pays at a convenience store.
 
 I instrumented the funnel end to end, on both sides of the marketplace:
 bookings, conversion, cancellations, refunds and host activation. Those numbers
-steer product and monetization decisions. On unit economics, we tested a
-commission model against direct event ticket sales and made decisions about
-where the margin is.
+steer product and monetization decisions. On unit economics, we also tested a commission model against direct event ticket sales.
 
 ### How I build it
 
@@ -574,7 +571,7 @@ note on migrations; it keeps its place after "What changed".]
 
 Outcome strip (top of the page, four cells, then a role line):
 
-- **80+** — stakeholders in seven regions on self-serve quarterly reporting
+- **80+** — stakeholders in 7 regions on self-serve quarterly reporting
 - **One workday** — of manual collection by a finance analyst, eliminated every day of quarter-end close
 - **150+** — users on sales reporting I rebuilt and moved to a new platform
 - **3,000–4,000** — people in the organization whose headcount reporting and forecasting I owned, 2022–2024
@@ -600,11 +597,7 @@ so confidentiality limits the screenshots and specifics I can share.
 
 ### Headcount and forecasting, 2022–2024
 
-I owned headcount reporting and forecasting for an organization of 3,000–4,000
-people: how many people it has, and how many it will have.
-
-I also analyzed lab and facility utilization data to see whether the space it
-pays for is being used, and identified $1.2M in real-estate cost savings.
+I owned headcount reporting and forecasting for an organization of 3,000–4,000 people. I also analyzed lab and facility utilization data to see whether the space it pays for is used, and identified $1.2M in real-estate cost savings.
 
 ### How I ran it
 

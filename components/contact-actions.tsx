@@ -81,9 +81,13 @@ type CopyState = "idle" | "copied" | "selected";
 export function EmailCopy({
   surface,
   className = "",
+  copyFromSm = false,
 }: {
   surface: ContactSurface;
   className?: string;
+  /** Hide the copy button below sm. A phone has a mail client, so the
+   *  address is a working mailto: there, and the room goes to LinkedIn. */
+  copyFromSm?: boolean;
 }) {
   // The copy button is disabled until hydration, like every other control
   // that needs JavaScript (see use-hydrated.ts). The address beside it is a
@@ -137,7 +141,7 @@ export function EmailCopy({
         disabled={!hydrated}
         data-js-control
         aria-label={`Copy ${EMAIL}`}
-        className="flex shrink-0 touch-manipulation items-center border-l border-line-strong px-3 t-meta text-text-soft transition-colors hover:text-accent disabled:text-text-dim"
+        className={`${copyFromSm ? "hidden sm:flex" : "flex"} shrink-0 touch-manipulation items-center border-l border-line-strong px-3 t-meta text-text-soft transition-colors hover:text-accent disabled:text-text-dim`}
       >
         {state === "copied" ? "copied" : state === "selected" ? "selected" : "copy"}
       </button>

@@ -46,7 +46,7 @@ export const PROJECTS: Record<ProjectSlug, Project> = {
     index: "01",
     title: "Reporting tools at Nokia",
     description:
-      "A self-serve app I built replaced a manual quarter-end process for 80+ stakeholders in seven regions. That process took one finance analyst's entire workday, every day of close. I also moved sales reporting for 150+ users from Salesforce Analytics to Power BI, and I own it from data model to user support.",
+      "A self-serve app I built replaced a manual quarter-end process for 80+ stakeholders in 7 regions. That process took one finance analyst's entire workday, every day of close. I also moved sales reporting for 150+ users from Salesforce Analytics to Power BI, and I own it from data model to user support.",
     role: "Sales operations specialist",
     stack: ["Power Apps", "Power BI", "SQL", "DAX", "Salesforce"],
     status: "In production since 2024",

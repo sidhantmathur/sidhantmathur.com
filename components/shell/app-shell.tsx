@@ -924,10 +924,14 @@ export function AppShell() {
                       still open, so both are tracked. The email is on screen
                       and copyable because a bare mailto: is a dead end without
                       a mail client. */}
+                  {/* On a phone: the resume full width, then the address and
+                      LinkedIn sharing one row, so the summary starts sooner. */}
                   <div className="flex flex-col gap-2.5 pt-2 sm:flex-row sm:flex-wrap">
                     <ResumePdfButton surface="front-door" primary />
-                    <EmailCopy surface="front-door" />
-                    <LinkedInButton surface="front-door" />
+                    <div className="flex gap-2.5">
+                      <EmailCopy surface="front-door" copyFromSm className="min-w-0 flex-1 sm:flex-none" />
+                      <LinkedInButton surface="front-door" className="shrink-0" />
+                    </div>
                   </div>
                   {/* The six-second scan; see recruiter-tldr.tsx. */}
                   <div>
