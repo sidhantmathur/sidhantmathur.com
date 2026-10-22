@@ -8,8 +8,10 @@ No taglines beyond what's written here. [TODO] items are placeholders for Sidhan
 ## Meta
 
 Site title: Sidhant Mathur
-Homepage title (tab, search result, share card): Sidhant Mathur — RevOps and
-delivery operations
+Homepage title (tab, search result, share card): Sidhant Mathur — Sales
+operations, open to RevOps and delivery ops
+[Gauntlet audit, 2026-10-22: was "— RevOps and delivery operations", which
+reads as a discipline he has held. None of his titles is delivery operations.]
 Meta description: Sales operations at Nokia, open to RevOps and delivery
 operations roles. Replaced a manual quarter-end process with an app 80+
 stakeholders in 7 regions use.
@@ -37,14 +39,12 @@ organization." [DRAFT 2026-10-22; all from `resume.md`, target roles from
 [DRAFT 2026-10-19, wave 2 of the council plan. The previous description
 ("Sales operations specialist and builder. I make internal tools and revenue
 systems at Nokia, and I'm co-founder and CTO of A Darle 20, a marketplace for
-tabletop game sessions in Latin America — 2,100+ bookings in its first four
-months.") led with neither role and spent half its length on tabletop games.
+tabletop game sessions in Latin America — 2,100+ bookings in the four months after launch.") led with neither role and spent half its length on tabletop games.
 The same description is the Person JSON-LD's, and `llms.txt` opens with the
 role line.]
 
 Share card (OG image): the headshot beside "Sidhant Mathur" and "Sales
-operations specialist at Nokia · Toronto, ON", then "I build and roll out the
-systems sales and finance teams run on.", then, in the accent, "Looking for a
+operations specialist at Nokia · Toronto, ON", then "I build and roll out the tools sales and finance teams run on.", then, in the accent, "Looking for a
 revenue operations or delivery operations role at an AI-forward company."
 Alt text: "Sidhant Mathur, sales operations specialist at Nokia, looking for a
 revenue operations or delivery operations role".
@@ -82,7 +82,7 @@ recruiter searches for. `ROLE_LINE` in `content/recruiter.ts`, checked against
 and finance teams at Nokia").]
 
 Heading:
-I build and roll out the systems sales and finance teams run on.
+I build and roll out the tools sales and finance teams run on.
 
 [DRAFT 2026-10-22, gauntlet pass. Replaces Sidhant's "I learn what the problem
 needs, then I build the thing." A blind critic reading the page as a RevOps
@@ -208,17 +208,17 @@ labelled "now", with its outcomes in the rows; A Darle 20 follows as "also".
 The old rows were: now — "Sales operations specialist at Nokia, in Toronto.
 Co-founder and CTO of A Darle 20." (`bio.md`); shipped — "A Darle 20 — a
 two-sided marketplace, architected and shipped solo. 1,400+ registered users,
-127 hosts and 2,100+ bookings in its first four months."; before that — "At
+127 hosts and 2,100+ bookings in the four months after launch."; before that — "At
 Nokia: a self-serve Power App used by 80+ stakeholders across seven regions,
 and a Salesforce Analytics to Power BI migration for 150+ users."]
 
 | Row label | Value | From |
 | --- | --- | --- |
-| now | Sales operations at Nokia since Jun 2024. I own the internal tools and reporting that global sales and finance teams run on, from requirements through executive demos, global rollout and support. | `resume.md` |
+| now | Sales operations at Nokia since Jun 2024. I build and own internal tools and reporting for global sales and finance teams, from requirements through executive demos, global rollout and support. | `resume.md` |
 | shipped | A self-serve Power App for 80+ stakeholders across 7 regions. It replaced a manual collection process that took one finance analyst's entire workday, every day of quarter-end close. | `resume.md` |
 | before that | Workforce management at Nokia, Oct 2022 – Jun 2024: headcount reporting and forecasting for a 3,000–4,000-person organization. I identified $1.2M in real-estate cost savings in lab and facility utilization data. | `resume.md` |
 | also | Co-founder and CTO of A Darle 20, a live two-sided marketplace I architected and shipped solo, payments, refunds and funnel instrumentation included. | `resume.md` |
-| how I build | AI agents in Claude Code write most of the code. I own architecture, code review and release. | `projects-adarle20.md` |
+| how I build | At A Darle 20, AI agents in Claude Code write most of the code. I own architecture, code review and release. | `projects-adarle20.md` |
 | looking for | A revenue operations or delivery operations role at an AI-forward company. | `faq.md` |
 | where | Toronto, ON. Canadian citizen, no visa sponsorship needed. | `faq.md` |
 
@@ -247,7 +247,7 @@ Label: case studies
 | Card | Number | Under it | From |
 | --- | --- | --- | --- |
 | Reporting tools at Nokia | 150+ | users on the sales reporting I moved from Salesforce Analytics to Power BI | `projects-nokia.md` |
-| A Darle 20 | 2,100+ | bookings in the marketplace's first four months | `projects-adarle20.md` |
+| A Darle 20 | 2,100+ | bookings in the four months after launch | `projects-adarle20.md` |
 
 Link on each: Read the case study →
 
@@ -265,7 +265,7 @@ as its only developer and run as co-founder. Four months after launch: 1,400+
 registered users, 127 hosts and 2,100+ bookings. I shipped bookings, payments,
 chat and refunds with an AI-agent-heavy development workflow.
 
-Role: Co-Founder & CTO
+Role: Co-founder and CTO
 Stack: TypeScript, Next.js, Supabase, Stripe Connect
 Status: Live at adarle20.com
 Link: Read the case study
@@ -308,8 +308,7 @@ lead with the outcome in operating terms; same facts, reordered. Dell's status
 was "2018" and now reads as the internship it was (resume: May–Aug 2018). The
 `/projects` intro was meta (it pointed at the chatbot) and now says what the
 three are evidence of:
-"Three systems revenue runs on, each built by me and used by the people it was
-for: Nokia's quarter-end and sales reporting, a live marketplace I built as its
+"Three things I built for sales and revenue teams: Nokia's quarter-end and sales reporting, a live marketplace I built as its
 only developer, and the Dell sales model where this work started."]
 
 ### Chat panel (homepage teaser)
@@ -383,7 +382,7 @@ changed. See the copy-pass section of docs/copy-ledger.md. The body below is
 re-copied from content/adarle20.mdx. The Stripe Connect and OXXO details now
 sit once, in "The unit economics", instead of twice. The page's metadata
 description now reads "A marketplace for tabletop game sessions in Latin
-America, with 2,100+ bookings in its first four months."]
+America, with 2,100+ bookings in the four months after launch."]
 
 [Cute pass 2026-10-20: playful wording removed at Sidhant's request. No fact
 changed. Two headings: "The funnel, instrumented" is now "Funnel tracking" (so
@@ -405,7 +404,7 @@ money through one booking instead of restating the problem. No new fact; see
 the gauntlet rows in docs/copy-ledger.md. Subtitle was "A marketplace for
 tabletop game sessions in Latin America." Metadata description is now "A live
 marketplace I co-founded and built as the only developer: payments, payouts,
-refunds and funnel tracking, and 2,100+ bookings in its first four months."]
+refunds and funnel tracking, and 2,100+ bookings in the four months after launch."]
 
 ### At a glance
 
@@ -416,7 +415,7 @@ refunds and funnel tracking, and 2,100+ bookings in its first four months."]
   convention, rated 4.96/5 by attendees. I built the technology behind it, and
   my co-founder ran the event on the ground.
 - **What I own** — the whole product, including the money flow from payment to
-  host payout and the funnel data we run the business on.
+  host payout and the funnel data that steers product and monetization decisions.
 
 ### The problem
 
@@ -427,8 +426,7 @@ Two friends and I decided to build the marketplace ourselves.
 
 ### From booking to payout
 
-I own the money side end to end: the listed price, the payment, the platform
-fee, the host's payout, and the refund when a booking is cancelled.
+I own the money side end to end: the payment, the platform fee, the host's payout, and the refund when a booking is cancelled.
 
 Payments run on Stripe Connect, which handles host payouts and the platform
 fee. Refunds are automated, and transactional email keeps host and player
@@ -446,9 +444,7 @@ and made decisions about where the margin is.
 ### Running it on its numbers
 
 I instrumented the funnel end to end, on both sides of the marketplace:
-bookings, conversion, cancellations, refunds and host activation. Those numbers
-are how we run the business. They steer product and monetization decisions,
-the pricing test included.
+bookings, conversion, cancellations, refunds and host activation. Those numbers steer product and monetization decisions.
 
 ### How I build it
 
@@ -465,13 +461,12 @@ Resend for transactional email, deployed on Vercel.
 
 ### In plain terms
 
-A host lists a game session with a price and a set number of seats. A player
+A host lists a game session with a price. A player
 books a seat and pays, by card or in cash at a convenience store. The site takes
 its fee, pays the host, and sends both sides an email about it.
 
 If a booking is cancelled, the money goes back to the player without anyone
-handling it by hand. Money is the hard part, and most of what I built handles it
-automatically.
+handling it by hand. Money is the hard part, so fees, payouts and refunds run without anyone handling them by hand.
 
 ### What's in it (#19 — the feature surface)
 
@@ -562,8 +557,7 @@ your own voice.]
 Outcome strip (top of the page, three cells, then a role line):
 
 - **80+** — stakeholders in seven regions on self-serve quarterly reporting
-- **One workday** — of a finance analyst's time back, every day of quarter-end
-  close
+- **One workday** — of manual collection by a finance analyst, eliminated every day of quarter-end close
 - **150+** — users on sales reporting I rebuilt and moved to a new platform
 
 Role line: Sales operations specialist (internal tools and automation), Nokia,
@@ -622,15 +616,14 @@ and nobody has to chase them.
 
 A reporting migration is harder than it sounds. Every report carries rules
 inside it, like what counts as a sale or which region an account belongs to.
-Those rules have to be rebuilt on the new system, and the new numbers have to
-match the old ones before people trust them. The rebuilt rules are the data
+Those rules have to be rebuilt on the new system. The rebuilt rules are the data
 model, and that's the part I own.
 
 ---
 
-## Case study — Sales prediction at Dell
+## Case study — Sales prediction model at Dell
 
-Title: Sales prediction at Dell
+Title: Sales prediction model at Dell
 Subtitle: A propensity model that ranked accounts for cross-sell, built during a
 2018 internship.
 
@@ -661,8 +654,7 @@ estimated $129M in pipeline at segment-level average deal sizes. The model was
 hosted on Azure so sales and marketing teams could get predictions and feed back new
 training data.
 
-It's where the work I do now started: revenue questions answered with data, and
-delivered as a tool other teams use.
+It's where the work I do now started: revenue questions answered with data, and built as a tool other teams could use.
 
 ---
 

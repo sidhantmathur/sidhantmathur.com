@@ -7,7 +7,7 @@
   convention, rated 4.96/5 by attendees. I built the technology behind it, and
   my co-founder ran the event on the ground.
 - **What I own** — the whole product, including the money flow from payment to
-  host payout and the funnel data we run the business on.
+  host payout and the funnel data that steers product and monetization decisions.
 
 ### The problem
 
@@ -18,8 +18,7 @@ Two friends and I decided to build the marketplace ourselves.
 
 ### From booking to payout
 
-I own the money side end to end: the listed price, the payment, the platform
-fee, the host's payout, and the refund when a booking is cancelled.
+I own the money side end to end: the payment, the platform fee, the host's payout, and the refund when a booking is cancelled.
 
 Payments run on Stripe Connect, which handles host payouts and the platform
 fee. Refunds are automated, and transactional email keeps host and player
@@ -37,9 +36,7 @@ and made decisions about where the margin is.
 ### Running it on its numbers
 
 I instrumented the funnel end to end, on both sides of the marketplace:
-bookings, conversion, cancellations, refunds and host activation. Those numbers
-are how we run the business. They steer product and monetization decisions,
-the pricing test included.
+bookings, conversion, cancellations, refunds and host activation. Those numbers steer product and monetization decisions.
 
 ### How I build it
 
@@ -56,10 +53,9 @@ Resend for transactional email, deployed on Vercel.
 
 ### In plain terms
 
-A host lists a game session with a price and a set number of seats. A player
+A host lists a game session with a price. A player
 books a seat and pays, by card or in cash at a convenience store. The site takes
 its fee, pays the host, and sends both sides an email about it.
 
 If a booking is cancelled, the money goes back to the player without anyone
-handling it by hand. Money is the hard part, and most of what I built handles it
-automatically.
+handling it by hand. Money is the hard part, so fees, payouts and refunds run without anyone handling them by hand.

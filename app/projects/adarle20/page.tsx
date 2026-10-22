@@ -10,7 +10,7 @@ export const metadata: Metadata = {
   alternates: { canonical: "/projects/adarle20" },
   title: "A Darle 20",
   description:
-    "A live marketplace I co-founded and built as the only developer: payments, payouts, refunds and funnel tracking, and 2,100+ bookings in its first four months.",
+    "A live marketplace I co-founded and built as the only developer: payments, payouts, refunds and funnel tracking, and 2,100+ bookings in the four months after launch.",
 };
 
 export default function AdarleTwentyPage() {

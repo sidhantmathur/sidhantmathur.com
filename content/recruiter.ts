@@ -36,7 +36,7 @@ export const RECRUITER_TLDR: TldrRow[] = [
   {
     label: "now",
     value:
-      "Sales operations at Nokia since Jun 2024. I own the internal tools and reporting that global sales and finance teams run on, from requirements through executive demos, global rollout and support.",
+      "Sales operations at Nokia since Jun 2024. I build and own internal tools and reporting for global sales and finance teams, from requirements through executive demos, global rollout and support.",
     source: "content/knowledge/resume.md",
   },
   {
@@ -60,7 +60,7 @@ export const RECRUITER_TLDR: TldrRow[] = [
   {
     label: "how I build",
     value:
-      "AI agents in Claude Code write most of the code. I own architecture, code review and release.",
+      "At A Darle 20, AI agents in Claude Code write most of the code. I own architecture, code review and release.",
     source: "content/knowledge/projects-adarle20.md",
   },
   {
@@ -84,7 +84,7 @@ export const TLDR_FOOTER = "The resume has the rest.";
 // the delivery half without a label. Gauntlet pass, 2026-10-22; logged in the
 // copy ledger. Voice, not a checkable claim, so it isn't a TldrRow — the rows
 // below it carry the evidence.
-export const HERO = "I build and roll out the systems sales and finance teams run on.";
+export const HERO = "I build and roll out the tools sales and finance teams run on.";
 
 // The hero subline: the `looking for` and `where` rows fused into one sentence
 // a visitor doesn't have to scroll for. Toronto is on the role line above the
@@ -129,7 +129,7 @@ export const CASE_CARDS: CaseCard[] = [
     slug: "adarle20",
     title: "A Darle 20",
     stat: "2,100+",
-    statLabel: "bookings in the marketplace's first four months",
+    statLabel: "bookings in the four months after launch",
     href: "/projects/adarle20",
     source: "content/knowledge/projects-adarle20.md",
   },

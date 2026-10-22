@@ -21,7 +21,7 @@ questions about my work.
 organization.
 /projects/adarle20 — A Darle 20: a marketplace for tabletop game sessions in
 Latin America.
-/projects/dell-ml — Sales prediction at Dell: a propensity model for
+/projects/dell-ml — Sales prediction model at Dell: a propensity model for
 cross-sell targeting, built as an intern.
 /resume — Resume, with a plain-text version at /resume.md.
 /colophon — How this site was built.
