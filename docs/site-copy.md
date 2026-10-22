@@ -326,11 +326,14 @@ recruiter/engineer toggle, per decisions #26.]
 
 - Give me the short version
 - What did he own end to end at Nokia?
-- Is he a fit for a RevOps or delivery ops role?
+- Is he a fit for a RevOps role?
 
 [Gauntlet pass, 2026-10-22: the Nokia chip asks what a screener asks — what
-he owned, not what he built — and the fit chip names both role families. It is
-still the `/fit` command's question.]
+he owned, not what he built. The fit chip, still the `/fit` command's
+question, names one role and drops "at an AI-forward company". A version
+naming both role families made the model call the assessment tool twice in
+one turn, run out of output budget mid-call and show nothing (caught probing
+the preview); the prompt now allows one assessment per answer.]
 
 [Wave 2, 2026-10-19: the fourth chip was "Does he need visa sponsorship?",
 which the hero subline already answers. The Nokia work had no chip.]

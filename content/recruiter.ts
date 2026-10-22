@@ -144,7 +144,7 @@ export const HERO_TLDR = RECRUITER_TLDR.filter(
 );
 
 /** The chip the `/fit` slash command sends. One string, two surfaces. */
-export const FIT_QUESTION = "Is he a fit for a RevOps or delivery ops role?";
+export const FIT_QUESTION = "Is he a fit for a RevOps role?";
 
 // #26: the first things a recruiter asks. They replace the old chips rather
 // than adding a recruiter mode.
