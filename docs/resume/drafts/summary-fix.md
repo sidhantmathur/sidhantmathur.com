@@ -1,7 +1,8 @@
 # Summary fix for the canonical resume
 
-A proposed replacement for the summary in `docs/resume/resume-source.md`. Nothing
-here has been applied. The drafts in this folder don't depend on it.
+**Applied 2026-10-22 at Sidhant's word** to all four places listed below. The PDF
+is now generated: the `canonical` variant in `build.py`. This file stays as the
+record of what changed and why.
 
 ## What's wrong with the current one
 

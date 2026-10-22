@@ -78,7 +78,8 @@ Checked against `resume.md`.]
 him nor his role. The heading stays Sidhant's; this sits over it in the words a
 recruiter searches for. `ROLE_LINE` in `content/recruiter.ts`, checked against
 `resume.md` by the eval suite ("AI-native revenue operations builder"; "sales
-and finance teams at Nokia").]
+and finance teams at Nokia"). The first phrase left the resume summary on
+2026-10-22.]
 
 Heading:
 I build and roll out the tools sales and finance teams run on.
@@ -91,7 +92,11 @@ half. Restore his line if he prefers it; it is quoted here in full.]
 
 Subline:
 Looking for a revenue operations or delivery operations role at an AI-forward
-company. Canadian citizen, no visa sponsorship needed.
+company.
+
+[2026-10-22, Sidhant: "No visa sponsorship needed … we should just remove, it's
+not needed. And it's meant only for Canada." The citizenship sentence left the
+subline; `faq.md` keeps the fact, scoped to Canada, for the chat.]
 
 [DRAFT 2026-10-22, gauntlet pass. Delivery operations added at Sidhant's word
 ("rev ops or delivery ops type role", 2026-10-22; now in `faq.md`). "Toronto,
@@ -219,7 +224,7 @@ and a Salesforce Analytics to Power BI migration for 150+ users."]
 | also | Co-founder and CTO of A Darle 20, a live two-sided marketplace I architected and shipped solo, payments, refunds and funnel instrumentation included. | `resume.md` |
 | how I work | At Nokia I was the whole team on both tools: requirements, build, executive demos, global rollout and support across time zones. At A Darle 20, AI agents in Claude Code write most of the code; I own architecture, code review and release. | `resume.md`, `projects-nokia.md`, `projects-adarle20.md` |
 | looking for | A revenue operations or delivery operations role at an AI-forward company. | `faq.md` |
-| where | Toronto, ON. Canadian citizen, no visa sponsorship needed. | `faq.md` |
+| where | Toronto, ON. | `faq.md` |
 
 Footer link (to /resume): The resume has the rest.
 
@@ -726,7 +731,7 @@ Label: Resume
 Heading: Sidhant Mathur
 [Wave 2: the heading was "Resume", so the page carried no name above the
 contact line.]
-Body: The current version, last updated July 2026. There's a plain-text
+Body: The current version, last updated October 2026. There's a plain-text
 version at /resume.md for pasting into an AI tool.
 Button: Download PDF
 

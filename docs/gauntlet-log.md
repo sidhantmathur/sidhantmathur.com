@@ -34,25 +34,26 @@ Sidhant in Toronto, something about revenue ops, wants a job."
   page each, same facts as your resume, tailored to each role family. The
   README there lists every judgment call; skim it before sending.
 
-**Only you can decide these**
+**Decided 2026-10-22 (Sidhant's answers, applied)**
 
-1. **Your canonical resume summary contradicts the site.** The PDF a recruiter
-   downloads says "Looking for a RevOps / GTM systems role" and blends your two
-   Nokia jobs ("150+ users across 7 regions" mixes the Power BI users with the
-   Power App's regions). `docs/resume/drafts/summary-fix.md` has a paste-ready
-   fix. I didn't touch `public/resume.pdf`: it's your document and was built
-   from a file that isn't in the repo.
-2. **The headline changed.** "I learn what the problem needs, then I build the
-   thing." is now "I build and roll out the tools sales and finance teams run
-   on." Your line is quoted in `docs/site-copy.md` if you want it back.
-3. **"No visa sponsorship needed."** Two critics read it as covering US roles
-   too. If you mean Canada, say "Canadian citizen, based in Toronto"; if you
-   mean the US as well (TN status), keep it.
-4. **"What is he not looking for?"** in `content/knowledge/faq.md` is still
-   blank, so the chat says it doesn't know.
+1. **Resume summary:** fixed. It now separates the two Nokia jobs and names both
+   role families, in `resume-source.md`, `content/knowledge/resume.md`, `/resume`
+   and `public/resume.pdf`. The PDF is now generated from text (see
+   `docs/resume/drafts/README.md`); headings are sentence case.
+2. **Headline:** the new one stays ("old headline was cringe").
+3. **Visa line:** removed from the site ("it's meant only for Canada"). The FAQ
+   keeps the fact for the chat, scoped to Canada.
+4. **What you're not looking for:** "A step down. He's looking for a role that
+   pays more than his current one, and he'd rather discuss compensation directly
+   than publish a number." A public floor (70k or 80k) would anchor every
+   negotiation and screen you out of roles that pay more; if you want one
+   anyway, it's a one-line change in `content/knowledge/faq.md`.
+
+**Still open**
+
 5. **Don't send `docs/resume/Sidhant_Mathur_Resume_GTM.docx`.** It's stale: an
    old phone number, your personal email, a typo'd domain, and claims the
-   current resume dropped.
+   current resume dropped. Say the word and I'll delete it.
 6. **Optional:** hiding the three chat chips until the composer is focused
    would bring the whole summary above the fold on a laptop. It reverses your
    2026-10-20 call, so I left it.

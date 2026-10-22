@@ -152,9 +152,9 @@ and checked: each is one page, with no orphaned words and no overflow.
     `.docx` bolded them. Bolding would help someone skimming, but it costs nothing
     to leave it out, and it keeps the page calm.
 12. **Not added, though the knowledge base has it:** "bringing LLMs and Python into
-    these workflows" at Nokia (`projects-nokia.md`) and "no visa sponsorship
-    needed" (`faq.md`). Both are true but not on the canonical resume, so I left
-    them out. Either could go back in if you want it.
+    these workflows" at Nokia (`projects-nokia.md`). True but not on the
+    canonical resume, so I left it out. The sponsorship line is gone everywhere
+    at your word (2026-10-22): it only ever applied to Canada.
 
 ## Found on the way (not fixed here)
 
@@ -187,3 +187,19 @@ From a blind review of both PDFs:
 - The RevOps summary no longer says "adoption" (nothing in the record measures
   it) or "teams run on"; the delivery summary names "a delivery operations
   role" (your words), not "deployment operations".
+
+## The site's resume is built here too (2026-10-22)
+
+`build.py` has a third variant, `canonical`: the general resume, word for word
+`docs/resume/resume-source.md` with the corrected summary from `summary-fix.md`.
+Its PDF is what the site serves:
+
+    python3 docs/resume/drafts/build.py
+    cd docs/resume/drafts && soffice --headless --convert-to pdf resume-canonical.docx
+    cp resume-canonical.pdf ../../../public/resume.pdf
+    cp resume-canonical.pdf ../../Sidhant_Mathur_Resume.pdf
+
+Change the canonical text in `resume-source.md`, `content/knowledge/resume.md`,
+`app/resume/page.tsx` and the `canonical` variant together; the site's tests
+check claims against `content/knowledge/resume.md`. Headings are sentence case
+now, which is the one visible difference from the July export.

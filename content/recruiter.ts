@@ -70,7 +70,7 @@ export const RECRUITER_TLDR: TldrRow[] = [
   },
   {
     label: "where",
-    value: "Toronto, ON. Canadian citizen, no visa sponsorship needed.",
+    value: "Toronto, ON.",
     source: "content/knowledge/faq.md",
   },
 ];
@@ -93,7 +93,7 @@ export const HERO = "I build and roll out the tools sales and finance teams run 
 export const POSITIONING: TldrRow = {
   label: "positioning",
   value:
-    "Looking for a revenue operations or delivery operations role at an AI-forward company. Canadian citizen, no visa sponsorship needed.",
+    "Looking for a revenue operations or delivery operations role at an AI-forward company.",
   source: "content/knowledge/faq.md",
 };
 

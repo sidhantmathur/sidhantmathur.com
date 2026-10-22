@@ -21,6 +21,11 @@ Total: about half a day, most of it capturing screens.
 
 ### 1a. What are you *not* looking for?
 
+**Done 2026-10-22.** Sidhant: "if it's better paid than my current job." The FAQ
+now says "A step down. He's looking for a role that pays more than his current
+one, and he'd rather discuss compensation directly than publish a number." To
+publish a floor instead, replace that answer with a line naming it.
+
 **File:** `content/knowledge/faq.md`, under "What is he not looking for?"
 **Replace:** `[TODO: Sidhant — stated nowhere; do not guess]`
 

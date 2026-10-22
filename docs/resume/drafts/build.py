@@ -230,6 +230,117 @@ VARIANTS = {
             ("AI-assisted development", "Claude Code, Anthropic API, LLM integration & agentic workflows, prompt engineering"),
         ],
     },
+    # -------------------------------------------------------------- Canonical
+    # The general resume the site serves as public/resume.pdf and mirrors on
+    # /resume and in content/knowledge/resume.md. Word for word the canonical
+    # text in docs/resume/resume-source.md, with the corrected summary from
+    # summary-fix.md (applied 2026-10-22 at Sidhant's word).
+    "canonical": {
+        "label": "General (the site's resume)",
+        "summary": (
+            "Sales operations specialist who turns ambiguous business problems into shipped "
+            "software. 3+ years at Nokia: headcount reporting and forecasting for a "
+            "3,000–4,000-person organization, then sales reporting for 150+ users and a "
+            "quarterly executive reporting app used by 80+ stakeholders across 7 regions. "
+            "Co-Founder & CTO of A Darle 20, a live two-sided marketplace with 1,400+ users "
+            "and 2,100+ bookings, architected and shipped solo with an AI-agent-heavy "
+            "development workflow (Claude Code). Looking for a revenue operations or delivery "
+            "operations role at an AI-forward company."
+        ),
+        "experience": [
+            {
+                "org": "Nokia",
+                "where": "Toronto, ON",
+                "roles": [
+                    {
+                        "title": "Sales operations specialist (internal tools & automation)",
+                        "dates": "Jun 2024 – Present",
+                        "bullets": [
+                            "Built a self-serve Power App used by 80+ stakeholders across 7 regions for "
+                            "quarterly executive reporting — eliminating a manual collection process that "
+                            "consumed one finance analyst's entire workday, every day of quarter-end close.",
+                            "Migrated all sales reporting from Salesforce Analytics to Power BI for 150+ "
+                            "users — owned data modeling, transformation logic (SQL/DAX), and the global "
+                            "stakeholder rollout end-to-end.",
+                            "Own every tool through its full lifecycle — translating vague requests from "
+                            "sales and finance leadership into scoped requirements, then executive demos, "
+                            "global rollout, user support, and rapid iteration across time zones.",
+                        ],
+                    },
+                    {
+                        "title": "Workforce management specialist",
+                        "dates": "Oct 2022 – Jun 2024",
+                        "bullets": WFM_BULLETS,
+                    },
+                ],
+            },
+            {
+                "org": "A Darle 20 (“Let’s Go 20”) — adarle20.com",
+                "where": "Toronto, ON",
+                "roles": [
+                    {
+                        "title": "Co-Founder & CTO (solo developer)",
+                        "dates": "Aug 2025 – Present · launched Mar 2026",
+                        "bullets": [
+                            "Architected and shipped the entire marketplace as solo developer — TypeScript, "
+                            "Next.js, Supabase/PostgreSQL, Stripe Connect, Vercel — running an "
+                            "AI-agent-heavy development workflow (Claude Code), with hands-on ownership of "
+                            "architecture, code review, and release.",
+                            "Grew to 1,400+ registered users, 127 hosts, and 2,100+ bookings in the first "
+                            "four months post-launch, with 200–400 unique visitors daily.",
+                            "Instrumented the funnel end-to-end — bookings, conversion, cancellations, "
+                            "refunds, host activation — and use the data to steer product and monetization "
+                            "decisions.",
+                            "Built the technology behind a flagship 251-player event at a 19,000-attendee "
+                            "convention, rated 4.96/5 by attendees.",
+                            "Integrated Stripe Connect for host payouts, platform fees, and OXXO cash "
+                            "payments — solution-designing payment flows around a low-card-penetration "
+                            "Mexican customer base, with automated refunds and transactional email.",
+                            "Run an autonomous multi-agent code-audit workflow (Claude Code) that reviews, "
+                            "refactors, and regression-tests the production codebase.",
+                        ],
+                    }
+                ],
+            },
+            {
+                "org": "Freelance web development & consulting",
+                "where": "Remote",
+                "roles": [
+                    {
+                        "title": "Self-employed",
+                        "dates": "May 2019 – Oct 2022",
+                        "bullets": [
+                            "Advised a startup client on web-development strategy, saving $100k+ in agency fees.",
+                            "Built custom client solutions — an integrated web ordering experience and an "
+                            "affiliate-marketing site.",
+                            "Resolved a client security breach and restored their domains from email blacklists.",
+                        ],
+                    }
+                ],
+            },
+            {
+                "org": "Dell Technologies",
+                "where": "Austin, TX",
+                "roles": [
+                    {
+                        "title": "Marketing intern",
+                        "dates": "May 2018 – Aug 2018",
+                        "bullets": [
+                            "Built a propensity model (Azure ML) on Dell's historical customer database to "
+                            "identify cross-sell targets for a high-margin software product — surfaced "
+                            "~20,000 qualified accounts representing an estimated $129M pipeline "
+                            "(segment-level average deal size).",
+                        ],
+                    }
+                ],
+            },
+        ],
+        "skills": [
+            ("GTM systems & analytics", "Salesforce, Power BI, DAX, Power Apps / Power Automate, SharePoint, Excel/VBA, forecasting"),
+            ("AI & automation", "LLM integration & agentic workflows (Claude Code, Anthropic API), prompt engineering, Python automation"),
+            ("Engineering", "TypeScript, React, Next.js, Node.js, Python, SQL, PostgreSQL, Supabase, Stripe, REST APIs, ETL & data workflows"),
+        ],
+    },
 }
 
 

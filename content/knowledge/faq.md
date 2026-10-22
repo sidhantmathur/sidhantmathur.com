@@ -2,7 +2,7 @@
 
 ## Citizenship and work authorization
 
-Sidhant is a Canadian citizen. He does not require visa sponsorship.
+Sidhant is a Canadian citizen, so he doesn't need sponsorship to work in Canada.
 
 ## Location
 
@@ -43,7 +43,8 @@ AI-forward companies.
 
 ## What is he not looking for?
 
-[TODO: Sidhant — stated nowhere; do not guess]
+A step down. He's looking for a role that pays more than his current one, and
+he'd rather discuss compensation directly than publish a number.
 
 ## How to get in touch
 

@@ -13,7 +13,7 @@ export const metadata: Metadata = {
     types: { "text/markdown": "/resume.md" },
   },
   title: "Resume",
-  description: "The current version, last updated July 2026.",
+  description: "The current version, last updated October 2026.",
 };
 
 export default function ResumePage() {
@@ -24,7 +24,7 @@ export default function ResumePage() {
         <p className="t-label text-text-faint">Resume</p>
         <h1 className="t-title mt-1 font-medium text-text">{SITE_NAME}</h1>
         <p className="t-body mt-3 max-w-[72ch] text-text-soft">
-          The current version, last updated July 2026. There&apos;s a
+          The current version, last updated October 2026. There&apos;s a
           plain-text version at{" "}
           <Link
             href="/resume.md"
@@ -64,7 +64,7 @@ export default function ResumePage() {
           ))}
         </nav>
 
-        {/* Resume body matches docs/Sidhant_Mathur_Resume.pdf (July 2026). */}
+        {/* Resume body matches docs/Sidhant_Mathur_Resume.pdf (October 2026). */}
         <div className="mt-8">
           <h2 className="font-mono t-meta text-text-soft">Toronto, ON</h2>
           <p className="mt-1 font-mono t-meta text-text-soft">
@@ -75,13 +75,14 @@ export default function ResumePage() {
           <div id="summary" className="mt-10 scroll-mt-20">
             <MonoLabel>Summary</MonoLabel>
             <p className="t-body mt-3 max-w-[72ch] text-text-soft">
-              AI-native revenue operations builder who turns ambiguous business problems
-              into shipped software. 3+ years owning sales reporting, forecasting, and
-              quarter-end close infrastructure for global sales and finance teams at Nokia
-              (150+ users across 7 regions). Co-Founder &amp; CTO of A Darle 20, a live
-              two-sided marketplace with 1,400+ users and 2,100+ bookings, architected and
-              shipped solo with an AI-agent-heavy development workflow. Looking for a
-              RevOps / GTM systems role at an AI-forward company.
+              Sales operations specialist who turns ambiguous business problems into shipped
+              software. 3+ years at Nokia: headcount reporting and forecasting for a
+              3,000–4,000-person organization, then sales reporting for 150+ users and a
+              quarterly executive reporting app used by 80+ stakeholders across 7 regions.
+              Co-Founder &amp; CTO of A Darle 20, a live two-sided marketplace with 1,400+
+              users and 2,100+ bookings, architected and shipped solo with an AI-agent-heavy
+              development workflow (Claude Code). Looking for a revenue operations or
+              delivery operations role at an AI-forward company.
             </p>
           </div>
 
