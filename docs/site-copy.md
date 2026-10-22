@@ -577,7 +577,7 @@ Outcome strip (top of the page, four cells, then a role line):
 - **80+** — stakeholders in 7 regions on self-serve quarterly reporting
 - **One workday** — of manual collection by a finance analyst, eliminated every day of quarter-end close
 - **150+** — users on sales reporting I rebuilt and moved to a new platform
-- **3,000–4,000** — people in the organization whose headcount reporting and forecasting I owned, 2022–2024
+- **3,000–4,000** — people whose headcount reporting and forecasting I owned, 2022–2024
 
 Role line: Nokia, Toronto. Sales operations specialist (internal tools and
 automation), June 2024 to present. Before that, workforce management
@@ -611,8 +611,8 @@ whole team, from the first request to support after launch.
   and I turned each one into a scoped plan.
 - **Build** — the Power App, and the Power BI data model with its SQL and DAX
   transformation logic.
-- **Executive demos** — I showed each tool to leadership before it went out.
-- **Global rollout** — I rolled both out to stakeholders across regions.
+- **Demos and rollout** — I demoed each tool to leadership, then rolled it out
+  globally.
 - **Support** — I handle user support, bug triage and rapid iteration myself,
   across time zones.
 
