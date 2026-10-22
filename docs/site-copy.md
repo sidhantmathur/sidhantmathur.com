@@ -541,7 +541,8 @@ docs/copy-ledger.md.]
 
 Title: Reporting tools at Nokia
 Subtitle: I eliminated a manual quarter-end reporting process and moved sales
-reporting for 150+ users onto a data model I own.
+reporting for 150+ users onto a data model I own. Before that, I owned
+headcount reporting and forecasting.
 
 [Gauntlet pass 2026-10-22 — restructured by Claude. The page said the same fact
 four times ("At a glance", "Before and after", "In plain terms", "Summary").
@@ -553,14 +554,24 @@ facts: every number and name is in content/knowledge/projects-nokia.md,
 resume.md or bio.md. The text below is content/nokia.mdx verbatim. Rewrite in
 your own voice.]
 
-Outcome strip (top of the page, three cells, then a role line):
+[Second pass, same day: the workforce management role moved up from "Before
+this" to sit right after "What changed", under a heading a delivery-ops
+screener scans for, and it got a fourth cell in the outcome strip (2×2 in a
+wide container, stacked in a narrow one). Both roles are named in the role
+line. The LLM/Python line is cut: a claim with no example behind it read as
+padding. The plain-language section is one paragraph plus a three-sentence
+note on migrations; it keeps its place after "What changed".]
+
+Outcome strip (top of the page, four cells, then a role line):
 
 - **80+** — stakeholders in seven regions on self-serve quarterly reporting
 - **One workday** — of manual collection by a finance analyst, eliminated every day of quarter-end close
 - **150+** — users on sales reporting I rebuilt and moved to a new platform
+- **3,000–4,000** — people in the organization whose headcount reporting and forecasting I owned, 2022–2024
 
-Role line: Sales operations specialist (internal tools and automation), Nokia,
-Toronto. June 2024 to present. Both tools have been in production since 2024.
+Role line: Nokia, Toronto. Sales operations specialist (internal tools and
+automation), June 2024 to present. Before that, workforce management
+specialist, October 2022 to June 2024.
 
 ### What changed
 
@@ -574,13 +585,21 @@ the manual collection is gone.
 migrated all of its sales reporting to Power BI and owned the data model and
 the transformation logic, in SQL and DAX, end to end.
 
-This work is internal to Nokia, so confidentiality limits the screenshots and
-specifics I can share.
+Both tools have been in production since 2024. The work is internal to Nokia,
+so confidentiality limits the screenshots and specifics I can share.
+
+### Headcount and forecasting, 2022–2024
+
+I owned headcount reporting and forecasting for an organization of 3,000–4,000
+people: how many people it has, and how many it will have.
+
+I also analyzed lab and facility utilization data to see whether the space it
+pays for is being used, and identified $1.2M in real-estate cost savings.
 
 ### How I ran it
 
-For both tools I was the whole team, from the first request to support after
-launch.
+For the quarterly reporting tool and the sales reporting migration, I was the
+whole team, from the first request to support after launch.
 
 - **Requirements** — sales and finance leadership came with vague requests,
   and I turned each one into a scoped plan.
@@ -591,20 +610,6 @@ launch.
 - **Support** — I handle user support, bug triage and rapid iteration myself,
   across time zones.
 
-More recently I've been bringing LLMs and Python into these workflows where
-they help.
-
-### Before this: headcount and forecasting
-
-I joined Nokia in October 2022 as a workforce management specialist. Until June
-2024 I owned headcount reporting and forecasting for an organization of
-3,000–4,000 people.
-
-The questions were operating questions: how many people the organization has,
-how many it will have, and whether the space it pays for is being used. On that
-last one, I analyzed lab and facility utilization data and identified $1.2M in
-real-estate cost savings.
-
 ### In plain terms
 
 Most of this job is making sure a number means the same thing to everyone who
@@ -613,10 +618,9 @@ reconcile them by hand before leadership can trust the total. A self-serve tool
 moves that work to the source: people put their numbers in once, in one place,
 and nobody has to chase them.
 
-A reporting migration is harder than it sounds. Every report carries rules
-inside it, like what counts as a sale or which region an account belongs to.
-Those rules have to be rebuilt on the new system. The rebuilt rules are the data
-model, and that's the part I own.
+A reporting migration is the same problem one level down. Every report carries
+rules, like what counts as a sale or which region an account belongs to. Rebuilt
+on the new system, those rules are the data model.
 
 ---
 
@@ -633,16 +637,21 @@ tooling work started. No new facts: content/knowledge/projects-dell.md and
 resume.md. The body below is content/dell-ml.mdx verbatim. Rewrite in your own
 voice.]
 
+[Second pass, same day: the plain-language section is one paragraph. Its
+separate caveat paragraph ("one piece of a much bigger sales process… not
+money anyone collected") read as an apology for the number; the caveat is now
+one clause ("as estimated pipeline, not closed sales"), and the project
+paragraph still says the figure is estimated at segment-level average deal
+sizes. The section still opens the page (decisions: on Dell the caveats are
+the point).]
+
 ### In plain terms
 
 Some customers would buy a second product, but nobody knows which ones, so the
 sales team calls everyone or guesses. A propensity model ranks the list. It
 learns from who bought what in the past and scores the customers who look most
 like the ones who already said yes, so sales knows which accounts to call
-first.
-
-The model was one piece of a much bigger sales process, and the pipeline figure
-below is an estimate from average deal sizes, not money anyone collected.
+first and what the list is worth as estimated pipeline, not closed sales.
 
 ### The project
 
@@ -650,10 +659,11 @@ In a 2018 summer internship at Dell, I built a propensity model in Azure ML on
 Dell's historical customer database to find cross-sell targets for a
 high-margin software product. It surfaced about 20,000 qualified accounts, an
 estimated $129M in pipeline at segment-level average deal sizes. The model was
-hosted on Azure so sales and marketing teams could get predictions and feed back new
-training data.
+hosted on Azure so sales and marketing teams could get predictions and feed
+back new training data.
 
-It's where the work I do now started: revenue questions answered with data, and built as a tool other teams could use.
+It's where the work I do now started: revenue questions answered with data, and
+built as a tool other teams could use.
 
 ---
 

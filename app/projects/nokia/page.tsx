@@ -14,7 +14,7 @@ export default function NokiaPage() {
     <CaseStudyLayout
       slug="nokia"
       title="Reporting tools at Nokia"
-      subtitle="I eliminated a manual quarter-end reporting process and moved sales reporting for 150+ users onto a data model I own."
+      subtitle="I eliminated a manual quarter-end reporting process and moved sales reporting for 150+ users onto a data model I own. Before that, I owned headcount reporting and forecasting."
     >
       <CaseStudy />
     </CaseStudyLayout>
