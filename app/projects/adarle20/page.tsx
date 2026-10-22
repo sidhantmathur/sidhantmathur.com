@@ -21,12 +21,12 @@ export default function AdarleTwentyPage() {
       subtitle="A live two-sided marketplace for tabletop game sessions in Latin America. I'm co-founder and CTO, and the only developer."
     >
       <CaseStudy />
-      {/* #19 — the feature surface and the media frames. Both are appended
-          below the approved case-study prose rather than woven into it: the
-          MDX is site copy from docs/site-copy.md and this track adds layers
-          above and below it without editing a word. */}
-      <AdarleFeatureSurface />
+      {/* #19 — the media frames and the feature surface, appended below the
+          case-study prose rather than woven into it, so the MDX stays plain
+          site copy from docs/site-copy.md. The screenshot comes first: it is
+          proof; the feature list is an index of what the prose already says. */}
       <AdarleMediaSurface />
+      <AdarleFeatureSurface />
     </CaseStudyLayout>
   );
 }

@@ -123,6 +123,12 @@ export const ADARLE_MEDIA: MediaSlot[] = [
 // feature is a factual claim about a product a hiring manager can go and use.
 // The gap between this list and the real product is recorded in
 // FEATURE_SURFACE_NOTE rather than filled in.
+//
+// It renders as one line per area (gauntlet pass, 2026-10-22). Decision #19
+// asks for the full feature surface, so the list stays; but every item is
+// already told in the case study above it, and a two-column grid of single
+// words was the longest block on the page. Item text is kept short for the
+// same reason: the prose carries the detail.
 export type Feature = {
   group: string;
   items: string[];
@@ -146,7 +152,7 @@ export const FEATURE_SURFACE: Feature[] = [
       "Stripe Connect",
       "Host payouts",
       "Platform fees",
-      "OXXO cash payments at a convenience store",
+      "OXXO cash payments",
     ],
     source: "projects-adarle20.md, resume.md",
   },
@@ -162,9 +168,7 @@ export const FEATURE_SURFACE: Feature[] = [
   },
   {
     group: "Operations",
-    items: [
-      "End-to-end funnel instrumentation (bookings, conversion, cancellations, refunds, host activation)",
-    ],
+    items: ["Funnel instrumentation"],
     source: "projects-adarle20.md, resume.md",
   },
 ];
