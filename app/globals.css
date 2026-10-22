@@ -291,8 +291,16 @@ body {
    line. These are the pages that get read rather than scanned, so their
    paragraphs and list items read in Geist Sans — the face the front door's
    headline and tl;dr already use. Everything that is a label stays mono:
-   headings, section markers, datelines, the contact line, metadata lists,
-   navigation, buttons, and anything that opts out with `font-mono`.
+   section markers, datelines, the contact line, metadata lists, navigation,
+   buttons, and anything that opts out with `font-mono`.
+
+   Headings moved to sans in the gauntlet pass (2026-10-22). Wave 2 kept them
+   mono and flagged it as an open question; a blind review then read a 32px
+   mono page title as terminal output, and it split the site's display type in
+   two — the front door's headline is Geist Sans semibold, every inner page's
+   was mono. Titles and section heads now match the front door. Eyebrows,
+   labels and metadata rows keep the mono register, which is where it reads
+   as instrument rather than as console.
 
    Scoped to `.doc-prose` (the <main> of components/layout/doc-page.tsx), so
    the same MDX inside the shell's context panel keeps the instrument register.
@@ -312,9 +320,35 @@ body {
   line-height: 1.65;
 }
 
+/* Page titles and section heads: the front door's face, set tight and
+   balanced so a two-line title breaks evenly rather than leaving one word. */
+.doc-prose :is(h1, h2, h3):not(.font-mono, .t-label) {
+  font-family: var(--font-geist-sans);
+  text-wrap: balance;
+}
+
+.doc-prose h1.t-title {
+  font-weight: 600;
+  letter-spacing: -0.025em;
+}
+
+/* The case-study MDX's section heads ("At a glance", "Before and after") were
+   15px, under the 16–17px body they introduce — mono carried that by texture;
+   in sans a head smaller than its paragraph reads as a caption. On the page
+   they take the head tier. In the shell's panel they keep their own size. */
+.doc-prose .case-body > h2 {
+  font-size: 18px;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+}
+
 @media (min-width: 768px) {
   .doc-prose .mdx-prose {
     font-size: 17px;
+  }
+
+  .doc-prose .case-body > h2 {
+    font-size: 20px;
   }
 }
 
