@@ -39,7 +39,12 @@ contest he wants to be judged in.
 
 Name and role line (above the heading, beside a small square headshot):
 Sidhant Mathur
-Revenue and sales operations: I build the tools sales and finance teams run on.
+Sales operations specialist at Nokia · Toronto, ON
+
+[DRAFT 2026-10-22, gauntlet pass. Was "Revenue and sales operations: I build
+the tools sales and finance teams run on." That sentence is now the heading's
+job, so this line only says what the job is called, where, and in which city.
+Checked against `resume.md`.]
 
 [DRAFT 2026-10-19, wave 2. The council's finding: the front door named neither
 him nor his role. The heading stays Sidhant's; this sits over it in the words a
@@ -48,11 +53,21 @@ recruiter searches for. `ROLE_LINE` in `content/recruiter.ts`, checked against
 and finance teams at Nokia").]
 
 Heading:
-I learn what the problem needs, then I build the thing.
+I build and roll out the systems sales and finance teams run on.
+
+[DRAFT 2026-10-22, gauntlet pass. Replaces Sidhant's "I learn what the problem
+needs, then I build the thing." A blind critic reading the page as a RevOps
+hiring manager: "the H1 is a motto, not a fact" — the five-second read came
+away without his job. This one names it, and "roll out" carries the delivery
+half. Restore his line if he prefers it; it is quoted here in full.]
 
 Subline:
-Looking for a RevOps / GTM systems role at an AI-forward company. Toronto, ON.
-Canadian citizen, no visa sponsorship needed.
+Looking for a revenue operations or delivery operations role at an AI-forward
+company. Canadian citizen, no visa sponsorship needed.
+
+[DRAFT 2026-10-22, gauntlet pass. Delivery operations added at Sidhant's word
+("rev ops or delivery ops type role", 2026-10-22; now in `faq.md`). "Toronto,
+ON." left this line because the role line above the heading carries it.]
 
 [Front-door pass, 2026-08-23 — Sidhant's call, from
 `docs/mockups/front-door-1-hero.html`. The old subline ("Ask what you'd ask on
@@ -64,7 +79,11 @@ every row.]
 
 CTA row (under the subline):
 Download resume (PDF) · hello@sidhantmathur.com [copy] · LinkedIn ↗
-Text links under it: Resume as a web page · Ask the AI assistant ↓
+
+[Gauntlet pass, 2026-10-22: the text links under the row ("Resume as a web
+page · Ask the AI assistant ↓") were removed. Five actions competed in the
+hero; the web resume is in the header on every page, and the composer it
+pointed at is on screen at every width.]
 
 [DRAFT 2026-10-19, wave 2. Was "View resume · Email me · Interview this site
 ↓". The PDF is primary because it is what a recruiter attaches to an ATS; the
@@ -166,14 +185,23 @@ and a Salesforce Analytics to Power BI migration for 150+ users."]
 
 | Row label | Value | From |
 | --- | --- | --- |
-| now | Sales operations specialist at Nokia since Jun 2024, building internal tools and automation for global sales and finance teams. | `resume.md` |
-| shipped | A self-serve Power App used by 80+ stakeholders across 7 regions, replacing a manual process that took one finance analyst's entire workday, every day of quarter-end close. He also migrated all sales reporting from Salesforce Analytics to Power BI for 150+ users. | `resume.md` |
-| also | Co-founder and CTO of A Darle 20, a two-sided marketplace he architected and shipped solo: 1,400+ registered users, 127 hosts and 2,100+ bookings in its first four months. | `resume.md` |
-| how he builds | AI agents in Claude Code write most of the code. He owns architecture, code review and release. | `projects-adarle20.md` |
-| looking for | A RevOps / GTM systems role at an AI-forward company. | `faq.md`, `resume.md` |
+| now | Sales operations at Nokia since Jun 2024. I own the internal tools and reporting that global sales and finance teams run on, from requirements through executive demos, global rollout and support. | `resume.md` |
+| shipped | A self-serve Power App for 80+ stakeholders across 7 regions. It replaced a manual collection process that took one finance analyst's entire workday, every day of quarter-end close. | `resume.md` |
+| before that | Workforce management at Nokia, Oct 2022 – Jun 2024: headcount reporting and forecasting for a 3,000–4,000-person organization. I identified $1.2M in real-estate cost savings in lab and facility utilization data. | `resume.md` |
+| also | Co-founder and CTO of A Darle 20, a live two-sided marketplace I architected and shipped solo, payments, refunds and funnel instrumentation included. | `resume.md` |
+| how I build | AI agents in Claude Code write most of the code. I own architecture, code review and release. | `projects-adarle20.md` |
+| looking for | A revenue operations or delivery operations role at an AI-forward company. | `faq.md` |
 | where | Toronto, ON. Canadian citizen, no visa sponsorship needed. | `faq.md` |
 
 Footer link (to /resume): The resume has the rest.
+
+[DRAFT 2026-10-22, gauntlet pass. First person, like the heading and the case
+studies; the chat is the only voice that says "he". Read as a timeline for the
+two role families: "now" is the job and what he owns in it, "shipped" its
+outcome, and "before that" — new — is the workforce management role, the
+delivery-ops evidence (headcount forecasting at scale, utilization data) that
+was only on the case study. The 150+ migration moved to its card below, and
+the A Darle 20 numbers to theirs, so no figure is said twice on the page.]
 
 [Copy pass 2026-10-20: reworded to read less like AI-generated text. No fact
 changed. See the copy-pass section of docs/copy-ledger.md. Rows "shipped" and
@@ -189,7 +217,7 @@ Label: case studies
 
 | Card | Number | Under it | From |
 | --- | --- | --- | --- |
-| Reporting tools at Nokia | 150+ | users on the sales reporting he moved from Salesforce Analytics to Power BI | `projects-nokia.md` |
+| Reporting tools at Nokia | 150+ | users on the sales reporting I moved from Salesforce Analytics to Power BI | `projects-nokia.md` |
 | A Darle 20 | 2,100+ | bookings in the marketplace's first four months | `projects-adarle20.md` |
 
 Link on each: Read the case study →
@@ -263,8 +291,12 @@ questions the reader arrived with. These replace them; there is no
 recruiter/engineer toggle, per decisions #26.]
 
 - Give me the short version
-- What did he build at Nokia?
-- Is he a fit for a RevOps role at an AI-forward company?
+- What did he own end to end at Nokia?
+- Is he a fit for a RevOps or delivery ops role?
+
+[Gauntlet pass, 2026-10-22: the Nokia chip asks what a screener asks — what
+he owned, not what he built — and the fit chip names both role families. It is
+still the `/fit` command's question.]
 
 [Wave 2, 2026-10-19: the fourth chip was "Does he need visa sponsorship?",
 which the hero subline already answers. The Nokia work had no chip.]

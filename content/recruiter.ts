@@ -21,38 +21,51 @@ export const TLDR_LABEL = "summary";
 // Scan-shaped rather than prose: the reader this is for hasn't started reading
 // yet (six seconds, per decisions #25).
 //
-// Nokia first and labelled as current: for the RevOps and sales-ops roles he
-// is applying to, Nokia is the proof and A Darle 20 the differentiator. The
-// Nokia rows carry outcomes rather than a job title alone. Every figure is the
-// resume's.
+// First person, like the H1 above it and the case studies behind it: the
+// front door is Sidhant talking, and the chat is the only voice that calls
+// him "he".
+//
+// Read as an experience timeline, newest first, for the two role families he
+// is applying to (RevOps and delivery ops, 2026-10-22). `now` is the job and
+// what he owns in it; `shipped` is its outcome in operating terms; `before
+// that` is the workforce role, the delivery-ops evidence (headcount
+// forecasting at scale, utilization data), which used to live only on the
+// case study. The A Darle 20 row carries no number because its card below
+// does. Every figure is the resume's.
 export const RECRUITER_TLDR: TldrRow[] = [
   {
     label: "now",
     value:
-      "Sales operations specialist at Nokia since Jun 2024, building internal tools and automation for global sales and finance teams.",
+      "Sales operations at Nokia since Jun 2024. I own the internal tools and reporting that global sales and finance teams run on, from requirements through executive demos, global rollout and support.",
     source: "content/knowledge/resume.md",
   },
   {
     label: "shipped",
     value:
-      "A self-serve Power App used by 80+ stakeholders across 7 regions, replacing a manual process that took one finance analyst's entire workday, every day of quarter-end close. He also migrated all sales reporting from Salesforce Analytics to Power BI for 150+ users.",
+      "A self-serve Power App for 80+ stakeholders across 7 regions. It replaced a manual collection process that took one finance analyst's entire workday, every day of quarter-end close.",
+    source: "content/knowledge/resume.md",
+  },
+  {
+    label: "before that",
+    value:
+      "Workforce management at Nokia, Oct 2022 – Jun 2024: headcount reporting and forecasting for a 3,000–4,000-person organization. I identified $1.2M in real-estate cost savings in lab and facility utilization data.",
     source: "content/knowledge/resume.md",
   },
   {
     label: "also",
     value:
-      "Co-founder and CTO of A Darle 20, a two-sided marketplace he architected and shipped solo: 1,400+ registered users, 127 hosts and 2,100+ bookings in its first four months.",
+      "Co-founder and CTO of A Darle 20, a live two-sided marketplace I architected and shipped solo, payments, refunds and funnel instrumentation included.",
     source: "content/knowledge/resume.md",
   },
   {
-    label: "how he builds",
+    label: "how I build",
     value:
-      "AI agents in Claude Code write most of the code. He owns architecture, code review and release.",
+      "AI agents in Claude Code write most of the code. I own architecture, code review and release.",
     source: "content/knowledge/projects-adarle20.md",
   },
   {
     label: "looking for",
-    value: "A RevOps / GTM systems role at an AI-forward company.",
+    value: "A revenue operations or delivery operations role at an AI-forward company.",
     source: "content/knowledge/faq.md",
   },
   {
@@ -64,37 +77,35 @@ export const RECRUITER_TLDR: TldrRow[] = [
 
 export const TLDR_FOOTER = "The resume has the rest.";
 
-// The hero subline (docs/mockups/front-door-1-hero.html): the `looking for`
-// and `where` rows fused into one sentence a visitor doesn't have to scroll
-// for. Same claims and source file, checked like the rows.
+// The H1. Sidhant wrote the one it replaced ("I learn what the problem
+// needs, then I build the thing.") — a motto, where a screener's first five
+// seconds need the job. This one names it: he builds the systems, rolls them
+// out, and the people on them are sales and finance teams. "Roll out" carries
+// the delivery half without a label. Gauntlet pass, 2026-10-22; logged in the
+// copy ledger. Voice, not a checkable claim, so it isn't a TldrRow — the rows
+// below it carry the evidence.
+export const HERO = "I build and roll out the systems sales and finance teams run on.";
+
+// The hero subline: the `looking for` and `where` rows fused into one sentence
+// a visitor doesn't have to scroll for. Toronto is on the role line above the
+// H1, so it isn't said twice. Same claims and source file, checked like the
+// rows.
 export const POSITIONING: TldrRow = {
   label: "positioning",
   value:
-    "Looking for a RevOps / GTM systems role at an AI-forward company. Toronto, ON. Canadian citizen, no visa sponsorship needed.",
+    "Looking for a revenue operations or delivery operations role at an AI-forward company. Canadian citizen, no visa sponsorship needed.",
   source: "content/knowledge/faq.md",
 };
 
-// The role line above the H1, in the words a recruiter searches for: revenue
-// operations, sales operations. Also the og:image's text. Sidhant's H1 stays
-// as he wrote it.
-//
-// Two claims, both the resume's: he is a sales operations specialist and an
-// "AI-native revenue operations builder", and the tools are for sales and
-// finance ("quarter-end close infrastructure for global sales and finance
-// teams at Nokia"; "vague requests from sales and finance leadership").
-// Checked like the rows.
+// The line under his name, above the H1: the job title a recruiter searches
+// for, the employer, and the city. The H1 says what the job is for, so this
+// line only has to say what it's called. Also read by the og:image.
 export const ROLE_LINE: TldrRow = {
   label: "role",
-  value: "Revenue and sales operations: I build the tools sales and finance teams run on.",
+  value: "Sales operations specialist at Nokia · Toronto, ON",
   source: "content/knowledge/resume.md",
 };
 
-// The two case-study cards under the tl;dr: one number each, the biggest true
-// one for the reader the site is for. Nokia first, as in the rows. Dell stays
-// off the homepage: it is a 2018 internship, and its $129M is an estimate.
-//
-// `stat` and `statLabel` together are a claim, checked against `source` by
-// evals/track-b.test.mjs like every row.
 export type CaseCard = {
   slug: "nokia" | "adarle20";
   /** The case study's own title, as content/projects.ts writes it. */
@@ -110,7 +121,7 @@ export const CASE_CARDS: CaseCard[] = [
     slug: "nokia",
     title: "Reporting tools at Nokia",
     stat: "150+",
-    statLabel: "users on the sales reporting he moved from Salesforce Analytics to Power BI",
+    statLabel: "users on the sales reporting I moved from Salesforce Analytics to Power BI",
     href: "/projects/nokia",
     source: "content/knowledge/projects-nokia.md",
   },
@@ -133,7 +144,7 @@ export const HERO_TLDR = RECRUITER_TLDR.filter(
 );
 
 /** The chip the `/fit` slash command sends. One string, two surfaces. */
-export const FIT_QUESTION = "Is he a fit for a RevOps role at an AI-forward company?";
+export const FIT_QUESTION = "Is he a fit for a RevOps or delivery ops role?";
 
 // #26: the first things a recruiter asks. They replace the old chips rather
 // than adding a recruiter mode.
@@ -149,6 +160,6 @@ export const FIT_QUESTION = "Is he a fit for a RevOps role at an AI-forward comp
 // evals/track-b.test.mjs.
 export const SUGGESTED_QUESTIONS = [
   "Give me the short version",
-  "What did he build at Nokia?",
+  "What did he own end to end at Nokia?",
   FIT_QUESTION,
 ];

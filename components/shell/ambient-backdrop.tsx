@@ -221,8 +221,12 @@ export function AmbientBackdrop({ visible }: { visible: boolean }) {
       </div>
       {/* Legibility scrim: the texture keeps the margins, the words keep the
           middle. On small screens the column is the whole width, so the flat
-          mobile scrim is heavier and the shaped one takes over from md up. */}
-      <div className="absolute inset-0 bg-bg/78 md:hidden" />
+          mobile scrim is heavier and the shaped one takes over from md up.
+          The middle is near-solid (90%, was 72%) and wider (20–80%, was
+          30–70%, which left the label column on the ramp at 1280px): the
+          summary sat on visible glyph noise, and the front door's job is to be read in five
+          seconds (gauntlet pass, 2026-10-22). */}
+      <div className="absolute inset-0 bg-bg/90 md:hidden" />
       {/* The stops derive from --bg rather than repeating its hex, so the
           scrim can't drift away from the page behind it. */}
       <div
@@ -230,8 +234,8 @@ export function AmbientBackdrop({ visible }: { visible: boolean }) {
         style={{
           background: `linear-gradient(90deg,
             color-mix(in srgb, var(--bg) 10%, transparent) 0%,
-            color-mix(in srgb, var(--bg) 72%, transparent) 30%,
-            color-mix(in srgb, var(--bg) 72%, transparent) 70%,
+            color-mix(in srgb, var(--bg) 90%, transparent) 20%,
+            color-mix(in srgb, var(--bg) 90%, transparent) 80%,
             color-mix(in srgb, var(--bg) 10%, transparent) 100%)`,
         }}
       />

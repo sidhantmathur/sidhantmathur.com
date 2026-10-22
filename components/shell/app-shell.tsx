@@ -45,6 +45,7 @@ import {
 import { track } from "@/lib/analytics";
 import { CaseCards, RecruiterTldr } from "./recruiter-tldr";
 import {
+  HERO,
   POSITIONING,
   ROLE_LINE,
   SUGGESTED_QUESTIONS as SUGGESTED,
@@ -121,7 +122,7 @@ const PrintSheet = dynamic(() => import("./print-sheet").then((m) => m.PrintShee
 // Copy. Final strings come from docs/site-copy.md; drafted ones are logged in
 // docs/copy-ledger.md.
 // ---------------------------------------------------------------------------
-const HERO = "I learn what the problem needs, then I build the thing.";
+// The H1 is HERO in content/recruiter.ts, beside the rows it introduces.
 // The empty state's desktop placeholder. The subline under the headline is
 // POSITIONING from content/recruiter.ts, where the citation checker covers it.
 const HERO_SUB = "Ask what you'd ask on a call";
@@ -830,7 +831,10 @@ export function AppShell() {
                 stays legible and every control stays live — this is a settle,
                 not a screensaver. */}
             <div
-              className={`mx-auto max-w-[68ch] transition-opacity duration-700 ${
+              // The front door is a little wider than the transcript: at 68ch
+              // its three actions wrapped LinkedIn onto a row of its own at
+              // 1280px. Every prose block inside it keeps its own measure.
+              className={`mx-auto ${hasMessages ? "max-w-[68ch]" : "max-w-[76ch]"} transition-opacity duration-700 ${
                 idle ? "opacity-90" : "opacity-100"
               }`}
             >
@@ -890,11 +894,19 @@ export function AppShell() {
                         {SITE_NAME}
                       </span>
                       <span className="block text-[15px] leading-snug text-text-soft">
-                        {ROLE_LINE.value}
+                        {/* One line from sm up; below it, title and city
+                            stack, so a phone never starts a line with the
+                            dot or breaks inside "Toronto, ON". */}
+                        {ROLE_LINE.value.split(" · ").map((part, i) => (
+                          <span key={part} className="block sm:inline">
+                            {i > 0 && <span className="hidden px-1.5 text-text-faint sm:inline">·</span>}
+                            {part}
+                          </span>
+                        ))}
                       </span>
                     </p>
                   </div>
-                  <h1 className="t-hero max-w-[24ch] font-semibold text-text [font-family:var(--font-geist-sans)]">
+                  <h1 className="t-hero max-w-[24ch] font-semibold text-text [font-family:var(--font-geist-sans)] [text-wrap:balance]">
                     {HERO}
                   </h1>
                   {/* Answers "what does he want" without a scroll. The string
@@ -912,27 +924,6 @@ export function AppShell() {
                     <ResumePdfButton surface="front-door" primary />
                     <EmailCopy surface="front-door" />
                     <LinkedInButton surface="front-door" />
-                  </div>
-                  {/* "Interview this site" only focuses the composer, so it's
-                      styled as a link, and gated on hydration like every
-                      control that needs JavaScript. */}
-                  <div className="-mt-1.5 flex flex-wrap items-center gap-x-5 t-meta">
-                    <Link
-                      href="/resume"
-                      onClick={() => track("resume_open", { surface: "front-door" })}
-                      className="flex min-h-[44px] touch-manipulation items-center text-text-soft underline decoration-line-strong underline-offset-4 transition-colors hover:text-accent hover:decoration-accent"
-                    >
-                      Resume as a web page
-                    </Link>
-                    <button
-                      type="button"
-                      onClick={() => inputRef.current?.focus()}
-                      disabled={!hydrated}
-                      data-js-control
-                      className="flex min-h-[44px] touch-manipulation items-center text-text-soft underline decoration-line-strong underline-offset-4 transition-colors hover:text-accent hover:decoration-accent disabled:text-text-dim disabled:no-underline"
-                    >
-                      Ask the AI assistant ↓
-                    </button>
                   </div>
                   {/* The six-second scan; see recruiter-tldr.tsx. */}
                   <div>
