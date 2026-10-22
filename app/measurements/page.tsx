@@ -92,7 +92,7 @@ const COPY = {
   groundedElsewhereNote: "in the record, under a different source",
   groundedAbsentNote: "can include a sentence naming what the record lacks, or a word taken for a name",
   groundedRules:
-    "A name or number found elsewhere in the record is now counted separately from one found nowhere, numbers only match as whole numbers, and a sentence that only names a gap isn't checked any more.",
+    "A citation written after the full stop now counts for the sentence before it rather than the one after, which had checked every cited sentence after a paragraph's first against the source of the sentence before it. Before that, on 19 Oct 2026: a name or number found elsewhere in the record started being counted separately from one found nowhere, numbers started matching only as whole numbers, and a sentence that only names a gap stopped being checked.",
   groundedRulesAbove: "Every run counted above was scored after the change.",
   groundedEarlierLead:
     "Runs from before the change were scored by the older rules, so they're counted separately.",

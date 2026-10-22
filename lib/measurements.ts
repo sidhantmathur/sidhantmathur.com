@@ -43,7 +43,9 @@ export const MIN_TURNS_FOR_P95 = 50;
  *     count as claims at all.
  *   - 82117c5 gives a marker written after the full stop to the sentence
  *     before it, not the one after. Every cited sentence after the first in a
- *     paragraph had been checked against the wrong chunk, so more verify.
+ *     paragraph had been checked against its predecessor's chunk, and the
+ *     first against every chunk the paragraph cited. Counts can move either
+ *     way: the later sentences get their own chunk, the first a smaller one.
  *
  * A run's citation counts are computed by the runner, with whatever checker the
  * tree had that day, and are never recomputed. So a run from before this moment
