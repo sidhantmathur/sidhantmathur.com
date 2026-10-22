@@ -1,3 +1,14 @@
+### At a glance
+
+- **Launched** — March 2026. I started building in August 2025.
+- **First four months** — 1,400+ registered users, 127 hosts and 2,100+
+  bookings after launch, with 200–400 unique visitors a day.
+- **Biggest test** — a flagship 251-player event at a 19,000-attendee
+  convention, rated 4.96/5 by attendees. I built the technology behind it, and
+  my co-founder ran the event on the ground.
+- **What I own** — the whole product, including the money flow from payment to
+  host payout and the funnel data we run the business on.
+
 ### The problem
 
 Tabletop roleplaying games are big in Latin America, but finding and paying a
@@ -5,63 +16,51 @@ good game master was informal and unreliable. Hosts had no clean way to take
 bookings or get paid, especially in a market where many players prefer cash.
 Two friends and I decided to build the marketplace ourselves.
 
-### What I built
+### From booking to payout
 
-I architected and shipped the whole product: host profiles, session listings,
-bookings and reservations, payments, real-time chat, email notifications,
-automated refunds, and authentication.
+I own the marketplace's quote to cash: the listed price, the payment, the
+platform fee, the host's payout, and the refund when a booking is cancelled.
 
-I build it with AI agents in Claude Code. They write most of the code, and I
-handle the architecture, product decisions, code review, and release myself.
-Later I set up a multi-agent workflow that reviews, refactors, and
-regression-tests the codebase on its own.
+Payments run on Stripe Connect, which handles host payouts and the platform
+fee. Refunds are automated, and transactional email keeps host and player
+informed.
 
-### The unit economics
+Card penetration in Mexico is low, so I designed the payment flows around cash
+as well. With OXXO, a player with no card pays at a convenience store.
 
-I integrated Stripe Connect for host payouts, the platform fee, and OXXO cash
-payments. OXXO lets a player with no card pay in cash at a convenience store,
-which matters in Mexico, where card penetration is low.
+### A pricing experiment
 
 Running A Darle 20 has taught me as much about unit economics as about code. We
-tested a commission model against direct event ticket sales and made decisions
-about where the margin is.
+ran a monetization test, a commission model against direct event ticket sales,
+and made decisions about where the margin is.
 
-### Funnel tracking
+### Running it on its numbers
 
-I instrumented the funnel end to end: bookings, conversion, cancellations,
-refunds and host activation. That covers both sides of the marketplace, so I
-can see how many players visit, register and book, and how many hosts
-activate. I use that data to make product and monetization decisions,
-including the commission question above.
+I instrumented the funnel end to end, on both sides of the marketplace:
+bookings, conversion, cancellations, refunds and host activation. Those numbers
+are how we run the business. They steer product and monetization decisions,
+the pricing test included.
+
+### How I build it
+
+AI agents in Claude Code write most of the code. I own the architecture and
+the product decisions, review the code, and handle every release.
+
+I also set up a multi-agent workflow that reviews, refactors and
+regression-tests the production codebase on its own. That workflow is how one
+developer built, launched and keeps running the whole marketplace.
 
 ### What it runs on
 
 TypeScript, React and Next.js, Supabase (PostgreSQL) with Prisma, Stripe Connect,
 Resend for transactional email, deployed on Vercel.
 
-### Where it stands
-
-I started building in August 2025, and the platform launched in March 2026.
-Four months in, it has 1,400+ registered users, 127 hosts, and 2,100+ bookings,
-with 200–400 unique visitors a day. The biggest single test so far was a
-flagship 251-player event at a 19,000-attendee convention, rated 4.96/5 by
-attendees. I built the technology behind it, and my co-founder ran the event on
-the ground.
-
 ### In plain terms
 
-Tabletop roleplaying games are played in groups, and somebody has to run the
-game for everyone else. Finding a good one, and paying them, came down to word
-of mouth and private arrangements. On A Darle 20, a host lists a session, a
-player books a seat, the payment goes through the site, and both sides get an
-email about it.
+A host lists a game session with a price and a set number of seats. A player
+books a seat and pays, by card or in cash at a convenience store. The site takes
+its fee, pays the host, and sends both sides an email about it.
 
-Money is the hard part. It has to get to the host, some players have no card
-and pay cash at a convenience store, and bookings get cancelled and refunded.
-Most of what I built handles that automatically.
-
-### Summary
-
-A Darle 20 shows I can take an ambiguous idea to a revenue-generating product
-and handle the refunds, payment edge cases, and infrastructure costs that come
-with it.
+If a booking is cancelled, the money goes back to the player without anyone
+handling it by hand. Money is the hard part, and most of what I built handles it
+automatically.
