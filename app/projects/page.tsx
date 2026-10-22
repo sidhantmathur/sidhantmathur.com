@@ -21,7 +21,10 @@ export default function ProjectsPage() {
     <DocPage>
       <h1 className="t-title font-medium text-text">Projects</h1>
       <p className="t-body mt-3 max-w-[62ch] text-text-soft">
-        Three case studies. The assistant on the homepage can summarize any of them.
+        Three systems revenue runs on, each built by me and used by the people it
+        was for: Nokia&apos;s quarter-end and sales reporting, a live marketplace I
+        built as its only developer, and the Dell sales model where this work
+        started.
       </p>
 
       <div className="mt-10 space-y-10">

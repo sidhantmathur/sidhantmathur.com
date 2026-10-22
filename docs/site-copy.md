@@ -203,11 +203,10 @@ Nokia is now listed first (01) and A Darle 20 second (02). The card copy below
 is unchanged.]
 
 **Card 1 — A Darle 20**
-A marketplace connecting tabletop game hosts with paying players across Latin
-America. I designed and shipped the whole product solo (bookings, payments,
-chat, refunds and notifications) with an AI-agent-heavy development workflow.
-Four months after launch it had 1,400+ registered users, 127 hosts and 2,100+
-bookings.
+A live marketplace for tabletop game sessions in Latin America, which I built
+as its only developer and run as co-founder. Four months after launch: 1,400+
+registered users, 127 hosts and 2,100+ bookings. I shipped bookings, payments,
+chat and refunds with an AI-agent-heavy development workflow.
 
 Role: Co-Founder & CTO
 Stack: TypeScript, Next.js, Supabase, Stripe Connect
@@ -215,10 +214,10 @@ Status: Live at adarle20.com
 Link: Read the case study
 
 **Card 2 — Reporting tools at Nokia**
-Self-serve reporting tools for a global sales organization. A Power App used by
-80+ stakeholders across seven regions replaced a manual quarterly process. I
-also moved all sales reporting from Salesforce Analytics to Power BI for 150+
-users, and I model and maintain it.
+A self-serve app I built replaced a manual quarter-end process for 80+
+stakeholders in seven regions. That process took one finance analyst's entire
+workday, every day of close. I also moved sales reporting for 150+ users from
+Salesforce Analytics to Power BI, and I own it from data model to user support.
 
 Role: Sales operations specialist
 Stack: Power Apps, Power BI, SQL, DAX, Salesforce
@@ -227,16 +226,16 @@ Link: Read the case study
 Stat column (display numeral): 150+ / users across seven regions
 
 **Card 3 — Sales prediction model at Dell**
-As an intern, I built a propensity model on Dell's historical customer
-database to find cross-sell targets for a high-margin software product. It
-surfaced about 20,000 qualified accounts representing an estimated $129M in
-pipeline.
+A propensity model that surfaced about 20,000 qualified cross-sell accounts for
+a high-margin software product: an estimated $129M in pipeline at segment-level
+average deal sizes. I built it as an intern on Dell's historical customer
+database.
 
 Role: Marketing intern
 Stack: Azure ML
 [Wave 1, 2026-10-19: "Python" removed — the Dell record names Azure ML and no
 language. It comes back if Sidhant confirms it.]
-Status: 2018
+Status: Internship, May–Aug 2018
 Link: Read the case study
 Stat column (display numeral): $129M / estimated pipeline
 
@@ -246,6 +245,15 @@ descriptions changed. The `/projects` page around them now reads: intro "Three
 case studies. The assistant on the homepage can summarize any of them.";
 metadata description "Three case studies: reporting tools at Nokia, the A Darle
 20 marketplace, and a sales prediction model at Dell."]
+
+[Gauntlet pass 2026-10-22, lane `doc-type`: all three card descriptions now
+lead with the outcome in operating terms; same facts, reordered. Dell's status
+was "2018" and now reads as the internship it was (resume: May–Aug 2018). The
+`/projects` intro was meta (it pointed at the chatbot) and now says what the
+three are evidence of:
+"Three systems revenue runs on, each built by me and used by the people it was
+for: Nokia's quarter-end and sales reporting, a live marketplace I built as its
+only developer, and the Dell sales model where this work started."]
 
 ### Chat panel (homepage teaser)
 
@@ -638,7 +646,9 @@ Then: Download resume (PDF) · hello@sidhantmathur.com [copy] · LinkedIn ↗
 
 Case studies end instead on:
 Label: Contact
-Body: If this is the kind of work you're hiring for, the resume has the rest.
+Body: If you're hiring for this kind of work, email me. The resume has the rest.
+[Gauntlet pass 2026-10-22: was "If this is the kind of work you're hiring for,
+the resume has the rest." Tightened, and it now names the one action.]
 Then the same three controls, and a bordered link: "Next case study" ·
 {next title} → · {its status line}. Order: Nokia → A Darle 20 → Dell → Nokia.
 
