@@ -1,19 +1,23 @@
 <div className="@container max-w-[68ch]">
-  <dl aria-label="Outcomes" className="grid grid-cols-1 border-y border-line @lg:grid-cols-3">
-    <div className="border-line py-3 @lg:pr-4 [&+&]:border-t @lg:[&+&]:border-t-0 @lg:[&+&]:border-l @lg:[&+&]:pl-4">
+  <dl aria-label="Outcomes" className="grid grid-cols-1 border-y border-line @md:grid-cols-2">
+    <div className="py-3 @md:pr-4">
       <dt className="text-[28px] font-semibold leading-none tracking-tight text-text">80+</dt>
       <dd className="t-meta mt-1.5 text-text-soft">stakeholders in seven regions on self-serve quarterly reporting</dd>
     </div>
-    <div className="border-line py-3 @lg:pr-4 [&+&]:border-t @lg:[&+&]:border-t-0 @lg:[&+&]:border-l @lg:[&+&]:pl-4">
+    <div className="border-t border-line py-3 @md:border-t-0 @md:border-l @md:pl-4">
       <dt className="text-[28px] font-semibold leading-none tracking-tight text-text">One workday</dt>
       <dd className="t-meta mt-1.5 text-text-soft">of manual collection by a finance analyst, eliminated every day of quarter-end close</dd>
     </div>
-    <div className="border-line py-3 @lg:pr-4 [&+&]:border-t @lg:[&+&]:border-t-0 @lg:[&+&]:border-l @lg:[&+&]:pl-4">
+    <div className="border-t border-line py-3 @md:pr-4">
       <dt className="text-[28px] font-semibold leading-none tracking-tight text-text">150+</dt>
       <dd className="t-meta mt-1.5 text-text-soft">users on sales reporting I rebuilt and moved to a new platform</dd>
     </div>
+    <div className="border-t border-line py-3 @md:border-l @md:pl-4">
+      <dt className="text-[28px] font-semibold leading-none tracking-tight text-text">3,000–4,000</dt>
+      <dd className="t-meta mt-1.5 text-text-soft">people in the organization whose headcount reporting and forecasting I owned, 2022–2024</dd>
+    </div>
   </dl>
-  <p className="t-meta mt-3 text-text-faint">Sales operations specialist (internal tools and automation), Nokia, Toronto. June 2024 to present. Both tools have been in production since 2024.</p>
+  <p className="t-meta mt-3 text-text-faint">Nokia, Toronto. Sales operations specialist (internal tools and automation), June 2024 to present. Before that, workforce management specialist, October 2022 to June 2024.</p>
 </div>
 
 ### What changed
@@ -28,13 +32,21 @@ the manual collection is gone.
 migrated all of its sales reporting to Power BI and owned the data model and
 the transformation logic, in SQL and DAX, end to end.
 
-This work is internal to Nokia, so confidentiality limits the screenshots and
-specifics I can share.
+Both tools have been in production since 2024. The work is internal to Nokia,
+so confidentiality limits the screenshots and specifics I can share.
+
+### Headcount and forecasting, 2022–2024
+
+I owned headcount reporting and forecasting for an organization of 3,000–4,000
+people: how many people it has, and how many it will have.
+
+I also analyzed lab and facility utilization data to see whether the space it
+pays for is being used, and identified $1.2M in real-estate cost savings.
 
 ### How I ran it
 
-For both tools I was the whole team, from the first request to support after
-launch.
+For the quarterly reporting tool and the sales reporting migration, I was the
+whole team, from the first request to support after launch.
 
 - **Requirements** — sales and finance leadership came with vague requests,
   and I turned each one into a scoped plan.
@@ -45,20 +57,6 @@ launch.
 - **Support** — I handle user support, bug triage and rapid iteration myself,
   across time zones.
 
-More recently I've been bringing LLMs and Python into these workflows where
-they help.
-
-### Before this: headcount and forecasting
-
-I joined Nokia in October 2022 as a workforce management specialist. Until June
-2024 I owned headcount reporting and forecasting for an organization of
-3,000–4,000 people.
-
-The questions were operating questions: how many people the organization has,
-how many it will have, and whether the space it pays for is being used. On that
-last one, I analyzed lab and facility utilization data and identified $1.2M in
-real-estate cost savings.
-
 ### In plain terms
 
 Most of this job is making sure a number means the same thing to everyone who
@@ -67,7 +65,6 @@ reconcile them by hand before leadership can trust the total. A self-serve tool
 moves that work to the source: people put their numbers in once, in one place,
 and nobody has to chase them.
 
-A reporting migration is harder than it sounds. Every report carries rules
-inside it, like what counts as a sale or which region an account belongs to.
-Those rules have to be rebuilt on the new system. The rebuilt rules are the data
-model, and that's the part I own.
+A reporting migration is the same problem one level down. Every report carries
+rules, like what counts as a sale or which region an account belongs to. Rebuilt
+on the new system, those rules are the data model.
