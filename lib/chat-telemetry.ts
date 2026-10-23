@@ -312,6 +312,24 @@ export type TurnTelemetry = {
   toolsCalled: string[] | null;
   finishReason: string | null;
   error: TurnError | null;
+  /**
+   * Set when the answer was replayed rather than generated: one of the site's
+   * own fixed questions, answered earlier on this deployment by this model
+   * (lib/stored-answers.ts). `usage` and `timing` are then this turn's own,
+   * zero tokens and no model call, and this is the generation it came from.
+   * Optional because older persisted records don't carry it.
+   */
+  stored?: StoredOrigin | null;
+};
+
+/** Where a replayed answer came from. */
+export type StoredOrigin = {
+  /** ISO time the answer was generated. */
+  generatedAt: string;
+  /** That generation's time to first output, server-measured. */
+  ttftMs: number | null;
+  /** That generation's wall-clock time on the server. */
+  durationMs: number | null;
 };
 
 /** The data parts this app's UI messages can carry. */

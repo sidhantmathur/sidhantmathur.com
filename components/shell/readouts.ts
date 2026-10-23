@@ -46,9 +46,17 @@ export function readoutValues({ turns, ttft, cost, model }: ReadoutState): Reado
 /**
  * The header's one-line receipt: turns used and what the last answer cost. The
  * header renders it as the button that opens the instruments panel, where the
- * rest of the readouts live. `lastCost` is null until an answer has been priced.
+ * rest of the readouts live. `last` is null until an answer has been priced.
+ *
+ * A replayed answer (lib/stored-answers.ts) reads "cached" rather than its
+ * price. It billed nothing, and "$0.0000" would read as a broken meter rather
+ * than as an answer nobody had to generate.
  */
-export function receiptText(turns: number, lastCost: number | null): string {
+export function receiptText(
+  turns: number,
+  last: { cost: number | null; cached: boolean } | null,
+): string {
   const used = `${turns}/${TURN_CAP} turns`;
-  return `${used} · last answer ${lastCost == null ? "—" : formatUsd(lastCost)}`;
+  if (last?.cached) return `${used} · last answer cached`;
+  return `${used} · last answer ${last?.cost == null ? "—" : formatUsd(last.cost)}`;
 }

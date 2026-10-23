@@ -181,7 +181,11 @@ describe("groundedness after the 2026-10-19 checker changes", () => {
     // figure that neither set of rules produced.
     assert.equal(checkedByCurrentRules({ ranAt: "2026-07-27T20:43:28.667Z" }), false);
     assert.equal(checkedByCurrentRules({ ranAt: CHECKER_REVISED }), true);
-    assert.equal(checkedByCurrentRules({ ranAt: "2026-10-20T02:27:27.691Z" }), true);
+    // The published run of 2026-10-20 was scored before the full-stop fix
+    // (82117c5), which changed the chunk a paragraph's cited sentences are
+    // checked against.
+    assert.equal(checkedByCurrentRules({ ranAt: "2026-10-20T02:27:27.691Z" }), false);
+    assert.equal(checkedByCurrentRules({ ranAt: "2026-10-23T00:00:00.000Z" }), true);
     assert.equal(checkedByCurrentRules({ ranAt: null }), false, "an undated run is not assumed current");
   });
 

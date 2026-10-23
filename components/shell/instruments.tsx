@@ -378,6 +378,7 @@ function TraceInspector({ turnLog }: { turnLog: TurnRecord[] }) {
                 <span className="tabular-nums text-text-faint">#{i + 1}</span>
                 <span className={turn.error ? "text-accent" : "text-text-soft"}>
                   {turn.error ? turn.error.class : shortModel(turn.model)}
+                  {turn.stored && !turn.error ? " · cached" : ""}
                 </span>
                 <span className="ml-auto shrink-0 tabular-nums text-text-faint">
                   {turn.timing?.ttftMs != null ? `${turn.timing.ttftMs}ms` : "—"}
@@ -406,6 +407,25 @@ function TraceInspector({ turnLog }: { turnLog: TurnRecord[] }) {
                 <div className="overflow-hidden">
                 <div className="space-y-1 border-t border-line px-2 py-2">
                   <Row label="model" value={turn.model} />
+                  {/* A replay of a stored answer (lib/stored-answers.ts). The
+                      rows below are this turn's own, a store read and zero
+                      tokens; these two are the generation it came from. */}
+                  {turn.stored && (
+                    <>
+                      <Row
+                        label="answer"
+                        value={`cached, generated ${formatGenerated(turn.stored.generatedAt)}`}
+                      />
+                      <Row
+                        label="generation took"
+                        value={
+                          turn.stored.durationMs != null
+                            ? `${turn.stored.durationMs}ms (ttft ${turn.stored.ttftMs ?? "—"}ms)`
+                            : "—"
+                        }
+                      />
+                    </>
+                  )}
                   <Row label="job posting" value={turn.jobPosting ? "yes" : "no"} />
                   {/* The only per-turn change to the system prompt, so the
                       only explanation for an input count that differs from
@@ -440,7 +460,13 @@ function TraceInspector({ turnLog }: { turnLog: TurnRecord[] }) {
                   <Row label="output" value={formatTokens(turn.usage?.outputTokens)} />
                   <Row
                     label="prompt cache"
-                    value={(turn.usage?.cachedInputTokens ?? 0) > 0 ? "hit" : "miss"}
+                    value={
+                      turn.stored
+                        ? "not used"
+                        : (turn.usage?.cachedInputTokens ?? 0) > 0
+                          ? "hit"
+                          : "miss"
+                    }
                   />
                   <Row label="steps" value={turn.steps != null ? String(turn.steps) : "—"} />
                   <Row
@@ -678,4 +704,16 @@ export function lastSettledRate(turnLog: TurnRecord[]): number | null {
 /** `openai/gpt-6-luna` → `gpt-6-luna`, for the one-line rows. */
 function shortModel(model: string): string {
   return model.split("/").pop() ?? model;
+}
+
+/**
+ * When a stored answer was generated, in the reader's own clock: the time
+ * alone for today, the date as well for anything older.
+ */
+function formatGenerated(iso: string): string {
+  const at = new Date(iso);
+  if (Number.isNaN(at.getTime())) return "earlier";
+  const time = at.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+  if (at.toDateString() === new Date().toDateString()) return `today at ${time}`;
+  return `${at.toLocaleDateString(undefined, { month: "short", day: "numeric" })} at ${time}`;
 }

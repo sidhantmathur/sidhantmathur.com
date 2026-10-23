@@ -5,8 +5,10 @@ import {
   createUIMessageStreamResponse,
   tool,
   stepCountIs,
+  type InferUIMessageChunk,
   type UIMessage,
 } from "ai";
+import { after } from "next/server";
 import { z } from "zod";
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
@@ -15,6 +17,7 @@ import { looksLikeJobPosting, MAX_USER_TEXT, wrapPosting } from "@/lib/job-posti
 import { looksLikeSiteQuestion } from "@/lib/site-question";
 import { reconcileRoleFit } from "@/lib/role-fit";
 import { CHUNK_BY_ID } from "@/lib/chunks.generated";
+import { ALL_CHUNKS_BY_ID } from "@/lib/corpus";
 import {
   SIMULATABLE_CLASSES,
   TURN_FAILURES,
@@ -23,7 +26,17 @@ import {
   type ChatUIMessage,
   type TurnErrorClass,
   type TurnTelemetry,
+  type TurnUsage,
 } from "@/lib/chat-telemetry";
+import {
+  fixedQuestionOf,
+  readStoredAnswer,
+  recorder,
+  storedAnswerKey,
+  unstorableReason,
+  writeStoredAnswer,
+  type StoredAnswer,
+} from "@/lib/stored-answers";
 import { INTERNAL_TOOLS } from "@/lib/chat-transport";
 import { PROJECTS } from "@/content/projects";
 import {
@@ -430,6 +443,24 @@ function buildChatTools(extraction: { requirements: string[] }) {
   };
 }
 
+type ChatToolName = keyof ReturnType<typeof buildChatTools>;
+
+/**
+ * Every tool, for `activeTools`. Spelled out as a record so a tool added above
+ * without a line here is a type error rather than a tool that silently
+ * disappears from a turn's later steps.
+ */
+const TOOL_NAMES = Object.keys({
+  showProject: true,
+  showResume: true,
+  extractRequirements: true,
+  roleFit: true,
+  contactCard: true,
+} satisfies Record<ChatToolName, true>) as ChatToolName[];
+
+/** Cards a turn shows at most once. See `prepareStep` in POST. */
+const ONCE_PER_TURN: readonly ChatToolName[] = ["roleFit", "showResume", "contactCard"];
+
 // --- Failure theatre ------------------------------------------------------
 //
 // `?simulate=<class>` reproduces each failure path on demand: 400 for a bad
@@ -547,6 +578,62 @@ function simulateEmptyTurn(model: ModelId): Response {
   });
 }
 
+// --- Stored answers -------------------------------------------------------
+//
+// One of the site's own fixed questions, already answered on this deployment
+// by this model, written back as the stream it was. What qualifies, and what
+// has to be true of an answer before anyone else is shown it, is in
+// lib/stored-answers.ts.
+
+/** A replay bills nothing, and its record says zero rather than unknown. */
+const NO_USAGE: TurnUsage = {
+  inputTokens: 0,
+  cachedInputTokens: 0,
+  cacheWriteTokens: 0,
+  outputTokens: 0,
+  reasoningTokens: 0,
+  totalTokens: 0,
+};
+
+/** How long a finished turn waits for its recording before giving up on keeping it. */
+const RECORDING_GRACE_MS = 5_000;
+
+function replayStoredAnswer(
+  stored: StoredAnswer,
+  telemetry: TurnTelemetry,
+  headers: Record<string, string>,
+): Response {
+  const startedAt = Date.now();
+  telemetry.stored = {
+    generatedAt: stored.generatedAt,
+    ttftMs: stored.ttftMs,
+    durationMs: stored.durationMs,
+  };
+
+  const stream = createUIMessageStream<ChatUIMessage>({
+    execute: ({ writer }) => {
+      writer.write({ type: "start" });
+      writer.write({ type: "data-turn", id: TURN_PART_ID, data: { ...telemetry } });
+      // This turn's own time to first output, which is the store read, not a
+      // model: the generation's own is in `stored`.
+      const ttftMs = Date.now() - startedAt;
+      for (const chunk of stored.chunks) writer.write(chunk as Parameters<typeof writer.write>[0]);
+      telemetry.usage = NO_USAGE;
+      telemetry.timing = { ttftMs, durationMs: Date.now() - startedAt, tokensPerSecond: null };
+      telemetry.steps = stored.steps;
+      telemetry.toolsCalled = stored.toolsCalled;
+      telemetry.finishReason = "stop";
+      writer.write({ type: "data-turn", id: TURN_PART_ID, data: { ...telemetry } });
+      writer.write({ type: "finish" });
+    },
+  });
+
+  return createUIMessageStreamResponse({
+    stream,
+    headers: { ...headers, "x-stored-answer": stored.generatedAt },
+  });
+}
+
 export async function POST(req: Request): Promise<Response> {
   // (0) Failure theatre comes first: no body parsing, no budget, no model.
   const simulate = simulatedClass(req);
@@ -640,6 +727,28 @@ export async function POST(req: Request): Promise<Response> {
     error: null,
   };
 
+  // The status strip reads the budget from these headers before the first
+  // token arrives; the live eval harness reads them too.
+  const headers = {
+    "x-model": model,
+    "x-budget-remaining": String(budget.remaining),
+    "x-budget-limit": String(HOURLY_LIMIT),
+  };
+
+  const systemPrompt = buildSystemPrompt({ repoCorpus: siteQuestion });
+
+  // (e3) A chip or a fixed slash command, opening the conversation: answered
+  // from the store when this deployment and model have a clean answer to it.
+  // After the budget, so a replay still counts as a turn. A posting is never
+  // one of these, but the check costs nothing and keeps the forced tool
+  // sequence out of the store.
+  const fixedQuestion = jobPosting ? null : fixedQuestionOf(messages);
+  const storedKey = fixedQuestion
+    ? storedAnswerKey({ model, systemPrompt, question: fixedQuestion })
+    : null;
+  const stored = storedKey ? await readStoredAnswer(storedKey) : null;
+  if (stored) return replayStoredAnswer(stored, telemetry, headers);
+
   const stream = createUIMessageStream<ChatUIMessage>({
     // The default masks every error as "An error occurred." The class is safe
     // to expose — it's a closed vocabulary with no server detail in it — and
@@ -689,7 +798,21 @@ export async function POST(req: Request): Promise<Response> {
               }
               return { toolChoice: "none" };
             }
-          : undefined,
+          : ({ steps }) => {
+              // One of each card per turn. On the fit chip GPT-6 Luna was seen
+              // (2026-10-22) calling roleFit in two consecutive steps, writing
+              // a second whole assessment before the answer: 14 s where one
+              // call took 10. A card whose input is the whole answer, or that
+              // takes no input, drops out once it has run. showProject stays,
+              // because two projects are two different cards.
+              const used = new Set(steps.flatMap((s) => s.toolCalls.map((c) => c.toolName)));
+              if (!ONCE_PER_TURN.some((name) => used.has(name))) return undefined;
+              return {
+                activeTools: TOOL_NAMES.filter(
+                  (name) => !(ONCE_PER_TURN.includes(name) && used.has(name)),
+                ),
+              };
+            },
         // Supplied as a message so it can carry cache_control. The base prompt
         // is byte-identical across requests, so ephemeral caching hits after
         // the first.
@@ -697,7 +820,7 @@ export async function POST(req: Request): Promise<Response> {
         messages: [
           {
             role: "system",
-            content: buildSystemPrompt({ repoCorpus: siteQuestion }),
+            content: systemPrompt,
             providerOptions: {
               anthropic: { cacheControl: { type: "ephemeral" } },
             },
@@ -706,7 +829,14 @@ export async function POST(req: Request): Promise<Response> {
         ],
       });
 
-      writer.merge(result.toUIMessageStream({ sendStart: false, sendFinish: false }));
+      // A turn that could be stored keeps a copy of what the browser receives.
+      // Whether it is stored is decided once the turn has finished.
+      const uiStream = result.toUIMessageStream<ChatUIMessage>({
+        sendStart: false,
+        sendFinish: false,
+      });
+      const recording = storedKey ? recorder<InferUIMessageChunk<ChatUIMessage>>() : null;
+      writer.merge(recording ? uiStream.pipeThrough(recording.transform) : uiStream);
 
       try {
         const [steps, usage, finishReason] = await Promise.all([
@@ -777,17 +907,46 @@ export async function POST(req: Request): Promise<Response> {
 
       writer.write({ type: "data-turn", id: TURN_PART_ID, data: { ...telemetry } });
       writer.write({ type: "finish" });
+
+      // Kept for the next visitor only if the turn finished cleanly and the
+      // answer passes the citation check the browser runs over it. Saved after
+      // the response, so the visitor who waited for it doesn't wait for the
+      // write as well.
+      if (recording && storedKey && telemetry.error == null && telemetry.finishReason === "stop") {
+        const entry = {
+          generatedAt: new Date(startedAt).toISOString(),
+          ttftMs: telemetry.timing?.ttftMs ?? null,
+          durationMs: telemetry.timing?.durationMs ?? null,
+          steps: telemetry.steps,
+          toolsCalled: telemetry.toolsCalled,
+        };
+        const keep = async () => {
+          const chunks = await Promise.race([
+            recording.done,
+            new Promise<null>((resolve) => setTimeout(() => resolve(null), RECORDING_GRACE_MS)),
+          ]);
+          if (!chunks) {
+            console.info("[chat] stored answer not kept: the recording never finished");
+            return;
+          }
+          const reason = unstorableReason(chunks, ALL_CHUNKS_BY_ID);
+          if (reason) {
+            console.info(`[chat] stored answer not kept: ${reason}`);
+            return;
+          }
+          await writeStoredAnswer(storedKey, { ...entry, chunks });
+          console.info(`[chat] stored answer kept for "${fixedQuestion}"`);
+        };
+        try {
+          after(keep);
+        } catch (err) {
+          // Outside a request scope `after` throws. Losing the write is fine;
+          // turning a finished answer into an error is not.
+          console.error("[chat] could not defer the stored answer", err);
+        }
+      }
     },
   });
 
-  // The status strip reads the budget from these headers before the first
-  // token arrives; the live eval harness reads them too.
-  return createUIMessageStreamResponse({
-    stream,
-    headers: {
-      "x-model": model,
-      "x-budget-remaining": String(budget.remaining),
-      "x-budget-limit": String(HOURLY_LIMIT),
-    },
-  });
+  return createUIMessageStreamResponse({ stream, headers });
 }

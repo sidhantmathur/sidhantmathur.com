@@ -209,7 +209,10 @@ export function useConversation(model: string) {
   const [saved, setSaved] = useState<SavedConversation | null>(null);
 
   // The client's own stopwatch, kept so the record can carry both latencies.
+  // `sentAt` is when the turn was sent; the closing record of a stored answer
+  // reads it too, so it is declared before the chat hook.
   const clientTtft = useRef<number | null>(null);
+  const sentAt = useRef<number | null>(null);
 
   const {
     messages,
@@ -234,6 +237,16 @@ export function useConversation(model: string) {
       if (part.type !== "data-turn") return;
       const data = part.data;
       const opening = data.usage == null && data.error == null;
+      // A stored answer arrives whole, in one read, and React can batch from
+      // "submitted" straight to "ready" without rendering "streaming", which is
+      // where the time-to-first-token effect takes its reading. Taken here
+      // instead: for a replay, the closing record lands with the answer.
+      if (!opening && data.stored && sentAt.current != null) {
+        const elapsed = Math.round(nowMs() - sentAt.current);
+        sentAt.current = null;
+        clientTtft.current = elapsed;
+        queueMicrotask(() => setTtft(elapsed));
+      }
       const record: TurnRecord = {
         ...data,
         clientTtftMs: clientTtft.current,
@@ -270,6 +283,9 @@ export function useConversation(model: string) {
         steps: data.steps,
         tools_called: data.toolsCalled,
         finish_reason: data.finishReason,
+        // A replay of a stored answer: its timing is a store read, so it is
+        // split out before anyone averages the chat's latency.
+        stored: data.stored != null,
       });
     },
     // Stamps the record with the message it belongs to, so an instrument can
@@ -323,7 +339,6 @@ export function useConversation(model: string) {
   }, [status, messages]);
   useEffect(() => () => publishPhaseActivity(null), []);
 
-  const sentAt = useRef<number | null>(null);
   const sentCount = useRef(0);
 
   // Put a conversation back on screen. One that ends on an unanswered question
