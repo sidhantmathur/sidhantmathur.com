@@ -255,7 +255,7 @@ const STOPWORDS = new Set(
     .filter(Boolean),
 );
 
-/** Digit runs: `1,400`, `4.96`, `20,000`, `2024`. */
+/** Digit runs: `2,100`, `4.96`, `20,000`, `2024`. */
 const NUMBER = /\d[\d,]*(?:\.\d+)?/g;
 
 /** Capitalized words, keeping internal punctuation: `Power`, `B.S.`, `OXXO`. */

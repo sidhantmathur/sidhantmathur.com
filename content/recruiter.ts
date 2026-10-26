@@ -25,47 +25,53 @@ export const TLDR_LABEL = "summary";
 // front door is Sidhant talking, and the chat is the only voice that calls
 // him "he".
 //
-// Read as an experience timeline, newest first, for the two role families he
-// is applying to (RevOps and delivery ops, 2026-10-22). `now` is the job and
-// what he owns in it; `shipped` is its outcome in operating terms; `before
-// that` is the workforce role, the delivery-ops evidence (headcount
-// forecasting at scale, utilization data), which used to live only on the
-// case study. The A Darle 20 row carries no number because its card below
-// does. Every figure is the resume's.
+// Read as an experience timeline, newest first, for the role families he is
+// applying to (RevOps, sales ops and delivery ops). `now` is the scope of the
+// current job, in the master resume's summary words; `built` and `shipped` are
+// its two tools with numbers; `inherited` is the other half of the one-line
+// story (he keeps other people's systems alive); `before that` is the
+// workforce role. The A Darle 20 row carries no number because its card below
+// does. Every figure is the master resume's (2026-10-26).
 export const RECRUITER_TLDR: TldrRow[] = [
   {
     label: "now",
     value:
-      "Sales operations at Nokia since Jun 2024, building and owning reporting tools for global sales and finance.",
+      "I own the reporting and tooling for Nokia's 7-region, $10B+ pipeline sales organization: incentives, quarter-end close and weekly operating review.",
+    source: "content/knowledge/resume.md",
+  },
+  {
+    label: "built",
+    value:
+      "The weekly operating review tool regional sales ops teams use to compile the Chief Customer Officer's weekly report, shipped in two weeks.",
     source: "content/knowledge/resume.md",
   },
   {
     label: "shipped",
     value:
-      "A self-serve quarterly reporting app for 80+ stakeholders in 7 regions, replacing manual quarter-end collection that took a finance analyst's entire workday, every day of close.",
+      "The self-serve Power App behind quarter-end executive reporting for 80+ stakeholders across 7 regions, replacing an error-prone, full-day manual consolidation.",
+    source: "content/knowledge/resume.md",
+  },
+  {
+    label: "inherited",
+    value:
+      "The Power App and automations North America runs all its reviews on (30 core users), and the sales incentive calculations for 900+ staff. I extended the first and cut steps and manual checks from the second.",
     source: "content/knowledge/resume.md",
   },
   {
     label: "before that",
     value:
-      "Workforce management at Nokia, Oct 2022 – Jun 2024: headcount reporting and forecasting for a 3,000–4,000-person organization. I identified $1.2M in real-estate cost savings in lab and facility utilization data.",
+      "Workforce management at Nokia, Oct 2021 – Jun 2024: I ran the monthly headcount forecast for a 3,000–4,000-person org and led an analysis that identified $1.2M in real-estate cost savings.",
     source: "content/knowledge/resume.md",
   },
   {
     label: "also",
     value:
-      "Co-founder and CTO of A Darle 20, a live two-sided marketplace I architected and shipped solo, payments, refunds and funnel instrumentation included.",
-    source: "content/knowledge/resume.md",
-  },
-  {
-    label: "how I work",
-    value:
-      "At Nokia I was the whole team on both tools: requirements, build, executive demos, global rollout and support across time zones. At A Darle 20, AI agents in Claude Code write most of the code; I own architecture, code review and release.",
+      "Co-founder and CTO of A Darle 20 (part-time), a marketplace I built as its sole developer.",
     source: "content/knowledge/resume.md",
   },
   {
     label: "looking for",
-    value: "A revenue operations or delivery operations role at an AI-forward company.",
+    value: "A RevOps, sales operations or delivery operations role.",
     source: "content/knowledge/faq.md",
   },
   {
@@ -77,23 +83,20 @@ export const RECRUITER_TLDR: TldrRow[] = [
 
 export const TLDR_FOOTER = "The resume has the rest.";
 
-// The H1. Sidhant wrote the one it replaced ("I learn what the problem
-// needs, then I build the thing.") — a motto, where a screener's first five
-// seconds need the job. This one names it: he builds the systems, rolls them
-// out, and the people on them are sales and finance teams. "Roll out" carries
-// the delivery half without a label. Gauntlet pass, 2026-10-22; logged in the
-// copy ledger. Voice, not a checkable claim, so it isn't a TldrRow — the rows
-// below it carry the evidence.
-export const HERO = "I build and roll out the tools sales and finance teams run on.";
+// The H1: the one-line story from the resume decisions log (2026-10-25), "an
+// ops person whose edge is building". It names the work and its scale; the
+// `inherited` row below carries the other half ("and I keep alive the ones
+// other people built"). Voice rather than a checkable claim, so it isn't a
+// TldrRow, but its one figure is the resume's.
+export const HERO = "I build and run the tools a 7-region sales organization reports on.";
 
-// The hero subline: the `looking for` and `where` rows fused into one sentence
-// a visitor doesn't have to scroll for. Toronto is on the role line above the
-// H1, so it isn't said twice. Same claims and source file, checked like the
-// rows.
+// The hero subline: the `looking for` row as a sentence a visitor doesn't have
+// to scroll for. Toronto is on the role line above the H1, so it isn't said
+// twice. Same claims and source file, checked like the rows. Also the og:image's
+// last line.
 export const POSITIONING: TldrRow = {
   label: "positioning",
-  value:
-    "Looking for a revenue operations or delivery operations role at an AI-forward company.",
+  value: "Looking for a RevOps, sales operations or delivery operations role.",
   source: "content/knowledge/faq.md",
 };
 
@@ -119,9 +122,9 @@ export type CaseCard = {
 export const CASE_CARDS: CaseCard[] = [
   {
     slug: "nokia",
-    title: "Reporting tools at Nokia",
+    title: "Reporting and tooling at Nokia",
     stat: "150+",
-    statLabel: "users on the sales reporting I moved from Salesforce Analytics to Power BI",
+    statLabel: "monthly users on the Salesforce CRM Analytics dashboards I delivered for exec reviews",
     href: "/projects/nokia",
     source: "content/knowledge/projects-nokia.md",
   },
@@ -129,7 +132,7 @@ export const CASE_CARDS: CaseCard[] = [
     slug: "adarle20",
     title: "A Darle 20",
     stat: "2,100+",
-    statLabel: "bookings in the four months after launch",
+    statLabel: "users, with 110+ hosts and 3,600+ session reservations from 1,000+ players",
     href: "/projects/adarle20",
     source: "content/knowledge/projects-adarle20.md",
   },
@@ -160,6 +163,6 @@ export const FIT_QUESTION = "Is he a fit for a RevOps role?";
 // evals/track-b.test.mjs.
 export const SUGGESTED_QUESTIONS = [
   "Give me the short version",
-  "What did he own end to end at Nokia?",
+  "What does he build and run at Nokia?",
   FIT_QUESTION,
 ];

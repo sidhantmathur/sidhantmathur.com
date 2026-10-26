@@ -51,8 +51,8 @@ const FIXTURE = {
     sourceLabel: "A Darle 20",
     heading: "Where it stands",
     meta: "",
-    lines: ["Four months in, it has 1,400+ registered users and 127 hosts."],
-    text: "Where it stands\nFour months in, it has 1,400+ registered users and 127 hosts.",
+    lines: ["It has reached 2,100+ users and 110+ hosts."],
+    text: "Where it stands\nIt has reached 2,100+ users and 110+ hosts.",
   },
 };
 
@@ -233,7 +233,7 @@ describe("the downgrade path", () => {
   });
 
   test("a fact with no citation at all is downgraded", () => {
-    const result = check("He grew it to 1,400 users in four months.");
+    const result = check("He grew it to 2,100 users in seven months.");
     assert.equal(result.claims[0].verdict, "uncited");
     assert.equal(result.downgraded.length, 1);
   });
@@ -265,7 +265,7 @@ describe("the downgrade path", () => {
 
   test("two chunks are checked as one haystack when both are cited", () => {
     const result = check(
-      "He works at Nokia, and it has 127 hosts. [resume:nokia] [adarle20:where-it-stands]",
+      "He works at Nokia, and it has 110+ hosts. [resume:nokia] [adarle20:where-it-stands]",
     );
     assert.equal(result.claims[0].verdict, "verified");
     assert.equal(result.citedIds.length, 2);
@@ -399,7 +399,7 @@ describe("false alarms the live corpus produced", () => {
       );
     }
     const result = verifyAnswer(
-      "A Darle 20 has 127 hosts. [adarle20:where-it-stands]",
+      "A Darle 20 has 110+ hosts. [adarle20:where-it-stands]",
       BY_ID,
     );
     assert.equal(result.claims[0].verdict, "verified", `flagged: ${result.claims[0].missing}`);
@@ -408,22 +408,22 @@ describe("false alarms the live corpus produced", () => {
 
 // The council review's finding (2026-10-19): one sentence joining two chunks,
 // citing one of them, was painted with the same accent as a fabrication. The
-// first answer to "Give me the 30-second version" flagged 1,400, 2,100 and
-// "March 2026" — all true, cited to resume:nokia instead of resume:a-darle-20 —
+// first answer to "Give me the 30-second version" flagged A Darle 20's two
+// headline numbers and "March 2026" — all true, cited to resume:nokia instead of resume:a-darle-20 —
 // and a recruiter read the site doubting its owner's headline numbers. A true
 // fact under the wrong pointer is `miscited` and rendered quietly; only a token
 // the record has nowhere is `unverified`.
 describe("a sentence that spans two chunks and cites one", () => {
   const SPAN =
-    "He builds Power App reporting at Nokia, and his marketplace has 1,400+ registered users and 127 hosts. [resume:nokia]";
+    "He builds Power App reporting at Nokia, and his marketplace has 2,100+ users and 110+ hosts. [resume:nokia]";
 
   test("is miscited, not unverified, when the rest of the record holds the facts", () => {
     const result = verifyAnswer(SPAN, FIXTURE);
     const claim = result.claims[0];
     assert.equal(claim.verdict, "miscited", `got ${claim.verdict}: missing ${claim.missing}`);
     assert.deepEqual(claim.absent, [], `called absent: ${claim.absent}`);
-    assert.ok(claim.missing.includes("1,400"), `missing: ${claim.missing}`);
-    assert.ok(claim.missing.includes("127"), `missing: ${claim.missing}`);
+    assert.ok(claim.missing.includes("2,100"), `missing: ${claim.missing}`);
+    assert.ok(claim.missing.includes("110"), `missing: ${claim.missing}`);
     assert.deepEqual(claim.elsewhere, ["adarle20:where-it-stands"]);
     // Still not a verified claim: the pointer is wrong, and the groundedness
     // figure on /measurements counts pointers.
@@ -441,13 +441,13 @@ describe("a sentence that spans two chunks and cites one", () => {
 
   test("a token the record has nowhere keeps the strong verdict, even beside miscited ones", () => {
     const result = verifyAnswer(
-      "His marketplace has 1,400+ registered users and 900 game masters. [resume:nokia]",
+      "His marketplace has 2,100+ users and 900 game masters. [resume:nokia]",
       FIXTURE,
     );
     const claim = result.claims[0];
     assert.equal(claim.verdict, "unverified");
     assert.deepEqual(claim.absent, ["900"], "only the fabricated number is absent");
-    assert.ok(claim.missing.includes("1,400"), "the true number is still reported as missing from the cited chunk");
+    assert.ok(claim.missing.includes("2,100"), "the true number is still reported as missing from the cited chunk");
   });
 
   test("a citation to a chunk that does not exist stays unverified beside a real one", () => {
@@ -494,7 +494,7 @@ describe("a sentence that spans two chunks and cites one", () => {
     // Its shape exactly: A Darle 20's figures and launch month, cited to the
     // Nokia resume block.
     const result = verifyAnswer(
-      "He co-founded A Darle 20, which reached 1,400+ registered users and 2,100+ bookings after launching in March 2026. [resume:nokia]",
+      "He co-founded A Darle 20, which reached 2,100+ users and 3,600+ session reservations after launching in March 2026. [resume:nokia]",
       BY_ID,
     );
     const claim = result.claims[0];

@@ -56,24 +56,14 @@ export const ADARLE_MEDIA: MediaSlot[] = [
     },
   },
   {
-    id: "booking",
+    id: "reservation",
     kind: "screen recording",
-    title: "Booking a seat, end to end",
+    title: "Reserving a place, end to end",
     brief:
-      "One unbroken take from the listing page through checkout to the confirmation — the flow described under “From booking to payout”, without cuts. Use a test account; no real player's name or email on screen.",
+      "One unbroken take from the listing page through checkout to the confirmation, without cuts. Use a test account; no real player's name or email on screen.",
     aspect: "16:9",
     aspectClass: "aspect-video",
     width: "column",
-  },
-  {
-    id: "cash-payment",
-    kind: "screenshot",
-    title: "Paying in cash",
-    brief:
-      "The OXXO path at the point where a player is handed a payment reference to take to a convenience store. This is the part of the product nobody outside Mexico has seen.",
-    aspect: "9:16",
-    aspectClass: "aspect-[9/16]",
-    width: "narrow",
   },
   {
     id: "host",
@@ -100,7 +90,7 @@ export const ADARLE_MEDIA: MediaSlot[] = [
     kind: "screenshot",
     title: "Funnel tracking",
     brief:
-      "Whatever you actually look at to run the business — bookings, conversion, cancellations, refunds, host activation. Check before sending: this is the one slot where the file would carry live numbers, and anything in it is published.",
+      "Whatever you actually look at to run the business — conversion, refunds, host activation. Check before sending: this is the one slot where the file would carry live numbers, and anything in it is published.",
     aspect: "16:9",
     aspectClass: "aspect-video",
     width: "column",
@@ -117,9 +107,11 @@ export const ADARLE_MEDIA: MediaSlot[] = [
   },
 ];
 
-// The feature surface. Every entry is a capability named in
-// content/knowledge/projects-adarle20.md or the resume, and `source` says
-// which. It is not a guess at what a marketplace probably has: a plausible
+// The feature surface. Every entry is a capability named in the master
+// resume (content/knowledge/resume.md) or the A Darle 20 knowledge file built
+// from it, and `source` says which. The 2026-10-26 resume sync cut the entries
+// the master doesn't name (host profiles, cancellations, chat, authentication,
+// cash payments); they come back when Sidhant writes them down. It is not a guess at what a marketplace probably has: a plausible
 // feature is a factual claim about a product a hiring manager can go and use.
 // The gap between this list and the real product is recorded in
 // FEATURE_SURFACE_NOTE rather than filled in.
@@ -137,39 +129,24 @@ export type Feature = {
 
 export const FEATURE_SURFACE: Feature[] = [
   {
-    group: "Discovery",
-    items: ["Host profiles", "Session listings"],
-    source: "projects-adarle20.md",
-  },
-  {
-    group: "Booking",
-    items: ["Bookings and reservations", "Cancellations", "Automated refunds"],
+    group: "Marketplace",
+    items: ["Session listings", "Session reservations"],
     source: "projects-adarle20.md, resume.md",
   },
   {
     group: "Payments",
-    items: [
-      "Stripe Connect",
-      "Host payouts",
-      "Platform fees",
-      "OXXO cash payments",
-    ],
-    source: "projects-adarle20.md, resume.md",
+    items: ["Stripe Connect", "Refunds"],
+    source: "resume.md",
   },
   {
-    group: "Communication",
-    items: ["Real-time chat", "Transactional email on Resend"],
-    source: "projects-adarle20.md",
-  },
-  {
-    group: "Accounts",
-    items: ["Authentication"],
-    source: "projects-adarle20.md",
+    group: "Email",
+    items: ["Resend"],
+    source: "resume.md",
   },
   {
     group: "Operations",
-    items: ["Funnel instrumentation"],
-    source: "projects-adarle20.md, resume.md",
+    items: ["Funnel instrumentation", "Host activation", "PostHog"],
+    source: "resume.md",
   },
 ];
 

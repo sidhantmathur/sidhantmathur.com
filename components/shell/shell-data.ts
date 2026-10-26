@@ -31,7 +31,7 @@ export const WHY_CHATBOT_HEADING = "Why there's a chat on a portfolio";
 export const WHY_CHATBOT = [
   "Most software is turning into a conversation. I don't build my own PostHog dashboards anymore. I describe what I want and the product's assistant builds it, because it knows the platform better than I do. I think a lot of interfaces will go the same way, portfolios included.",
   "Questions about a portfolio usually have to wait for a call. If you're going through candidates and can't call me, you can ask the assistant whether any of my work maps to what you need.",
-  "It works best with a specific question, such as how the payments work, what the Nokia rollout involved, or what I'd do in the first ninety days of the role you're hiring for.",
+  "It works best with a specific question, such as who uses the weekly operating review tool I built, what I inherited at Nokia, or how my experience maps to the role you're hiring for.",
   "Every answer is built from the same source files as the resume and shows which ones it drew on, so you can open the file when a paragraph isn't enough.",
 ];
 

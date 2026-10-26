@@ -1,49 +1,32 @@
 # A Darle 20
 
-A marketplace for tabletop game sessions in Latin America. Live at adarle20.com.
-Sidhant's role: co-founder and CTO (solo developer).
-
-## The problem
-
-Tabletop roleplaying games are big in Latin America, but finding a good game
-master and paying one was informal and unreliable. Hosts had no clean way to
-take bookings or get paid, especially in a market where many players prefer cash.
-Two friends and Sidhant decided to build the marketplace themselves.
-
-## What he built
-
-He architected and shipped the product end to end: host profiles, session
-listings, bookings and reservations, real-time chat, email notifications,
-refunds, and authentication. Payments run on Stripe Connect, handling host
-payouts and platform fees, including OXXO integration so players in Mexico can
-pay in cash at a convenience store. That matters in a market where card
-penetration is low. The funnel is instrumented end to end (bookings, conversion,
-cancellations, refunds, host activation), and that data steers product and
-monetization decisions.
-
-He runs an AI-agent-heavy development workflow in Claude Code. Agents write
-most of the code, and he keeps hands-on ownership of architecture, product
-decisions, code review, and release. Later he set up a multi-agent workflow
-that reviews, refactors, and regression-tests the codebase on its own.
-
-## What it runs on
-
-TypeScript, React and Next.js, Supabase (PostgreSQL) with Prisma, Stripe Connect,
-Resend for transactional email, deployed on Vercel.
+A Darle 20 ("Let's Go 20") is a marketplace for tabletop game sessions, live at
+adarle20.com and based in Puebla, Mexico. Hosts list sessions and players
+reserve them. Sidhant's role: co-founder and CTO, part-time and remote, and the
+sole developer. He started in August 2025 and it launched in March 2026.
 
 ## Where it stands
 
-Development started in August 2025; the platform launched in March 2026. Four
-months in, it has 1,400+ registered users, 127 hosts, and 2,100+ bookings, with
-200–400 unique visitors a day. The biggest single test so far was a flagship
-251-player event at a 19,000-attendee convention, rated 4.96/5 by attendees. He
-built the technology behind it, and his co-founder ran the event on the ground.
-Running A Darle 20 has taught Sidhant as much about unit economics as about code.
-They've tested a commission model against direct event ticket sales and made
-decisions about where the margin is.
+It has reached 2,100+ users, 110+ hosts and 3,600+ session reservations from
+1,000+ players. The exact counts from the production database on October 25,
+2026: 2,189 users, 111 hosts who have listed a session, and 3,641 confirmed
+reservations from 1,057 players. About 84% of sessions are free, so these are
+session reservations rather than paid sales.
 
-## What he'd tell a hiring manager
+## How he built it
 
-This project shows he can take an ambiguous idea to a revenue-generating
-product and handle the refunds, payment edge cases, and infrastructure costs
-that come with it.
+He built the platform as sole developer using AI-native workflows (AI coding
+tools), owning the architecture, code review and release. The stack: Next.js,
+React, TypeScript, Supabase (PostgreSQL), Stripe Connect, Vercel, PostHog and
+Resend.
+
+## What the data showed
+
+He instrumented the funnel: conversion, refunds and host activation. The data
+showed paid acquisition wasn't worth it, so growth runs on in-person marketing
+and word of mouth.
+
+## The convention event
+
+He ran the technology behind a flagship 251-player event at a 19,000-attendee
+convention, rated 4.96/5 by attendees.

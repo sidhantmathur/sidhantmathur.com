@@ -34,9 +34,9 @@ export const PROJECTS: Record<ProjectSlug, Project> = {
     index: "02",
     title: "A Darle 20",
     description:
-      "A live marketplace for tabletop game sessions in Latin America, which I built as its only developer and run as co-founder. Four months after launch: 1,400+ registered users, 127 hosts and 2,100+ bookings. I shipped bookings, payments, chat and refunds, with AI agents in Claude Code writing most of the code.",
-    role: "Co-founder and CTO",
-    stack: ["TypeScript", "Next.js", "Supabase", "Stripe Connect"],
+      "A marketplace for tabletop game sessions, based in Puebla, Mexico, which I built as its sole developer and run part-time as co-founder and CTO. Since its March 2026 launch: 2,100+ users, 110+ hosts and 3,600+ session reservations from 1,000+ players.",
+    role: "Co-founder and CTO (part-time)",
+    stack: ["Next.js", "TypeScript", "Supabase", "Stripe Connect"],
     status: "Live at adarle20.com",
     caseStudyHref: "/projects/adarle20",
     image: "/images/adarle20-listings.png",
@@ -44,12 +44,12 @@ export const PROJECTS: Record<ProjectSlug, Project> = {
   nokia: {
     slug: "nokia",
     index: "01",
-    title: "Reporting tools at Nokia",
+    title: "Reporting and tooling at Nokia",
     description:
-      "A self-serve app I built replaced a manual quarter-end process for 80+ stakeholders in 7 regions. That process took one finance analyst's entire workday, every day of close. I also moved sales reporting for 150+ users from Salesforce Analytics to Power BI, and I own it from data model to user support.",
+      "I build and run the tools a 7-region sales organization reports on: the weekly operating review tool regional sales ops teams use to compile the Chief Customer Officer's weekly report, and the self-serve Power App behind quarter-end executive reporting for 80+ stakeholders. I also keep alive the ones I inherited, including the sales incentive calculations for 900+ staff.",
     role: "Sales operations specialist",
-    stack: ["Power Apps", "Power BI", "SQL", "DAX", "Salesforce"],
-    status: "In production since 2024",
+    stack: ["Power Apps", "Power Automate", "Power BI", "DAX", "Salesforce CRM Analytics"],
+    status: "Current role, since Jun 2024",
     caseStudyHref: "/projects/nokia",
   },
   "dell-ml": {
@@ -57,10 +57,9 @@ export const PROJECTS: Record<ProjectSlug, Project> = {
     index: "03",
     title: "Sales prediction model at Dell",
     description:
-      "A propensity model that surfaced about 20,000 qualified cross-sell accounts for a high-margin software product: an estimated $129M in pipeline at segment-level average deal sizes. I built it as an intern on Dell's historical customer database.",
+      "An Azure ML propensity model that found about 20,000 cross-sell accounts, about $129M at the segment's average deal size. I built it as an intern and trained the sales and marketing teams to use its output for lead prioritization.",
     role: "Marketing intern",
-    // Azure ML only: it is the one tool content/knowledge/projects-dell.md
-    // names. Python stays off until Sidhant confirms it (copy ledger, pending).
+    // Azure ML only: it is the one tool the master resume names for Dell.
     stack: ["Azure ML"],
     status: "Internship, May–Aug 2018",
     caseStudyHref: "/projects/dell-ml",

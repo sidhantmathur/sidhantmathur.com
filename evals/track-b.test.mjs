@@ -277,7 +277,7 @@ describe("#20 — plain-language prose", () => {
     // number. The explainer stays, below the outcomes. Dell keeps it first —
     // the caveats it carries are the point of that page.
     for (const [slug, results] of [
-      ["nokia", "### What changed"],
+      ["nokia", "### What I build and run"],
       ["adarle20", "### At a glance"],
     ]) {
       const mdx = read(`content/${slug}.mdx`);

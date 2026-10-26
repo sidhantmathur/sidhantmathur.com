@@ -4,16 +4,13 @@ Some customers would buy a second product, but nobody knows which ones, so the
 sales team calls everyone or guesses. A propensity model ranks the list. It
 learns from who bought what in the past and scores the customers who look most
 like the ones who already said yes, so sales knows which accounts to call
-first and what the list is worth as estimated pipeline, not closed sales.
+first. Multiplying the number of accounts by the average deal size gives a rough
+sense of what the list is worth. That is a sizing, not a forecast or a pipeline.
 
 ### The project
 
-In a 2018 summer internship at Dell, I built a propensity model in Azure ML on
-Dell's historical customer database to find cross-sell targets for a
-high-margin software product. It surfaced about 20,000 qualified accounts, an
-estimated $129M in pipeline at segment-level average deal sizes. The model was
-hosted on Azure so sales and marketing teams could get predictions and feed
-back new training data.
-
-It's where the work I do now started: revenue questions answered with data, and
-built as a tool other teams could use.
+In a 2018 summer internship at Dell Technologies in Round Rock, TX, I built a
+propensity model in Azure ML that found about 20,000 cross-sell accounts. At
+the segment's average deal size, those accounts are worth about $129M. That is
+a sizing, not pipeline. I then trained the sales and marketing teams to use the
+model's output for lead prioritization.
