@@ -79,20 +79,24 @@ Haiku-class, ~8k cached input + ~600 output per message → fractions of a cent 
 
 ## 4. Content requirements (writing tasks, not code)
 
-### A Darle 20 case study (flagship — allocate the most effort)
-- Problem: paid TTRPG sessions in LatAm, no marketplace, cash-heavy market.
-- Build: Next.js / Supabase / Prisma / Stripe Connect / Resend. Architecture diagram (payments flow incl. OXXO cash rails; booking/chat/refund flows).
-- AI angle: entire product shipped by directing AI coding agents; the autonomous multi-agent Claude Code audit workflow (review → refactor → regression test) deserves its own section + eventually a blog post.
-- GTM angle: marketplace vs. events model economics, MegaXP learnings, what real revenue taught about unit economics. This section IS the GTM-engineer pitch.
-- Numbers: whatever is shareable (bookings, GMV, users, uptime). Real > big.
+**Facts: superseded 2026-10-26.** Every fact about Sidhant now comes from his
+master resume and the verified-facts ledger in its decisions log (local copies in
+the git-ignored `docs/source/`; `content/knowledge/` is built from them). The
+case-study briefs below keep their structure; the numbers and claims the
+original spec carried here were replaced or cut, and must not come back from git
+history. A Darle 20 is supporting evidence, not the flagship.
+
+### A Darle 20 case study
+- What it is: a marketplace for tabletop game sessions, based in Puebla, Mexico; co-founder and CTO, part-time, sole developer.
+- Build: the master's stack line (Next.js, React, TypeScript, Supabase, Stripe Connect, Vercel, PostHog, Resend).
+- Numbers: users, hosts, players and session reservations, as the master states them. Never revenue, GMV, MRR, visitor counts or "bookings".
 
 ### Nokia case study (sanitize; no confidential data/screens)
-- Before/after narrative: manual quarter-end data collection → self-serve Power App, 80+ stakeholders, 7 regions, 4–6 hrs/day saved at close.
-- Salesforce Analytics → Power BI migration for 150+ users; SQL/DAX ownership; global rollout.
-- Frame: "internal tools PM+engineer of one."
+- The tools a 7-region sales organization reports on: the weekly operating review tool, the quarter-end Power App, CRM Analytics then Power BI reporting, and the systems he inherited and keeps running.
+- The AI agent is in testing with no results, and says so.
 
 ### Dell ML (short)
-- 91% accuracy sale-outcome model → 20k leads, $129M pipeline. Two paragraphs + one chart mock.
+- Propensity model → ~20,000 cross-sell accounts, ~$129M at the segment's average deal size: a sizing, not pipeline.
 
 ### Colophon
 - Stack choices and why; why NO RAG; chatbot guardrail design; what was delegated to Claude Code vs. decided by hand; cost design. Converts the site into proof-of-work.
