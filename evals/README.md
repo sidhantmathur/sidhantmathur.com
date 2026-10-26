@@ -46,7 +46,7 @@ invariants the chat silently depends on:
 - **Transcript serializer** — unit tests for `lib/transcript.ts`.
 
 The **fixture freshness** group is what keeps the suite honest. A live case checking for
-`1,400` is worthless once someone edits `resume.md` and the number changes — the
+`2,100` is worthless once someone edits `resume.md` and the number changes — the
 case would fail and look like a model regression. Layer 1 catches it as what it
 is: a stale assertion.
 

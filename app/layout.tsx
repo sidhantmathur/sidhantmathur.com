@@ -4,16 +4,15 @@ import { AnalyticsProvider } from "@/components/analytics-provider";
 import { EMAIL, GITHUB_URL, HEADSHOT, LINKEDIN_URL, SITE_NAME, SITE_URL } from "@/lib/site";
 import "./globals.css";
 
-// Who he is, both role families and one proof point, in ~155 characters so a
-// search snippet and a LinkedIn or Slack preview show all of it. The proof is
-// the resume's: a self-serve Power App for quarterly executive reporting, used
-// by 80+ stakeholders across 7 regions, that replaced a manual quarter-end
-// process. The work leads; the tool name stays on the case study.
+// Who he is, what he does and what he's looking for, in ~155 characters so a
+// search snippet and a LinkedIn or Slack preview show all of it. The middle
+// sentence is the H1 (content/recruiter.ts HERO), the one-line story from the
+// resume decisions log.
 const DESCRIPTION =
-  "Sales operations at Nokia, open to RevOps and delivery ops roles. Replaced a manual quarter-end process with an app 80+ stakeholders in 7 regions use.";
+  "Sales operations specialist at Nokia. I build and run the tools a 7-region sales organization reports on. Open to RevOps, sales ops and delivery ops roles.";
 
 /** The homepage's tab, search result and share-card title. */
-const HOME_TITLE = `${SITE_NAME} — Sales operations, open to RevOps and delivery ops`;
+const HOME_TITLE = `${SITE_NAME} — Sales operations specialist at Nokia`;
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),

@@ -63,7 +63,7 @@ Nothing else depends on this.
 
 Your words: *"there's a shit ton of features buried up there."* The site can only
 list what's written in the record, so right now the A Darle 20 page publishes
-twelve capabilities and then says out loud that the list is incomplete.
+only the handful of capabilities the master resume names.
 
 **This is the highest-value 15 minutes on the list.** Everything you add here shows
 up in three places at once: the feature list on the project page, the chatbot's
@@ -73,10 +73,13 @@ answers, and the citations that back them.
 
 Already in the record — don't re-write these:
 
-> host profiles · session listings · bookings and reservations · cancellations ·
-> automated refunds · Stripe Connect · host payouts · platform fees · OXXO cash
-> payments · real-time chat · transactional email · authentication · funnel
-> instrumentation
+> session listings · session reservations · Stripe Connect · refunds · Resend
+> email · funnel instrumentation (conversion, refunds, host activation) · PostHog
+
+(The 2026-10-26 resume sync cut the list to what the master resume names. Host
+profiles, cancellations, host payouts, platform fees, real-time chat and
+authentication came off and can come back if you write them down. Cash payments
+stay off: the decisions log excludes them.)
 
 Add a section at the end and list what's missing. One line each — a name and a
 sentence is enough for it to be quotable and citable:
@@ -98,7 +101,7 @@ above, as prompts. Only write the ones that actually exist:
 - Host onboarding, verification, or activation flow
 - Admin or moderation tooling
 - Notifications beyond email
-- Anything localisation- or Spanish-specific
+- Anything localisation-specific
 - Anything you built for the 251-player event that doesn't exist elsewhere
 
 ---

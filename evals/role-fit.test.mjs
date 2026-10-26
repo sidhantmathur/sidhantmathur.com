@@ -25,7 +25,7 @@ const CHUNKS = {
   },
   "resume:a-darle-20": {
     id: "resume:a-darle-20",
-    text: "Resume — A Darle 20\nArchitected and shipped a two-sided marketplace with 1,400+ users and 2,100+ bookings.",
+    text: "Resume — A Darle 20\nBuilt the platform as sole developer. Reached 2,100+ users, 110+ hosts and 3,600+ session reservations.",
   },
 };
 

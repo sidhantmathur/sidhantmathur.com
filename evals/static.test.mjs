@@ -7,7 +7,7 @@
 // every fact the live evals assert on actually exists in the corpus.
 //
 // That last group is the one that keeps the suite honest. A live case checking
-// for "1,400" is worthless if someone edits resume.md and the number changes —
+// for "2,100" is worthless if someone edits resume.md and the number changes —
 // the case would fail and look like a model regression. These tests catch it
 // as what it is: a stale assertion.
 //
@@ -180,18 +180,19 @@ describe("system prompt", () => {
     }
   });
 
-  // Two target role families since 2026-10-22 (faq.md). The section that maps
-  // his record to delivery operations is advocacy, so these are the sentences
-  // that keep it honest: the $1.2M stays "identified", the event he built the
-  // technology for stays his co-founder's to have run, and the gaps a delivery
-  // posting will ask about are named when a role asks, not hidden.
+  // Three target role families since the resume sync (2026-10-26, faq.md).
+  // The section that maps his record to delivery operations is advocacy, so
+  // these are the sentences that keep it honest: the $1.2M stays
+  // "identified", he ran the technology behind the convention event and not
+  // the event, and the gaps a delivery posting will ask about are named when a
+  // role asks, not hidden.
   test("advocates for both role families without overstating either", () => {
     const src = readSystemPromptSource().replace(/\s+/g, " ");
     for (const rule of [
       "## Making his case",
-      "revenue operations (RevOps / GTM systems) and delivery operations",
-      'identified, never "saved"',
-      "Don't say he ran it.",
+      "RevOps (revenue operations), sales operations and delivery operations roles",
+      'identified, not necessarily realized. Never say "saved".',
+      "He ran the technology behind the convention event, not the event.",
       "never with a motive you supplied",
       "no PSA tools, statements of work, billable utilization, project accounting, or time on a professional services team",
       "it is an unmet row and a named gap like any other",

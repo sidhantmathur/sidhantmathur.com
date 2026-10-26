@@ -4,7 +4,7 @@ import { ImageResponse } from "next/og";
 import { HERO, POSITIONING as POSITION, ROLE_LINE as ROLE } from "@/content/recruiter";
 
 export const alt =
-  "Sidhant Mathur, sales operations specialist at Nokia, looking for a revenue operations or delivery operations role";
+  "Sidhant Mathur, sales operations specialist at Nokia: I build and run the tools a 7-region sales organization reports on. Looking for a RevOps, sales operations or delivery operations role.";
 export const size = {
   width: 1200,
   height: 630,
@@ -14,11 +14,7 @@ export const contentType = "image/png";
 // The same checked strings the front door renders, so the card can't drift
 // from them.
 const ROLE_LINE = ROLE.value;
-const POSITIONING = POSITION.value;
-
-// The card carries the positioning's first sentence only: both role families,
-// without the work-authorization line a 500px preview has no room for.
-const LOOKING_FOR = POSITIONING.slice(0, POSITIONING.indexOf(". ") + 1);
+const LOOKING_FOR = POSITION.value;
 
 // Colours match app/globals.css: --bg #0B0A09, --text #EFEBE4, --text-soft
 // #C4BCB4, --line-strong #6B6259, --accent #E4522B. This is the card a link
@@ -95,8 +91,8 @@ export default async function Image() {
             </div>
           </div>
         </div>
-        {/* The claim, then who it is for. The two role families take the
-            accent: they are what a recruiter scanning a feed matches on. */}
+        {/* The claim, then what he is looking for. The role families take
+            the accent: they are what a recruiter scanning a feed matches on. */}
         <div
           style={{
             marginTop: 44,

@@ -194,7 +194,7 @@ describe("conversationToMarkdown", () => {
     userMsg("What did he build at Nokia?"),
     assistantMsg("A self-serve Power App for 80+ stakeholders."),
     userMsg("And the marketplace?"),
-    assistantMsg("A Darle 20 — 1,400+ users."),
+    assistantMsg("A Darle 20 — 2,100+ users."),
   ];
 
   test("alternates quoted questions and plain answers", () => {

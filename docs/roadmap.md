@@ -757,10 +757,10 @@ Six things worth carrying forward:
    every reload it would be chrome. The test reads the `!hasMessages` branch
    rather than trusting the comment.
 
-**Not done, and out of scope by design:** **#19 is a frame, not a page.** Six of
-seven slots hold nothing, the page says so in words, and the asset list is
-Sidhant's to work through — a screen recording of a booking, the OXXO cash path,
-the host view, the chat, the funnel dashboard, and anything at all from the
+**Not done, and out of scope by design:** **#19 is a frame, not a page.** Five of
+six slots hold nothing, the page says so in words, and the asset list is
+Sidhant's to work through — a screen recording of a reservation, the host view,
+the chat, the funnel dashboard, and anything at all from the
 251-player event, which is the largest thing this platform has done and has
 never been visible on this site. No video infrastructure was added: no player,
 no transcoding, no CDN, no hero reel — what it takes to serve a video well is a

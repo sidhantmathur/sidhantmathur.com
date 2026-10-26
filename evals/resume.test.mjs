@@ -11,9 +11,8 @@
 //
 // The check runs ONE WAY: everything checkable the page states must be
 // supported by the markdown. The reverse is not asserted and should not be —
-// the page is allowed to show less than the record (it omits A Darle 20's
-// "— Toronto, ON", for instance), and a page that is a strict subset of the
-// source cannot contradict it.
+// the page is allowed to show less than the record, and a page that is a
+// strict subset of the source cannot contradict it.
 //
 // WHAT COUNTS AS CHECKABLE is `lib/verify.ts`'s answer, not a second one. The
 // site's own citation checker — the function that decides whether a model's
@@ -28,7 +27,7 @@
 // On top of the token sweep, three things are checked as WHOLE CONTIGUOUS
 // STRINGS rather than as loose tokens, because for these the arrangement is the
 // fact. `present()` searches the whole markdown, so a token sweep alone would
-// accept "Jun 2022 – Oct 2024" — every piece of it is somewhere in the file.
+// accept "Jun 2021 – Oct 2024" — every piece of it is somewhere in the file.
 // Employers, datelines and date ranges have to appear as written.
 //
 // Run: npm run eval
@@ -208,15 +207,15 @@ describe("drift the page could plausibly acquire", () => {
   });
 
   test("a wrong figure is caught", () => {
-    const text = flatten(mutate("1,400+ registered users", "2,700+ registered users"));
+    const text = flatten(mutate("2,100+ users", "2,700+ users"));
     assert.equal(checkClaim(text, [SOURCE], LOOKUP).verdict, "unverified");
   });
 
   test("a reshuffled date range is caught, though every token in it is real", () => {
-    // The one the token sweep cannot see. "Jun", "2022", "Oct" and "2024" are
+    // The one the token sweep cannot see. "Jun", "2021", "Oct" and "2024" are
     // all in the source; only the arrangement is invented, so this is what the
     // contiguous check exists for.
-    const mutated = mutate("Oct 2022 – Jun 2024", "Jun 2022 – Oct 2024");
+    const mutated = mutate("Oct 2021 – Jun 2024", "Jun 2021 – Oct 2024");
     assert.equal(
       checkClaim(flatten(mutated), [SOURCE], LOOKUP).verdict,
       "verified",
@@ -243,7 +242,7 @@ describe("drift the page could plausibly acquire", () => {
     // none of them flagged; these are the shapes that would have.
     for (const prose of [
       "Summary",
-      "Technical skills",
+      "Skills",
       "case study →",
       "The Nokia work is internal tooling behind a corporate login, so there is nothing to show from it here.",
     ]) {

@@ -5,92 +5,102 @@ linkedin.com/in/sidhantmathur · github.com/sidhantmathur · sidhantmathur.com
 
 ## Summary
 
-Sales operations specialist who turns ambiguous business problems into shipped
-software. 3+ years at Nokia: headcount reporting and forecasting for a
-3,000–4,000-person organization, then sales reporting for 150+ users and a
-quarterly executive reporting app used by 80+ stakeholders across 7 regions.
-Co-Founder & CTO of A Darle 20, a live two-sided marketplace with 1,400+ users
-and 2,100+ bookings, architected and shipped solo with an AI-agent-heavy
-development workflow (Claude Code). Looking for a revenue operations or
-delivery operations role at an AI-forward company.
+Sales operations specialist with 5 years at Nokia, owning the reporting and
+tooling for a 7-region, $10B+ pipeline sales organization: incentives,
+quarter-end close and weekly operating review. Co-founder and sole developer of
+A Darle 20, a marketplace with 2,100+ users. Builds with whatever the job needs,
+from Power BI and Salesforce to Next.js and Supabase.
 
 ## Experience
 
-### Nokia — Toronto, ON
+### Nokia — Ottawa & Toronto, ON (Remote)
 
-**Sales operations specialist (internal tools & automation) · Jun 2024 – Present**
-- Built a self-serve Power App used by 80+ stakeholders across 7 regions for
-  quarterly executive reporting — eliminating a manual collection process
-  that consumed one finance analyst's entire workday, every day of
-  quarter-end close.
-- Migrated all sales reporting from Salesforce Analytics to Power BI for 150+
-  users — owned data modeling, transformation logic (SQL/DAX), and the global
-  stakeholder rollout end-to-end.
-- Own every tool through its full lifecycle — translating vague requests from
-  sales and finance leadership into scoped requirements, then executive
-  demos, global rollout, user support, and rapid iteration across time
-  zones.
+**Sales operations specialist · Jun 2024 – Present**
+- Built the weekly operating review tool that regional sales ops teams use to
+  compile the Chief Customer Officer's weekly report, merging CRM data with
+  standardized self-serve updates in place of ad hoc email and slides; shipped
+  in two weeks.
+- Launched the self-serve Power App behind quarter-end executive reporting for
+  80+ stakeholders across 7 regions, replacing an error-prone, full-day manual
+  consolidation, so close reporting no longer waits on one analyst.
+- Inherited and extended the Power App and automations that North America runs
+  all its reviews on; 30 core users.
+- Run monthly and quarterly sales incentive calculations for 900+ staff; cut
+  steps and manual checks from the automation.
+- Delivered Salesforce CRM Analytics dashboards for exec reviews (150+ monthly
+  users), then moved reporting to Power BI.
+- Built Power BI reports for 5 teams outside the sales org and maintain the
+  automation that keeps them refreshed.
+- Building an AI agent (Power BI, Glean, Teams) that flags pipeline gaps vs.
+  prior years, conflicting fields and past-due dates.
 
-**Workforce management specialist · Oct 2022 – Jun 2024**
-- Owned headcount reporting and forecasting for a 3,000–4,000-person
-  organization.
-- Identified $1.2M in real-estate cost savings by analyzing lab and facility
-  utilization data.
+**Workforce management specialist · Oct 2021 – Jun 2024**
+- Ran the monthly headcount forecast process (~70% of budget), planning and
+  requisitions for a 3,000–4,000-person org.
+- Automated input checks for the monthly headcount forecast with VBA, saving ~5
+  hours a week of manual review.
+- Inherited and ran the SharePoint home site for 3,000–4,000 people and helped
+  teams set up their own sites.
+- Led a lab and facility utilization analysis that identified $1.2M in
+  real-estate cost savings.
 
-### A Darle 20 ("Let's Go 20") — adarle20.com — Toronto, ON
+### A Darle 20 ("Let's Go 20") — adarle20.com — Puebla, Mexico (Remote)
 
-**Co-Founder & CTO (solo developer) · Aug 2025 – Present · launched Mar 2026**
-- Architected and shipped the entire marketplace as solo developer —
-  TypeScript, Next.js, Supabase/PostgreSQL, Stripe Connect, Vercel — running
-  an AI-agent-heavy development workflow (Claude Code), with hands-on
-  ownership of architecture, code review, and release.
-- Grew to 1,400+ registered users, 127 hosts, and 2,100+ bookings in the
-  first four months post-launch, with 200–400 unique visitors daily.
-- Instrumented the funnel end-to-end — bookings, conversion, cancellations,
-  refunds, host activation — and use the data to steer product and
-  monetization decisions.
-- Built the technology behind a flagship 251-player event at a
-  19,000-attendee convention, rated 4.96/5 by attendees.
-- Integrated Stripe Connect for host payouts, platform fees, and OXXO cash
-  payments — solution-designing payment flows around a low-card-penetration
-  Mexican customer base, with automated refunds and transactional email.
-- Run an autonomous multi-agent code-audit workflow (Claude Code) that
-  reviews, refactors, and regression-tests the production codebase.
+**Co-founder & CTO (part-time) · Aug 2025 – Present · launched Mar 2026**
+- Stack: Next.js, React, TypeScript, Supabase (PostgreSQL), Stripe Connect,
+  Vercel, PostHog, Resend
+- Built the platform as sole developer using AI-native workflows, owning
+  architecture, code review and release.
+- Reached 2,100+ users, 110+ hosts and 3,600+ session reservations from 1,000+
+  players.
+- Instrumented the funnel (conversion, refunds, host activation); data steered
+  growth to word of mouth over paid ads.
+- Ran the technology behind a flagship 251-player event at a 19,000-attendee
+  convention, rated 4.96/5 by attendees.
 
-### Freelance web development & consulting — remote
+### Freelance web development & consulting — Remote
 
-**Self-employed · May 2019 – Oct 2022**
-- Advised a startup client on web-development strategy, saving $100k+ in
-  agency fees.
-- Built custom client solutions — an integrated web ordering experience and an
-  affiliate-marketing site.
-- Resolved a client security breach and restored their domains from email
-  blacklists.
+**Self-employed · May 2019 – Oct 2021**
+- Built client sites, including an affiliate-marketing site and consultation
+  booking for a fashion consultant's team.
 
-### Dell Technologies — Austin, TX
+### Immosis LLC — Dallas, TX (Remote)
+
+**Digital marketing/web developer (part-time) · Mar 2018 – Aug 2018**
+- Developed the company's VR course platform: video playback, uploads, user
+  accounts and Stripe subscription payments.
+- Designed the data model and admin panel so the team could manage courses
+  without a developer.
+
+### Dell Technologies — Round Rock, TX
 
 **Marketing intern · May 2018 – Aug 2018**
-- Built a propensity model (Azure ML) on Dell's historical customer database
-  to identify cross-sell targets for a high-margin software product —
-  surfaced ~20,000 qualified accounts representing an estimated $129M
-  pipeline (segment-level average deal size).
+- Built an Azure ML propensity model that found ~20,000 cross-sell accounts
+  (~$129M at the segment's average deal size).
+- Trained the sales and marketing teams to use the model's output for lead
+  prioritization.
 
 ## Education
 
 - B.S. in Business Administration — The University of Texas at Dallas,
-  2016 – 2019
-- Software Engineering Immersive — General Assembly, Toronto,
-  2020 – 2021
+  2016 – 2019. Placed 3rd of 150+ in a sales competition pitching to local sales
+  managers.
+- Software Engineering Immersive — General Assembly, Toronto, Sep 2020 – Jan
+  2021
 
-## Technical skills
+## Skills
 
-- **GTM systems & analytics:** Salesforce, Power BI, DAX, Power Apps / Power
-  Automate, SharePoint, Excel/VBA, forecasting
-- **AI & automation:** LLM integration & agentic workflows (Claude Code,
-  Anthropic API), prompt engineering, Python automation
-- **Engineering:** TypeScript, React, Next.js, Node.js, Python, SQL,
-  PostgreSQL, Supabase, Stripe, REST APIs, ETL & data workflows
+- **RevOps systems & analytics:** Salesforce (CRM Analytics), Power BI, DAX,
+  Power Apps / Power Automate, SharePoint, Excel/VBA
+- **Sales operations:** Sales compensation, forecasting, pipeline and
+  quarter-end reporting, CRM data quality, process automation
+- **AI:** Claude Code, Codex, LLM APIs (Anthropic, OpenAI, OpenRouter), Glean,
+  Copilot Studio
+- **Software engineering:** JavaScript, TypeScript, Python, SQL, React,
+  Next.js, Node.js, PostgreSQL, Supabase, REST APIs, Git, HTML/CSS
+- **Interests:** building with AI, pickup basketball, classic and horror
+  fiction, Canadian AI and housing policy
 
-## Other
+## Work authorization
 
 - Canadian citizen

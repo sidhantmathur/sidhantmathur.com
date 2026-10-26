@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   alternates: { canonical: "/projects/dell-ml" },
   title: "Sales prediction model at Dell",
   description:
-    "A propensity model that ranked accounts for cross-sell, built during a 2018 internship.",
+    "An Azure ML propensity model that found cross-sell accounts, built during a 2018 internship.",
 };
 
 export default function DellMlPage() {
@@ -14,7 +14,7 @@ export default function DellMlPage() {
     <CaseStudyLayout
       slug="dell-ml"
       title="Sales prediction model at Dell"
-      subtitle="A propensity model that ranked accounts for cross-sell, built during a 2018 internship."
+      subtitle="An Azure ML propensity model that found cross-sell accounts, built during a 2018 internship."
     >
       <CaseStudy />
     </CaseStudyLayout>

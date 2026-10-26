@@ -39,12 +39,13 @@ forwarding exists, mail to it bounces.
 - [ ] FAQ "what he's NOT looking for" (`content/knowledge/faq.md`). **[→ Claude]**
 - [ ] Decide: is this repo public? (colophon either links it or drops the
       line). **[→ Claude]**
-- [x] Export `resume.pdf` into `public/`. Done 2026-10-22: it is now built
-      from text, by `python3 docs/resume/drafts/build.py` (the `canonical`
-      variant) and `soffice --headless --convert-to pdf resume-canonical.docx`,
-      then copied to `public/resume.pdf` and `docs/Sidhant_Mathur_Resume.pdf`.
-      The stale `docs/resume/Sidhant_Mathur_Resume_GTM.docx` (old phone,
-      personal email, a typo'd domain) was deleted 2026-10-22.
+- [x] Export `resume.pdf` into `public/`. Since 2026-10-26 the resume has one
+      source: Sidhant's Resume_Master Google Doc, with a decisions log beside
+      it. `public/resume.pdf` is that doc's PDF export, copied in as it is;
+      `content/knowledge/resume.md` and `/resume` are retyped from it. Local
+      copies of all three live in `docs/source/`, which is git-ignored (the
+      log names target companies). The old `docs/resume/` builder and its
+      variant drafts were removed the same day: the log rules out variants.
 
 ## C. Design sign-offs (decisions only you can make)
 

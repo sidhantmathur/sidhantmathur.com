@@ -1,41 +1,34 @@
 ### At a glance
 
-- **Launched** — March 2026. I started building in August 2025.
-- **First four months live** — 1,400+ registered users, 127 hosts and 2,100+
-  bookings, with 200–400 unique visitors a day.
-- **Biggest test** — a 251-player event at a 19,000-attendee convention, rated
-  4.96/5 by attendees. I built the technology; my co-founder ran it on the ground.
-- **What I own** — the product end to end, including the money flow from
-  payment to host payout and the funnel data behind monetization decisions.
+- **Launched** — March 2026. I started building it in August 2025, and I work on
+  it part-time as co-founder and CTO.
+- **So far** — 2,100+ users, 110+ hosts and 3,600+ session reservations from
+  1,000+ players.
+- **Flagship event** — 251 players at a 19,000-attendee convention, rated
+  4.96/5 by attendees. I ran the technology behind it.
+- **What I own** — the architecture, code review and release. I'm the sole
+  developer.
 
-### The problem
+### What it is
 
-Finding and paying a good game master in Latin America was informal and
-unreliable. Hosts had no clean way to take bookings or get paid, in a market
-where many players prefer cash.
-
-### From booking to payout
-
-Payments run on Stripe Connect, which handles the platform fee and the host's
-payout. Refunds are automated, and transactional email keeps both sides
-informed. Card penetration in Mexico is low, so I designed for cash too: with
-OXXO, a player with no card pays at a convenience store.
+A Darle 20 ("Let's Go 20") is a marketplace for tabletop game sessions, based in
+Puebla, Mexico. Hosts list sessions and players reserve them.
 
 ### Running it on its numbers
 
-I instrumented the funnel end to end, on both sides of the marketplace:
-bookings, conversion, cancellations, refunds and host activation. Those numbers steer product and monetization decisions.
+I instrumented the funnel: conversion, refunds and host activation. The data
+showed paid acquisition wasn't worth it, so growth runs on in-person marketing
+and word of mouth.
 
 ### How I build it
 
-AI agents in Claude Code write most of the code. I own the architecture and
-product decisions, review the code, and handle every release. A multi-agent
-workflow I set up reviews, refactors and regression-tests the production
-codebase on its own. The stack is TypeScript, React and Next.js, Supabase
-(PostgreSQL) with Prisma, Stripe Connect and Resend, on Vercel.
+I built the platform as its sole developer, working with AI coding tools, and I
+own the architecture, code review and release. The stack is Next.js, React,
+TypeScript, Supabase (PostgreSQL), Stripe Connect, Vercel, PostHog and Resend.
 
 ### In plain terms
 
-A host lists a game session. A player books a seat and pays by card or in cash.
-The site takes its fee, pays the host, and refunds a cancelled booking without
-anyone handling the money by hand.
+A host lists a game session and players reserve a place in it. Paid sessions
+take payment through Stripe Connect. Tracking every step from visit to
+reservation showed that word of mouth brings players in better than paid ads
+do.
