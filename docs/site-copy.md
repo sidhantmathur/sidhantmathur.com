@@ -9,50 +9,36 @@ No taglines beyond what's written here. [TODO] items are placeholders for Sidhan
 
 Site title: Sidhant Mathur
 Homepage title (tab, search result, share card): Sidhant Mathur — Sales
-operations, open to RevOps and delivery ops
-[Gauntlet audit, 2026-10-22: was "— RevOps and delivery operations", which
-reads as a discipline he has held. None of his titles is delivery operations.]
-Meta description: Sales operations at Nokia, open to RevOps and delivery ops roles. Replaced a manual quarter-end process with an app 80+
-stakeholders in 7 regions use.
+operations specialist at Nokia
+Meta description: Sales operations specialist at Nokia. I build and run the tools a 7-region sales organization reports on. Open to RevOps, sales ops and delivery ops roles.
 
-[DRAFT 2026-10-22, gauntlet pass. Sidhant now targets revenue operations and
-delivery operations roles (`faq.md`). The description names who he is, both
-role families and one proof point (the quarterly executive reporting Power App,
-`resume.md`) in 157 characters, so a search snippet or a link preview doesn't
-truncate the proof. Was: "Revenue and sales operations: I build the tools
-sales and finance teams run on. Sales operations specialist at Nokia,
-co-founder and CTO of A Darle 20, based in Toronto. Looking for a RevOps / GTM
-systems role." Same string in `og:description` and the Person JSON-LD.]
+[Resume sync 2026-10-26. Sidhant's resume is final: one master (the Resume_Master Google Doc) and a decisions log whose verified-facts ledger is the only place detail beyond the resume may come from. Every fact in this section now comes from one of the two; older notes quoting the previous copy were dropped from this file and live in git history.] The description is the role line, the heading and the target roles in
+155 characters. Same string in `og:description` and the Person JSON-LD.
 
-llms.txt opening: "I'm a sales operations specialist at Nokia in Toronto, and
-co-founder and CTO of A Darle 20, a marketplace for tabletop game sessions in
-Latin America. I'm looking for a revenue operations (RevOps / GTM systems) or
-delivery operations role at an AI-forward company." Then: "At Nokia I built a
-self-serve Power App for quarterly executive reporting, used by 80+
-stakeholders across 7 regions. It replaced a manual process that took one
-finance analyst's entire workday, every day of quarter-end close. Before that I
-owned headcount reporting and forecasting for a 3,000–4,000-person
-organization." [DRAFT 2026-10-22; all from `resume.md`, target roles from
-`faq.md`.]
-
-[DRAFT 2026-10-19, wave 2 of the council plan. The previous description
-("Sales operations specialist and builder. I make internal tools and revenue
-systems at Nokia, and I'm co-founder and CTO of A Darle 20, a marketplace for
-tabletop game sessions in Latin America — 2,100+ bookings in the four months after launch.") led with neither role and spent half its length on tabletop games.
-The same description is the Person JSON-LD's, and `llms.txt` opens with the
-role line.]
+llms.txt opening: "I'm a sales operations specialist at Nokia, based in
+Toronto, with 5 years at the company. I build and run the tools a 7-region
+sales organization reports on, and I inherit and keep alive the ones other
+people built. I'm also the co-founder and sole developer of A Darle 20, a
+marketplace with 2,100+ users, part-time. I'm looking for a RevOps, sales
+operations or delivery operations role." Then: "At Nokia I built the weekly
+operating review tool that regional sales ops teams use to compile the Chief
+Customer Officer's weekly report, and launched the self-serve Power App behind
+quarter-end executive reporting for 80+ stakeholders across 7 regions. I run
+the sales incentive calculations for 900+ staff. Before that I ran the monthly
+headcount forecast process for a 3,000–4,000-person organization."
 
 Share card (OG image): the headshot beside "Sidhant Mathur" and "Sales
-operations specialist at Nokia · Toronto, ON", then "I build and roll out the tools sales and finance teams run on.", then, in the accent, "Looking for a
-revenue operations or delivery operations role at an AI-forward company."
-Alt text: "Sidhant Mathur, sales operations specialist at Nokia, looking for a
-revenue operations or delivery operations role".
+operations specialist at Nokia · Toronto, ON", then "I build and run the tools
+a 7-region sales organization reports on.", then, in the accent, "Looking for a
+RevOps, sales operations or delivery operations role."
+Alt text: "Sidhant Mathur, sales operations specialist at Nokia: I build and run
+the tools a 7-region sales organization reports on. Looking for a RevOps, sales
+operations or delivery operations role."
 
-[DRAFT 2026-10-22, gauntlet pass. The three lines are the front door's role
-line, hero and positioning (first sentence) from `content/recruiter.ts` as the
-front-door pass rewrites them, so the card and the page say the same thing.
-Was: "Revenue and sales operations" over "I build the tools sales and finance
-teams run on."]
+[The three lines are the front door's role line, heading and subline from
+`content/recruiter.ts`, so the card and the page say the same thing. Before
+this pass the accent line rendered empty: the card cut the subline at its first
+". ", and the one-sentence subline had none.]
 
 ---
 
@@ -69,46 +55,23 @@ Name and role line (above the heading, beside a small square headshot):
 Sidhant Mathur
 Sales operations specialist at Nokia · Toronto, ON
 
-[DRAFT 2026-10-22, gauntlet pass. Was "Revenue and sales operations: I build
-the tools sales and finance teams run on." That sentence is now the heading's
-job, so this line only says what the job is called, where, and in which city.
-Checked against `resume.md`.]
-
-[DRAFT 2026-10-19, wave 2. The council's finding: the front door named neither
-him nor his role. The heading stays Sidhant's; this sits over it in the words a
-recruiter searches for. `ROLE_LINE` in `content/recruiter.ts`, checked against
-`resume.md` by the eval suite ("AI-native revenue operations builder"; "sales
-and finance teams at Nokia"). The first phrase left the resume summary on
-2026-10-22.]
+[`ROLE_LINE` in `content/recruiter.ts`, checked against `resume.md` by the eval
+suite. The title and city are the master resume's.]
 
 Heading:
-I build and roll out the tools sales and finance teams run on.
+I build and run the tools a 7-region sales organization reports on.
 
-[DRAFT 2026-10-22, gauntlet pass. Replaces Sidhant's "I learn what the problem
-needs, then I build the thing." A blind critic reading the page as a RevOps
-hiring manager: "the H1 is a motto, not a fact" — the five-second read came
-away without his job. This one names it, and "roll out" carries the delivery
-half. Restore his line if he prefers it; it is quoted here in full.]
+[Resume sync 2026-10-26. Sidhant's resume is final: one master (the Resume_Master Google Doc) and a decisions log whose verified-facts ledger is the only place detail beyond the resume may come from. Every fact in this section now comes from one of the two; older notes quoting the previous copy were dropped from this file and live in git history.] The heading is the one-line story from the decisions log ("an ops person
+whose edge is building"). Its second half, "and I inherit and keep alive the
+ones other people built", is the summary block's `inherited` row. The previous
+heading was "I build and roll out the tools sales and finance teams run on."
 
 Subline:
-Looking for a revenue operations or delivery operations role at an AI-forward
-company.
+Looking for a RevOps, sales operations or delivery operations role.
 
-[2026-10-22, Sidhant: "No visa sponsorship needed … we should just remove, it's
-not needed. And it's meant only for Canada." The citizenship sentence left the
-subline; `faq.md` keeps the fact, scoped to Canada, for the chat.]
-
-[DRAFT 2026-10-22, gauntlet pass. Delivery operations added at Sidhant's word
-("rev ops or delivery ops type role", 2026-10-22; now in `faq.md`). "Toronto,
-ON." left this line because the role line above the heading carries it.]
-
-[Front-door pass, 2026-08-23 — Sidhant's call, from
-`docs/mockups/front-door-1-hero.html`. The old subline ("Ask what you'd ask on
-a call.") moved into the composer as the empty state's desktop placeholder —
-the invitation now lives in the input it was pointing at. The new subline is
-the `looking for` and `where` TL;DR rows fused into one sentence
-(`POSITIONING` in `content/recruiter.ts`), checked by the eval suite like
-every row.]
+[The target roles are Sidhant's (2026-10-26): RevOps, sales ops and delivery
+ops, with GTM systems after those; `faq.md` holds them for the chat.
+"At an AI-forward company" left the line: it is in neither source.]
 
 CTA row (under the subline):
 Download resume (PDF) · hello@sidhantmathur.com [copy] · LinkedIn ↗
@@ -188,70 +151,44 @@ unchanged.]
 
 ### Recruiter TL;DR (#25)
 
-[DRAFT 2026-07-27 — assembled by Claude for Track B. Every value is lifted from
-`content/knowledge/` or the resume; nothing here is drafted prose about
-Sidhant. Rewrite the wording freely, but a fact that leaves this block has to
-leave the corpus too.]
-
 Shown in the homepage's empty state only, under the CTA row. Gone as soon as a
-conversation starts. Since the front-door pass (2026-08-23) the block renders
-four of the six rows at body scale — `looking for` and `where` live in the
-hero subline instead (see above), so they are not repeated four lines apart.
-All six rows stay canonical here and stay checked by the suite.
+conversation starts. The block renders every row except `looking for` and
+`where`, which live in the hero subline and role line instead. All rows stay
+canonical here and stay checked by the suite against the file each names.
 
 Label: summary
 
-[Cute pass 2026-10-20: playful wording removed at Sidhant's request. No fact
-changed. The label was "tl;dr", internet slang; it now matches the block's
-accessible name, "Summary". This section's heading keeps "TL;DR" as the name of
-decision #25. The rows are unchanged.]
-
-[Wave 2, 2026-10-19: reordered. Nokia — the current job and the sales-ops
-evidence — was labelled "before that" and sat under A Darle 20. It now leads,
-labelled "now", with its outcomes in the rows; A Darle 20 follows as "also".
-The old rows were: now — "Sales operations specialist at Nokia, in Toronto.
-Co-founder and CTO of A Darle 20." (`bio.md`); shipped — "A Darle 20 — a
-two-sided marketplace, architected and shipped solo. 1,400+ registered users,
-127 hosts and 2,100+ bookings in the four months after launch."; before that — "At
-Nokia: a self-serve Power App used by 80+ stakeholders across seven regions,
-and a Salesforce Analytics to Power BI migration for 150+ users."]
+[Resume sync 2026-10-26. Sidhant's resume is final: one master (the Resume_Master Google Doc) and a decisions log whose verified-facts ledger is the only place detail beyond the resume may come from. Every fact in this section now comes from one of the two; older notes quoting the previous copy were dropped from this file and live in git history.]
 
 | Row label | Value | From |
 | --- | --- | --- |
-| now | Sales operations at Nokia since Jun 2024, building and owning reporting tools for global sales and finance. | `resume.md` |
-| shipped | A self-serve quarterly reporting app for 80+ stakeholders in 7 regions, replacing manual quarter-end collection that took a finance analyst's entire workday, every day of close. | `resume.md` |
-| before that | Workforce management at Nokia, Oct 2022 – Jun 2024: headcount reporting and forecasting for a 3,000–4,000-person organization. I identified $1.2M in real-estate cost savings in lab and facility utilization data. | `resume.md` |
-| also | Co-founder and CTO of A Darle 20, a live two-sided marketplace I architected and shipped solo, payments, refunds and funnel instrumentation included. | `resume.md` |
-| how I work | At Nokia I was the whole team on both tools: requirements, build, executive demos, global rollout and support across time zones. At A Darle 20, AI agents in Claude Code write most of the code; I own architecture, code review and release. | `resume.md`, `projects-nokia.md`, `projects-adarle20.md` |
-| looking for | A revenue operations or delivery operations role at an AI-forward company. | `faq.md` |
+| now | I own the reporting and tooling for Nokia's 7-region, $10B+ pipeline sales organization: incentives, quarter-end close and weekly operating review. | `resume.md` |
+| built | The weekly operating review tool regional sales ops teams use to compile the Chief Customer Officer's weekly report, shipped in two weeks. | `resume.md` |
+| shipped | The self-serve Power App behind quarter-end executive reporting for 80+ stakeholders across 7 regions, replacing an error-prone, full-day manual consolidation. | `resume.md` |
+| inherited | The Power App and automations North America runs all its reviews on (30 core users), and the sales incentive calculations for 900+ staff. I extended the first and cut steps and manual checks from the second. | `resume.md` |
+| before that | Workforce management at Nokia, Oct 2021 – Jun 2024: I ran the monthly headcount forecast for a 3,000–4,000-person org and led an analysis that identified $1.2M in real-estate cost savings. | `resume.md` |
+| also | Co-founder and CTO of A Darle 20 (part-time), a marketplace I built as its sole developer. | `resume.md` |
+| looking for | A RevOps, sales operations or delivery operations role. | `faq.md` |
 | where | Toronto, ON. | `faq.md` |
 
 Footer link (to /resume): The resume has the rest.
 
-[DRAFT 2026-10-22, gauntlet pass. First person, like the heading and the case
-studies; the chat is the only voice that says "he". Read as a timeline for the
-two role families: "now" is the job and what he owns in it, "shipped" its
-outcome, and "before that" — new — is the workforce management role, the
-delivery-ops evidence (headcount forecasting at scale, utilization data) that
-was only on the case study. The 150+ migration moved to its card below, and
-the A Darle 20 numbers to theirs, so no figure is said twice on the page.]
-
-[Copy pass 2026-10-20: reworded to read less like AI-generated text. No fact
-changed. See the copy-pass section of docs/copy-ledger.md. Rows "shipped" and
-"how he builds" and the footer link changed; the other four rows did not.]
+[First person, like the heading and the case studies; the chat is the only
+voice that says "he". Read as a timeline, newest first. The "how I work" row
+was cut: its "whole team, executive demos, global rollout" claims are in
+neither source. The A Darle 20 row carries no number because its card does.]
 
 ### Case-study cards (under the summary block)
 
-[DRAFT 2026-10-19, wave 2. One number each, a link to the long version. Dell
-stays off the homepage. `CASE_CARDS` in `content/recruiter.ts`, checked
-against the file each names.]
+[One number each, a link to the long version. Dell stays off the homepage.
+`CASE_CARDS` in `content/recruiter.ts`, checked against the file each names.]
 
 Label: case studies
 
 | Card | Number | Under it | From |
 | --- | --- | --- | --- |
-| Reporting tools at Nokia | 150+ | users on the sales reporting I moved from Salesforce Analytics to Power BI | `projects-nokia.md` |
-| A Darle 20 | 2,100+ | bookings in the four months after launch | `projects-adarle20.md` |
+| Reporting and tooling at Nokia | 150+ | monthly users on the Salesforce CRM Analytics dashboards I delivered for exec reviews | `projects-nokia.md` |
+| A Darle 20 | 2,100+ | users, with 110+ hosts and 3,600+ session reservations from 1,000+ players | `projects-adarle20.md` |
 
 Link on each: Read the case study →
 
@@ -264,53 +201,32 @@ Nokia is now listed first (01) and A Darle 20 second (02). The card copy below
 is unchanged.]
 
 **Card 1 — A Darle 20**
-A live marketplace for tabletop game sessions in Latin America, which I built
-as its only developer and run as co-founder. Four months after launch: 1,400+
-registered users, 127 hosts and 2,100+ bookings. I shipped bookings, payments, chat and refunds, with AI agents in Claude Code writing most of the code.
+A marketplace for tabletop game sessions, based in Puebla, Mexico, which I built as its sole developer and run part-time as co-founder and CTO. Since its March 2026 launch: 2,100+ users, 110+ hosts and 3,600+ session reservations from 1,000+ players.
 
-Role: Co-founder and CTO
-Stack: TypeScript, Next.js, Supabase, Stripe Connect
+Role: Co-founder and CTO (part-time)
+Stack: Next.js, TypeScript, Supabase, Stripe Connect
 Status: Live at adarle20.com
 Link: Read the case study
 
-**Card 2 — Reporting tools at Nokia**
-A self-serve app I built replaced a manual quarter-end process for 80+ stakeholders in 7 regions. That process took one finance analyst's entire
-workday, every day of close. I also moved sales reporting for 150+ users from
-Salesforce Analytics to Power BI, and I own it from data model to user support.
+**Card 2 — Reporting and tooling at Nokia**
+I build and run the tools a 7-region sales organization reports on: the weekly operating review tool regional sales ops teams use to compile the Chief Customer Officer's weekly report, and the self-serve Power App behind quarter-end executive reporting for 80+ stakeholders. I also keep alive the ones I inherited, including the sales incentive calculations for 900+ staff.
 
 Role: Sales operations specialist
-Stack: Power Apps, Power BI, SQL, DAX, Salesforce
-Status: In production since 2024
+Stack: Power Apps, Power Automate, Power BI, DAX, Salesforce CRM Analytics
+Status: Current role, since Jun 2024
 Link: Read the case study
-Stat column (display numeral): 150+ / users on the sales reporting I moved from Salesforce Analytics to Power BI
 
 **Card 3 — Sales prediction model at Dell**
-A propensity model that surfaced about 20,000 qualified cross-sell accounts for
-a high-margin software product: an estimated $129M in pipeline at segment-level
-average deal sizes. I built it as an intern on Dell's historical customer
-database.
+An Azure ML propensity model that found about 20,000 cross-sell accounts, about $129M at the segment's average deal size. I built it as an intern and trained the sales and marketing teams to use its output for lead prioritization.
 
 Role: Marketing intern
 Stack: Azure ML
-[Wave 1, 2026-10-19: "Python" removed — the Dell record names Azure ML and no
-language. It comes back if Sidhant confirms it.]
 Status: Internship, May–Aug 2018
 Link: Read the case study
-Stat column (display numeral): $129M / estimated pipeline
 
-[Copy pass 2026-10-20: reworded to read less like AI-generated text. No fact
-changed. See the copy-pass section of docs/copy-ledger.md. All three card
-descriptions changed. The `/projects` page around them now reads: intro "Three
-case studies. The assistant on the homepage can summarize any of them.";
-metadata description "Three case studies: reporting tools at Nokia, the A Darle
-20 marketplace, and a sales prediction model at Dell."]
+`/projects` intro: "Three things I built: the tools a 7-region sales organization at Nokia reports on, A Darle 20, a marketplace where I'm the sole developer, and the Dell sales model where this work started." Metadata description: "Three case studies: reporting and tooling at Nokia, the A Darle 20 marketplace, and a sales prediction model at Dell."
 
-[Gauntlet pass 2026-10-22, lane `doc-type`: all three card descriptions now
-lead with the outcome in operating terms; same facts, reordered. Dell's status
-was "2018" and now reads as the internship it was (resume: May–Aug 2018). The
-`/projects` intro was meta (it pointed at the chatbot) and now says what the
-three are evidence of:
-"Three things I built: Nokia's quarter-end and sales reporting, A Darle 20, a live marketplace where I'm the only developer, and the Dell sales model where this work started."]
+[Resume sync 2026-10-26. Sidhant's resume is final: one master (the Resume_Master Google Doc) and a decisions log whose verified-facts ledger is the only place detail beyond the resume may come from. Every fact in this section now comes from one of the two; older notes quoting the previous copy were dropped from this file and live in git history.] Dell's figure is a sizing at the segment's average deal size, never "estimated pipeline" (decisions log). The Nokia card's stack is the master's skills line.
 
 ### Chat panel (homepage teaser)
 
@@ -328,11 +244,14 @@ questions the reader arrived with. These replace them; there is no
 recruiter/engineer toggle, per decisions #26.]
 
 - Give me the short version
-- What did he own end to end at Nokia?
+- What does he build and run at Nokia?
 - Is he a fit for a RevOps role?
 
-[Gauntlet pass, 2026-10-22: the Nokia chip asks what a screener asks — what
-he owned, not what he built. The fit chip, still the `/fit` command's
+[Resume sync 2026-10-26: the Nokia chip was "What did he own end to end at
+Nokia?". The master resume is careful about "own" (he ran the headcount
+forecast his manager owned), and the new chip asks in the heading's words.]
+
+[Gauntlet pass, 2026-10-22: the Nokia chip asked what a screener asks. The fit chip, still the `/fit` command's
 question, names one role and drops "at an AI-forward company". A version
 naming both role families made the model call the assessment tool twice in
 one turn, run out of output budget mid-call and show nothing (caught probing
@@ -371,134 +290,74 @@ changed in this section; the chips are unchanged.]
 ## Case study — A Darle 20
 
 Title: A Darle 20
-Subtitle: A live two-sided marketplace for tabletop game sessions in Latin
-America. I'm co-founder and CTO, and the only developer.
+Subtitle: A marketplace for tabletop game sessions, based in Puebla, Mexico.
+I'm co-founder and CTO, part-time, and its sole developer.
+Metadata description: A marketplace I co-founded and built as its sole
+developer, part-time: 2,100+ users, 110+ hosts and 3,600+ session reservations
+since its March 2026 launch.
 
-[DRAFT 2026-10-19 — restructured by Claude after the council review: the unit
-economics and the funnel instrumentation each get a section, the plain-language
-explainer (#20, drafted 2026-07-27) moves below the results, and the rest is
-kept. Every number and name is in content/knowledge/projects-adarle20.md or
-resume.md, and evals/track-b.test.mjs checks each paragraph against them. The
-text below is content/adarle20.mdx verbatim. Rewrite in your own voice.]
-
-[Copy pass 2026-10-20: reworded to read less like AI-generated text. No fact
-changed. See the copy-pass section of docs/copy-ledger.md. The body below is
-re-copied from content/adarle20.mdx. The Stripe Connect and OXXO details now
-sit once, in "The unit economics", instead of twice. The page's metadata
-description now reads "A marketplace for tabletop game sessions in Latin
-America, with 2,100+ bookings in the four months after launch."]
-
-[Cute pass 2026-10-20: playful wording removed at Sidhant's request. No fact
-changed. Two headings: "The funnel, instrumented" is now "Funnel tracking" (so
-is the matching media slot's title), and "What I'd tell a hiring manager" is now
-"Summary". The knowledge file keeps "What he'd tell a hiring manager", because
-that heading is a chunk id, so a chat citation of the closing paragraph still
-shows the old name.]
-
-[Gauntlet pass 2026-10-22: restructured for a revenue operations or delivery
-operations reader. The outcome comes first, in an "At a glance" list modelled on
-the Nokia page. "Where it stands" and "Summary" are cut: their facts now live
-once, in the list, and "Summary" restated the intro. The payments section is
-framed as the money side end to end ("From booking to payout"); the
-commission test is named as a pricing experiment without inventing its result;
-the funnel section says the business is run on those numbers; the AI workflow
-has its own short section. The feature list left "What I built", because the
-"What's in it" grid below already carries it. "In plain terms" now walks the
-money through one booking instead of restating the problem. No new fact; see
-the gauntlet rows in docs/copy-ledger.md. Subtitle was "A marketplace for
-tabletop game sessions in Latin America." Metadata description is now "A live
-marketplace I co-founded and built as the only developer: payments, payouts,
-refunds and funnel tracking, and 2,100+ bookings in the four months after launch."]
-
-[Trim pass 2026-10-22 (gauntlet): the page was about 3,400px tall at 1280px
-and a blind critic called the feature grid padding. Cut to the facts that
-prove he runs the revenue machinery. "A pricing experiment" is folded into
-"Running it on its numbers" as one sentence, kept as the record words it: a
-test was run and margin decisions made, with no result claimed and no claim
-that the funnel data decided it. "What it runs on" is one sentence at the end
-of "How I build it". "The problem" lost its opening clause about how big the
-games are and the founding line (the subtitle already says co-founder). "From
-booking to payout" lost its opening line, which restated the "What I own"
-bullet. "At a glance" is tightened: "flagship" dropped, "after launch" became the label
-"First four months live", and
-"What I own" now ends "the funnel data behind monetization decisions" (the
-record: the data steers product and monetization decisions). "In plain terms"
-is one paragraph and no longer says what email goes out. The "unit economics"
-line keeps its idea as the lead-in to the pricing sentence. No new fact. The
-text below is content/adarle20.mdx verbatim.]
+[Resume sync 2026-10-26. Every fact now comes from the master resume or the decisions log's verified-facts ledger; older notes quoting the previous copy were dropped from this file and live in git history.] Cut because neither source has them: the old numbers and daily visitor
+counts (the log excludes visitor counts), cash payments (excluded), the
+problem story, platform fees and payouts, Prisma, the multi-agent audit
+workflow and the pricing experiment. "Bookings" is gone everywhere: about 84%
+of sessions are free, so the record's word is "session reservations". The
+master's "AI-native workflows" is on /resume as written; this page says "AI
+coding tools", in plain words. "Tabletop game sessions" is the one description
+in neither source: it is what the product is, and Sidhant should confirm it.
+The text below is content/adarle20.mdx verbatim.
 
 ### At a glance
 
-- **Launched** — March 2026. I started building in August 2025.
-- **First four months live** — 1,400+ registered users, 127 hosts and 2,100+
-  bookings, with 200–400 unique visitors a day.
-- **Biggest test** — a 251-player event at a 19,000-attendee convention, rated
-  4.96/5 by attendees. I built the technology; my co-founder ran it on the ground.
-- **What I own** — the product end to end, including the money flow from
-  payment to host payout and the funnel data behind monetization decisions.
+- **Launched** — March 2026. I started building it in August 2025, and I work on
+  it part-time as co-founder and CTO.
+- **So far** — 2,100+ users, 110+ hosts and 3,600+ session reservations from
+  1,000+ players.
+- **Flagship event** — 251 players at a 19,000-attendee convention, rated
+  4.96/5 by attendees. I ran the technology behind it.
+- **What I own** — the architecture, code review and release. I'm the sole
+  developer.
 
-### The problem
+### What it is
 
-Finding and paying a good game master in Latin America was informal and
-unreliable. Hosts had no clean way to take bookings or get paid, in a market
-where many players prefer cash.
-
-### From booking to payout
-
-Payments run on Stripe Connect, which handles the platform fee and the host's
-payout. Refunds are automated, and transactional email keeps both sides
-informed. Card penetration in Mexico is low, so I designed for cash too: with
-OXXO, a player with no card pays at a convenience store.
+A Darle 20 ("Let's Go 20") is a marketplace for tabletop game sessions, based in
+Puebla, Mexico. Hosts list sessions and players reserve them.
 
 ### Running it on its numbers
 
-I instrumented the funnel end to end, on both sides of the marketplace:
-bookings, conversion, cancellations, refunds and host activation. Those numbers steer product and monetization decisions.
+I instrumented the funnel: conversion, refunds and host activation. The data
+showed paid acquisition wasn't worth it, so growth runs on in-person marketing
+and word of mouth.
 
 ### How I build it
 
-AI agents in Claude Code write most of the code. I own the architecture and
-product decisions, review the code, and handle every release. A multi-agent
-workflow I set up reviews, refactors and regression-tests the production
-codebase on its own. The stack is TypeScript, React and Next.js, Supabase
-(PostgreSQL) with Prisma, Stripe Connect and Resend, on Vercel.
+I built the platform as its sole developer, working with AI coding tools, and I
+own the architecture, code review and release. The stack is Next.js, React,
+TypeScript, Supabase (PostgreSQL), Stripe Connect, Vercel, PostHog and Resend.
 
 ### In plain terms
 
-A host lists a game session. A player books a seat and pays by card or in cash.
-The site takes its fee, pays the host, and refunds a cancelled booking without
-anyone handling the money by hand.
+A host lists a game session and players reserve a place in it. Paid sessions
+take payment through Stripe Connect. Tracking every step from visit to
+reservation showed that word of mouth brings players in better than paid ads
+do.
 
 ### What's in it (#19 — the feature surface)
 
-[DRAFT 2026-07-27 — assembled by Claude for Track B. Every line item is a
-capability already named in `content/knowledge/projects-adarle20.md` or the
-resume. Nothing was added because a marketplace probably has it.]
-
-[Copy pass 2026-10-20: reworded to read less like AI-generated text. No fact
-changed. See the copy-pass section of docs/copy-ledger.md. The heading was
-"Everything in it" and the intro was "The prose above is the story. This is the
-surface area — what a host or a player can actually do." "Everything"
-overclaimed, since the list holds only what the record names. The Operations
-item's dash became parentheses. The unrendered note was reworded; its marker is
-untouched.]
-
-[Trim pass 2026-10-22 (gauntlet): decision #19 asks for the full feature
-surface, so the list stays, but as one line per area below the screenshot,
-with no rule above it and no intro line (the intro was "The main features,
-grouped by area."). Two items shortened because the prose above carries their
-detail: "OXXO cash payments at a convenience store" is now "OXXO cash
-payments", and "End-to-end funnel instrumentation (bookings, conversion,
-cancellations, refunds, host activation)" is now "Funnel instrumentation".]
+[Every line item is a capability the record names. Nothing is added because a
+marketplace probably has it. One line per area, below the screenshot, with no
+intro line.]
 
 Section heading: What's in it
 
-- Discovery: Host profiles · Session listings
-- Booking: Bookings and reservations · Cancellations · Automated refunds
-- Payments: Stripe Connect · Host payouts · Platform fees · OXXO cash payments
-- Communication: Real-time chat · Transactional email on Resend
-- Accounts: Authentication
-- Operations: Funnel instrumentation
+- Marketplace: Session listings · Session reservations
+- Payments: Stripe Connect · Refunds
+- Email: Resend
+- Operations: Funnel instrumentation · Host activation · PostHog
+
+[Resume sync 2026-10-26: cut to what the master names. Host profiles,
+cancellations, host payouts, platform fees, real-time chat, authentication and
+cash payments came off; they return once Sidhant writes them down somewhere
+checkable.]
 
 Closing note (draft, NOT RENDERED since wave 1, 2026-10-19 — it carries a
 marker, and markers never ship on a page): These are the features written down
@@ -521,14 +380,13 @@ intro "Frames with nothing in them are waiting on a file…", empty-frame text
 "Nothing here yet — waiting on a {kind}.", empty caption "{slot title} — not
 captured yet." A slot appears the day its file is added.]
 
-The seven slots, and what each needs, live in `content/adarle20-media.ts` as
+The six slots, and what each needs, live in `content/adarle20-media.ts` as
 capture briefs. Summary:
 
 | Slot | Kind | Shape | Must show |
 | --- | --- | --- | --- |
 | Session listings | screenshot | 152:69 | **Filled** — the existing `public/images/adarle20-listings.png` |
-| Booking a seat, end to end | screen recording | 16:9 | listing → checkout → confirmation, one take, test account |
-| Paying in cash | screenshot | 9:16 | the OXXO reference handed to the player |
+| Reserving a place, end to end | screen recording | 16:9 | listing → checkout → confirmation, one take, test account |
 | What a host sees | screenshot | 16:9 | a host's profile, sessions and payouts |
 | Host and player chat | screenshot | 9:16 | a real thread, redacted or on test accounts |
 | Funnel tracking | screenshot | 16:9 | whatever he actually watches — live numbers, so check before sending |
@@ -549,73 +407,96 @@ docs/copy-ledger.md.]
 
 ---
 
-## Case study — Reporting tools at Nokia
+## Case study — Reporting and tooling at Nokia
 
-Title: Reporting tools at Nokia
-Subtitle: I eliminated a manual quarter-end reporting process and moved sales
-reporting for 150+ users onto a data model I own. Before that, I owned
-headcount reporting and forecasting.
+Title: Reporting and tooling at Nokia
+Subtitle: I build and run the tools a 7-region sales organization reports on,
+and keep alive the ones I inherited. Before that, I ran the monthly headcount
+forecast.
+Metadata description: I build and run the tools a 7-region sales organization
+reports on, and keep alive the ones I inherited.
 
-[Gauntlet pass 2026-10-22 — restructured by Claude. The page said the same fact
-four times ("At a glance", "Before and after", "In plain terms", "Summary").
-Now: an outcome strip, one "What changed" section, "How I ran it" promoted to a
-five-stage delivery method, the workforce management role given its own
-section, and a plain-language section that explains the work instead of
-restating it. "Summary" is cut; its point is carried by "How I ran it". No new
-facts: every number and name is in content/knowledge/projects-nokia.md,
-resume.md or bio.md. The text below is content/nokia.mdx verbatim. Rewrite in
-your own voice.]
+[Resume sync 2026-10-26. Every fact now comes from the master resume or the decisions log's verified-facts ledger; older notes quoting the previous copy were dropped from this file and live in git history.] New from the master: the weekly operating review tool, the incentive
+calculations for 900+ staff, the North America app (30 core users), Power BI
+for 5 teams, the AI agent (in testing, no results, and the page says so) and
+the VBA and SharePoint work. The 150+ figure belongs to the CRM Analytics
+dashboards, not a Power BI migration. Cut: "migrated all sales reporting",
+"How I ran it" (whole team, executive demos, global rollout), SQL as a Nokia
+tool, and "owned headcount" (he ran it; his manager owned it). Dates: Nokia
+since Oct 2021. The text below is content/nokia.mdx verbatim, outcome strip
+included.
 
-[Second pass, same day: the workforce management role moved up from "Before
-this" to sit right after "What changed", under a heading a delivery-ops
-screener scans for, and it got a fourth cell in the outcome strip (2×2 in a
-wide container, stacked in a narrow one). Both roles are named in the role
-line. The LLM/Python line is cut: a claim with no example behind it read as
-padding. The plain-language section is one paragraph plus a three-sentence
-note on migrations; it keeps its place after "What changed".]
+<div className="@container max-w-[68ch]">
+  <dl aria-label="Outcomes" className="[font-family:var(--font-geist-sans)] [text-wrap:pretty] grid grid-cols-1 border-y border-line @md:grid-cols-2">
+    <div className="py-3 @md:pr-4">
+      <dt className="text-[28px] font-semibold leading-none tracking-tight text-text">80+</dt>
+      <dd className="t-meta mt-1.5 text-text-soft">stakeholders across 7 regions on the self-serve quarter-end reporting app I launched</dd>
+    </div>
+    <div className="border-t border-line py-3 @md:border-t-0 @md:border-l @md:pl-4">
+      <dt className="text-[28px] font-semibold leading-none tracking-tight text-text">900+</dt>
+      <dd className="t-meta mt-1.5 text-text-soft">staff whose monthly and quarterly sales incentive calculations I run</dd>
+    </div>
+    <div className="border-t border-line py-3 @md:pr-4">
+      <dt className="text-[28px] font-semibold leading-none tracking-tight text-text">150+</dt>
+      <dd className="t-meta mt-1.5 text-text-soft">monthly users on the Salesforce CRM Analytics dashboards I delivered for exec reviews</dd>
+    </div>
+    <div className="border-t border-line py-3 @md:border-l @md:pl-4">
+      <dt className="text-[28px] font-semibold leading-none tracking-tight text-text">$1.2M</dt>
+      <dd className="t-meta mt-1.5 text-text-soft">in real-estate cost savings identified by a lab and facility utilization analysis I led</dd>
+    </div>
+  </dl>
+  <p className="t-meta mt-3 text-text-faint">Nokia, Ottawa and Toronto, ON (remote). Sales operations specialist, Jun 2024 – present. Before that, workforce management specialist, Oct 2021 – Jun 2024.</p>
+</div>
 
-Outcome strip (top of the page, four cells, then a role line):
+### What I build and run
 
-- **80+** — stakeholders in 7 regions on self-serve quarterly reporting
-- **One workday** — of manual collection by a finance analyst, eliminated every day of quarter-end close
-- **150+** — users on the sales reporting I moved from Salesforce Analytics to Power BI
-- **$1.2M** — in real-estate cost savings identified from lab and facility utilization data, 2022–2024
+I own the reporting and tooling for a 7-region sales organization with $10B+ in
+pipeline. That is the organization's scale, not a pipeline I carry.
 
-Role line: Nokia, Toronto. Sales operations specialist (internal tools and
-automation), Jun 2024 – present. Before that, workforce management specialist, Oct 2022 – Jun 2024.
+**The weekly operating review.** Regional sales ops teams use the tool I built to
+compile the Chief Customer Officer's weekly report. It merges CRM data with
+standardized self-serve updates, which replaced ad hoc email, meetings and
+slides. I shipped it within two weeks of the process launching, and regions also
+run their own reviews on it. I build and maintain the tool.
 
-### What changed
+**Quarter-end close.** I launched the self-serve Power App behind quarter-end
+executive reporting for 80+ stakeholders across 7 regions. It replaced a
+full-day manual consolidation by one finance analyst that was error-prone under
+close deadlines, so close reporting no longer waits on one person.
 
-**Quarterly executive reporting.** Leadership needed one picture of the quarter
-from every region, and the inputs arrived by hand, in whatever format each
-region kept them. A finance analyst chased and assembled them. I replaced that
-process with a self-serve Power App the regions report through directly, and
-the manual collection is gone.
+**Reporting.** I delivered Salesforce CRM Analytics dashboards for exec reviews,
+with 150+ monthly users, then moved reporting to Power BI. I also built Power BI
+reports for 5 teams outside the sales organization and maintain the automation
+that keeps them refreshed.
 
-**Sales reporting.** The organization was moving off Salesforce Analytics. I
-migrated all of its sales reporting to Power BI and owned the data model and
-the transformation logic, in SQL and DAX, end to end.
+### What I inherited and kept running
 
-Both tools have been in production since 2024. The work is internal to Nokia,
-so confidentiality limits the screenshots and specifics I can share.
+**North America's review app.** I inherited the Power App and automations that
+North America runs its reviews on from a developer who moved teams, and I have
+extended them. North America runs its monthly reviews, incentive performance
+reviews and weekly operating review on it, with about 30 core users.
 
-### Headcount and forecasting, 2022–2024
+**Sales incentives.** I run the monthly and quarterly sales incentive
+calculations for 900+ staff: North America monthly, the other regions
+quarterly. I inherited the automation and cut steps and manual checks from it.
 
-I owned headcount reporting and forecasting for an organization of 3,000–4,000 people. I also identified $1.2M in real-estate cost savings by analyzing lab and facility utilization data.
+### In testing: an AI agent
 
-### How I ran it
+I am building an AI agent on Power BI, Glean and Teams that flags pipeline gaps
+against prior years, conflicting fields and past-due dates. Power BI does the
+bulk analysis and segmentation; Glean is the reasoning layer. It is in testing,
+not live, and has no results yet.
 
-For the quarterly reporting tool and the sales reporting migration, I was the
-whole team, from the first request to support after launch.
+### Workforce management, Oct 2021 – Jun 2024
 
-- **Requirements** — sales and finance leadership came with open-ended requests,
-  and I turned each one into a scoped plan.
-- **Build** — the Power App, and the Power BI data model with its SQL and DAX
-  transformation logic.
-- **Demos and rollout** — I demoed each tool to leadership, then rolled it out
-  globally.
-- **Support** — I handle user support, bug triage and rapid iteration myself,
-  across time zones.
+I ran the monthly headcount forecast process, plus planning and requisitions,
+for an organization of 3,000–4,000 people. Headcount was about 70% of its
+budget. I automated the forecast's input checks with VBA, saving about 5 hours a
+week of manual review, and I inherited and ran the SharePoint home site for the
+same organization. I also led a lab and facility utilization analysis that
+identified $1.2M in real-estate cost savings.
+
+The work is internal to Nokia, so there are no screenshots.
 
 ### In plain terms
 
@@ -625,30 +506,24 @@ reconcile them by hand before leadership can trust the total. A self-serve tool
 moves that work to the source: people put their numbers in once, in one place,
 and nobody has to chase them.
 
-A reporting migration is the same problem one level down. Every report carries logic about what its numbers mean, and rebuilt on the new system, that logic is the data model and its SQL and DAX.
+The other half is keeping tools alive after the person who built them has moved
+on. An app a region runs its reviews on can't stop working because its
+developer changed teams, so I learn how it works, keep it running and extend it.
 
 ---
 
 ## Case study — Sales prediction model at Dell
 
 Title: Sales prediction model at Dell
-Subtitle: A propensity model that ranked accounts for cross-sell, built during a
-2018 internship.
+Subtitle: An Azure ML propensity model that found cross-sell accounts, built
+during a 2018 internship.
 
-[Gauntlet pass 2026-10-22 — tightened by Claude. The internship caveat is said
-once, the plain-language section ends on what the model is for (which accounts
-to call first), and the close frames the project as where his revenue, data and
-tooling work started. No new facts: content/knowledge/projects-dell.md and
-resume.md. The body below is content/dell-ml.mdx verbatim. Rewrite in your own
-voice.]
-
-[Second pass, same day: the plain-language section is one paragraph. Its
-separate caveat paragraph ("one piece of a much bigger sales process… not
-money anyone collected") read as an apology for the number; the caveat is now
-one clause ("as estimated pipeline, not closed sales"), and the project
-paragraph still says the figure is estimated at segment-level average deal
-sizes. The section still opens the page (decisions: on Dell the caveats are
-the point).]
+[Resume sync 2026-10-26. Every fact now comes from the master resume or the decisions log's verified-facts ledger; older notes quoting the previous copy were dropped from this file and live in git history.] The $129M is a sizing at the segment's average deal size, never
+pipeline. Round Rock, TX, not Austin. Cut: the high-margin software product,
+the historical customer database, and hosting the model on Azure for feedback.
+Added from the master: training the sales and marketing teams to use its
+output for lead prioritization. The text below is content/dell-ml.mdx
+verbatim.
 
 ### In plain terms
 
@@ -656,44 +531,35 @@ Some customers would buy a second product, but nobody knows which ones, so the
 sales team calls everyone or guesses. A propensity model ranks the list. It
 learns from who bought what in the past and scores the customers who look most
 like the ones who already said yes, so sales knows which accounts to call
-first and what the list is worth as estimated pipeline, not closed sales.
+first. Multiplying the number of accounts by the average deal size gives a rough
+sense of what the list is worth. That is a sizing, not a forecast or a pipeline.
 
 ### The project
 
-In a 2018 summer internship at Dell, I built a propensity model in Azure ML on
-Dell's historical customer database to find cross-sell targets for a
-high-margin software product. It surfaced about 20,000 qualified accounts, an
-estimated $129M in pipeline at segment-level average deal sizes. The model was
-hosted on Azure so sales and marketing teams could get predictions and feed
-back new training data.
-
-It's where the work I do now started: revenue questions answered with data, and
-built as a tool other teams could use.
+In a 2018 summer internship at Dell Technologies in Round Rock, TX, I built a
+propensity model in Azure ML that found about 20,000 cross-sell accounts. At
+the segment's average deal size, those accounts are worth about $129M. That is
+a sizing, not pipeline. I then trained the sales and marketing teams to use the
+model's output for lead prioritization.
 
 ---
 
 ## About (short section or page)
 
-I'm a sales operations specialist at Nokia in Toronto and the co-founder and
-CTO of A Darle 20. I don't have a computer science degree. I have a business
-degree, a bootcamp, and eight years of teaching myself whatever the next problem
-required: React, SQL, the Power Platform, Stripe, and lately, building with
-LLMs and coding agents.
+I'm a sales operations specialist at Nokia, where I've worked since October
+2021, and the co-founder and CTO of A Darle 20, part-time. I live in Toronto.
 
-I like turning vague business problems into working software, then owning it,
-including the support and the bug fixes.
+I'm an ops person whose edge is building. I build and run the tools a 7-region
+sales organization reports on, and I inherit and keep alive the ones other
+people built.
 
-Outside work: basketball, chess, cooking, and learning three languages.
+Outside work: building with AI, pickup basketball, classic and horror fiction,
+and Canadian AI and housing policy.
 
-[Copy pass 2026-10-20: reworded to read less like AI-generated text. No fact
-changed. See the copy-pass section of docs/copy-ledger.md. No page renders this
-section today; it is the first-person mirror of `content/knowledge/bio.md`.
-The pass reworded bio.md's "The through line is that… support, bugs, and all"
-paragraph, and this section follows it. The degree sentence now breaks at a full
-stop, as bio.md's always has.]
-
-[Cute pass 2026-10-20: playful wording removed at Sidhant's request. No fact
-changed. "slowly learning three languages" lost "slowly", here and in bio.md.]
+[Resume sync 2026-10-26. No page renders this section; it is the first-person
+mirror of `content/knowledge/bio.md`. The interests are the master resume's.
+Languages are off by the decisions log's rule, and the self-taught paragraph
+went because neither source carries it.]
 
 ---
 
@@ -708,12 +574,12 @@ the contact block at the end of the page)
 
 Contact block, at the end of every document page:
 Label: Contact
-Body: I'm looking for a revenue operations or delivery operations role. Download the resume, or reach me by email or LinkedIn.
+Body: I'm looking for a RevOps, sales operations or delivery operations role. Download the resume, or reach me by email or LinkedIn. [Resume sync 2026-10-26: sales operations added, matching the hero subline.]
 Then: Download resume (PDF) · hello@sidhantmathur.com [copy] · LinkedIn ↗
 
 Case studies end instead on:
 Label: Contact
-Body: If you're hiring for revenue operations or delivery operations, email me. The resume has the rest.
+Body: If you're hiring for RevOps, sales operations or delivery operations, email me. The resume has the rest. [Resume sync 2026-10-26: sales operations added.]
 [Gauntlet pass 2026-10-22: was "If this is the kind of work you're hiring for,
 the resume has the rest." Tightened, and it now names the one action.]
 Then the same three controls, and a bordered link: "Next case study" ·
@@ -886,9 +752,9 @@ Questions about a portfolio usually have to wait for a call. If you're going
 through candidates and can't call me, you can ask the assistant whether any of
 my work maps to what you need.
 
-It works best with a specific question, such as how the payments work, what the
-Nokia rollout involved, or what I'd do in the first ninety days of the role
-you're hiring for.
+It works best with a specific question, such as who uses the weekly operating review tool I built, what I inherited at Nokia, or how my experience maps to the role you're hiring for.
+
+[Resume sync 2026-10-26: the examples were "how the payments work, what the Nokia rollout involved, or what I'd do in the first ninety days". The record no longer describes A Darle 20's payment flow or a Nokia rollout, and has nothing on a first ninety days, so all three would have drawn a "the record doesn't cover it".]
 
 Every answer is built from the same source files as the resume and shows which
 ones it drew on, so you can open the file when a paragraph isn't enough.

@@ -31,7 +31,7 @@ export const GROUNDED = [
     id: "adarle20-scale",
     prompt: "How big is A Darle 20?",
     expect: {
-      includesAny: ["1,400", "1400", "2,100", "2100", "127 hosts"],
+      includesAny: ["2,100", "2100", "110+ hosts", "3,600", "3600"],
     },
   },
   {
@@ -39,7 +39,7 @@ export const GROUNDED = [
     prompt: "How do payments work in A Darle 20?",
     expect: {
       includesAny: ["Stripe"],
-      includesAnySecond: ["Connect", "OXXO", "payout", "refund"],
+      includesAnySecond: ["Connect", "refund"],
     },
   },
   {

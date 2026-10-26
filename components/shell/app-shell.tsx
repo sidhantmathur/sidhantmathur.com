@@ -897,14 +897,14 @@ export function AppShell() {
                     </p>
                   </div>
                   <h1 className="t-hero max-w-[24ch] font-semibold text-text [font-family:var(--font-geist-sans)] [text-wrap:balance]">
-                    {HERO}
+                    {/* Non-breaking hyphen: "7-region" stays on one line. */}
+                    {HERO.replace(/(\d)-/g, "$1\u2011")}
                   </h1>
                   {/* Answers "what does he want" without a scroll. The string
                       lives in content/recruiter.ts under the same citation
                       check as the tl;dr rows — see POSITIONING. */}
                   <p className="t-body max-w-[52ch] text-text-soft [font-family:var(--font-geist-sans)] [text-wrap:balance]">
-                    {/* A non-breaking hyphen, so a line never ends on "AI-". */}
-                    {POSITIONING.value.replace("AI-forward", "AI\u2011forward")}
+                    {POSITIONING.value}
                   </p>
                   {/* The resume PDF is primary: it's the file a recruiter
                       attaches to an ATS record. Which format visitors take is

@@ -13,7 +13,7 @@ export const metadata: Metadata = {
   alternates: { canonical: "/projects" },
   title: "Projects",
   description:
-    "Three case studies: reporting tools at Nokia, the A Darle 20 marketplace, and a sales prediction model at Dell.",
+    "Three case studies: reporting and tooling at Nokia, the A Darle 20 marketplace, and a sales prediction model at Dell.",
 };
 
 export default function ProjectsPage() {
@@ -21,7 +21,7 @@ export default function ProjectsPage() {
     <DocPage>
       <h1 className="t-title font-medium text-text">Projects</h1>
       <p className="t-body mt-3 max-w-[62ch] text-text-soft">
-        Three things I built: Nokia&apos;s quarter-end and sales reporting, A Darle 20, a live marketplace where I&apos;m the only developer, and the Dell sales model where this work started.
+        Three things I built: the tools a 7-region sales organization at Nokia reports on, A Darle 20, a marketplace where I&apos;m the sole developer, and the Dell sales model where this work started.
       </p>
 
       <div className="mt-10 space-y-10">

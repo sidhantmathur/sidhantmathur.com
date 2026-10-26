@@ -2,57 +2,73 @@
   <dl aria-label="Outcomes" className="[font-family:var(--font-geist-sans)] [text-wrap:pretty] grid grid-cols-1 border-y border-line @md:grid-cols-2">
     <div className="py-3 @md:pr-4">
       <dt className="text-[28px] font-semibold leading-none tracking-tight text-text">80+</dt>
-      <dd className="t-meta mt-1.5 text-text-soft">stakeholders in 7 regions on self-serve quarterly reporting</dd>
+      <dd className="t-meta mt-1.5 text-text-soft">stakeholders across 7 regions on the self-serve quarter-end reporting app I launched</dd>
     </div>
     <div className="border-t border-line py-3 @md:border-t-0 @md:border-l @md:pl-4">
-      <dt className="text-[28px] font-semibold leading-none tracking-tight text-text">One workday</dt>
-      <dd className="t-meta mt-1.5 text-text-soft">of manual collection by a finance analyst, eliminated every day of quarter-end close</dd>
+      <dt className="text-[28px] font-semibold leading-none tracking-tight text-text">900+</dt>
+      <dd className="t-meta mt-1.5 text-text-soft">staff whose monthly and quarterly sales incentive calculations I run</dd>
     </div>
     <div className="border-t border-line py-3 @md:pr-4">
       <dt className="text-[28px] font-semibold leading-none tracking-tight text-text">150+</dt>
-      <dd className="t-meta mt-1.5 text-text-soft">users on the sales reporting I moved from Salesforce Analytics to Power BI</dd>
+      <dd className="t-meta mt-1.5 text-text-soft">monthly users on the Salesforce CRM Analytics dashboards I delivered for exec reviews</dd>
     </div>
     <div className="border-t border-line py-3 @md:border-l @md:pl-4">
       <dt className="text-[28px] font-semibold leading-none tracking-tight text-text">$1.2M</dt>
-      <dd className="t-meta mt-1.5 text-text-soft">in real-estate cost savings identified from lab and facility utilization data, 2022–2024</dd>
+      <dd className="t-meta mt-1.5 text-text-soft">in real-estate cost savings identified by a lab and facility utilization analysis I led</dd>
     </div>
   </dl>
-  <p className="t-meta mt-3 text-text-faint">Nokia, Toronto. Sales operations specialist (internal tools and automation), Jun 2024 – present. Before that, workforce management specialist, Oct 2022 – Jun 2024.</p>
+  <p className="t-meta mt-3 text-text-faint">Nokia, Ottawa and Toronto, ON (remote). Sales operations specialist, Jun 2024 – present. Before that, workforce management specialist, Oct 2021 – Jun 2024.</p>
 </div>
 
-### What changed
+### What I build and run
 
-**Quarterly executive reporting.** Leadership needed one picture of the quarter
-from every region, and the inputs arrived by hand, in whatever format each
-region kept them. A finance analyst chased and assembled them. I replaced that
-process with a self-serve Power App the regions report through directly, and
-the manual collection is gone.
+I own the reporting and tooling for a 7-region sales organization with $10B+ in
+pipeline. That is the organization's scale, not a pipeline I carry.
 
-**Sales reporting.** The organization was moving off Salesforce Analytics. I
-migrated all of its sales reporting to Power BI and owned the data model and
-the transformation logic, in SQL and DAX, end to end.
+**The weekly operating review.** Regional sales ops teams use the tool I built to
+compile the Chief Customer Officer's weekly report. It merges CRM data with
+standardized self-serve updates, which replaced ad hoc email, meetings and
+slides. I shipped it within two weeks of the process launching, and regions also
+run their own reviews on it. I build and maintain the tool.
 
-Both tools have been in production since 2024. The work is internal to Nokia,
-so confidentiality limits the screenshots and specifics I can share.
+**Quarter-end close.** I launched the self-serve Power App behind quarter-end
+executive reporting for 80+ stakeholders across 7 regions. It replaced a
+full-day manual consolidation by one finance analyst that was error-prone under
+close deadlines, so close reporting no longer waits on one person.
 
-### Headcount and forecasting, 2022–2024
+**Reporting.** I delivered Salesforce CRM Analytics dashboards for exec reviews,
+with 150+ monthly users, then moved reporting to Power BI. I also built Power BI
+reports for 5 teams outside the sales organization and maintain the automation
+that keeps them refreshed.
 
-I owned headcount reporting and forecasting for an organization of 3,000–4,000
-people. I also identified $1.2M in real-estate cost savings by analyzing lab and facility utilization data.
+### What I inherited and kept running
 
-### How I ran it
+**North America's review app.** I inherited the Power App and automations that
+North America runs its reviews on from a developer who moved teams, and I have
+extended them. North America runs its monthly reviews, incentive performance
+reviews and weekly operating review on it, with about 30 core users.
 
-For the quarterly reporting tool and the sales reporting migration, I was the
-whole team, from the first request to support after launch.
+**Sales incentives.** I run the monthly and quarterly sales incentive
+calculations for 900+ staff: North America monthly, the other regions
+quarterly. I inherited the automation and cut steps and manual checks from it.
 
-- **Requirements** — sales and finance leadership came with open-ended requests,
-  and I turned each one into a scoped plan.
-- **Build** — the Power App, and the Power BI data model with its SQL and DAX
-  transformation logic.
-- **Demos and rollout** — I demoed each tool to leadership, then rolled it out
-  globally.
-- **Support** — I handle user support, bug triage and rapid iteration myself,
-  across time zones.
+### In testing: an AI agent
+
+I am building an AI agent on Power BI, Glean and Teams that flags pipeline gaps
+against prior years, conflicting fields and past-due dates. Power BI does the
+bulk analysis and segmentation; Glean is the reasoning layer. It is in testing,
+not live, and has no results yet.
+
+### Workforce management, Oct 2021 – Jun 2024
+
+I ran the monthly headcount forecast process, plus planning and requisitions,
+for an organization of 3,000–4,000 people. Headcount was about 70% of its
+budget. I automated the forecast's input checks with VBA, saving about 5 hours a
+week of manual review, and I inherited and ran the SharePoint home site for the
+same organization. I also led a lab and facility utilization analysis that
+identified $1.2M in real-estate cost savings.
+
+The work is internal to Nokia, so there are no screenshots.
 
 ### In plain terms
 
@@ -62,4 +78,6 @@ reconcile them by hand before leadership can trust the total. A self-serve tool
 moves that work to the source: people put their numbers in once, in one place,
 and nobody has to chase them.
 
-A reporting migration is the same problem one level down. Every report carries logic about what its numbers mean, and rebuilt on the new system, that logic is the data model and its SQL and DAX.
+The other half is keeping tools alive after the person who built them has moved
+on. An app a region runs its reviews on can't stop working because its
+developer changed teams, so I learn how it works, keep it running and extend it.

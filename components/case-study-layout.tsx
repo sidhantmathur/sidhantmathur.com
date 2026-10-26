@@ -16,7 +16,7 @@ type CaseStudyLayoutProps = {
 // prose is Sidhant's copy and is edited on its own schedule.
 export const CASE_END_LABEL = "Contact";
 export const CASE_END_LINE =
-  "If you're hiring for revenue operations or delivery operations, email me. The resume has the rest.";
+  "If you're hiring for RevOps, sales operations or delivery operations, email me. The resume has the rest.";
 export const NEXT_CASE_LABEL = "Next case study";
 
 /** The next case study in the site's order, wrapping round. */

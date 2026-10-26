@@ -30,7 +30,7 @@ The **Claims** column is the one that matters:
 
 ## Ledger
 
-Rows below that quote older wording are superseded by "Copy pass, 2026-10-20" and then "Cute pass, 2026-10-20" at the end of this file, which have the current text.
+Rows below that quote older wording are superseded by the later sections of this file, in order: "Copy pass, 2026-10-20", "Cute pass, 2026-10-20", "Gauntlet pass, 2026-10-22" and "Resume sync, 2026-10-26". The resume sync replaced every fact about Sidhant on the site, so where an older row quotes a number, date or claim, the resume sync section has the current one.
 
 | Status | Where | String / summary | Claims | Source |
 | --- | --- | --- | --- | --- |
@@ -551,8 +551,8 @@ here means a `[VERIFY]` left in a file can't quietly ship.
 | `content/adarle20-media.ts` → `FEATURE_SURFACE_NOTE` (not rendered since wave 1, 2026-10-19; it goes back on `/projects/adarle20` once resolved) | **The features of A Darle 20 that appear in no source file.** The list on the page is the dozen the record names; the note says so out loud. To resolve it: write the missing capabilities into `content/knowledge/projects-adarle20.md` — one line each is enough — and they can then be added to the surface and checked by the suite like the rest. Reviews and ratings are visible in the one screenshot the repo has and are still *not* on the list, because a screenshot is not the record. |
 | `content/knowledge/faq.md` → "What is he not looking for?" | Held out of the system prompt, `/prompt` and the chunk index by `scripts/build-knowledge.mjs` since wave 1 (2026-10-19), until it has an answer; the chat now has nothing on the question rather than a marker. Pre-existing, untouched by Track B, and now more visible than it was: the recruiter chips and the TL;DR both point a reader at what he *is* looking for, and the corpus has nothing for the other half of that question. |
 | `docs/site-copy.md` → Colophon | "[TODO: confirm repo is public before linking]". Cut from `/colophon` with its sentence in wave 1. The repo IS public, and so is `docs/` (the ledger, the decisions doc, dictated notes). Decision for Sidhant: link it, or move `docs/` out first. |
-| `content/adarle20-media.ts` → `ADARLE_MEDIA`, the six slots with no `asset` | Not rendered since wave 1. Each slot's brief says what file it needs; a slot appears on `/projects/adarle20` the day its `asset` is filled in. |
-| `content/projects.ts` → Dell card stack | Did the Dell work use Python? The card said so; `content/knowledge/projects-dell.md` doesn't. Removed in wave 1 until confirmed. |
+| `content/adarle20-media.ts` → `ADARLE_MEDIA`, the five slots with no `asset` | Not rendered since wave 1. Each slot's brief says what file it needs; a slot appears on `/projects/adarle20` the day its `asset` is filled in. |
+| ~~`content/projects.ts` → Dell card stack~~ | Resolved 2026-10-26: the master resume names Azure ML and no language for Dell, so the stack stays Azure ML. |
 
 ## Copy pass, 2026-10-20
 
@@ -1038,3 +1038,66 @@ for the same strings.
 | draft | `content/knowledge/faq.md` → "What is he not looking for?" (chat corpus; replaces the `[TODO]`) | "A step down. He's looking for a role that pays more than his current one, and he'd rather discuss compensation directly than publish a number." The pay floor is Sidhant's ("if it's better paid than my current job"); keeping the number off the page is Claude's recommendation, flagged to him. | factual | Sidhant, 2026-10-22 |
 | sidhant | Resume summary in `docs/resume/resume-source.md`, `content/knowledge/resume.md`, `app/resume/page.tsx`, `public/resume.pdf` | The corrected summary from `docs/resume/drafts/summary-fix.md`, applied at Sidhant's word ("Apply the fixes"). `/resume` says "last updated October 2026". | factual | `resume-source.md` bullets |
 | removed | `components/shell/app-shell.tsx` → header status light | The "● loading / streaming / ready" indicator beside the nav, at Sidhant's request (2026-10-22): with most of the telemetry gone it wasn't needed. The composer placeholder still says "loading" before hydration; the polite status region still announces turns. | none | — |
+
+## Resume sync, 2026-10-26
+
+Sidhant's resume is final. The facts on the site now come from two documents
+only: **Resume_Master** (the Google Doc; `public/resume.pdf` is its export) and
+the **Resume — Decisions Log**, whose section 4, the verified-facts ledger, is
+the only place detail beyond the resume may come from. Its section 5 lists what
+is deliberately excluded, and none of it may appear on the site or in the chat.
+Local copies of both are in `docs/source/`, which is git-ignored because the log
+names target companies.
+
+Source column: **master** = the resume, **ledger** = decisions log §4,
+**log §1** = the log's positioning section (the one-line story, which Sidhant
+also gave in the brief for this pass).
+
+### Resume and chat corpus
+
+| Status | Where | String / summary | Claims | Source |
+| --- | --- | --- | --- | --- |
+| draft | `content/knowledge/resume.md` (also served as `/resume.md`) | The master retyped as markdown: summary, all seven bullets of the sales operations role, four of the workforce role, A Darle 20 with its stack line, freelance (one bullet), Immosis (new), Dell, education with the sales competition line, the four skills groups plus interests, and "Canadian citizen" under a "Work authorization" heading. Titles in the site's sentence case ("Sales operations specialist", "Co-founder & CTO (part-time)"); every other word as the master writes it, "AI-native workflows" included. | factual | master |
+| draft | `app/resume/page.tsx` | Same content as the markdown, checked against it by `evals/resume.test.mjs`. Section nav is now Summary · Experience · Education · Skills (the log's section order); "Technical skills" and "Other" are gone. Screenshot alt: "…showing hosted games players can reserve". | factual | master |
+| draft | `content/knowledge/bio.md` | Who he is (Nokia since October 2021, A Darle 20 part-time, Toronto), the one-line story, education, interests, and a "Before Nokia" chunk: freelance, Immosis, Dell. | factual | master, log §1 |
+| draft | `content/knowledge/projects-nokia.md` | Rebuilt as eight chunks: overview, scale ($10B+ is the organization's, not his), the weekly operating review tool (CCO's report; he builds and maintains it, doesn't attend or own the meeting), quarter-end close, what he inherited (North America app, ~30 core users; incentives for 900+, ~200 account managers and ~700 pre-sales and customer success, no authority over design), reporting (CRM Analytics 150+ monthly users, Power BI for 5 teams, not Salesforce admin), the AI agent (in testing, no results), workforce management (ran, manager owned; ~70% of budget; VBA ~5 hours a week; SharePoint; $1.2M identified, not necessarily realized). | factual | master, ledger |
+| draft | `content/knowledge/projects-adarle20.md` | Overview (tabletop game sessions, Puebla, co-founder and CTO part-time, sole developer, Aug 2025, launched Mar 2026), where it stands (2,100+ / 110+ / 3,600+ / 1,000+, plus the exact production counts of Oct 25, 2026, and ~84% free, so "session reservations"), how he built it, what the data showed (paid acquisition wasn't worth it; in-person marketing and word of mouth), the convention event. | factual | master, ledger. "Tabletop game sessions" is in neither: kept as what the product is. Sidhant to confirm. |
+| draft | `content/knowledge/projects-dell.md` | Round Rock, May–Aug 2018; ~20,000 cross-sell accounts; ~$129M "a sizing (accounts times average deal size), not pipeline"; trained the sales and marketing teams. | factual | master, ledger |
+| draft | `content/knowledge/faq.md` | Location (Toronto; Ottawa then Toronto remote at Nokia); target roles ("RevOps (revenue operations), sales operations and delivery operations roles, and GTM systems roles after those"); "What does he bring to delivery operations?" rebuilt from the master. | factual | master, ledger, Sidhant's brief (target roles) |
+| draft | `lib/system-prompt.ts` → "Making his case", "Saying it the way the record says it", "What the record leaves out" (rendered on /prompt) | Three role families; the one-line story; the delivery-ops mapping and the short-version recipe rebuilt from the master. New: the exact shapes of the facts that are easy to inflate (weekly review tool's audience, AI agent in testing, "ran" not "owned", identified not saved, org pipeline not his, Dell sizing, part-time and reservations, incentive design, CRM Analytics not admin), and a list of topics to answer with "the record doesn't cover it" (languages, freelance savings, A Darle 20 revenue and payment figures, who else receives the weekly report, hours saved by it, North America revenue, the agent's plans, tools not in the knowledge base). | factual | ledger, log §3 and §5 (the exclusions are named as absences, never stated) |
+
+### Front door, metadata and pages
+
+| Status | Where | String / summary | Claims | Source |
+| --- | --- | --- | --- | --- |
+| draft | `content/recruiter.ts` → `HERO` (H1, og:image) | "I build and run the tools a 7-region sales organization reports on." | factual | log §1, master |
+| draft | `content/recruiter.ts` → `POSITIONING` and the `looking for` row | "Looking for a RevOps, sales operations or delivery operations role." / "A RevOps, sales operations or delivery operations role." | none | Sidhant's brief |
+| draft | `content/recruiter.ts` → summary rows | now · built · shipped · inherited · before that · also, as `docs/site-copy.md` lists them. | factual | master |
+| draft | `content/recruiter.ts` → case-study cards | Nokia "150+ · monthly users on the Salesforce CRM Analytics dashboards I delivered for exec reviews"; A Darle 20 "2,100+ · users, with 110+ hosts and 3,600+ session reservations from 1,000+ players". Nokia card title is now "Reporting and tooling at Nokia". | factual | master |
+| draft | `content/recruiter.ts` → Nokia chip | "What does he build and run at Nokia?" | none | — |
+| draft | `app/layout.tsx` | Title "Sidhant Mathur — Sales operations specialist at Nokia"; description "Sales operations specialist at Nokia. I build and run the tools a 7-region sales organization reports on. Open to RevOps, sales ops and delivery ops roles." | factual | master, log §1 |
+| draft | `app/opengraph-image.tsx` | Alt text rewritten; the accent line now renders the whole positioning sentence (it was empty). | factual | as above |
+| draft | `app/llms.txt/route.ts` | Two opening paragraphs and the three project lines, as `docs/site-copy.md` lists them. | factual | master, log §1 |
+| draft | `content/projects.ts` | All three card descriptions; Nokia stack (Power Apps, Power Automate, Power BI, DAX, Salesforce CRM Analytics) and status ("Current role, since Jun 2024"); A Darle 20 role "Co-founder and CTO (part-time)". | factual | master |
+| draft | `app/projects/page.tsx` | Intro: "Three things I built: the tools a 7-region sales organization at Nokia reports on, A Darle 20, a marketplace where I'm the sole developer, and the Dell sales model where this work started." | factual | master |
+| draft | `app/projects/*/page.tsx` | Titles, subtitles and metadata descriptions for all three case studies. | factual | master |
+| draft | `content/nokia.mdx` | Rewritten: outcome strip (80+, 900+, 150+, $1.2M), "What I build and run", "What I inherited and kept running", "In testing: an AI agent", "Workforce management, Oct 2021 – Jun 2024", and a new second paragraph in "In plain terms" about keeping inherited tools alive. | factual | master, ledger |
+| draft | `content/adarle20.mdx` | Rewritten: "At a glance" (launch, numbers, flagship event, what I own), "What it is", "Running it on its numbers" (paid acquisition finding), "How I build it" ("AI coding tools" for the master's "AI-native workflows"), "In plain terms". | factual | master, ledger |
+| draft | `content/dell-ml.mdx` | "In plain terms" now explains the sizing; "The project" is the master's two bullets in prose. | factual | master, ledger |
+| draft | `content/adarle20-media.ts` → `FEATURE_SURFACE` | Marketplace: Session listings · Session reservations; Payments: Stripe Connect · Refunds; Email: Resend; Operations: Funnel instrumentation · Host activation · PostHog. | factual | master |
+| draft | `components/layout/doc-page.tsx` and `components/case-study-layout.tsx` → contact blocks | "I'm looking for a RevOps, sales operations or delivery operations role. Download the resume, or reach me by email or LinkedIn." / "If you're hiring for RevOps, sales operations or delivery operations, email me. The resume has the rest." Sales operations added to match the hero subline. | none | Sidhant's brief (target roles) |
+
+### Removed
+
+| Status | Where | String / summary | Claims | Source |
+| --- | --- | --- | --- | --- |
+| removed | everywhere | The old A Darle 20 numbers, daily visitor counts and every "bookings"; "3+ years"; Nokia start Oct 2022; Nokia in Toronto only; freelance to Oct 2022; Dell in Austin; "estimated $129M pipeline". | factual | Superseded by the master |
+| removed | resume, bio, knowledge | "$100k+ in agency fees", the client security breach bullet, the web ordering bullet. | factual | Log §5 (agency fees, freelance bullets) |
+| removed | resume, knowledge, feature list, media briefs | Cash payments at convenience stores (the "Paying in cash" slot went with them). | factual | Log §5 |
+| removed | `content/knowledge/bio.md`, `docs/site-copy.md` About | "learning three languages", chess, cooking, the self-taught paragraph. | factual | Log §5 (languages); the rest is in neither source |
+| removed | Nokia case study, summary rows, knowledge, prompt | "Migrated all sales reporting from Salesforce Analytics to Power BI for 150+ users", "owned headcount reporting", "whole team / executive demos / global rollout / support across time zones", SQL as a Nokia tool, "In production since 2024". | factual | Not in the master; 150+ belongs to CRM Analytics, and "ran", not "owned" |
+| removed | A Darle 20 everywhere | Prisma, the multi-agent code-audit workflow, "AI agents write most of the code", the commission-versus-tickets test, unit economics, host profiles, platform fees, payouts, cancellations, chat, authentication, "my co-founder ran it on the ground", "four months after launch". | factual | Not in the master or the ledger |
+| removed | Dell everywhere | "high-margin software product", "historical customer database", "qualified accounts", the model hosted on Azure for feedback. | factual | Not in the master |
+| removed | front door, metadata, prompt | "at an AI-forward company". | factual | In neither source |
+| removed | `docs/resume/` (the July source and its three variant drafts), `docs/Sidhant_Mathur_Resume.docx` and `.pdf` | Deleted; `public/resume.pdf` is the master's export. | — | Log §3 and §5: one master, no variant files |
+

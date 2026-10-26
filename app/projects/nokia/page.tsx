@@ -4,17 +4,17 @@ import CaseStudy from "@/content/nokia.mdx";
 
 export const metadata: Metadata = {
   alternates: { canonical: "/projects/nokia" },
-  title: "Reporting tools at Nokia",
+  title: "Reporting and tooling at Nokia",
   description:
-    "I eliminated a manual quarter-end reporting process and moved sales reporting for 150+ users onto a data model I own.",
+    "I build and run the tools a 7-region sales organization reports on, and keep alive the ones I inherited.",
 };
 
 export default function NokiaPage() {
   return (
     <CaseStudyLayout
       slug="nokia"
-      title="Reporting tools at Nokia"
-      subtitle="I eliminated a manual quarter-end reporting process and moved sales reporting for 150+ users onto a data model I own. Before that, I owned headcount reporting and forecasting."
+      title="Reporting and tooling at Nokia"
+      subtitle="I build and run the tools a 7-region sales organization reports on, and keep alive the ones I inherited. Before that, I ran the monthly headcount forecast."
     >
       <CaseStudy />
     </CaseStudyLayout>

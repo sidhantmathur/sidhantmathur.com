@@ -6,7 +6,8 @@ Sidhant is a Canadian citizen, so he doesn't need sponsorship to work in Canada.
 
 ## Location
 
-Toronto, ON.
+Toronto, ON. At Nokia he worked from Ottawa as a workforce management
+specialist, and works from Toronto, remote, as a sales operations specialist.
 
 ## Is he open to new roles?
 
@@ -14,32 +15,28 @@ Yes, he's open to new roles.
 
 ## What roles is he targeting?
 
-Revenue operations (RevOps / GTM systems) and delivery operations roles at
-AI-forward companies.
+RevOps (revenue operations), sales operations and delivery operations roles,
+and GTM systems roles after those.
 
 ## What does he bring to delivery operations?
 
 - His titles have been sales operations and workforce management, not delivery
   operations. What follows is the work in his record that the role draws on,
   all of it stated elsewhere in this knowledge base.
-- Headcount and forecasting: as a workforce management specialist at Nokia
-  (Oct 2022 – Jun 2024), he owned headcount reporting and forecasting for a
-  3,000–4,000-person organization, and identified $1.2M in real-estate cost
-  savings by analyzing lab and facility utilization data.
-- Rollout and support: at Nokia he owns every tool through its full
-  lifecycle, from vague requests from sales and finance leadership to scoped
-  requirements, executive demos, global rollout, user support, and iteration
-  across time zones.
-- Operating cadence: quarterly executive reporting runs on a self-serve Power
-  App he built, used by 80+ stakeholders across 7 regions. It replaced a manual
-  process that took one finance analyst's entire workday, every day of
-  quarter-end close.
-- Running a live service: at A Darle 20 he integrated Stripe Connect for host
-  payouts, platform fees, and OXXO cash payments, with automated refunds, and
-  instrumented the funnel (bookings, conversion, cancellations, refunds, host
-  activation). He built the technology behind a 251-player event at a
-  19,000-attendee convention, rated 4.96/5 by attendees; his co-founder ran the
-  event on the ground.
+- Operating cadence: he built the weekly operating review tool that regional
+  sales ops teams use to compile the Chief Customer Officer's weekly report,
+  and the self-serve Power App behind quarter-end executive reporting for 80+
+  stakeholders across 7 regions.
+- Data quality: he automated the input checks for the monthly headcount
+  forecast with VBA, saving about 5 hours a week of manual review. The AI agent
+  he is building flags pipeline gaps against prior years, conflicting fields
+  and past-due dates; it is in testing and has no results yet.
+- Keeping other people's systems running: he inherited and extended the Power
+  App and automations North America runs its reviews on (30 core users), and
+  the sales incentive calculations for 900+ staff.
+- Forecasting and planning: as a workforce management specialist at Nokia
+  (Oct 2021 – Jun 2024) he ran the monthly headcount forecast process, planning
+  and requisitions for a 3,000–4,000-person organization.
 
 ## What is he not looking for?
 

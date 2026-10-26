@@ -29,7 +29,9 @@ export function RecruiterTldr() {
               {row.label}
             </dt>
             <dd className="t-body text-text-soft [font-family:var(--font-geist-sans)] [text-wrap:pretty]">
-              {row.value}
+              {/* A non-breaking hyphen after a digit, so a phone never ends a
+                  line on "7-" and starts the next on "region". */}
+              {row.value.replace(/(\d)-/g, "$1\u2011")}
             </dd>
           </div>
         ))}
