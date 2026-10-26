@@ -238,15 +238,20 @@ export function AppShell() {
   // The four session numbers for the index sheet; see readouts.ts.
   const readouts: ReadoutState = { turns, ttft, cost: sessionCost.total, model };
   // What the last answer cost: the newest turn that finished and was priced.
-  // A failed turn is skipped rather than reported as free.
-  const lastAnswerCost = useMemo(() => {
+  // A failed turn is skipped rather than reported as free; a replayed one is
+  // reported as cached.
+  const lastPriced = useMemo(() => {
     for (let i = turnLog.length - 1; i >= 0; i -= 1) {
       const t = turnLog[i]!;
       if (t.error || t.usage == null) continue;
-      return costOfTurn(t.model, t.usage)?.total ?? null;
+      return t;
     }
     return null;
   }, [turnLog]);
+  const lastAnswer = lastPriced && {
+    cost: costOfTurn(lastPriced.model, lastPriced.usage)?.total ?? null,
+    cached: lastPriced.stored != null,
+  };
 
   // Idle mode. Suspended while a turn is in flight — an answer arriving is not
   // an idle screen — and it never blocks anything: the input keeps focus and
@@ -764,7 +769,7 @@ export function AppShell() {
               data-js-control
               className="hidden h-11 items-center tabular-nums transition-colors hover:text-accent lg:flex"
             >
-              {receiptText(turns, lastAnswerCost)}
+              {receiptText(turns, lastAnswer)}
             </button>
           )}
           {/* No status light here any more (2026-10-22, Sidhant): with most of

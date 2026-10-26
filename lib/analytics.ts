@@ -139,7 +139,8 @@ export type AnalyticsEvent =
   // One per completed turn: the per-turn telemetry record.
   //   model, jd, ttft_ms, client_ttft_ms, duration_ms, tokens_per_second,
   //   input_tokens, cached_input_tokens, output_tokens, reasoning_tokens,
-  //   cache_hit, cache_hit_ratio, steps, tools_called, finish_reason
+  //   cache_hit, cache_hit_ratio, steps, tools_called, finish_reason, stored
+  //   (`stored`: a replayed answer to a fixed question; lib/stored-answers.ts)
   | "chat_turn_complete"
   // A failed turn with its error class, which tells "the model timed out"
   // apart from "the site is down".

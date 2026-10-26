@@ -60,6 +60,9 @@ function readSnapshot() {
 
 // --- PostHog ----------------------------------------------------------------
 
+// Replayed answers (lib/stored-answers.ts) are left out: their time to first
+// output is a store read, and counting them would report the model as faster
+// than it is. Events from before the flag existed carry no `stored` at all.
 const COMPLETE_QUERY = `
   select
     properties.model as model,
@@ -71,6 +74,7 @@ const COMPLETE_QUERY = `
   from events
   where event = 'chat_turn_complete'
     and timestamp > now() - interval ${WINDOW_DAYS} day
+    and (isNull(properties.stored) or properties.stored = false)
   group by model
   order by turns desc
 `;
