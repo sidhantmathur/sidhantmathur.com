@@ -95,7 +95,7 @@ describe("what is kept", () => {
   const lookup = {
     "resume:nokia": {
       id: "resume:nokia",
-      text: "Migrated all sales reporting from Salesforce Analytics to Power BI for 150+ users.",
+      text: "Delivered Salesforce CRM Analytics dashboards for exec reviews (150+ monthly users), then moved reporting to Power BI.",
     },
   };
   const textTurn = (text) => [
@@ -108,21 +108,21 @@ describe("what is kept", () => {
 
   test("an answer whose every claim is in the chunk it cites is kept", () => {
     assert.equal(
-      storable(textTurn("He moved sales reporting for 150+ users to Power BI [resume:nokia]."), lookup),
+      storable(textTurn("His CRM Analytics dashboards for exec reviews had 150+ monthly users [resume:nokia]."), lookup),
       true,
     );
   });
 
   test("a number the cited chunk doesn't hold keeps the answer out", () => {
     assert.equal(
-      storable(textTurn("He moved sales reporting for 300+ users to Power BI [resume:nokia]."), lookup),
+      storable(textTurn("His CRM Analytics dashboards for exec reviews had 300+ monthly users [resume:nokia]."), lookup),
       false,
     );
   });
 
   test("a citation to a chunk that doesn't exist keeps the answer out", () => {
     assert.equal(
-      storable(textTurn("He moved sales reporting to Power BI [resume:invented]."), lookup),
+      storable(textTurn("He moved reporting to Power BI [resume:invented]."), lookup),
       false,
     );
   });
