@@ -133,6 +133,13 @@ From each board:
    hash of the id, so the largest boards don't stand in for the market.
    Controls are spread across their kinds and companies.
 
+**The corpus is not committed.** It is other companies' posting text, and
+this repo is public, so `evals/postings/corpus.jsonl(.gz)` is git-ignored.
+Run `npm run postings:fetch` to build it locally. The boards change daily, so
+a fresh fetch will not match the 502 postings counted here exactly. Committing
+it is Sidhant's call: drop the two corpus lines from `.gitignore` and add the
+file.
+
 Each line of `evals/postings/corpus.jsonl.gz` carries:
 
 | Field | Meaning |
@@ -551,7 +558,7 @@ only for permalink length, so nothing else notices.
 
 | File | What it is |
 | --- | --- |
-| `evals/postings/corpus.jsonl.gz` | the corpus |
+| `evals/postings/corpus.jsonl.gz` | the corpus, git-ignored; built by `npm run postings:fetch` |
 | `evals/postings/mine.jsonl` | empty slot for postings he applies to; see the privacy note |
 | `evals/postings/runs/` | results, git-ignored |
 | `scripts/fetch-postings.mjs` | refreshes the corpus (`npm run postings:fetch`) |
