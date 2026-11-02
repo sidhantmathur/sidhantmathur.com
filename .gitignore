@@ -68,3 +68,7 @@ evals/static-results.json
 
 # resume source files (private: the decisions log names target companies)
 /docs/source/
+
+# fetched job-posting corpus: other companies' text, kept out of the public repo until Sidhant decides (docs/fit-check-at-scale.md)
+/evals/postings/corpus.jsonl
+/evals/postings/corpus.jsonl.gz
