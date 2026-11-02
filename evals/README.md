@@ -202,7 +202,8 @@ the right number still passes. They are a regression net, not a quality score.
 
 ## The fit check at scale
 
-`evals/postings/` holds 502 real job postings, and
+`evals/postings/` holds the corpus of real job postings (502 on the run that
+built it; git-ignored, rebuilt with `npm run postings:fetch`), and
 `scripts/run-fit-stability.mjs` sends each one through the route several times
 to measure how much the fit check's verdicts move between runs.
 `docs/fit-check-at-scale.md` describes both, with the spend cap, the commands
@@ -210,3 +211,16 @@ and the recommended first run. The pure parts are tested in
 `evals/fit-stability.test.mjs`, which runs as part of `npm run eval`.
 `evals/postings/mine.jsonl` is the empty slot for postings Sidhant is applying
 to. The repo is public, so that file stays empty in git.
+
+## The entailment grader
+
+`npm run eval:grade` asks a model whether each claim is supported by the chunk
+it cites, or overstates it: ownership, scale, causality, time. It runs at eval
+time only, never in the request path, and complements `lib/verify.ts`, which
+checks numbers and names but can't see scope. It is calibrated against
+`evals/grader/calibration.jsonl` (97 labelled rows, each with its provenance).
+`--stub` and `--dry-run` work without a key; a live run has a hard
+`--max-usd` cap (default $0.50) and costs about $0.02 on the default model.
+`docs/verifier-and-grader.md` has the design and the before/after re-score of
+the checker. The pure parts are tested in `evals/grader.test.mjs` and
+`evals/checker-rescore.test.mjs`.
