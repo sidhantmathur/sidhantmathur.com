@@ -79,10 +79,17 @@ function isPositive(v: RequirementVerdict): boolean {
   return v === "met" || v === "partial";
 }
 
-/** Votes per verdict, only the verdicts that got one. */
+/**
+ * Votes per verdict, only the verdicts that got one, in the table's verdict
+ * order: the same votes always serialize the same way, whichever assessment
+ * cast which.
+ */
 export function tally(votes: RequirementVerdict[]): VerdictVotes {
   const out: VerdictVotes = {};
-  for (const v of votes) out[v] = (out[v] ?? 0) + 1;
+  for (const v of VERDICTS) {
+    const count = votes.filter((vote) => vote === v).length;
+    if (count) out[v] = count;
+  }
   return out;
 }
 

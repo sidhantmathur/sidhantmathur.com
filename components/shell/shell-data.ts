@@ -159,14 +159,23 @@ export function fitExcerptNote(shown: number, total: number): string {
  */
 export const FIT_CONSENSUS = {
   note: (n: number) =>
-    `Each requirement was assessed ${n} times, independently, and each row shows the verdict most of the assessments gave. A count beside a row means they differed. A row with no majority, or with both met and unmet among its assessments, is unclear.`,
+    `Each requirement was assessed ${n} times, independently, and each row shows the verdict most of the assessments gave. A count under a tag, or a split under a row, means they differed. A row with no majority, or with both met and unmet among its assessments, is unclear.`,
   unshared: (claimed: string) =>
     `no source most of the assessments shared · downgraded from ${claimed}`,
 };
 
-/** The line beside a row the assessments didn't agree on: `2 of 3 agree`, or how they split. */
+/** Under a verdict most of the assessments gave: `2 of 3`. */
+export function agreementCount(agreement: { count: number; of: number }): string {
+  return `${agreement.count} of ${agreement.of}`;
+}
+
+/**
+ * In the quiet line under a row: how a split row's assessments voted
+ * (`split · 1 met, 1 partial, 1 unmet`), or `2 of 3 agree` on a row code
+ * changed after the vote.
+ */
 export function agreementNote(agreement: Agreement): string {
-  if (agreement.kind === "majority") return `${agreement.count} of ${agreement.of} agree`;
+  if (agreement.kind === "majority") return `${agreementCount(agreement)} agree`;
   return `split · ${agreement.votes.map(([verdict, count]) => `${count} ${verdict}`).join(", ")}`;
 }
 

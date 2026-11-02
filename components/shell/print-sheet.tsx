@@ -6,7 +6,13 @@ import { stripCitations, citationIds } from "@/lib/verify";
 import { DISCLAIMER, SITE_NAME, SITE_URL } from "@/lib/site";
 import { Markdown } from "./markdown";
 import { agreementOf } from "@/lib/consistency";
-import { FIT_CONSENSUS, FIT_LABELS, agreementNote, fitExcerptNote } from "./shell-data";
+import {
+  FIT_CONSENSUS,
+  FIT_LABELS,
+  agreementCount,
+  agreementNote,
+  fitExcerptNote,
+} from "./shell-data";
 
 // The typeset document (docs/idea-decisions.md #17): what "save as PDF" saves.
 // Not the chat window on paper: no application chrome, citation ids printed
@@ -108,6 +114,7 @@ function PrintedFit({ fit }: { fit: RoleFit }) {
             <tr key={i} className="doc-block align-top">
               <td className="w-[64px] border-t border-line py-1.5 pr-2 tracking-[0.06em]">
                 {row.verdict}
+                <PrintedCount row={row} />
               </td>
               <td className="border-t border-line py-1.5">
                 <span className="font-medium">{row.requirement}</span>
@@ -152,9 +159,22 @@ function PrintedFit({ fit }: { fit: RoleFit }) {
   );
 }
 
-/** The split under a row the assessments didn't agree on, as on screen. */
+/** A majority the tag shows as it is, as on screen: not split, not changed after. */
+function majorityOf(row: RoleFit["rows"][number]) {
+  const agreement = agreementOf(row);
+  return agreement?.kind === "majority" && row.downgrade === null ? agreement : null;
+}
+
+/** `2 of 3` under the verdict, as on screen. */
+function PrintedCount({ row }: { row: RoleFit["rows"][number] }) {
+  const majority = majorityOf(row);
+  if (!majority) return null;
+  return <span className="block text-[10px] tracking-normal">{agreementCount(majority)}</span>;
+}
+
+/** Any other disagreement under the row: a split, or the vote behind a downgrade. */
 function PrintedAgreement({ row }: { row: RoleFit["rows"][number] }) {
   const agreement = agreementOf(row);
-  if (!agreement) return null;
+  if (!agreement || majorityOf(row)) return null;
   return <span className="block text-[10px]">{agreementNote(agreement)}</span>;
 }

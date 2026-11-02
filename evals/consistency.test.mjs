@@ -34,7 +34,7 @@ import { costOfTurn, MODEL_PRICES } from "../lib/pricing.ts";
 import { DEFAULT_MODEL } from "../lib/models.ts";
 import { read } from "./lib/artifacts.mjs";
 
-const { FIT_CONSENSUS, agreementNote } = await import("../components/shell/shell-data.ts");
+const { FIT_CONSENSUS, agreementCount, agreementNote } = await import("../components/shell/shell-data.ts");
 
 const CHUNKS = {
   "resume:nokia": {
@@ -155,6 +155,13 @@ describe("settling a row", () => {
     for (const [votes, expected] of cases) {
       assert.equal(consensusVerdict(tally(votes)), expected, votes.join(", "));
     }
+  });
+
+  test("the same votes serialize the same way, whoever cast them", () => {
+    const a = JSON.stringify(tally(["unmet", "met", "partial"]));
+    const b = JSON.stringify(tally(["partial", "unmet", "met"]));
+    assert.equal(a, b);
+    assert.equal(a, JSON.stringify({ met: 1, partial: 1, unmet: 1 }));
   });
 
   test("unanimous: the row is the row, and nothing is said about agreement", () => {
@@ -471,12 +478,17 @@ describe("the agreement line", () => {
   test("the panel and the print sheet both render it, and only from the row", () => {
     const panel = read("components/shell/panel-body.tsx");
     const print = read("components/shell/print-sheet.tsx");
+    // The count under the tag; a split or a downgraded row's vote in the line.
+    assert.match(panel, /<VerdictTag row=\{row\} \/>/);
     assert.match(panel, /<AgreementMark row=\{row\} \/>/);
+    assert.match(print, /<PrintedCount row=\{row\} \/>/);
     assert.match(print, /<PrintedAgreement row=\{row\} \/>/);
     for (const src of [panel, print]) {
       assert.match(src, /agreementOf\(row\)/);
+      assert.match(src, /kind === "majority" && row\.downgrade === null/);
       assert.match(src, /samples > 1 &&/, "the consensus note shows on a single assessment");
     }
+    assert.equal(agreementCount({ count: 2, of: 3 }), "2 of 3");
   });
 });
 

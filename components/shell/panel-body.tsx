@@ -16,6 +16,7 @@ import { agreementOf } from "@/lib/consistency";
 import {
   FIT_CONSENSUS,
   FIT_LABELS,
+  agreementCount,
   agreementNote,
   fitExcerptNote,
   JD_COPY,
@@ -336,11 +337,7 @@ function RequirementTable({
             key={i}
             className="grid grid-cols-[72px_1fr] gap-3 border-b border-line py-3 last:border-b-0"
           >
-            <span
-              className={`mt-0.5 self-start border px-1 py-0.5 text-center t-label tracking-[0.07em] ${VERDICT_STYLE[row.verdict]}`}
-            >
-              {row.verdict}
-            </span>
+            <VerdictTag row={row} />
             <div>
               {/* The posting's words, not the site's — the input, not a claim. */}
               <p className="t-meta text-text">{row.requirement}</p>
@@ -432,10 +429,36 @@ function RequirementTable({
   );
 }
 
-/** How the assessments split on a row, when they did. Nothing otherwise. */
+/**
+ * The row's tag. When most of the assessments gave it and not all, the count
+ * sits under it ("2 of 3"): it qualifies the verdict, and in the left column
+ * it can't run into the source ids on the line under the evidence.
+ */
+function VerdictTag({ row }: { row: RoleFit["rows"][number] }) {
+  const tag = `border px-1 py-0.5 text-center t-label tracking-[0.07em] ${VERDICT_STYLE[row.verdict]}`;
+  const count = verdictCount(row);
+  if (!count) return <span className={`mt-0.5 self-start ${tag}`}>{row.verdict}</span>;
+  return (
+    <div className="mt-0.5 self-start">
+      <span className={`block ${tag}`}>{row.verdict}</span>
+      <span className="mt-1 block text-center t-label text-text-faint">{agreementCount(count)}</span>
+    </div>
+  );
+}
+
+/** A majority the tag shows as it is: not split, and not changed after the vote. */
+function verdictCount(row: RoleFit["rows"][number]) {
+  const agreement = agreementOf(row);
+  return agreement?.kind === "majority" && row.downgrade === null ? agreement : null;
+}
+
+/**
+ * Any other disagreement, in the row's quiet line: how a split row's
+ * assessments voted, or the vote behind a row code changed afterwards.
+ */
 function AgreementMark({ row }: { row: RoleFit["rows"][number] }) {
   const agreement = agreementOf(row);
-  if (!agreement) return null;
+  if (!agreement || verdictCount(row)) return null;
   return <span>{agreementNote(agreement)}</span>;
 }
 
