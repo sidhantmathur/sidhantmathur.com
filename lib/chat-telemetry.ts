@@ -312,11 +312,45 @@ export type TurnTelemetry = {
   toolsCalled: string[] | null;
   finishReason: string | null;
   error: TurnError | null;
+  /**
+   * A fit check settled across several independent assessments
+   * (lib/consistency.ts). Absent on every other turn, and on every turn when
+   * CONSISTENCY_SAMPLES is 1.
+   */
+  consistency?: TurnConsistency;
 };
+
+/**
+ * The assessments behind one fit check. Their cost is already in the turn's
+ * `usage`; this says how much of it they were.
+ */
+export type TurnConsistency = {
+  /** Assessments asked for, the turn's own included: CONSISTENCY_SAMPLES. */
+  requested: number;
+  /** Assessments the table was merged from. Null if the turn never got that far. */
+  merged: number | null;
+  /** What the extra assessments billed, included in `usage`. Null when none reported. */
+  extraUsage: TurnUsage | null;
+  /** Extra assessments that never reported usage, counted at an upper bound instead. */
+  estimated: number;
+  /** Each extra assessment's time from launch to settle, in ms. */
+  sampleMs: number[];
+};
+
+/**
+ * Written while a fit check waits for its other assessments: how many are in,
+ * the turn's own included, out of how many. It keeps the stream from going
+ * quiet, and it is the phase line's readout.
+ */
+export type SampleProgress = { done: number; of: number };
+
+/** The id the progress part is written under, so each write replaces the last. */
+export const SAMPLES_PART_ID = "samples";
 
 /** The data parts this app's UI messages can carry. */
 export type ChatDataParts = {
   turn: TurnTelemetry;
+  samples: SampleProgress;
 };
 
 /** The app's UIMessage type. Use it instead of a bare `UIMessage`. */
