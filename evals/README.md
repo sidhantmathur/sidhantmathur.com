@@ -199,3 +199,14 @@ Assertions are deterministic string checks, not model grading. That keeps runs
 free and reproducible; the trade-off is that they check for the presence of
 specific evidence rather than judging overall quality. A wrong answer containing
 the right number still passes. They are a regression net, not a quality score.
+
+## The fit check at scale
+
+`evals/postings/` holds 502 real job postings, and
+`scripts/run-fit-stability.mjs` sends each one through the route several times
+to measure how much the fit check's verdicts move between runs.
+`docs/fit-check-at-scale.md` describes both, with the spend cap, the commands
+and the recommended first run. The pure parts are tested in
+`evals/fit-stability.test.mjs`, which runs as part of `npm run eval`.
+`evals/postings/mine.jsonl` is the empty slot for postings Sidhant is applying
+to. The repo is public, so that file stays empty in git.
