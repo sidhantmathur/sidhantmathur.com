@@ -19,6 +19,7 @@ import assert from "node:assert/strict";
 
 import {
   JD_CHECKING_PHASE,
+  JD_COMPARING_PHASE,
   JD_READING_PHASE,
   JD_WRITING_PHASE,
   OPENING_PHASE,
@@ -82,6 +83,32 @@ function jobPostingStream() {
   return states;
 }
 
+const samples = (done, of = 3) => ({ type: "data-samples", id: "samples", data: { done, of } });
+
+/**
+ * The same turn when the card is a consensus (lib/consistency.ts): once the
+ * turn's own call is complete, the route writes how many assessments are in
+ * while the card waits for the rest, under one part id.
+ */
+function consensusStream() {
+  const plain = jobPostingStream();
+  const lastRow = plain.findLastIndex(([, m]) => m.at(-1).parts.some((p) => p.state === "input-streaming"));
+  const [, lastMessages] = plain[lastRow];
+  const before = lastMessages.at(-1).parts.slice(0, -1);
+  const waiting = (n) => [
+    "streaming",
+    [user(POSTING), assistant(...before, fit("input-available", rows(14)), samples(n))],
+  ];
+  return [
+    ...plain.slice(0, lastRow + 1),
+    ["streaming", [user(POSTING), assistant(...before, fit("input-available", rows(14)))]],
+    waiting(1),
+    waiting(2),
+    waiting(3),
+    ...plain.slice(lastRow + 1),
+  ];
+}
+
 describe("phaseOf on a pasted posting", () => {
   test("names the posting from the moment it is sent, before the stream opens", () => {
     assert.equal(phaseOf("submitted", [user(POSTING)]), JD_READING_PHASE);
@@ -99,6 +126,26 @@ describe("phaseOf on a pasted posting", () => {
     const phases = jobPostingStream().map(([status, messages]) => phaseOf(status, messages));
     const distinct = phases.filter((p, i) => p !== phases[i - 1]);
     assert.deepEqual(distinct, [JD_READING_PHASE, JD_CHECKING_PHASE, JD_WRITING_PHASE, null]);
+  });
+
+  test("a consensus card adds one step, between the rows and the summary", () => {
+    const phases = consensusStream().map(([status, messages]) => phaseOf(status, messages));
+    const distinct = phases.filter((p, i) => p !== phases[i - 1]);
+    assert.deepEqual(distinct, [
+      JD_READING_PHASE,
+      JD_CHECKING_PHASE,
+      JD_COMPARING_PHASE,
+      JD_WRITING_PHASE,
+      null,
+    ]);
+  });
+
+  test("with one assessment there is no such step: a call waiting on its result is still checking", () => {
+    // The route writes no progress part when it runs one assessment, so the
+    // gap between the call and its result reads exactly as it did before.
+    const waiting = [user(POSTING), assistant(frame(true), extract("output-available"), fit("input-available", rows(14)))];
+    assert.equal(phaseOf("streaming", waiting), JD_CHECKING_PHASE);
+    assert.equal(activityOf("streaming", waiting), null);
   });
 
   test("the reasoning between extraction and the first row belongs to the judging step", () => {
@@ -169,7 +216,24 @@ describe("activityOf: what the stream is doing inside the step", () => {
     }
   });
 
+  test("counts the assessments that are in while the card waits for the rest", () => {
+    const readouts = consensusStream()
+      .map(([status, messages]) => activityOf(status, messages))
+      .filter((a) => a?.kind === "samples")
+      .map(formatActivity);
+    assert.deepEqual(readouts, ["1/3", "2/3", "3/3"]);
+    // A progress part the route wouldn't write is not read.
+    const odd = [user(POSTING), assistant(frame(true), fit("input-available", rows(2)), samples(7, 1))];
+    assert.equal(activityOf("streaming", odd), null);
+    assert.equal(phaseOf("streaming", odd), JD_CHECKING_PHASE);
+    const over = [user(POSTING), assistant(frame(true), fit("input-available", rows(2)), samples(9, 3))];
+    assert.deepEqual(activityOf("streaming", over), { kind: "samples", done: 3, total: 3 });
+  });
+
   test("sameActivity tells a new reading from a repeat", () => {
+    assert.ok(sameActivity({ kind: "samples", done: 2, total: 3 }, { kind: "samples", done: 2, total: 3 }));
+    assert.ok(!sameActivity({ kind: "samples", done: 2, total: 3 }, { kind: "samples", done: 3, total: 3 }));
+    assert.ok(!sameActivity({ kind: "samples", done: 2, total: 3 }, { kind: "rows", done: 2, total: 3 }));
     assert.ok(sameActivity(null, null));
     assert.ok(sameActivity({ kind: "reasoning" }, { kind: "reasoning" }));
     assert.ok(sameActivity({ kind: "rows", done: 3, total: 14 }, { kind: "rows", done: 3, total: 14 }));
@@ -184,7 +248,8 @@ describe("the phase line's design rules", () => {
   // nothing clickable.
 
   test("every step string is sentence case, one line, and reads as in progress", () => {
-    for (const p of new Set(jobPostingStream().map(([s, m]) => phaseOf(s, m)).filter(Boolean))) {
+    const both = [...jobPostingStream(), ...consensusStream()];
+    for (const p of new Set(both.map(([s, m]) => phaseOf(s, m)).filter(Boolean))) {
       assert.ok(!p.includes("\n"), `"${p}" is not one line`);
       assert.equal(p, p.toLowerCase(), `"${p}" is not sentence case`);
       assert.ok(p.endsWith("…"), `"${p}" doesn't read as a step in progress`);
@@ -204,7 +269,7 @@ describe("the phase line's design rules", () => {
     const width = (label, readout, stop) =>
       14 + 10 + label.length * 9 + 10 + (readout ? readout.length * 8 + 6 : 0) + 40 + (stop ? 44 : 0);
     const widest = new Map();
-    for (const [status, messages] of jobPostingStream()) {
+    for (const [status, messages] of [...jobPostingStream(), ...consensusStream()]) {
       const p = phaseOf(status, messages);
       if (!p) continue;
       const a = activityOf(status, messages);
@@ -224,8 +289,12 @@ describe("the phase line's design rules", () => {
   test("the step string never carries a count that changes inside the step", () => {
     // The shell keys the line by this string and announces it (aria-live). A
     // row count in it would replay the entry and the announcement every row.
-    const phases = new Set(jobPostingStream().map(([s, m]) => phaseOf(s, m)));
-    assert.ok(phases.size <= 4, `the phase string took ${phases.size} values across one turn`);
+    // One value per step: three, or four on a consensus card, plus null once
+    // there is prose.
+    for (const [stream, steps] of [[jobPostingStream(), 3], [consensusStream(), 4]]) {
+      const phases = new Set(stream.map(([s, m]) => phaseOf(s, m)).filter(Boolean));
+      assert.ok(phases.size <= steps, `the phase string took ${phases.size} values across one turn`);
+    }
   });
 
   test("the readout is aria-hidden and nothing in the line is clickable", () => {
