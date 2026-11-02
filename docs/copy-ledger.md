@@ -1117,3 +1117,17 @@ knowledge base already says, so he can correct them.
 | draft | `docs/interview-guide.md` → "Off the record by an earlier decision" | The prompt's list of deliberate absences, restated so the interview doesn't reopen them by accident: languages, freelance fees, A Darle 20 revenue and payment figures, the weekly report's other readers, hours saved by the review tool, North America revenue, the agent's plans. | none (names absences) | `lib/system-prompt.ts` "What the record leaves out" |
 | draft | `docs/interview-guide.md` → question map, answer template, interviewer prompt, after-the-interview checklist | Seventeen interview questions mapped to stories, with the ones no story answers yet flagged; the shape of a future `content/knowledge/stories.md` (not created) with its chunk ids and the rules it has to follow; the voice-mode interviewer prompt; the ingestion checklist. | none | `scripts/build-knowledge.mjs`, `lib/verify.ts`, `evals/static.test.mjs`, `evals/track-b.test.mjs` |
 
+## Write-up draft, 2026-11-02
+
+A draft blog post for Sidhant to rewrite in his own voice, working title "How I
+built a chatbot that can't lie about me" (`docs/your-turn.md` §8). Nothing on
+the site renders it or links to it. Every paragraph carries a source comment;
+career facts come only from `content/knowledge/`; quotes attributed to Sidhant
+are verbatim from `docs/idea-decisions.md`. Its open `[VERIFY]` points (his
+reaction, who ran which test, the share of code agents wrote, the sprint dates,
+the RevOps framing, whether to link the repo) are listed at the end of the
+draft itself.
+
+| Status | Where | String / summary | Claims | Source |
+| --- | --- | --- | --- | --- |
+| draft | `docs/drafts/writeup.md` (not rendered) | The post (about 1,780 words) plus three figure briefs, a ~150-word LinkedIn version and a two-sentence pitch. Facts about the site: the 2026-10-19 smoke test, `lib/verify.ts`, `lib/role-fit.ts`, the eval suite, the bake-off's billed vs list price, `low` reasoning, the builder/critic loop and fact audit. Facts about Sidhant: his Nokia title and four Nokia bullets (sales operations and workforce management) and a quoted fit-check verdict saying Salesforce administration, lead routing and CPQ are outside his record, nothing else. | factual | `content/knowledge/resume.md`, `projects-nokia.md`; `docs/followups.md`, `docs/roadmap.md`, `docs/idea-decisions.md`, `docs/idea-bank.md` §6, `docs/gauntlet-log.md`, `evals/README.md`, `lib/refusals.ts` |
