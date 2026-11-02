@@ -8,6 +8,15 @@
 //
 // A caption is a claim a visitor can check by looking, so nothing here
 // describes footage nobody has seen.
+//
+// Captured slots render in array order. The 2026-11-02 captures (front page,
+// walkthrough, filters, session and host pages) were taken from the public
+// site without an account: no sign-up, no booking, nothing that reaches
+// Stripe. Their captions describe what is on screen and name no feature the
+// record doesn't. The screens show more than the record says (reviews,
+// badges, follows); closing that gap is docs/adarle20-feature-inventory.md's
+// job, not a caption's. Player names and avatars are out of every frame;
+// hosts appear as they do on the public cards.
 
 export type MediaSlot = {
   id: string;
@@ -50,6 +59,57 @@ export type MediaSlot = {
 
 export const ADARLE_MEDIA: MediaSlot[] = [
   {
+    id: "landing",
+    kind: "screenshot",
+    title: "The front page",
+    brief:
+      "The landing page at desktop width, cropped above the live counters so the frame carries no figures.",
+    aspect: "720:281",
+    aspectClass: "aspect-[720/281]",
+    width: "column",
+    // Alt text and caption written from the file itself (captured 2026-11-02).
+    asset: {
+      src: "/images/adarle20-landing.webp",
+      alt: "The A Darle 20 landing page: the headline “The portal to your next adventure.”, a Find games button, and four cards headed Online or in person, Vetted Dungeon Masters, Secure payments and We handle the logistics.",
+      caption: "The front page: one button to find games, and four cards on how it works.",
+    },
+  },
+  {
+    id: "walkthrough",
+    kind: "screen recording",
+    title: "From the listings to a session",
+    brief:
+      "A short silent take browsing as a visitor: the listings, one filter, then a session's own page. It stops before reserving, so it needs no account and no test data.",
+    aspect: "16:9",
+    aspectClass: "aspect-video",
+    width: "column",
+    // Alt text and caption written from the recording itself (captured 2026-11-02).
+    asset: {
+      src: "/images/adarle20-walkthrough.webm",
+      fallback: "/images/adarle20-walkthrough.mp4",
+      poster: "/images/adarle20-walkthrough-poster.webp",
+      alt: "Screen recording: the session listings, the Online filter switched on, and a paid one-shot opened to its own page, which scrolls down to the game's description and the host's card. Nothing is booked.",
+      caption:
+        "Browsing without an account: one filter, then a session's own page, stopping short of reserving.",
+    },
+  },
+  {
+    id: "filters",
+    kind: "screenshot",
+    title: "Browsing with filters",
+    brief: "The listings page with the full filter panel open, at desktop width.",
+    aspect: "8:5",
+    aspectClass: "aspect-[8/5]",
+    width: "column",
+    // Alt text and caption written from the file itself (captured 2026-11-02).
+    asset: {
+      src: "/images/adarle20-filters.webp",
+      alt: "The Available Sessions page with its filter panel open: quick filters for when, beginners, online, in person, free, workshops and one-shots, then price, experience, genre and format choices, a game menu, from and to dates, a currency menu and popular tags.",
+      caption:
+        "The listings with every filter open: price, experience, genre, format, game, dates and tags.",
+    },
+  },
+  {
     id: "listings",
     kind: "screenshot",
     title: "Session listings",
@@ -64,6 +124,41 @@ export const ADARLE_MEDIA: MediaSlot[] = [
       alt: "Three A Darle 20 session listing cards side by side, each with cover art, a title, tags, a weekly time, a price in Mexican pesos, the number of seats filled, and the host's name and review score.",
       caption:
         "Each card shows the host and their rating, the price in pesos, the schedule, and how many seats are filled.",
+    },
+  },
+  // The two phone frames sit side by side: project-media.tsx pairs
+  // consecutive narrow slots.
+  {
+    id: "session-phone",
+    kind: "screenshot",
+    title: "A session, on a phone",
+    brief:
+      "A paid session's page at phone size, top of the page, on a game with no seats taken so no player's avatar is in frame.",
+    aspect: "195:422",
+    aspectClass: "aspect-[195/422]",
+    width: "narrow",
+    // Alt text and caption written from the file itself (captured 2026-11-02).
+    asset: {
+      src: "/images/adarle20-session-phone.webp",
+      alt: "A one-shot's page on a phone: the title over its cover art, the host's name, the date in Mexico City time with the viewer's own time beneath, a price in pesos, a Book button, a row of empty seats, and Share, Save and Message DM buttons.",
+      caption:
+        "A session's own page on a phone: host, time, price and the button to reserve a place.",
+    },
+  },
+  {
+    id: "host-profile-phone",
+    kind: "screenshot",
+    title: "A host's public page",
+    brief:
+      "A host's public profile at phone size, top of the page, stopping above the reviews so no reviewer's name is in frame.",
+    aspect: "195:422",
+    aspectClass: "aspect-[195/422]",
+    width: "narrow",
+    // Alt text and caption written from the file itself (captured 2026-11-02).
+    asset: {
+      src: "/images/adarle20-host-profile-phone.webp",
+      alt: "A host's public profile on a phone: Overview, Calendar, Sessions and Reviews tabs, the host's logo and name, a star rating with the number of reviews, followers, three badges, a Support button, and the start of the host's own description in Spanish.",
+      caption: "A host's public page on a phone: their rating, badges and own description.",
     },
   },
   {
