@@ -1182,3 +1182,28 @@ Strings drafted for the consistent fit check (`docs/consistent-fit-check.md`): a
 | draft | `components/shell/shell-data.ts` → `FIT_CONSENSUS.unshared` (a row's quiet line, accent) | "no source most of the assessments shared · downgraded from {verdict}" | none | `lib/consistency.ts` (`unshared` downgrade) |
 | draft | `lib/turn-phase.ts` → `JD_COMPARING_PHASE` (the phase line while the card waits) | "cross-checking…", with the readout "{done}/{of}" | none | — |
 | draft | `lib/system-prompt.ts` → roleFit instructions (rendered on /prompt) | "The table the tool returns is the one the reader sees, and the site may have changed rows in it since your call. Write the sentences after the call from the returned table." | none | — |
+
+## Backlog pass, 2026-11-02
+
+GitHub issues #3 and #2, per-model settings, and the app-shell split. Visible
+strings changed for #3, #2 and the `/measurements/models` settings caveat; the
+split only moved strings (note under the table).
+
+| Status | Where | String / summary | Claims | Source |
+| --- | --- | --- | --- | --- |
+| draft | `components/shell/app-shell.tsx` → the composer's button | While a turn is in flight the "send ↵" button reads "stop" followed by a small drawn square, in the same box, from the moment a question is sent until the stream closes (issue #3). | none | — |
+| removed | `components/shell/app-shell.tsx` → beside the phase line | The plain "stop" that appeared after eight seconds beside the phase line. The composer's button replaces it. | none | Issue #3 |
+| draft | `lib/model-comparison.ts` → `rankedTrailer`, under the ranked panels on `/measurements/models` | "Median withheld for {models}: fewer than 10 measured turns." for a model whose run was measured over too few turns for a median; "Not measured for {models}." stays for one with no measurement. Both can appear under one panel. Was "Not measured for {models}." for both (issue #2). | none | `MIN_TURNS_FOR_P50` in `lib/measurements.ts` |
+| draft | `components/charts/ranked-bars.tsx` → a panel with no bars | "No published run reports this figure." when at least one model was measured but withheld; "Not measured in any published run." when none was measured, as before. | none | — |
+| draft | `lib/model-comparison.ts` → `unplottedTrailer`, under the frontier charts | "{models} could not be plotted because its median was withheld: fewer than 10 measured turns." ("their medians were" for several). The not-measured sentence is unchanged: "{models} could not be plotted because one of the two axes was not measured." | none | as above |
+| draft | `components/charts/frontier-scatter.tsx` → a chart with no points | "No published run reports both figures, so there's no chart to draw." Was "…has both measurements…", which a withheld median would make untrue. | none | — |
+| draft | `app/measurements/models/page.tsx` → the "Each model runs the way the chat runs it" caveat | When a charted model's settings changed after its run: "{models} have been reconfigured since their runs here, so the chat no longer runs them the way they were measured. Of the rest, {tuned list}, and everything else runs at the provider's default." (singular: "has been reconfigured since its run here, so the chat no longer runs it the way it was measured"; with nothing tuned: "The rest run at the provider's default reasoning."). Today it names DeepSeek V4 Flash, Claude Haiku 5.5 and GPT-5 mini. With nothing reconfigured the old sentence renders unchanged. | none about Sidhant; one about the site | `settingsChanged` on each row of `lib/models.ts` |
+
+The app-shell split (`docs/app-shell-split.md`) moved strings out of
+`components/shell/app-shell.tsx` without changing a word, so earlier rows that
+name that file now mean: the replay banner, `replay-banner.tsx`; the front door
+and the continue row, `front-door.tsx`; Home and the question count,
+`conversation-bar.tsx`; the composer's placeholders and fine print,
+`composer.tsx`; the conversation-full notice, `transcript-view.tsx`; the header,
+`status-strip.tsx`; the actions strip, `actions-strip.tsx`. The rate-limit line
+stays in `app-shell.tsx`.

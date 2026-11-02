@@ -25,7 +25,16 @@ import {
   readToolNames,
 } from "./lib/artifacts.mjs";
 import { GROUNDED, ROLE_FIT } from "./cases.mjs";
-import { DEFAULT_MODEL, HOURLY_LIMIT, MODELS, MODEL_IDS, reasoningFor } from "../lib/models.ts";
+import {
+  DEFAULT_MAX_OUTPUT_TOKENS,
+  DEFAULT_MODEL,
+  HOURLY_LIMIT,
+  MODELS,
+  MODEL_IDS,
+  maxOutputTokensFor,
+  providerOptionsFor,
+  reasoningFor,
+} from "../lib/models.ts";
 import {
   JD_PREFIX,
   MAX_POSTING_TEXT,
@@ -352,6 +361,130 @@ describe("model catalogue", () => {
       1,
       "the route sets `reasoning` in more than one place",
     );
+  });
+
+  // --- Per-model settings applied 2026-11-02 ------------------------------
+  //
+  // Each comes from the 2026-10-19 smoke test or the 2026-10-20 bake-off and
+  // none has run live yet (docs/followups.md §2, "Applied 2026-11-02,
+  // untested"). Change one with a live measurement, not instead of one.
+
+  // The efforts the Gateway's public /v1/models lists per model under
+  // `reasoning_options`, as fetched on 2026-11-02. A level outside a model's
+  // list is at best ignored and at worst a provider error on every turn, and
+  // the AI SDK's type can't tell: it accepts every level for every model.
+  // "provider-default" is the SDK's own and never reaches the provider.
+  const GATEWAY_EFFORTS = {
+    "openai/gpt-6-luna": ["none", "low", "medium", "high", "xhigh", "max"],
+    "deepseek/deepseek-v4-flash-0731": ["none", "low", "medium", "high"],
+    "anthropic/claude-haiku-5.5": ["none", "low", "medium", "high", "xhigh", "max"],
+    "openai/gpt-5-mini": ["minimal", "low", "medium", "high"],
+    "google/gemini-3.5-flash-lite": ["low", "high"],
+  };
+
+  test("every reasoning level is one the Gateway lists for that model", () => {
+    for (const id of MODEL_IDS) {
+      const accepted = GATEWAY_EFFORTS[id];
+      assert.ok(accepted, `${id} has no efforts on record here: check /v1/models and add them`);
+      for (const level of Object.values(MODELS[id].reasoning ?? {})) {
+        if (level === "provider-default") continue;
+        assert.ok(accepted.includes(level), `${id} asks for "${level}"; the Gateway lists ${accepted.join(", ")}`);
+      }
+    }
+  });
+
+  test("Haiku 5.5 runs with reasoning off and gets room for a tool call on ordinary turns", () => {
+    // Smoke test, 2026-10-19: at its default it spent 599 of 600 tokens
+    // thinking on the RevOps chip; with reasoning off its posting card was the
+    // fastest complete one (16 s), and the chip lost its roleFit call to the
+    // 600 ceiling after a one-line preamble.
+    const id = "anthropic/claude-haiku-5.5";
+    assert.equal(reasoningFor(id, { jobPosting: false }), "none");
+    assert.equal(reasoningFor(id, { jobPosting: true }), "none");
+    assert.equal(maxOutputTokensFor(id, { jobPosting: false }), 1000);
+    assert.equal(maxOutputTokensFor(id, { jobPosting: true }), DEFAULT_MAX_OUTPUT_TOKENS.jobPosting);
+  });
+
+  test("GPT-5 mini has a reasoning setting on both kinds of turn", () => {
+    // It blanked on two of four chips by reasoning through the whole ceiling,
+    // and its posting turn took 72 s with no card. It has no `none`.
+    const id = "openai/gpt-5-mini";
+    assert.equal(reasoningFor(id, { jobPosting: false }), "minimal");
+    assert.equal(reasoningFor(id, { jobPosting: true }), "low");
+  });
+
+  test("DeepSeek never runs with reasoning off on a posting", () => {
+    // At `none` it wrote 6,200 characters of raw tool-call markup into the
+    // answer on the smoke test's posting.
+    assert.notEqual(reasoningFor("deepseek/deepseek-v4-flash-0731", { jobPosting: true }), "none");
+  });
+
+  test("the output ceiling defaults where a row doesn't set one, and stays sane where it does", () => {
+    assert.equal(DEFAULT_MAX_OUTPUT_TOKENS.chat, 600);
+    assert.equal(DEFAULT_MAX_OUTPUT_TOKENS.jobPosting, 4000);
+    for (const id of MODEL_IDS) {
+      const own = MODELS[id].maxOutputTokens;
+      for (const jobPosting of [false, true]) {
+        const n = maxOutputTokensFor(id, { jobPosting });
+        assert.ok(Number.isInteger(n) && n > 0, `${id}: ceiling ${n}`);
+        const set = jobPosting ? own?.jobPosting : own?.chat;
+        if (set === undefined) {
+          assert.equal(n, jobPosting ? 4000 : 600, `${id} without its own ceiling`);
+        }
+      }
+      // An ordinary turn never gets more room than a posting: the posting runs
+      // three steps and fits a whole assessment.
+      assert.ok(
+        maxOutputTokensFor(id, { jobPosting: false }) <= maxOutputTokensFor(id, { jobPosting: true }),
+        `${id}: an ordinary turn has a higher ceiling than a posting`,
+      );
+    }
+  });
+
+  test("DeepSeek is pinned to the provider whose rate the meter charges", () => {
+    // `only`, not `order`: under `order` an unlisted provider can serve as a
+    // fallback at up to six times the rate, which is how the 2026-10-20
+    // bake-off was billed 3.3 times list. See the header of lib/models.ts.
+    assert.deepEqual(providerOptionsFor("deepseek/deepseek-v4-flash-0731"), {
+      gateway: { only: ["runware"] },
+    });
+    for (const id of MODEL_IDS) {
+      const routing = MODELS[id].gateway;
+      if (!routing) {
+        assert.equal(providerOptionsFor(id), undefined, `${id} sends routing it doesn't have`);
+        continue;
+      }
+      for (const list of [routing.only, routing.order]) {
+        if (!list) continue;
+        assert.ok(list.length > 0 && list.every((p) => /^[a-z0-9-]+$/.test(p)), `${id}: ${list}`);
+      }
+    }
+  });
+
+  test("the route reads the ceiling and the routing from the catalogue", () => {
+    const route = read("app/api/chat/route.ts");
+    assert.match(route, /maxOutputTokens: maxOutputTokensFor\(model, \{ jobPosting \}\)/);
+    assert.match(route, /providerOptions: providerOptionsFor\(model\)/);
+    // The turn's own call and its extra fit-check assessments
+    // (lib/fit-samples.ts) both set a ceiling; each must come from the
+    // catalogue, never a number or a constant in the route.
+    const ceilings = [...route.matchAll(/\bmaxOutputTokens:\s*([^,\n]+)/g)].map((m) => m[1]);
+    assert.ok(ceilings.length >= 1);
+    for (const c of ceilings) {
+      assert.match(c, /^maxOutputTokensFor\(model\b/, `the route sets an output ceiling from ${c}`);
+    }
+    assert.ok(!/const MAX_OUTPUT_TOKENS/.test(route), "a ceiling constant is back in the route");
+  });
+
+  test("a row's settings record when they last changed", () => {
+    // /measurements/models reads this to tell a run measured on today's
+    // settings from one measured before them.
+    for (const id of MODEL_IDS) {
+      const m = MODELS[id];
+      const has = m.reasoning || m.maxOutputTokens || m.gateway;
+      if (!has) continue;
+      assert.match(m.settingsChanged ?? "", /^\d{4}-\d{2}-\d{2}$/, `${id} has settings but no settingsChanged date`);
+    }
   });
 
   test("the turn record keeps the reasoning tokens", () => {

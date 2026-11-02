@@ -1,6 +1,6 @@
-import { ChartFrame, shortNames } from "./chart-frame";
+import { ChartFrame } from "./chart-frame";
 import { BAR_PX, CONTEXT, MARK } from "./chart-tokens";
-import type { RankResult } from "@/lib/model-comparison";
+import { rankedTrailer, type RankResult } from "@/lib/model-comparison";
 
 // A single-series ranked bar panel.
 //
@@ -12,7 +12,7 @@ export type RankedBarsProps = {
   heading: string;
   /** What the number is and which direction is good. Sits under the heading. */
   note: string;
-  /** A whole `rank()`, bars and the models it had no number for. */
+  /** A whole `rank()`, bars and the models it had no number for, with why. */
   ranked: RankResult;
   format: (value: number) => string;
   /**
@@ -33,10 +33,15 @@ export function RankedBars({
     <ChartFrame
       heading={heading}
       note={note}
-      trailer={missing.length > 0 ? `Not measured for ${shortNames(missing)}.` : undefined}
+      // Withheld and never measured, said apart (GitHub issue #2).
+      trailer={rankedTrailer(missing)}
     >
       {bars.length === 0 ? (
-        <p className="t-meta mt-3 text-text-faint">Not measured in any published run.</p>
+        <p className="t-meta mt-3 text-text-faint">
+          {missing.every((m) => m.reason === "not-measured")
+            ? "Not measured in any published run."
+            : "No published run reports this figure."}
+        </p>
       ) : (
         <div className="mt-3 space-y-2">
           {bars.map(({ row, value, fraction, best }) => (
@@ -80,3 +85,4 @@ export function RankedBars({
     </ChartFrame>
   );
 }
+

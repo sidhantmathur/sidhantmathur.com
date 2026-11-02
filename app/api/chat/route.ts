@@ -44,6 +44,8 @@ import {
   DEFAULT_MODEL,
   HOURLY_LIMIT,
   MAX_USER_MESSAGES,
+  maxOutputTokensFor,
+  providerOptionsFor,
   reasoningFor,
   type ModelId,
 } from "@/lib/models";
@@ -172,20 +174,8 @@ function jsonError(error: TurnErrorClass, status: number): Response {
   });
 }
 
-// --- Per-turn output ceiling ---------------------------------------------
-//
-// 600 tokens suits a conversational answer. A job-posting turn has to fit an
-// extraction, a whole `roleFit` object and the sentence after it, and a turn
-// truncated mid-tool-call loses the tool call entirely.
-//
-// The posting ceiling comes from measurement: a reasoning model spends the
-// per-step budget on reasoning before it emits the tool call. At 1000,
-// `openai/gpt-5-mini` finished three of five postings on
-// `finishReason: "length"` with nothing to show; at 2500 it spent 2,496 tokens
-// reasoning on the extraction step alone and emitted nothing. It's a ceiling,
-// not a target: non-reasoning models still answer in about 500.
-const MAX_OUTPUT_TOKENS = 600;
-const MAX_OUTPUT_TOKENS_JD = 4000;
+// The per-step output ceiling lives in lib/models.ts (DEFAULT_MAX_OUTPUT_TOKENS
+// and maxOutputTokensFor) since 2026-11-02, so a catalogue row can raise it.
 
 /**
  * Rewrites the last user message so the posting arrives fenced and re-asserted.
@@ -722,10 +712,14 @@ export async function POST(req: Request): Promise<Response> {
         // stall watchdog all abort the request. Without this the model would
         // keep generating, and billing, into a socket nobody reads.
         abortSignal: req.signal,
-        maxOutputTokens: jobPosting ? MAX_OUTPUT_TOKENS_JD : MAX_OUTPUT_TOKENS,
+        // Per model and kind of turn, from the catalogue, like `reasoning`.
+        maxOutputTokens: maxOutputTokensFor(model, { jobPosting }),
         // Per model and kind of turn, from the catalogue. Undefined sends
         // nothing and leaves the provider on its default.
         reasoning: reasoningFor(model, { jobPosting }),
+        // Which Gateway providers may serve this model, from the catalogue.
+        // Undefined sends nothing and leaves routing to the Gateway.
+        providerOptions: providerOptionsFor(model),
         tools: chatTools,
         // The SDK's default, stepCountIs(1), ends the stream at the tool call
         // before the model can answer, and a tool card is a visual aid, not a
@@ -752,7 +746,7 @@ export async function POST(req: Request): Promise<Response> {
                     model,
                     messages: stepMessages,
                     tools: chatTools,
-                    maxOutputTokens: MAX_OUTPUT_TOKENS_JD,
+                    maxOutputTokens: maxOutputTokensFor(model, { jobPosting: true }),
                     abortSignal: req.signal,
                   });
                 }
@@ -826,7 +820,7 @@ export async function POST(req: Request): Promise<Response> {
             outcomes.map((o) => o.usage),
             usageCeiling(
               steps[1]?.usage.inputTokens ?? usage.inputTokens ?? null,
-              MAX_OUTPUT_TOKENS_JD,
+              maxOutputTokensFor(model, { jobPosting: true }),
               MODELS[model],
             ),
           );

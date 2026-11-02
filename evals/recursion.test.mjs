@@ -401,8 +401,11 @@ describe("manual mode", () => {
   });
 
   test("the rate-limited state is the one that renders it", () => {
-    const shell = read("components/shell/app-shell.tsx");
-    assert.match(shell, /errorKind === "rate_limited" && \(\s*<ManualMode/);
+    // The transcript (transcript-view.tsx, split out of app-shell.tsx) renders
+    // it; the shell hands it the lazily loaded component.
+    const transcript = read("components/shell/transcript-view.tsx");
+    assert.match(transcript, /errorKind === "rate_limited" && \(\s*<ManualMode/);
+    assert.match(read("components/shell/app-shell.tsx"), /ManualMode=\{ManualMode\}/);
   });
 
   test("the state is reproducible without waiting for real traffic", () => {

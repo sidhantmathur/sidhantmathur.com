@@ -14,7 +14,9 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 import { JD_PREFIX, MAX_POSTING_TEXT, MAX_USER_TEXT, looksLikeJobPosting } from "../lib/job-posting.ts";
-import { DEFAULT_MODEL, MODEL_IDS } from "../lib/models.ts";
+import { DEFAULT_MODEL, MODEL_IDS, maxOutputTokensFor, reasoningFor } from "../lib/models.ts";
+import { MODEL_PRICES } from "../lib/pricing.ts";
+import { CONSISTENCY_SAMPLES } from "../lib/consistency.ts";
 import { ROOT, read } from "./lib/artifacts.mjs";
 import {
   classifyPosting,
@@ -28,7 +30,7 @@ import {
 import {
   MEASURED_POSTING_CHARS,
   MEASURED_POSTING_TURNS,
-  ROUTE_MAX_OUTPUT_TOKENS_JD,
+  routeMaxOutputTokensJd,
   ROUTE_MAX_STEPS,
   SpendGuard,
   aggregateSetting,
@@ -195,7 +197,15 @@ describe("jdRequestBody — the request the paste panel makes", () => {
 
   test("the catalogue's reasoning level is what a posting turn is labelled with", () => {
     assert.equal(effectiveReasoning("openai/gpt-6-luna", "catalogue"), "low");
-    assert.equal(effectiveReasoning("openai/gpt-5-mini", "catalogue"), "provider-default");
+    // Every row, read from the catalogue, so a row gaining or losing a level
+    // can't leave this test asserting the old one.
+    for (const id of MODEL_IDS) {
+      assert.equal(
+        effectiveReasoning(id, "catalogue"),
+        reasoningFor(id, { jobPosting: true }) ?? "provider-default",
+        id,
+      );
+    }
     assert.equal(effectiveReasoning("openai/gpt-6-luna", "none"), "none");
   });
 });
@@ -476,8 +486,25 @@ describe("SpendGuard — the hard cap", () => {
 describe("the cost model", () => {
   test("the route's limits the ceiling assumes are the route's limits", () => {
     const route = read("app/api/chat/route.ts");
-    assert.match(route, new RegExp(`MAX_OUTPUT_TOKENS_JD = ${ROUTE_MAX_OUTPUT_TOKENS_JD};`));
+    // The per-step cap comes from the catalogue, by kind of turn, in both the
+    // turn's own call and its extra assessments.
+    assert.match(route, /maxOutputTokens: maxOutputTokensFor\(model, \{ jobPosting \}\)/);
+    assert.match(route, /maxOutputTokens: maxOutputTokensFor\(model, \{ jobPosting: true \}\)/);
+    assert.equal(routeMaxOutputTokensJd(DEFAULT_MODEL), maxOutputTokensFor(DEFAULT_MODEL, { jobPosting: true }));
     assert.match(route, new RegExp(`stopWhen: stepCountIs\\(${ROUTE_MAX_STEPS}\\)`));
+  });
+
+  test("the ceiling pays for the extra assessments", () => {
+    // One extra assessment at its worst is the judging step's input plus a
+    // full output cap, so the ceiling must exceed a turn without them by at
+    // least that much output per extra sample.
+    const model = DEFAULT_MODEL;
+    const price = MODEL_PRICES[model];
+    const withSamples = ceilingTurnUsd({ model, chars: 4000 });
+    const minExtra = ((CONSISTENCY_SAMPLES - 1) * routeMaxOutputTokensJd(model) * price.output) / 1e6;
+    const single = ROUTE_MAX_STEPS * routeMaxOutputTokensJd(model) * price.output / 1e6;
+    assert.ok(CONSISTENCY_SAMPLES >= 1);
+    assert.ok(withSamples > single + minExtra - 1e-12, `${withSamples} vs ${single} + ${minExtra}`);
   });
 
   test("every measured posting turn is under its model's ceiling", () => {

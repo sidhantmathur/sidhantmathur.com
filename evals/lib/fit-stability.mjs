@@ -10,7 +10,8 @@ import { readFileSync, existsSync } from "node:fs";
 import { gunzipSync } from "node:zlib";
 
 import { JD_PREFIX, MAX_USER_TEXT, looksLikeJobPosting } from "../../lib/job-posting.ts";
-import { DEFAULT_MODEL, MODELS, reasoningFor } from "../../lib/models.ts";
+import { DEFAULT_MODEL, MODELS, maxOutputTokensFor, reasoningFor } from "../../lib/models.ts";
+import { CONSISTENCY_SAMPLES } from "../../lib/consistency.ts";
 import { MODEL_PRICES, PRICE_CONFIDENCE, costOfTurn } from "../../lib/pricing.ts";
 import { checkablePart } from "../../lib/role-fit.ts";
 import { checkClaim, verifyAnswer } from "../../lib/verify.ts";
@@ -821,10 +822,13 @@ export function projectTurnUsd({ model, reasoning, chars }) {
 }
 
 // The route's limits on a posting turn (app/api/chat/route.ts): four steps,
-// 4,000 output tokens each. Restated, because the route doesn't export them;
-// evals/fit-stability.test.mjs reads the route's source to keep them in step.
+// each capped at the model's posting-turn ceiling from the catalogue
+// (maxOutputTokensFor in lib/models.ts). The step count is restated, because
+// the route doesn't export it; evals/fit-stability.test.mjs reads the route's
+// source to keep it in step.
 export const ROUTE_MAX_STEPS = 4;
-export const ROUTE_MAX_OUTPUT_TOKENS_JD = 4000;
+/** The per-step output ceiling the route applies to this model's posting turns. */
+export const routeMaxOutputTokensJd = (model) => maxOutputTokensFor(model, { jobPosting: true });
 
 // First-turn input tokens of an ordinary chip turn, which is the system
 // prompt plus a sentence (docs/followups.md, smoke test). Rounded up.
@@ -846,18 +850,26 @@ const WRAPPER_CHARS = 1000;
  * The most one posting turn can cost at list price, whatever the model does:
  * every step at the output cap, every input token uncached (or written to the
  * cache, whichever is dearer), and each step's input carrying every earlier
- * step's output and tool results. The spend guard reserves this before a
- * request, so the list-price total can't pass the cap however a turn goes.
+ * step's output and tool results. On top of that, the CONSISTENCY_SAMPLES - 1
+ * extra assessments the route starts beside the judging step
+ * (lib/fit-samples.ts): one call each, with the judging step's input and the
+ * same output cap. The spend guard reserves this before a request, so the
+ * list-price total can't pass the cap however a turn goes.
  */
 export function ceilingTurnUsd({ model, chars }) {
   const price = MODEL_PRICES[model];
   if (!price) return null;
+  const cap = routeMaxOutputTokensJd(model);
   const system = SYSTEM_PROMPT_TOKENS[model] ?? 12_000;
   const posting = Math.ceil((chars + JD_PREFIX.length + WRAPPER_CHARS) / 3);
-  const perStepGrowth = ROUTE_MAX_OUTPUT_TOKENS_JD + TOOL_RESULTS_PER_STEP_TOKENS;
+  const perStepGrowth = cap + TOOL_RESULTS_PER_STEP_TOKENS;
   let input = 0;
   for (let step = 0; step < ROUTE_MAX_STEPS; step += 1) input += system + posting + step * perStepGrowth;
-  const output = ROUTE_MAX_STEPS * ROUTE_MAX_OUTPUT_TOKENS_JD;
+  let output = ROUTE_MAX_STEPS * cap;
+  // The judging step is step 1, so each extra assessment sees step 1's input.
+  const extraSamples = Math.max(0, CONSISTENCY_SAMPLES - 1);
+  input += extraSamples * (system + posting + perStepGrowth);
+  output += extraSamples * cap;
   const inputRate = Math.max(price.input, price.cacheWrite);
   const listUsd = (input / 1e6) * inputRate + (output / 1e6) * price.output;
   return PRICE_CONFIDENCE[model] === "unconfirmed" ? listUsd * UNCONFIRMED_BILLED_MULTIPLIER : listUsd;

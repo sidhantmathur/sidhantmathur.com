@@ -6,7 +6,7 @@
 // sources (route.ts) are read as text and pattern-matched — coarser, but it
 // means a check can cover a literal that no runtime boundary exposes.
 
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -14,6 +14,21 @@ export const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 
 export function read(relativePath) {
   return readFileSync(join(ROOT, relativePath), "utf8");
+}
+
+/**
+ * Every component in components/shell, concatenated. The shell was one file
+ * until 2026-11-02 and is now app-shell.tsx plus the regions split out of it
+ * (docs/app-shell-split.md), so a check that something is, or isn't, anywhere
+ * in the shell reads this rather than one file.
+ */
+export function readShellSources() {
+  const dir = join(ROOT, "components/shell");
+  return readdirSync(dir)
+    .filter((f) => f.endsWith(".tsx"))
+    .sort()
+    .map((f) => readFileSync(join(dir, f), "utf8"))
+    .join("\n");
 }
 
 /** The concatenated knowledge base injected into the system prompt. */

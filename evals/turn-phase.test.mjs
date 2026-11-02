@@ -31,7 +31,10 @@ import {
   sameActivity,
 } from "../lib/turn-phase.ts";
 import { JD_PREFIX } from "../lib/job-posting.ts";
-import { read } from "./lib/artifacts.mjs";
+import { canStop, composerAction } from "../components/shell/composer-action.ts";
+import { ROOT, read } from "./lib/artifacts.mjs";
+import { readdirSync } from "node:fs";
+import { join } from "node:path";
 
 const POSTING = `${JD_PREFIX}\n\nGTM Systems Manager. Own Salesforce administration, lead routing and CPQ.`;
 const REQUIREMENTS = Array.from({ length: 14 }, (_, i) => `requirement ${i + 1}`);
@@ -259,15 +262,14 @@ describe("the phase line's design rules", () => {
   test("every step, with its widest readout, fits on one line at 375px", () => {
     // Measured in the browser, 2026-10-19: the shell is Geist Mono, 9px a
     // character at the line's 15px and 8px at the readout's 13px. At 375px the
-    // row is 343px: the grid (14) and three gaps (10, 10, 6), the elapsed count
-    // (40), and once eight seconds have passed the stop button (32, after a
-    // 12px gap). "checking 14 requirements…" failed this on its own.
+    // row is 343px: the grid (14) and three gaps (10, 10, 6) and the elapsed
+    // count (40). "checking 14 requirements…" failed this on its own.
     //
-    // The reading step is held to the row WITHOUT the stop button: extraction
-    // ended by 4.3 s in every measured run, and the button arrives at 8 s.
+    // The stop button used to join this row after eight seconds. It is the
+    // composer's button now (issue #3), so the row no longer prices it in.
     const ROW = 343;
-    const width = (label, readout, stop) =>
-      14 + 10 + label.length * 9 + 10 + (readout ? readout.length * 8 + 6 : 0) + 40 + (stop ? 44 : 0);
+    const width = (label, readout) =>
+      14 + 10 + label.length * 9 + 10 + (readout ? readout.length * 8 + 6 : 0) + 40;
     const widest = new Map();
     for (const [status, messages] of [...jobPostingStream(), ...consensusStream()]) {
       const p = phaseOf(status, messages);
@@ -280,9 +282,8 @@ describe("the phase line's design rules", () => {
     // even where the fixture's widest readout is a row count.
     for (const [p, readout] of widest) {
       const worst = readout.length > "thinking".length ? readout : "thinking";
-      const stop = p !== JD_READING_PHASE;
-      const w = width(p, worst, stop);
-      assert.ok(w <= ROW, `"${p}" + "${worst}"${stop ? " + stop" : ""} is ${w}px, over the ${ROW}px row`);
+      const w = width(p, worst);
+      assert.ok(w <= ROW, `"${p}" + "${worst}" is ${w}px, over the ${ROW}px row`);
     }
   });
 
@@ -309,5 +310,80 @@ describe("the phase line's design rules", () => {
   test("the readout's words", () => {
     assert.equal(formatActivity({ kind: "reasoning" }), "thinking");
     assert.equal(formatActivity({ kind: "rows", done: 6, total: 14 }), "6/14");
+  });
+});
+
+// --- Stopping a turn (GitHub issue #3) ---------------------------------------
+//
+// The stop control used to live inside `{phase && …}`, behind an eight-second
+// delay, and phaseOf goes null as soon as prose arrives. On a healthy turn the
+// window between eight seconds and the first token never opened, so there was
+// no way to stop an answer once it was on screen. Stopping is now read off the
+// chat status alone (components/shell/composer-action.ts) and the composer's
+// button carries it.
+
+describe("stopping a turn", () => {
+  test("a turn can be stopped from the moment it is sent until the stream closes", () => {
+    assert.equal(canStop("submitted"), true);
+    assert.equal(canStop("streaming"), true);
+    assert.equal(canStop("ready"), false);
+    assert.equal(canStop("error"), false);
+  });
+
+  test("stop outlives the phase line: every streaming state can be stopped, prose or not", () => {
+    const ordinary = user("Tell me about A Darle 20");
+    const states = [
+      ...jobPostingStream(),
+      ["streaming", [ordinary, assistant(frame(false), { type: "text", text: "He built" })]],
+      ["streaming", [ordinary, assistant(frame(false), { type: "text", text: "He built the booking flow, " })]],
+    ];
+    let proseStates = 0;
+    for (const [status, messages] of states) {
+      if (status === "ready") continue;
+      if (phaseOf(status, messages) === null) proseStates += 1;
+      assert.ok(canStop(status), `a ${status} turn with phase ${phaseOf(status, messages)} can't be stopped`);
+    }
+    // The fixture has to contain the case the issue was about, or this proves
+    // nothing: a turn still streaming after its phase line has gone.
+    assert.ok(proseStates >= 3, `only ${proseStates} streaming states had prose on screen`);
+  });
+
+  test("while a turn is in flight the composer's button stops it, whatever is typed", () => {
+    for (const hasText of [false, true]) {
+      for (const full of [false, true]) {
+        assert.deepEqual(
+          composerAction({ stoppable: true, hydrated: true, hasText, full }),
+          { kind: "stop" },
+          `hasText=${hasText} full=${full}`,
+        );
+      }
+    }
+  });
+
+  test("otherwise it sends, and is disabled exactly when sending can't happen", () => {
+    const send = (hydrated, hasText, full) =>
+      composerAction({ stoppable: false, hydrated, hasText, full });
+    assert.deepEqual(send(true, true, false), { kind: "send", disabled: false });
+    assert.deepEqual(send(false, true, false), { kind: "send", disabled: true }, "before hydration");
+    assert.deepEqual(send(true, false, false), { kind: "send", disabled: true }, "nothing typed");
+    assert.deepEqual(send(true, true, true), { kind: "send", disabled: true }, "conversation full");
+  });
+
+  test("the shell renders stop from the chat status, never from the phase line", () => {
+    // Read across the shell's components so the check follows the composer
+    // wherever it lives.
+    const dir = "components/shell";
+    const src = readdirSync(join(ROOT, dir))
+      .filter((f) => f.endsWith(".tsx"))
+      .map((f) => read(`${dir}/${f}`))
+      .join("\n");
+    assert.match(src, /composerAction\(\{\s*stoppable/, "the composer no longer asks composerAction with stoppable");
+    assert.match(src, /action\.kind === "stop"/, "the composer no longer renders a stop state");
+    assert.ok(!/stallable|STALL_HINT_SECONDS/.test(src), "a delayed, phase-line stop is back");
+    assert.match(
+      read("components/shell/use-conversation.ts"),
+      /stoppable: canStop\(status\)/,
+      "useConversation no longer reads stoppable off the chat status",
+    );
   });
 });

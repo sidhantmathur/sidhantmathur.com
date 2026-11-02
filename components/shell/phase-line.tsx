@@ -48,7 +48,7 @@ export function PhaseLine({
         ))}
       </span>
       <span className="shimmer-text">{phase}</span>
-      {/* The tighter gap keeps "checking the fit… thinking 9.0s stop" on one
+      {/* The tighter gap keeps "checking the fit… thinking 19.0s" on one
           line at 375px (see lib/turn-phase.ts). */}
       {(activity || elapsed != null) && (
         <span

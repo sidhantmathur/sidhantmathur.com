@@ -18,7 +18,7 @@
 // lib/consistency.ts and loads without the SDK.
 
 import { generateText, type LanguageModelUsage, type ModelMessage, type ToolSet } from "ai";
-import { reasoningFor, type ModelId } from "./models.ts";
+import { providerOptionsFor, reasoningFor, type ModelId } from "./models.ts";
 import type { RawRoleFit } from "./role-fit.ts";
 import type { TurnUsage } from "./chat-telemetry.ts";
 
@@ -116,6 +116,9 @@ export function startFitSamples(options: {
         maxOutputTokens,
         // The catalogue's level for a posting turn: the judging step's own.
         reasoning: reasoningFor(model, { jobPosting: true }),
+        // The same Gateway routing as the turn's own call, so a pinned model's
+        // extra assessments bill at the price the cost meter assumes.
+        providerOptions: providerOptionsFor(model),
         abortSignal: signal,
       });
       const call = result.toolCalls.find((c) => c.toolName === ROLE_FIT_TOOL);

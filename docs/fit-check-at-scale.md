@@ -35,7 +35,12 @@ fits under $1.
 - **The recommended first run:** GPT-6 Luna at its catalogue setting (`low` on
   posting turns), 10 postings from each of the seven strata, 3 repeats. That
   is 210 turns, an expected $0.59 (at most $0.77 at the dearest measured turn),
-  and about an hour. The hard cap is $1.00.
+  and about an hour. The hard cap is $1.00. **These figures predate the
+  consistent fit check** (`docs/consistent-fit-check.md`), which now runs
+  three assessments per posting. Until a run measures it, assume up to 3×:
+  about $1.30–1.80 for this run, which the $1.00 cap would stop partway.
+  Run `--per-stratum 5` (105 turns) to stay under $1, or pass `--max-usd 2`.
+  The spend guard's per-turn ceiling already counts the extra assessments.
 
 ## The corpus
 
@@ -416,7 +421,9 @@ with 3 repeats:
 - **What it sends.** 70 postings: 10 from each family, 10 near misses and 10
   mismatches. That is 210 turns.
 - **What it costs.** $0.59 expected and $0.77 at the dearest measured turn,
-  against a $1.00 cap that stops it regardless. It takes about an hour, one
+  against a $1.00 cap that stops it regardless. Measured before the fit check
+  ran three assessments per posting: expect up to 3× that now (see the short
+  version above). It takes about an hour, one
   turn at a time.
 - **What it answers.** The question the three-posting runs raised: on the
   default setting, how often does a re-run change the counts, and which rows

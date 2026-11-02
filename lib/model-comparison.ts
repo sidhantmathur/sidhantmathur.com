@@ -7,8 +7,38 @@
 
 // Imported by its real filename, like lib/role-fit.ts does, so `node --test`
 // can load this module directly for evals/bakeoff.test.mjs.
-import { MIN_TURNS_FOR_P50, formatDate, type Maybe } from "./measurements.ts";
+import { MIN_TURNS_FOR_P50, formatDate, type Maybe, type Withheld } from "./measurements.ts";
 import type { CitationVerdicts, PublishedRun, PublishedSample } from "./measurement-types";
+
+// --- What a chart has no number for, and why ----------------------------------
+
+/**
+ * One model a chart couldn't draw, with the reason, so the chart can say which
+ * it was. "Not measured" and "measured, but too few turns to report" are
+ * opposite things to tell a reader, and collapsing them told the reader the
+ * first about a model the run had measured (GitHub issue #2).
+ */
+export type Missing = { row: ModelRow; reason: Withheld["reason"] };
+
+/**
+ * What a chart reads per model: a plain number (null for not measured), or a
+ * figure the policy may have withheld. Medians go through `medianOf`, so a
+ * `too-few` here always means the median floor, MIN_TURNS_FOR_P50.
+ */
+export type Reading = number | null | Maybe<number>;
+
+function toMaybe(reading: Reading): Maybe<number> {
+  if (reading == null) return { value: null, reason: "not-measured" };
+  if (typeof reading === "number") {
+    return Number.isFinite(reading)
+      ? { value: reading, reason: null }
+      : { value: null, reason: "not-measured" };
+  }
+  if (reading.value != null && !Number.isFinite(reading.value)) {
+    return { value: null, reason: "not-measured" };
+  }
+  return reading;
+}
 
 /**
  * The most recent run per model. The archive keeps older runs, so every
@@ -204,7 +234,7 @@ export function allGroups(rows: ModelRow[]): string[] {
 
 // --- The frontier -----------------------------------------------------------
 
-export type FrontierResult = { points: FrontierPoint[]; unplotted: ModelRow[] };
+export type FrontierResult = { points: FrontierPoint[]; unplotted: Missing[] };
 
 export type FrontierPoint = {
   row: ModelRow;
@@ -222,24 +252,29 @@ export type FrontierPoint = {
  * points both stay on.
  *
  * A row missing either axis is not plotted, neither drawn at the origin nor
- * dropped: it comes back in `unplotted` for the caller to report.
+ * dropped: it comes back in `unplotted`, with its reason, for the caller to
+ * report. An axis that was never measured outranks one that was withheld.
  */
 export function frontier(
   rows: ModelRow[],
-  x: (row: ModelRow) => number | null,
-  y: (row: ModelRow) => number | null,
+  x: (row: ModelRow) => Reading,
+  y: (row: ModelRow) => Reading,
 ): FrontierResult {
   const points: FrontierPoint[] = [];
-  const unplotted: ModelRow[] = [];
+  const unplotted: Missing[] = [];
 
   for (const row of rows) {
-    const xv = x(row);
-    const yv = y(row);
-    if (xv == null || yv == null || !Number.isFinite(xv) || !Number.isFinite(yv)) {
-      unplotted.push(row);
+    const xv = toMaybe(x(row));
+    const yv = toMaybe(y(row));
+    if (xv.value == null || yv.value == null) {
+      const reasons = [xv.reason, yv.reason];
+      unplotted.push({
+        row,
+        reason: reasons.includes("not-measured") ? "not-measured" : "too-few",
+      });
       continue;
     }
-    points.push({ row, x: xv, y: yv, onFrontier: false });
+    points.push({ row, x: xv.value, y: yv.value, onFrontier: false });
   }
 
   for (const p of points) {
@@ -320,7 +355,7 @@ export function placeLabels(
 
 // --- Ranked bars ------------------------------------------------------------
 
-export type RankResult = { bars: Ranked[]; missing: ModelRow[] };
+export type RankResult = { bars: Ranked[]; missing: Missing[] };
 
 export type Ranked = {
   row: ModelRow;
@@ -342,18 +377,22 @@ export type Direction = "lower" | "higher" | "none";
  * Sorts a metric best-first and normalises it for a bar length. `direction`
  * changes only the order and which bar is emphasised: length always encodes
  * the raw value against the panel's maximum, whichever end is good.
+ *
+ * A model with no number comes back in `missing` with its reason, in row
+ * order. Pass a median as `medianOf(...)`, not `median(...)`: the second can't
+ * tell a withheld median from an unmeasured one.
  */
 export function rank(
   rows: ModelRow[],
-  value: (row: ModelRow) => number | null,
+  value: (row: ModelRow) => Reading,
   direction: Direction,
 ): RankResult {
   const bars: { row: ModelRow; value: number }[] = [];
-  const missing: ModelRow[] = [];
+  const missing: Missing[] = [];
   for (const row of rows) {
-    const v = value(row);
-    if (v == null || !Number.isFinite(v)) missing.push(row);
-    else bars.push({ row, value: v });
+    const v = toMaybe(value(row));
+    if (v.value == null) missing.push({ row, reason: v.reason });
+    else bars.push({ row, value: v.value });
   }
   if (!bars.length) return { bars: [], missing };
 
@@ -393,11 +432,80 @@ export function supportsMedian(sample: PublishedSample): boolean {
 }
 
 /**
+ * The median a sample is allowed to report, and why not when it isn't: no
+ * sample is `not-measured`, a sample under the floor is `too-few`. Charts read
+ * medians through this, so they can say which.
+ */
+export function medianOf(sample: PublishedSample): Maybe<number> {
+  if (!sample) return { value: null, reason: "not-measured" };
+  if (!supportsMedian(sample)) return { value: null, reason: "too-few" };
+  return { value: sample.p50, reason: null };
+}
+
+/**
  * The median a sample is allowed to report, or null. Read medians through this
- * rather than `p50` directly, so no caller can skip the floor.
+ * or `medianOf` rather than `p50` directly, so no caller can skip the floor.
  */
 export function median(sample: PublishedSample): number | null {
-  return supportsMedian(sample) ? sample!.p50 : null;
+  return medianOf(sample).value;
+}
+
+// --- Saying what a chart left out ------------------------------------------
+//
+// "Not measured" and "measured, but withheld" are opposite things to tell a
+// reader. The charts used to say the first about both, so a model whose run was
+// measured over too few turns for a median was reported as never measured
+// (GitHub issue #2). Every withheld figure a chart receives is a median read
+// through `medianOf`, so the floor named here is the median's.
+
+/** "gpt-5-mini, gemini-3.5-flash" — models named in a trailer, never ids. */
+export function shortNames(rows: ModelRow[]): string {
+  return rows.map((row) => row.short).join(", ");
+}
+
+/** The models a chart left out, split by why. */
+export function missingByReason(missing: Missing[]): {
+  tooFew: ModelRow[];
+  notMeasured: ModelRow[];
+} {
+  return {
+    tooFew: missing.filter((m) => m.reason === "too-few").map((m) => m.row),
+    notMeasured: missing.filter((m) => m.reason === "not-measured").map((m) => m.row),
+  };
+}
+
+/** What a ranked panel says under its bars about the models it has none for. */
+export function rankedTrailer(missing: Missing[]): string | undefined {
+  const { tooFew, notMeasured } = missingByReason(missing);
+  const sentences: string[] = [];
+  if (tooFew.length) {
+    sentences.push(
+      `Median withheld for ${shortNames(tooFew)}: fewer than ${MIN_TURNS_FOR_P50} measured turns.`,
+    );
+  }
+  if (notMeasured.length) sentences.push(`Not measured for ${shortNames(notMeasured)}.`);
+  return sentences.length ? sentences.join(" ") : undefined;
+}
+
+/**
+ * What a frontier chart says about the dots it couldn't draw, as sentences to
+ * follow its own; empty when every model is plotted.
+ */
+export function unplottedTrailer(unplotted: Missing[]): string {
+  const { tooFew, notMeasured } = missingByReason(unplotted);
+  const sentences: string[] = [];
+  if (notMeasured.length) {
+    sentences.push(
+      `${shortNames(notMeasured)} could not be plotted because one of the two axes was not measured.`,
+    );
+  }
+  if (tooFew.length) {
+    const whose = tooFew.length === 1 ? "its median was" : "their medians were";
+    sentences.push(
+      `${shortNames(tooFew)} could not be plotted because ${whose} withheld: fewer than ${MIN_TURNS_FOR_P50} measured turns.`,
+    );
+  }
+  return sentences.join(" ");
 }
 
 // --- What the whole bake-off adds up to -------------------------------------

@@ -46,10 +46,11 @@ export const WRITING_PHASE = "writing the answer…";
 // --- A pasted job posting ---------------------------------------------------
 //
 // Three steps: extract, judge, then the sentence or two after the card. The
-// labels are short because the line shares a 375px row with the readout, the
-// elapsed count and, after eight seconds, the stop button, in Geist Mono at 9px
-// a character: a label and its readout get about 219px between them. A count
-// that changes every row belongs in the readout (6/14), not the label.
+// labels are short because the line shares a 375px row with the readout and
+// the elapsed count, in Geist Mono at 9px a character: a label and its readout
+// get about 263px between them. (The stop button used to share the row too;
+// it is the composer's button now, so it outlives this line.) A count that
+// changes every row belongs in the readout (6/14), not the label.
 // evals/turn-phase.test.mjs holds every step, with its widest readout, to that
 // budget.
 
