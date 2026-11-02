@@ -21,18 +21,14 @@ import { TurnError } from "./turn-error";
 import { RailContent } from "./rail-content";
 import { CitationChip } from "./citation-chip";
 import { IdleLine, useIdleLine } from "./idle-line";
-import { conversationToMarkdown, latestRoleFit, messageToMarkdown } from "@/lib/transcript";
+import { useTurnAnnouncement } from "./use-turn-announcement";
+import { useMediaQuery } from "./use-media-query";
+import { PANEL_MAX, PANEL_MIN, usePanelWidth } from "./use-panel-width";
+import { useStickToBottom } from "./use-stick-to-bottom";
+import { useExportActions, useStripEmphasis } from "./use-export-actions";
+import { latestRoleFit, messageToMarkdown } from "@/lib/transcript";
 import { isJdPrefix } from "@/lib/job-posting";
-import { permalinkFor } from "@/lib/permalink";
-import {
-  DISCLAIMER,
-  RESUME_PDF,
-  HEADSHOT,
-  RESUME_PDF_FILENAME,
-  SITE_NAME,
-  SITE_URL,
-} from "@/lib/site";
-import { track } from "@/lib/analytics";
+import { RESUME_PDF, HEADSHOT, RESUME_PDF_FILENAME, SITE_NAME } from "@/lib/site";
 import { CaseCards, RecruiterTldr } from "./recruiter-tldr";
 import {
   HERO,
@@ -155,11 +151,6 @@ const CONVERSATION_FULL = `That's ${MAX_USER_MESSAGES} questions, the most one c
 const CONVERSATION_FULL_ACTION = "Start a new conversation";
 const CONVERSATION_FULL_PLACEHOLDER = "This conversation is full";
 
-const PANEL_WIDTH_KEY = "panel.width.v1";
-const PANEL_MIN = 300;
-const PANEL_MAX = 640;
-const PANEL_DEFAULT = 380;
-
 export function AppShell() {
   // Every control that needs JavaScript is gated on this; see use-hydrated.ts.
   const hydrated = useHydrated();
@@ -236,42 +227,9 @@ export function AppShell() {
   const idle = useIdle(!isBusy);
   const idleLine = useIdleLine(idle);
 
-  // ---- What assistive tech is told ----------------------------------------
-  //
-  // Streamed prose can't go in a live region (a screen reader would read the
-  // answer over itself for the length of the turn), so each completed turn
-  // gets one polite announcement instead, and the answer is read once, when
-  // the reader navigates to it. The turn number makes each announcement a
-  // distinct string: a live region doesn't re-announce text identical to what
-  // it already holds.
-  //
-  // Failures don't come through here. TurnError carries role="alert", which
-  // interrupts rather than waits, as a turn that didn't happen should.
-  const [announcement, setAnnouncement] = useState("");
-  // Counted rather than edge-triggered: on a fast turn the whole answer can
-  // arrive inside one render batch, leaving no true→false `isBusy` transition
-  // to observe. Whenever the shell is idle with one more finished answer than
-  // was last announced, that is the event. The mocked-stream check in
-  // scripts/a11y-audit.mjs covers the fast case.
-  const announcedCount = useRef(0);
-  useEffect(() => {
-    if (isBusy) return;
-    const answered = messages.filter((m) => m.role === "assistant" && textOf(m)).length;
-    // Fewer than before means the conversation was left or swapped, which is
-    // not an answer and must not leave the counter high enough to swallow the
-    // next one.
-    if (answered <= announcedCount.current) {
-      announcedCount.current = answered;
-      return;
-    }
-    announcedCount.current = answered;
-    // The error and rate-limit blocks announce themselves; an aborted turn was
-    // the reader's own doing and renders nothing on purpose. errorKind is a
-    // string union, so this has to compare with "none": a truthiness test
-    // passes even when nothing has gone wrong.
-    if (errorKind !== "none") return;
-    queueMicrotask(() => setAnnouncement(`Answer ${answered} complete.`));
-  }, [isBusy, errorKind, messages]);
+  // What the polite status region says when a turn completes; see
+  // use-turn-announcement.ts. Rendered outside the shell, below.
+  const announcement = useTurnAnnouncement(messages, isBusy, errorKind);
 
   const [input, setInput] = useState("");
   const [railOpen, setRailOpen] = useState(false);
@@ -283,60 +241,19 @@ export function AppShell() {
   const panelOpenerRef = useRef<HTMLElement | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [sheetFull, setSheetFull] = useState(false);
-  const [panelWidth, setPanelWidth] = useState(PANEL_DEFAULT);
+  const panelWidth = usePanelWidth();
   const [linkCopied, setLinkCopied] = useState(false);
 
   // ---- Export and the actions strip ----------------------------------------
   //
-  // The link is held here rather than in the export panel because the print
-  // document carries it too. A permalink describes the turns it was built
-  // from, so it's remembered with that turn count and stops being current the
-  // moment another turn lands. Derived rather than cleared in an effect, so
-  // there's no window where the panel shows a link to a shorter conversation.
-  const [builtLink, setBuiltLink] = useState<{ link: string; at: number } | null>(null);
-  const permalink = builtLink && builtLink.at === messages.length ? builtLink.link : null;
-  const setPermalink = useCallback(
-    (link: string | null) => setBuiltLink(link ? { link, at: messages.length } : null),
-    [messages.length],
-  );
-
-  // After an action, the always-present strip gains a little weight for a few
-  // seconds. Nothing new appears, and nothing has to guess when a visit ends.
-  const [emphasis, setEmphasis] = useState(false);
-  const emphasisTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const bumpStrip = useCallback(() => {
-    setEmphasis(true);
-    if (emphasisTimer.current) clearTimeout(emphasisTimer.current);
-    emphasisTimer.current = setTimeout(() => setEmphasis(false), 6000);
-  }, []);
-  useEffect(
-    () => () => {
-      if (emphasisTimer.current) clearTimeout(emphasisTimer.current);
-    },
-    [],
-  );
+  // The strip's emphasis is read by openPanel below, and the export actions
+  // need openPanel, so they are two hooks; see use-export-actions.ts.
+  const { emphasis, bumpStrip } = useStripEmphasis();
 
   // Below lg the panel is a bottom sheet instead of the resizable aside.
   // Starts false so the first client render matches the server; both sheets
   // are closed at mount, so there's nothing to flash.
-  const [isMobile, setIsMobile] = useState(false);
-  useEffect(() => {
-    const mq = window.matchMedia("(max-width: 1023px)");
-    const apply = (m: MediaQueryList | MediaQueryListEvent) =>
-      queueMicrotask(() => setIsMobile(m.matches));
-    apply(mq);
-    mq.addEventListener("change", apply);
-    return () => mq.removeEventListener("change", apply);
-  }, []);
-
-  // Panel width is restored after mount for the same hydration reason.
-  useEffect(() => {
-    const raw = window.localStorage.getItem(PANEL_WIDTH_KEY);
-    const n = raw ? Number(raw) : NaN;
-    if (Number.isFinite(n)) {
-      queueMicrotask(() => setPanelWidth(Math.min(PANEL_MAX, Math.max(PANEL_MIN, n))));
-    }
-  }, []);
+  const isMobile = useMediaQuery("(max-width: 1023px)");
 
   // Opening a view from a deliberate action (rail item, citation chip) also
   // raises the sheet on mobile. Tool calls only set the view — see the note in
@@ -367,20 +284,8 @@ export function AppShell() {
     setSheetOpen(false);
   }, [setPanel]);
 
-  // Stick-to-bottom: streaming keeps the view pinned while the reader is at the
-  // bottom, and stops yanking them down once they scroll up to reread.
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const stick = useRef(true);
-  useEffect(() => {
-    const el = scrollRef.current;
-    // Not when there's nothing to stick to: the empty state is taller than a
-    // phone, and pinning it would land the visitor halfway down with the
-    // headline scrolled off. Not onto a replay either: it's a page someone was
-    // sent, so it opens at the top with its banner and contact actions in
-    // view. Sticking resumes with the reader's first new message.
-    const replaying = replayed && messages[messages.length - 1]?.id.startsWith("replay-");
-    if (el && stick.current && messages.length && !replaying) el.scrollTop = el.scrollHeight;
-  }, [messages, replayed]);
+  // Stick-to-bottom; see use-stick-to-bottom.ts.
+  const { scrollRef, onScroll, pin } = useStickToBottom(messages, replayed);
 
   // The composer sizes itself to its content. Reset to auto first, because an
   // already-tall textarea reports its current height as scrollHeight and would
@@ -408,7 +313,7 @@ export function AppShell() {
   // the site.
   function ask(text: string) {
     if (!messages.length) pushChatEntry();
-    stick.current = true;
+    pin();
     submit(text);
   }
 
@@ -422,7 +327,7 @@ export function AppShell() {
     // After the front door has rendered into the same scroll area, which was
     // scrolled to the foot of the conversation.
     requestAnimationFrame(() => scrollRef.current?.scrollTo({ top: 0 }));
-  }, [leave]);
+  }, [leave, scrollRef]);
 
   function goHome() {
     if (messages.length) pushHomeEntry();
@@ -431,9 +336,9 @@ export function AppShell() {
 
   // Back into the saved conversation at its latest answer, as it was left.
   const resumeAtEnd = useCallback(() => {
-    stick.current = true;
+    pin();
     resume();
-  }, [resume]);
+  }, [pin, resume]);
 
   function continueSaved() {
     pushChatEntry();
@@ -453,11 +358,6 @@ export function AppShell() {
     setPanel({ kind: "none" });
   };
 
-  function onScroll() {
-    const el = scrollRef.current;
-    if (el) stick.current = el.scrollHeight - el.clientHeight - el.scrollTop < 120;
-  }
-
   const slashQuery = input.startsWith("/") ? input.toLowerCase() : null;
   const slashMatches = slashQuery
     ? SLASH_COMMANDS.filter((c) => c.name.startsWith(slashQuery))
@@ -471,35 +371,13 @@ export function AppShell() {
     if (cmd.message) ask(cmd.message);
   }
 
-  // One place that says what a copied conversation looks like, so the strip,
-  // the export panel and the rail can't drift into three different documents.
-  const conversationMarkdown = useCallback(
-    () =>
-      conversationToMarkdown(messages, {
-        title: SITE_NAME,
-        sourceUrl: SITE_URL,
-        footer: DISCLAIMER,
-        permalink: permalink ?? undefined,
-      }),
-    [messages, permalink],
-  );
-
-  // The strip's one-tap version of the export panel's Link section. On a
-  // clipboard failure it opens the panel instead, where the link is visible and
-  // selectable — silently doing nothing is the one outcome worth avoiding.
-  const copyLink = useCallback(async () => {
-    try {
-      const link = await permalinkFor(`${window.location.origin}/`, messages);
-      setPermalink(link);
-      track("chat_permalink_created", { chars: link.length });
-      await navigator.clipboard.writeText(link);
-      bumpStrip();
-      return true;
-    } catch {
-      openPanel({ kind: "export" });
-      return false;
-    }
-  }, [messages, openPanel, bumpStrip, setPermalink]);
+  // The permalink, the copied conversation and the strip's copy-link; see
+  // use-export-actions.ts.
+  const { permalink, setPermalink, conversationMarkdown, copyLink } = useExportActions({
+    messages,
+    bumpStrip,
+    openPanel,
+  });
 
   function trySend() {
     const q = input.trim();
@@ -533,33 +411,6 @@ export function AppShell() {
       inputRef.current?.focus();
     }
   }, [stoppable]);
-
-  // Drag-to-resize. Hand-rolled rather than pulling in react-resizable-panels
-  // for one divider.
-  const dragging = useRef(false);
-  useEffect(() => {
-    function onMove(e: PointerEvent) {
-      if (!dragging.current) return;
-      const next = Math.min(PANEL_MAX, Math.max(PANEL_MIN, window.innerWidth - e.clientX));
-      setPanelWidth(next);
-    }
-    function onUp() {
-      if (!dragging.current) return;
-      dragging.current = false;
-      document.body.style.userSelect = "";
-      try {
-        window.localStorage.setItem(PANEL_WIDTH_KEY, String(panelWidth));
-      } catch {
-        /* persistence is a nicety */
-      }
-    }
-    window.addEventListener("pointermove", onMove);
-    window.addEventListener("pointerup", onUp);
-    return () => {
-      window.removeEventListener("pointermove", onMove);
-      window.removeEventListener("pointerup", onUp);
-    };
-  }, [panelWidth]);
 
   const hasMessages = messages.length > 0;
   const panelOpen = panel.kind !== "none";
@@ -1369,40 +1220,20 @@ export function AppShell() {
               role="separator"
               aria-orientation="vertical"
               aria-label="Resize panel"
-              aria-valuenow={Math.round(panelWidth)}
+              aria-valuenow={Math.round(panelWidth.width)}
               aria-valuemin={PANEL_MIN}
               aria-valuemax={PANEL_MAX}
               tabIndex={0}
-              onPointerDown={() => {
-                dragging.current = true;
-                document.body.style.userSelect = "none";
-              }}
-              onDoubleClick={() => setPanelWidth(PANEL_DEFAULT)}
-              onKeyDown={(e) => {
-                const step = e.shiftKey ? 64 : 16;
-                let next: number | null = null;
-                if (e.key === "ArrowLeft") next = panelWidth + step;
-                else if (e.key === "ArrowRight") next = panelWidth - step;
-                else if (e.key === "Home") next = PANEL_MAX;
-                else if (e.key === "End") next = PANEL_MIN;
-                else if (e.key === "Enter") next = PANEL_DEFAULT;
-                if (next == null) return;
-                e.preventDefault();
-                const clamped = Math.min(PANEL_MAX, Math.max(PANEL_MIN, next));
-                setPanelWidth(clamped);
-                try {
-                  window.localStorage.setItem(PANEL_WIDTH_KEY, String(clamped));
-                } catch {
-                  /* persistence is a nicety */
-                }
-              }}
+              onPointerDown={panelWidth.onPointerDown}
+              onDoubleClick={panelWidth.onDoubleClick}
+              onKeyDown={panelWidth.onKeyDown}
               className="hidden w-1 shrink-0 cursor-col-resize bg-line transition-colors hover:bg-accent focus-visible:bg-accent lg:block"
             />
             {/* Labelled with the title its header shows, so it's an
                 identifiable landmark rather than an unnamed region. */}
             <aside
               aria-label={panelTitle(panel)}
-              style={{ width: panelWidth }}
+              style={{ width: panelWidth.width }}
               className="hidden shrink-0 flex-col border-l border-line bg-panel lg:flex"
             >
               <div className="flex h-12 shrink-0 items-center justify-between border-b border-line px-4 t-meta">
