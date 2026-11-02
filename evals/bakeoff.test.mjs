@@ -33,12 +33,15 @@ import {
   latestRunPerModel,
   measuredRange,
   median,
+  medianOf,
   placeLabels,
   rank,
+  rankedTrailer,
   runHistory,
   splitArchive,
   supportsMedian,
   toRow,
+  unplottedTrailer,
 } from "../lib/model-comparison.ts";
 
 // --- fixtures ---------------------------------------------------------------
@@ -426,7 +429,10 @@ describe("what the comparison page derives", () => {
     ];
     const { points, unplotted } = frontier(rows, (r) => r.costPerTaskUsd, (r) => r.passRate);
     assert.equal(points.length, 1);
-    assert.deepEqual(unplotted.map((r) => r.model), ["a/unpriced"]);
+    assert.deepEqual(
+      unplotted.map((m) => [m.row.model, m.reason]),
+      [["a/unpriced", "not-measured"]],
+    );
   });
 
   it("ranks best-first and emphasises exactly one bar", () => {
@@ -500,9 +506,13 @@ describe("what the comparison page derives", () => {
     assert.equal(median(thin.inputTokens), null, "a token count is not exempt from the floor");
     assert.equal(median(thin.outputTokens), null);
 
-    const { bars, missing } = rank([thin], (r) => median(r.outputTokens), "none");
+    const { bars, missing } = rank([thin], (r) => medianOf(r.outputTokens), "none");
     assert.equal(bars.length, 0, "and a withheld median is not plotted");
-    assert.deepEqual(missing.map((r) => r.model), ["a/thin"], "it is reported as missing instead");
+    assert.deepEqual(
+      missing.map((m) => [m.row.model, m.reason]),
+      [["a/thin", "too-few"]],
+      "it is reported as withheld instead, not as unmeasured",
+    );
 
     const atFloor = toRow(run({ model: "a/floor", performance: perfWithTurns(MIN_TURNS_FOR_P50) }));
     assert.equal(median(atFloor.ttftMs), 1200);
@@ -662,3 +672,103 @@ function perfWithTurns(n) {
     outputTokens: s(300),
   };
 }
+
+// --- withheld is not "not measured" (GitHub issue #2) ------------------------
+//
+// A run measured over fewer than MIN_TURNS_FOR_P50 turns has its medians
+// withheld. The charts used to report every model they had no number for as
+// "Not measured", which told a reader the opposite of what happened. The reason
+// now travels from medianOf through rank() and frontier() to the trailer.
+
+describe("what a chart says about a model it has no number for", () => {
+  const thin = () => toRow(run({ model: "a/thin", performance: perfWithTurns(MIN_TURNS_FOR_P50 - 1) }));
+  const unmeasured = () => toRow(run({ model: "a/old" })); // predates the performance record
+  const full = () => toRow(run({ model: "a/full", performance: perfWithTurns(22) }));
+
+  it("medianOf says why a median is missing", () => {
+    assert.deepEqual(medianOf(null), { value: null, reason: "not-measured" });
+    assert.deepEqual(medianOf({ n: MIN_TURNS_FOR_P50 - 1, p50: 900, min: 900, max: 900 }), {
+      value: null,
+      reason: "too-few",
+    });
+    assert.deepEqual(medianOf({ n: MIN_TURNS_FOR_P50, p50: 900, min: 800, max: 1000 }), {
+      value: 900,
+      reason: null,
+    });
+    // median() is the same gate, without the reason.
+    assert.equal(median({ n: MIN_TURNS_FOR_P50 - 1, p50: 900, min: 900, max: 900 }), null);
+  });
+
+  it("rank keeps the reason for every model it leaves out, in row order", () => {
+    const { bars, missing } = rank([thin(), full(), unmeasured()], (r) => medianOf(r.ttftMs), "lower");
+    assert.deepEqual(bars.map((b) => b.row.model), ["a/full"]);
+    assert.deepEqual(
+      missing.map((m) => [m.row.model, m.reason]),
+      [
+        ["a/thin", "too-few"],
+        ["a/old", "not-measured"],
+      ],
+    );
+  });
+
+  it("a plain number or null still ranks as before", () => {
+    const { bars, missing } = rank([full(), unmeasured()], (r) => r.costPerTaskUsd, "lower");
+    assert.equal(bars.length, 1);
+    assert.deepEqual(missing.map((m) => m.reason), ["not-measured"]);
+    const nan = rank([full()], () => Number.NaN, "lower");
+    assert.deepEqual(nan.missing.map((m) => m.reason), ["not-measured"], "a NaN is not a number to chart");
+  });
+
+  it("the ranked panel's trailer says withheld for the one and not measured for the other", () => {
+    const { missing } = rank([thin(), full(), unmeasured()], (r) => medianOf(r.ttftMs), "lower");
+    assert.equal(
+      rankedTrailer(missing),
+      `Median withheld for thin: fewer than ${MIN_TURNS_FOR_P50} measured turns. Not measured for old.`,
+    );
+    const onlyThin = rank([thin()], (r) => medianOf(r.ttftMs), "lower").missing;
+    assert.doesNotMatch(rankedTrailer(onlyThin), /not measured/i, "a measured model is never called unmeasured");
+    assert.equal(rankedTrailer([]), undefined, "nothing to say when every model has a bar");
+  });
+
+  it("the frontier keeps the reason too, and an unmeasured axis outranks a withheld one", () => {
+    const { points, unplotted } = frontier(
+      [thin(), full(), unmeasured()],
+      (r) => medianOf(r.ttftMs),
+      (r) => r.passRate,
+    );
+    assert.deepEqual(points.map((p) => p.row.model), ["a/full"]);
+    assert.deepEqual(
+      unplotted.map((m) => [m.row.model, m.reason]),
+      [
+        ["a/thin", "too-few"],
+        ["a/old", "not-measured"],
+      ],
+    );
+    const both = frontier([unmeasured()], (r) => medianOf(r.ttftMs), () => ({ value: null, reason: "too-few" }));
+    assert.equal(both.unplotted[0].reason, "not-measured");
+  });
+
+  it("the frontier's sentences, singular and plural", () => {
+    const one = frontier([thin(), full()], (r) => medianOf(r.ttftMs), (r) => r.passRate).unplotted;
+    assert.equal(
+      unplottedTrailer(one),
+      `thin could not be plotted because its median was withheld: fewer than ${MIN_TURNS_FOR_P50} measured turns.`,
+    );
+    const two = frontier(
+      [thin(), toRow(run({ model: "b/thin2", performance: perfWithTurns(3) }))],
+      (r) => medianOf(r.ttftMs),
+      (r) => r.passRate,
+    ).unplotted;
+    assert.match(unplottedTrailer(two), /^thin, thin2 could not be plotted because their medians were withheld/);
+    assert.equal(unplottedTrailer([]), "");
+  });
+
+  it("the page hands every median to a chart with its reason", () => {
+    // median() can't tell a withheld median from an unmeasured one, so a chart
+    // fed through it would say "not measured" again.
+    const page = readFileSync(join(ROOT, "app/measurements/models/page.tsx"), "utf8");
+    assert.doesNotMatch(page, /rank\(rows, \(r\) => median\(/, "a ranked panel reads its median through median()");
+    assert.doesNotMatch(page, /frontier\(rows, \(r\) => median\(/, "a frontier reads its median through median()");
+    assert.equal((page.match(/rank\(rows, \(r\) => medianOf\(/g) ?? []).length, 4, "the four median panels");
+  });
+});

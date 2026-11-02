@@ -19,6 +19,7 @@ import {
   formatTurnCost,
   frontier,
   median,
+  medianOf,
   rank,
   runHistory,
   splitArchive,
@@ -225,7 +226,7 @@ export default function ModelComparisonPage() {
   });
   const bill = billedAgainstList(rows);
   const cost = frontier(rows, (r) => r.costPerTaskUsd, (r) => r.passRate);
-  const latency = frontier(rows, (r) => median(r.ttftMs), (r) => r.passRate);
+  const latency = frontier(rows, (r) => medianOf(r.ttftMs), (r) => r.passRate);
 
   return (
     <DocPage>
@@ -323,14 +324,14 @@ export default function ModelComparisonPage() {
             note="Median, server-measured. Lower is better."
             bestLabel="fastest"
             format={formatSeconds}
-            ranked={rank(rows, (r) => median(r.ttftMs), "lower")}
+            ranked={rank(rows, (r) => medianOf(r.ttftMs), "lower")}
           />
           <RankedBars
             heading="Output speed"
             note="Median output tokens per second across the turn. Higher is better."
             bestLabel="fastest"
             format={(v) => `${v.toFixed(1)} tok/s`}
-            ranked={rank(rows, (r) => median(r.tokensPerSecond), "higher")}
+            ranked={rank(rows, (r) => medianOf(r.tokensPerSecond), "higher")}
           />
           <RankedBars
             heading="Cost per turn"
@@ -343,14 +344,14 @@ export default function ModelComparisonPage() {
             heading="Output tokens per turn"
             note="Median. Neither end is better. More tokens means a longer answer and a bigger output bill. Each provider counts with its own tokenizer, so the counts don't line up exactly across models."
             format={(v) => formatCount(v)}
-            ranked={rank(rows, (r) => median(r.outputTokens), "none")}
+            ranked={rank(rows, (r) => medianOf(r.outputTokens), "none")}
           />
           <RankedBars
             heading="Input tokens per turn"
             note="Median. Every model got the same prompts, so most of this spread is each tokenizer counting the same text differently. These counts don't compare across providers the way seconds and dollars do."
             bestLabel="fewest"
             format={(v) => formatCount(v)}
-            ranked={rank(rows, (r) => median(r.inputTokens), "lower")}
+            ranked={rank(rows, (r) => medianOf(r.inputTokens), "lower")}
           />
           <RankedBars
             heading="Turns that broke"

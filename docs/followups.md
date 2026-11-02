@@ -607,6 +607,21 @@ this section is the index, the detail is in the issues.
   applying the same gate to token medians. `lib/measurements.ts:33` already
   models the distinction (`"too-few" | "not-measured"`); `rank()` collapses it.
   Needs a copy decision, so it wants Sidhant, not an agent.
+
+  **Fixed 2026-11-02 (backlog pass), copy drafted under the ledger.** The
+  copy-decision note above predates the rule that lets an agent draft and log
+  copy. `medianOf` in `lib/model-comparison.ts` returns the reason with the
+  median, `rank()` and `frontier()` carry it to their `missing`/`unplotted`
+  lists, and the trailers say "Median withheld for X: fewer than 10 measured
+  turns." apart from "Not measured for Y." The latency frontier had the same
+  fault ("one of the two axes was not measured") and is fixed the same way.
+  The page passes its four median panels through `medianOf`; a test fails if
+  one goes back to `median()`. Today's published data has no withheld median
+  among the charted models (Haiku 4.5's 6-turn run is retired, so it is not
+  charted), so the live page is unchanged; the screenshots in the backlog
+  pass used a doctored, uncommitted snapshot to show both sentences. The
+  wording is in the ledger's "Backlog pass, 2026-11-02" section for Sidhant.
+  The issue can be closed once this is merged.
 - **[#3](https://github.com/sidhantmathur/sidhantmathur.com/issues/3) — the stop
   button disappears the moment an answer starts rendering.** `phaseOf` returns
   null once the assistant message has text (`use-conversation.ts:135`) and the

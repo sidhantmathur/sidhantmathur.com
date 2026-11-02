@@ -1,7 +1,7 @@
-import { ChartFrame, ScrollFade, floorWidth, shortNames } from "./chart-frame";
+import { ChartFrame, ScrollFade, floorWidth } from "./chart-frame";
 import { CONTEXT, GRID, MARK, SURFACE } from "./chart-tokens";
 import { formatPercent } from "@/lib/measurements";
-import { placeLabels, type FrontierResult } from "@/lib/model-comparison";
+import { placeLabels, unplottedTrailer, type FrontierResult } from "@/lib/model-comparison";
 
 // Quality against cost, or quality against latency: one dot per model, better
 // is up, cheaper or faster is left. Dots on the Pareto frontier (nothing
@@ -83,7 +83,7 @@ export function FrontierScatter({
     return (
       <ChartFrame heading={heading}>
         <p className="t-meta mt-2 text-text-faint">
-          No published run has both measurements, so there&apos;s no chart to draw.
+          No published run reports both figures, so there&apos;s no chart to draw.
         </p>
       </ChartFrame>
     );
@@ -136,8 +136,8 @@ export function FrontierScatter({
         <>
           <span className="text-accent">Highlighted</span> models are on the frontier, which means
           no other model here is both better and {xScale === "log" ? "cheaper" : "faster"}.
-          {unplotted.length > 0 &&
-            ` ${shortNames(unplotted)} could not be plotted because one of the two axes was not measured.`}
+          {/* Withheld and never measured, said apart (GitHub issue #2). */}
+          {unplotted.length > 0 && ` ${unplottedTrailer(unplotted)}`}
         </>
       }
     >

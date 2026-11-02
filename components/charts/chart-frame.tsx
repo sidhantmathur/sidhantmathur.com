@@ -1,5 +1,3 @@
-import type { ModelRow } from "@/lib/model-comparison";
-
 // Shared chrome for the charts and the raw-numbers table on
 // /measurements/models: the scroll fade, the figure header, and the sentence
 // naming what is missing. The fade matters on touch devices with no visible
@@ -119,9 +117,4 @@ export function ChartFrame({
       )}
     </figure>
   );
-}
-
-/** "gpt-5-mini, gemini-3.5-flash" — models named in a trailer, never ids. */
-export function shortNames(rows: ModelRow[]): string {
-  return rows.map((row) => row.short).join(", ");
 }
