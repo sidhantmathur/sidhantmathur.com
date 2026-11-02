@@ -4,19 +4,7 @@ import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "rea
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import Link from "next/link";
-import {
-  HEADER_NAV,
-  IDLE_LINES,
-  JD_COPY,
-  RAIL_CONTACT_LABEL,
-  RAIL_HOW,
-  RAIL_WORK,
-  SLASH_COMMANDS,
-  SLUG_TO_RESUME,
-  SOCIAL_LINKS,
-  type RailGroup,
-  type RailItem,
-} from "./shell-data";
+import { HEADER_NAV, JD_COPY, SLASH_COMMANDS } from "./shell-data";
 import { Answer } from "./answer";
 import { usePanelUrl } from "./use-panel-url";
 import { panelTitle } from "./panel-title";
@@ -30,12 +18,14 @@ import { useElapsed } from "./use-elapsed";
 import { PhaseLine } from "./phase-line";
 import { AmbientBackdrop } from "./ambient-backdrop";
 import { TurnError } from "./turn-error";
+import { RailContent } from "./rail-content";
+import { CitationChip } from "./citation-chip";
+import { IdleLine, useIdleLine } from "./idle-line";
 import { conversationToMarkdown, latestRoleFit, messageToMarkdown } from "@/lib/transcript";
 import { isJdPrefix } from "@/lib/job-posting";
 import { permalinkFor } from "@/lib/permalink";
 import {
   DISCLAIMER,
-  downloadAs,
   RESUME_PDF,
   HEADSHOT,
   RESUME_PDF_FILENAME,
@@ -66,8 +56,6 @@ import {
   toolOutputs,
   useConversation,
   type PanelView,
-  type RoleFit,
-  type ToolOut,
 } from "./use-conversation";
 
 // ---------------------------------------------------------------------------
@@ -246,15 +234,7 @@ export function AppShell() {
   // an idle screen — and it never blocks anything: the input keeps focus and
   // the first keystroke ends it.
   const idle = useIdle(!isBusy);
-  const [idleIndex, setIdleIndex] = useState(0);
-  useEffect(() => {
-    if (!idle) return;
-    const id = window.setInterval(
-      () => setIdleIndex((i) => (i + 1) % IDLE_LINES.length),
-      14_000,
-    );
-    return () => window.clearInterval(id);
-  }, [idle]);
+  const idleLine = useIdleLine(idle);
 
   // ---- What assistive tech is told ----------------------------------------
   //
@@ -1079,7 +1059,7 @@ export function AppShell() {
                 )}
               </div>
 
-              {idle && <IdleLine key={idleIndex} line={IDLE_LINES[idleIndex]!} />}
+              {idle && <IdleLine key={idleLine.index} line={idleLine.line} />}
             </div>
           </div>
 
@@ -1478,129 +1458,6 @@ export function AppShell() {
   );
 }
 
-// The index: the full destination list, rendered inside the index sheet,
-// whose header carries the title.
-function RailContent({
-  onOpenPanel,
-  hydrated,
-}: {
-  onOpenPanel: (v: PanelView) => void;
-  /** Rail entries with no href need JavaScript; see RailLink. */
-  hydrated: boolean;
-}) {
-  const group = (g: RailGroup) => (
-    <section key={g.label} aria-label={g.label} className="mt-5 first:mt-2">
-      <h2 className="t-label text-text-faint">{g.label}</h2>
-      <div className="mt-1 flex flex-col">
-        {g.items.map((item) => (
-          <RailLink key={item.label} item={item} onOpenPanel={onOpenPanel} hydrated={hydrated} />
-        ))}
-      </div>
-    </section>
-  );
-  return (
-    <>
-      {group(RAIL_WORK)}
-      {/* Drawn by the shell rather than listed: the address is on screen and
-          copyable here too, as on the front door. */}
-      <section aria-label={RAIL_CONTACT_LABEL} className="mt-5">
-        <h2 className="t-label text-text-faint">{RAIL_CONTACT_LABEL}</h2>
-        <div className="mt-2 flex flex-col">
-          <EmailCopy surface="index" />
-          {SOCIAL_LINKS.filter((s) => s.label !== "Email").map((s) => (
-            <a
-              key={s.label}
-              href={s.href}
-              target="_blank"
-              rel="noreferrer"
-              className="flex min-h-[44px] items-center border-b border-line py-2 text-text-soft no-underline transition-colors hover:text-accent"
-            >
-              {s.label} ↗
-            </a>
-          ))}
-        </div>
-      </section>
-      {group(RAIL_HOW)}
-    </>
-  );
-}
-
-function RailLink({
-  item,
-  onOpenPanel,
-  hydrated,
-}: {
-  item: RailItem;
-  onOpenPanel: (v: PanelView) => void;
-  hydrated: boolean;
-}) {
-  // min-h plus items-center makes each row a full 44px target without changing
-  // how it looks.
-  const cls =
-    "flex min-h-[44px] items-center border-b border-line py-2 text-left text-text-soft no-underline transition-colors hover:text-accent";
-
-  // Hoisted so the click handlers close over a narrowed value — TypeScript
-  // drops narrowing on a property once it crosses into a callback.
-  const view = item.view;
-
-  if (item.external && item.href) {
-    return (
-      <a
-        href={item.href}
-        target="_blank"
-        rel="noreferrer"
-        {...downloadAs(item.href)}
-        className={cls}
-      >
-        {item.label} ↗
-      </a>
-    );
-  }
-
-  // Rendered as a real anchor so cmd-click, middle-click and "open in new tab"
-  // reach the standalone page, and so crawlers see a link. A plain left-click
-  // is intercepted and opens the panel instead; usePanelUrl pushes the same
-  // href into the address bar.
-  if (view && item.href) {
-    return (
-      <a
-        href={item.href}
-        onClick={(e) => {
-          if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
-          e.preventDefault();
-          onOpenPanel(view);
-        }}
-        className={cls}
-      >
-        {item.label} →
-      </a>
-    );
-  }
-
-  if (view) {
-    return (
-      // Entries with no page of their own can only open a panel, which needs
-      // JavaScript. The anchors above still work before hydration by
-      // navigating.
-      <button
-        type="button"
-        onClick={() => onOpenPanel(view)}
-        disabled={!hydrated}
-        data-js-control
-        className={cls}
-      >
-        {item.label}
-      </button>
-    );
-  }
-
-  return (
-    <Link href={item.href ?? "/"} className={cls}>
-      {item.label} →
-    </Link>
-  );
-}
-
 // One action in the strip. Emphasis is a colour step, not a new element, so
 // the strip is the same shape before and after.
 function StripButton({
@@ -1629,65 +1486,6 @@ function StripButton({
       }`}
     >
       {label}
-    </button>
-  );
-}
-
-// The idle one-liner fades in rather than typing itself out: one ambient motion
-// at a time, and the backdrop wave is it. The caret is punctuation and doesn't
-// pulse. The quietest thing on the page, below the conversation.
-function IdleLine({ line }: { line: string }) {
-  return (
-    <p className="t-meta animate-idle-line pt-6 text-text-faint">
-      {line}
-      <span className="text-accent">▍</span>
-    </p>
-  );
-}
-
-// Sits under an answer and reopens the evidence it was built from. On mobile,
-// where tool calls don't raise the panel sheet, this is the way into it, so
-// the newest turn's chips are marked.
-function CitationChip({
-  out,
-  latest,
-  onOpen,
-}: {
-  out: ToolOut;
-  latest: boolean;
-  onOpen: (v: PanelView) => void;
-}) {
-  let label = "Source";
-  let view: PanelView = { kind: "resume" };
-
-  if (out.type === "tool-showProject") {
-    const o = out.output as { slug?: string; title?: string };
-    label = o?.title ?? "Project";
-    // A slug without a SLUG_TO_RESUME entry (Dell) opens the projects list.
-    const focus = SLUG_TO_RESUME[o?.slug ?? ""];
-    view = focus ? { kind: "resume", focus } : { kind: "projects" };
-  } else if (out.type === "tool-showResume") {
-    label = "Resume";
-  } else if (out.type === "tool-contactCard") {
-    label = "Contact";
-    view = { kind: "contact" };
-  } else if (out.type === "tool-roleFit") {
-    const data = out.output as RoleFit;
-    label = `Role fit — ${data.role}`;
-    view = { kind: "roleFit", data };
-  }
-
-  return (
-    <button
-      type="button"
-      onClick={() => onOpen(view)}
-      // Same padding as the source chips in answer.tsx — they sit in adjacent
-      // rows under the same answer and were two different sizes.
-      className={`border px-3 py-2.5 t-meta transition-colors hover:border-accent hover:text-accent ${
-        latest ? "border-line-strong text-text-soft" : "border-line text-text-faint"
-      }`}
-    >
-      ↗ {label}
     </button>
   );
 }
