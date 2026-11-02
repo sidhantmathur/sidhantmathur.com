@@ -54,6 +54,7 @@ import { EmailCopy, LinkedInButton, ResumePdfButton } from "@/components/contact
 import { costOfTurn, sumCosts } from "@/lib/pricing";
 import { MAX_USER_MESSAGES, MODEL_IDS } from "@/lib/models";
 import { isShellPanel, type ShellPanelKind } from "./panels";
+import { composerAction } from "./composer-action";
 import { receiptText, type ReadoutState } from "./readouts";
 import {
   pushChatEntry,
@@ -166,11 +167,6 @@ const CONVERSATION_FULL = `That's ${MAX_USER_MESSAGES} questions, the most one c
 const CONVERSATION_FULL_ACTION = "Start a new conversation";
 const CONVERSATION_FULL_PLACEHOLDER = "This conversation is full";
 
-// How long a turn runs before the shell offers to abandon it. Roughly double a
-// normal answer's wait — early enough to be a rescue, late enough not to be a
-// suggestion that something is wrong.
-const STALL_HINT_SECONDS = 8;
-
 const PANEL_WIDTH_KEY = "panel.width.v1";
 const PANEL_MIN = 300;
 const PANEL_MAX = 640;
@@ -195,6 +191,7 @@ export function AppShell() {
     saved,
     full,
     isBusy,
+    stoppable,
     phase,
     errorKind,
     errorClass,
@@ -228,9 +225,6 @@ export function AppShell() {
   // Unlike the two above, this survives the turn ending, because the finished
   // duration is the interesting number.
   const elapsed = useElapsed(isBusy);
-  // Past this, the wait has become a question and the reader gets a way out
-  // (the stop button beside the phase line).
-  const stallable = isBusy && elapsed != null && elapsed >= STALL_HINT_SECONDS;
   const sessionCost = useMemo(
     () => sumCosts(turnLog.map((t) => (t.error ? null : costOfTurn(t.model, t.usage)))),
     [turnLog],
@@ -540,6 +534,25 @@ export function AppShell() {
     ask(q);
     setInput("");
   }
+
+  // The composer's one button: send, or stop while a turn is in flight. See
+  // composer-action.ts for why stop lives here and not beside the phase line.
+  const action = composerAction({ stoppable, hydrated, hasText: input.trim() !== "", full });
+  const stopping = action.kind === "stop";
+  // Stop turns back into a send that is disabled until something is typed, and
+  // a disabled button drops focus on <body>. Keyboard focus on it when the turn
+  // ends, by stop or by finishing, goes to the composer instead. Only keyboard
+  // focus: handing a tap's focus to the textarea would raise a phone keyboard.
+  const actionRef = useRef<HTMLButtonElement>(null);
+  const actionKeyboardFocus = useRef(false);
+  useEffect(() => {
+    if (stoppable || !actionKeyboardFocus.current) return;
+    actionKeyboardFocus.current = false;
+    const active = document.activeElement;
+    if (active == null || active === document.body || active === actionRef.current) {
+      inputRef.current?.focus();
+    }
+  }, [stoppable]);
 
   // Drag-to-resize. Hand-rolled rather than pulling in react-resizable-panels
   // for one divider.
@@ -1025,27 +1038,11 @@ export function AppShell() {
 
                 {/* Names the step rather than the wait. Keyed by phase so a step
                     change restarts the entry animation; the elapsed count isn't
-                    keyed, so it measures the whole turn. */}
-                {(phase || stallable) && (
-                  <div className="flex items-center gap-3">
-                    {phase && <PhaseLine key={phase} phase={phase} elapsed={elapsed} />}
-                    {/* A way out of a turn that's taking too long, and only then:
-                        offering stop against a two-second answer is noise. It
-                        outlives the phase line, because a job-posting answer
-                        can stream for most of a minute after its first token,
-                        and that's when a reader wants out. */}
-                    {stallable && (
-                      <button
-                        type="button"
-                        onClick={stop}
-                        data-js-control
-                        className="flex min-h-[44px] shrink-0 touch-manipulation items-center t-meta text-text-faint transition-colors hover:text-accent"
-                      >
-                        stop
-                      </button>
-                    )}
-                  </div>
-                )}
+                    keyed, so it measures the whole turn. The way out of a turn
+                    is the composer's button, not anything here: this line goes
+                    the moment prose arrives, and the answer is often where a
+                    reader decides they want out (issue #3). */}
+                {phase && <PhaseLine key={phase} phase={phase} elapsed={elapsed} />}
                 {errorKind === "error" && (
                   <TurnError
                     errorClass={errorClass}
@@ -1231,18 +1228,68 @@ export function AppShell() {
                   full ? "disabled:cursor-not-allowed" : "disabled:cursor-progress"
                 }`}
               />
-              {/* One send control at every width: bordered, labelled, 44px
-                  tall and legible when disabled. my-1.5 centres it on the
-                  first line of a growing field. */}
+              {/* One control at every width: bordered, labelled, 44px tall and
+                  legible when disabled. It sends, and while a turn is in
+                  flight it stops it, in the same place, so the way out never
+                  moves as the answer grows above it. my-1.5 centres it on the
+                  first line of a growing field.
+
+                  One element in both states, so keyboard focus survives the
+                  swap, and both labels always laid out in one grid cell, the
+                  idle one hidden, so the box is the same size either way. */}
               <button
-                type="submit"
+                ref={actionRef}
+                type={stopping ? "button" : "submit"}
+                onClick={
+                  stopping
+                    ? (e) => {
+                        // The second click of a double-click on send lands
+                        // here once the first has sent, and must not stop the
+                        // turn it just started. A key press has a detail of 0.
+                        if (e.detail > 1) return;
+                        stop();
+                      }
+                    : undefined
+                }
                 // Disabled until hydration, so a press before the JavaScript
                 // arrives shows it can't send yet rather than silently doing
-                // nothing.
-                disabled={!hydrated || !input.trim() || isBusy || full}
+                // nothing. Stop is never disabled.
+                disabled={action.kind === "send" && action.disabled}
+                onFocus={(e) => {
+                  actionKeyboardFocus.current = e.currentTarget.matches(":focus-visible");
+                }}
+                onBlur={(e) => {
+                  if (e.relatedTarget) actionKeyboardFocus.current = false;
+                }}
                 className="-mr-1.5 my-1.5 ml-2 disabled:cursor-progress flex h-11 min-w-[44px] shrink-0 touch-manipulation items-center justify-center border border-line-strong bg-raised px-3 t-meta text-text-soft transition-colors hover:border-accent hover:text-accent disabled:border-line disabled:text-text-dim"
               >
-                send ↵
+                <span className="grid">
+                  <span
+                    aria-hidden={stopping || undefined}
+                    className={`col-start-1 row-start-1 ${stopping ? "invisible" : ""}`}
+                  >
+                    send ↵
+                  </span>
+                  <span
+                    aria-hidden={!stopping || undefined}
+                    className={`col-start-1 row-start-1 flex items-center justify-center ${
+                      stopping ? "" : "invisible"
+                    }`}
+                  >
+                    stop
+                    {/* Drawn, like the index button's trigram: a Unicode
+                        square falls back to another font and another width. */}
+                    <svg
+                      width="8"
+                      height="8"
+                      viewBox="0 0 8 8"
+                      aria-hidden="true"
+                      className="ml-[0.6ch] shrink-0"
+                    >
+                      <rect width="8" height="8" fill="currentColor" />
+                    </svg>
+                  </span>
+                </span>
               </button>
             </form>
 

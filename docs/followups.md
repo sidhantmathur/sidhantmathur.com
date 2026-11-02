@@ -616,6 +616,18 @@ this section is the index, the detail is in the issues.
   abort path itself is sound and now covered by `evals/chat-transport.test.mjs`;
   it is the affordance that is unreachable.
 
+  **Fixed 2026-11-02 (backlog pass).** The composer's send button becomes
+  "stop" from the moment a question is sent until the stream closes, in the
+  same box, so it never moves as the answer grows. Whether a turn can be
+  stopped is read off the chat status (`canStop` in
+  `components/shell/composer-action.ts`), never off the phase line, and the
+  eight-second delay is gone: beside a disabled send it reads as the control,
+  not as a hint that something is wrong. One Tab from the composer reaches it;
+  keyboard focus returns to the composer when the turn ends; the second click
+  of a double-click on send doesn't stop the turn it started. Tests in
+  `evals/turn-phase.test.mjs` ("stopping a turn"). The issue can be closed
+  once this is merged.
+
 ---
 
 ## Known-open, not on Sidhant's list

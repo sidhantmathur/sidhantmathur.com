@@ -1101,3 +1101,13 @@ also gave in the brief for this pass).
 | removed | front door, metadata, prompt | "at an AI-forward company". | factual | In neither source |
 | removed | `docs/resume/` (the July source and its three variant drafts), `docs/Sidhant_Mathur_Resume.docx` and `.pdf` | Deleted; `public/resume.pdf` is the master's export. | — | Log §3 and §5: one master, no variant files |
 
+
+## Backlog pass, 2026-11-02
+
+GitHub issues #3 and #2, per-model settings, and the app-shell split. Only #3 and
+#2 changed visible strings.
+
+| Status | Where | String / summary | Claims | Source |
+| --- | --- | --- | --- | --- |
+| draft | `components/shell/app-shell.tsx` → the composer's button | While a turn is in flight the "send ↵" button reads "stop" followed by a small drawn square, in the same box, from the moment a question is sent until the stream closes (issue #3). | none | — |
+| removed | `components/shell/app-shell.tsx` → beside the phase line | The plain "stop" that appeared after eight seconds beside the phase line. The composer's button replaces it. | none | Issue #3 |
