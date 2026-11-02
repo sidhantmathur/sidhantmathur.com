@@ -12,8 +12,11 @@ import { locateMissing, stripCitations } from "@/lib/verify";
 import { buildSystemPrompt } from "@/lib/system-prompt";
 import { ENFORCEMENT_LABEL, REFUSALS } from "@/lib/refusals";
 import type { RequirementVerdict } from "@/lib/role-fit";
+import { agreementOf } from "@/lib/consistency";
 import {
+  FIT_CONSENSUS,
   FIT_LABELS,
+  agreementNote,
   fitExcerptNote,
   JD_COPY,
   PROJECT_LINKS,
@@ -276,7 +279,8 @@ export function PanelBody({
 // (docs/idea-decisions.md §3). So there is no score, percentage, weighting or
 // ordering by verdict: rows stay in the posting's order, the counts are counts,
 // and the line under them says what a tag is. A row that code changed says so
-// next to the row.
+// next to the row, and so does a row the independent assessments didn't agree
+// on (lib/consistency.ts), as a count in the same quiet line.
 
 const VERDICT_STYLE: Record<RequirementVerdict, string> = {
   met: "border-line-strong text-text",
@@ -308,7 +312,7 @@ function RequirementTable({
     return <p className="t-meta text-text-faint">{ROLE_FIT_UNREADABLE}</p>;
   }
 
-  const { rows, counts, gaps, noGapsRationale, verdict } = partial as RoleFit;
+  const { rows, counts, gaps, noGapsRationale, verdict, samples } = partial as RoleFit;
   // More verdicts counted than rows present: this is the short fit link's
   // excerpt, and it says so before the first row (see fitExcerptNote).
   const total = COUNT_ORDER.reduce((sum, v) => sum + (counts[v] ?? 0), 0);
@@ -368,6 +372,12 @@ function RequirementTable({
                 {row.downgrade === "unjudged" && (
                   <span>the assessment listed this one without a verdict</span>
                 )}
+                {row.downgrade === "unshared" && (
+                  <span className="text-accent">
+                    {FIT_CONSENSUS.unshared(row.claimedVerdict ?? "a fit")}
+                  </span>
+                )}
+                <AgreementMark row={row} />
                 {/* Same split as an answer's marks: a token the record holds
                     under another chunk is a pointer problem and is said
                     quietly; only one the record has nowhere keeps the accent. */}
@@ -414,9 +424,19 @@ function RequirementTable({
         </p>
       )}
 
+      {typeof samples === "number" && samples > 1 && (
+        <p className="t-meta text-text-faint">{FIT_CONSENSUS.note(samples)}</p>
+      )}
       <p className="t-meta text-text-faint">{FIT_LABELS.notAScore}</p>
     </div>
   );
+}
+
+/** How the assessments split on a row, when they did. Nothing otherwise. */
+function AgreementMark({ row }: { row: RoleFit["rows"][number] }) {
+  const agreement = agreementOf(row);
+  if (!agreement) return null;
+  return <span>{agreementNote(agreement)}</span>;
 }
 
 /**

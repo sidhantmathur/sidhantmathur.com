@@ -2,6 +2,7 @@ import { FIT_QUESTION } from "@/content/recruiter";
 import { JD_PREFIX } from "@/lib/job-posting";
 import { ROAST_REQUEST, SITE_REQUEST } from "@/lib/site-question";
 import { EMAIL, GITHUB_URL, LINKEDIN_URL } from "@/lib/site";
+import type { Agreement } from "@/lib/consistency";
 import { PANELS, SLASH_PANELS, type PanelView, type PlainPanelKind } from "./panels";
 
 // Navigation and copy for the app shell.
@@ -147,6 +148,26 @@ export function fitExcerptNote(shown: number, total: number): string {
   return shown > 0
     ? `Showing ${shown} of ${total} requirements, the strongest cited ones. The counts cover all ${total}, and every gap is listed below.`
     : `This link carries the counts for all ${total} requirements and every gap, but none of the rows.`;
+}
+
+/**
+ * A table settled across several independent assessments of the posting
+ * (lib/consistency.ts). `note` sits with `notAScore` under the table; the rest
+ * is the quiet line beside a row the assessments didn't agree on. Counts only,
+ * never a share or a decimal, for the reason `notAScore` exists. Logged in
+ * docs/copy-ledger.md.
+ */
+export const FIT_CONSENSUS = {
+  note: (n: number) =>
+    `Each requirement was assessed ${n} times, independently, and each row shows the verdict most of the assessments gave. A count beside a row means they differed. A row with no majority, or with both met and unmet among its assessments, is unclear.`,
+  unshared: (claimed: string) =>
+    `no source most of the assessments shared · downgraded from ${claimed}`,
+};
+
+/** The line beside a row the assessments didn't agree on: `2 of 3 agree`, or how they split. */
+export function agreementNote(agreement: Agreement): string {
+  if (agreement.kind === "majority") return `${agreement.count} of ${agreement.of} agree`;
+  return `split · ${agreement.votes.map(([verdict, count]) => `${count} ${verdict}`).join(", ")}`;
 }
 
 // Same order as the rail: Nokia first.

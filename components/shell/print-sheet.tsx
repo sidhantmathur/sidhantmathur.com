@@ -5,7 +5,8 @@ import { textOf, toolOutputs, type ChatMessage, type RoleFit } from "./use-conve
 import { stripCitations, citationIds } from "@/lib/verify";
 import { DISCLAIMER, SITE_NAME, SITE_URL } from "@/lib/site";
 import { Markdown } from "./markdown";
-import { FIT_LABELS, fitExcerptNote } from "./shell-data";
+import { agreementOf } from "@/lib/consistency";
+import { FIT_CONSENSUS, FIT_LABELS, agreementNote, fitExcerptNote } from "./shell-data";
 
 // The typeset document (docs/idea-decisions.md #17): what "save as PDF" saves.
 // Not the chat window on paper: no application chrome, citation ids printed
@@ -116,6 +117,7 @@ function PrintedFit({ fit }: { fit: RoleFit }) {
                 {row.sources.length > 0 && (
                   <span className="block text-[10px]">{row.sources.join(", ")}</span>
                 )}
+                <PrintedAgreement row={row} />
               </td>
             </tr>
           ))}
@@ -141,8 +143,18 @@ function PrintedFit({ fit }: { fit: RoleFit }) {
       {fit.verdict && (
         <p className="doc-block mt-3 text-[11px]">{stripCitations(fit.verdict)}</p>
       )}
+      {typeof fit.samples === "number" && fit.samples > 1 && (
+        <p className="mt-2 text-[10px] leading-relaxed">{FIT_CONSENSUS.note(fit.samples)}</p>
+      )}
       {/* Travels with the table on purpose; see FIT_LABELS in shell-data.ts. */}
       <p className="mt-2 text-[10px] leading-relaxed">{FIT_LABELS.notAScore}</p>
     </div>
   );
+}
+
+/** The split under a row the assessments didn't agree on, as on screen. */
+function PrintedAgreement({ row }: { row: RoleFit["rows"][number] }) {
+  const agreement = agreementOf(row);
+  if (!agreement) return null;
+  return <span className="block text-[10px]">{agreementNote(agreement)}</span>;
 }
