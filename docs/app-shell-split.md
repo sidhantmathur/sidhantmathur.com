@@ -1,7 +1,53 @@
 # Splitting `components/shell/app-shell.tsx`
 
-A proposal, not yet done. Written during the comment cleanup of 2026-10-19, after
-which the file is about 1,490 lines (it was about 1,740).
+**Done, 2026-11-02 (backlog pass), in three commits.** The file had grown to
+about 1,690 lines by then (the stop control of issue #3 landed first). It is
+now about 570, roughly 110 of them the header, the lazy imports and their
+notes. What shipped, against the plan below:
+
+| File | Holds |
+|---|---|
+| `app-shell.tsx` | the hooks' wiring, the refs that cross regions, every `dynamic()` import, the print document, the announcer, the sheets and the layout skeleton |
+| `rail-content.tsx` | `RailContent`, `RailLink` |
+| `citation-chip.tsx` | `CitationChip` (including the roleFit chip's label, moved verbatim) |
+| `idle-line.tsx` | `IdleLine` and `useIdleLine`, so the line index still keeps its place between idle spells |
+| `use-turn-announcement.ts` | the polite completion announcement; the `<p>` stays in `AppShell` |
+| `use-media-query.ts` | `isMobile`, generalised |
+| `use-panel-width.ts` | width, restore, drag, the splitter's keys, `PANEL_*` |
+| `use-stick-to-bottom.ts` | `{ scrollRef, onScroll, pin }`, as proposed |
+| `use-export-actions.ts` | two hooks, not one: `useStripEmphasis` comes before `openPanel` (which bumps the strip) and `useExportActions` after it (copying a link falls back to opening the export panel) |
+| `status-strip.tsx` | the header |
+| `conversation-bar.tsx` | Home, the label and the question count; exports `questionCount` |
+| `replay-banner.tsx` | the replay banner and its `REPLAY_*` copy |
+| `front-door.tsx` | `FrontDoor`, `SuggestedChips`, `ChipDock`, `ContinueRow` |
+| `transcript-view.tsx` | the turns, phase line, `TurnError`, manual mode (passed in as a prop) and the cap notice |
+| `composer.tsx` | the whole dock: slash menu, form, the send/stop button, fine print, with `input` state inside it; the continue row, chip dock and actions strip are passed in as `above`/`below` so the DOM order is unchanged |
+| `actions-strip.tsx` | the strip, `StripButton`, and `linkCopied` |
+| `context-panel.tsx` | the splitter and the desktop aside |
+
+How it was checked: build, lint, `npm run eval`, `npm run check:load` and
+`npm run a11y` after the last step, plus 13 states of `/` at 1280×800 and
+390×844, each screenshotted and its live DOM dumped before and after: the
+front door, the index sheet, a panel, a turn submitted, mid-stream and
+answered (through a faked stream), the slash menu, the continue row, an
+error, the rate-limited state, the job-description panel, the instruments
+panel and the citation chip's sheet. All 26 screenshots are pixel-identical.
+The DOM dumps differ only in values that change between runs (message ids,
+the measured client TTFT, the token-rate trace, the elapsed count), and the
+server-rendered HTML of `/` is identical once script and chunk names are set
+aside.
+
+The source-reading evals listed under "Risks" follow the code to its new
+files; `readShellSources()` in `evals/lib/artifacts.mjs` reads every shell
+component for the checks that ask whether something is anywhere in the shell.
+
+The proposal follows unchanged, as the record of why the seams are where
+they are.
+
+---
+
+Written during the comment cleanup of 2026-10-19, after which the file is
+about 1,490 lines (it was about 1,740).
 
 ## What's in the file now
 

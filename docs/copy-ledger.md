@@ -1104,8 +1104,9 @@ also gave in the brief for this pass).
 
 ## Backlog pass, 2026-11-02
 
-GitHub issues #3 and #2, per-model settings, and the app-shell split. Only #3 and
-#2 changed visible strings.
+GitHub issues #3 and #2, per-model settings, and the app-shell split. Visible
+strings changed for #3, #2 and the `/measurements/models` settings caveat; the
+split only moved strings (note under the table).
 
 | Status | Where | String / summary | Claims | Source |
 | --- | --- | --- | --- | --- |
@@ -1116,3 +1117,12 @@ GitHub issues #3 and #2, per-model settings, and the app-shell split. Only #3 an
 | draft | `lib/model-comparison.ts` → `unplottedTrailer`, under the frontier charts | "{models} could not be plotted because its median was withheld: fewer than 10 measured turns." ("their medians were" for several). The not-measured sentence is unchanged: "{models} could not be plotted because one of the two axes was not measured." | none | as above |
 | draft | `components/charts/frontier-scatter.tsx` → a chart with no points | "No published run reports both figures, so there's no chart to draw." Was "…has both measurements…", which a withheld median would make untrue. | none | — |
 | draft | `app/measurements/models/page.tsx` → the "Each model runs the way the chat runs it" caveat | When a charted model's settings changed after its run: "{models} have been reconfigured since their runs here, so the chat no longer runs them the way they were measured. Of the rest, {tuned list}, and everything else runs at the provider's default." (singular: "has been reconfigured since its run here, so the chat no longer runs it the way it was measured"; with nothing tuned: "The rest run at the provider's default reasoning."). Today it names DeepSeek V4 Flash, Claude Haiku 5.5 and GPT-5 mini. With nothing reconfigured the old sentence renders unchanged. | none about Sidhant; one about the site | `settingsChanged` on each row of `lib/models.ts` |
+
+The app-shell split (`docs/app-shell-split.md`) moved strings out of
+`components/shell/app-shell.tsx` without changing a word, so earlier rows that
+name that file now mean: the replay banner, `replay-banner.tsx`; the front door
+and the continue row, `front-door.tsx`; Home and the question count,
+`conversation-bar.tsx`; the composer's placeholders and fine print,
+`composer.tsx`; the conversation-full notice, `transcript-view.tsx`; the header,
+`status-strip.tsx`; the actions strip, `actions-strip.tsx`. The rate-limit line
+stays in `app-shell.tsx`.

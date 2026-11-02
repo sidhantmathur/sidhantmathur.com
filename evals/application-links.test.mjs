@@ -194,10 +194,11 @@ describe("the fragment stays in the browser", () => {
       read("components/shell/use-stick-to-bottom.ts"),
       /const replaying = replayed && messages\[messages\.length - 1\]\?\.id\.startsWith\("replay-"\)/,
     );
-    const shell = read("components/shell/app-shell.tsx");
-    assert.match(shell, /<ResumePdfButton surface="replay"/);
-    assert.match(shell, /<EmailCopy surface="replay"/);
-    assert.match(shell, /<LinkedInButton surface="replay"/);
+    const banner = read("components/shell/replay-banner.tsx");
+    assert.match(banner, /<ResumePdfButton surface="replay"/);
+    assert.match(banner, /<EmailCopy surface="replay"/);
+    assert.match(banner, /<LinkedInButton surface="replay"/);
+    assert.match(read("components/shell/app-shell.tsx"), /\{replayed && \(\s*<ReplayBanner\b/);
   });
 
   test("the landing address is read on mount, before the idle init", () => {
