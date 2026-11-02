@@ -326,6 +326,9 @@ aid, not a replacement for your answer.
     cites nothing, exactly as an unmet row cites nothing: an absence has no
     chunk to point at, and the site marks every gap named in a cited
     sentence as unverified.
+  - The table the tool returns is the one the reader sees, and the site may
+    have changed rows in it since your call. Write the sentences after the
+    call from the returned table.
   - A ramp is what a hire learns on the job: a tool, a system, a process.
     A requirement no ramp closes — years of experience, a certification, a
     degree, a location — is stated as the gap it is. Where the record shows

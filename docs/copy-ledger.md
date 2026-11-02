@@ -1101,3 +1101,109 @@ also gave in the brief for this pass).
 | removed | front door, metadata, prompt | "at an AI-forward company". | factual | In neither source |
 | removed | `docs/resume/` (the July source and its three variant drafts), `docs/Sidhant_Mathur_Resume.docx` and `.pdf` | Deleted; `public/resume.pdf` is the master's export. | — | Log §3 and §5: one master, no variant files |
 
+## Interview guide, 2026-11-02
+
+`docs/interview-guide.md`: the questions and format for one sitting in which
+Sidhant turns his resume bullets into stories. Nothing in it renders on the
+site, and the chat's corpus is unchanged: no knowledge file was created or
+edited. It asks and never answers. Its only factual lines restate what the
+knowledge base already says, so he can correct them.
+
+| Status | Where | String / summary | Claims | Source |
+| --- | --- | --- | --- | --- |
+| draft | `docs/interview-guide.md` → "Already on record", stories 1–11 | One short restatement per story of the facts already in the corpus (quarter-end app, weekly review tool, incentives, headcount forecast, building A Darle 20, North America app, the funnel finding, CRM Analytics to Power BI, the convention event, the $1.2M analysis, the AI agent), with the shapes the prompt enforces ("ran", "identified", "in testing", "not the event"). No new fact. | factual (restated) | `projects-nokia.md`, `projects-adarle20.md`, `resume.md` |
+| draft | `docs/interview-guide.md` → story questions and one-breath frames | Six questions per story (five for 10 and 11): before, yours and others', the hard call, pushback, what changed and how he knows, differently; plus a fill-in one-breath frame. A few A Darle 20 questions (where money could go wrong, a bug record, where the funnel lost people, analytics and database disagreeing, what the event left in the product) were sharpened by reading that product's docs; they are phrased as questions, and nothing from that repo is stated. | none | — |
+| draft | `docs/interview-guide.md` → gap prompts G1–G13, "Why these roles" W1–W2 | Questions on adjacent experience for the three recruiter-visible gaps (Salesforce administration, CPQ or deal desk, PSA, SOWs and billable utilization), plus SQL and people management, each answerable with "none"; two questions on why he wants these roles. | none | `docs/gauntlet-log.md` "Gaps a recruiter will notice"; `lib/system-prompt.ts` |
+| draft | `docs/interview-guide.md` → "Off the record by an earlier decision" | The prompt's list of deliberate absences, restated so the interview doesn't reopen them by accident: languages, freelance fees, A Darle 20 revenue and payment figures, the weekly report's other readers, hours saved by the review tool, North America revenue, the agent's plans. | none (names absences) | `lib/system-prompt.ts` "What the record leaves out" |
+| draft | `docs/interview-guide.md` → question map, answer template, interviewer prompt, after-the-interview checklist | Seventeen interview questions mapped to stories, with the ones no story answers yet flagged; the shape of a future `content/knowledge/stories.md` (not created) with its chunk ids and the rules it has to follow; the voice-mode interviewer prompt; the ingestion checklist. | none | `scripts/build-knowledge.mjs`, `lib/verify.ts`, `evals/static.test.mjs`, `evals/track-b.test.mjs` |
+
+## Write-up draft, 2026-11-02
+
+A draft blog post for Sidhant to rewrite in his own voice, working title "How I
+built a chatbot that can't lie about me" (`docs/your-turn.md` §8). Nothing on
+the site renders it or links to it. Every paragraph carries a source comment;
+career facts come only from `content/knowledge/`; quotes attributed to Sidhant
+are verbatim from `docs/idea-decisions.md`. Its open `[VERIFY]` points (his
+reaction, who ran which test, the share of code agents wrote, the sprint dates,
+the RevOps framing, whether to link the repo) are listed at the end of the
+draft itself.
+
+| Status | Where | String / summary | Claims | Source |
+| --- | --- | --- | --- | --- |
+| draft | `docs/drafts/writeup.md` (not rendered) | The post (about 1,780 words) plus three figure briefs, a ~150-word LinkedIn version and a two-sentence pitch. Facts about the site: the 2026-10-19 smoke test, `lib/verify.ts`, `lib/role-fit.ts`, the eval suite, the bake-off's billed vs list price, `low` reasoning, the builder/critic loop and fact audit. Facts about Sidhant: his Nokia title and four Nokia bullets (sales operations and workforce management) and a quoted fit-check verdict saying Salesforce administration, lead routing and CPQ are outside his record, nothing else. | factual | `content/knowledge/resume.md`, `projects-nokia.md`; `docs/followups.md`, `docs/roadmap.md`, `docs/idea-decisions.md`, `docs/idea-bank.md` §6, `docs/gauntlet-log.md`, `evals/README.md`, `lib/refusals.ts` |
+
+## A Darle 20 media and feature inventory, 2026-11-02
+
+Five new frames on `/projects/adarle20`, captured from the public site
+(www.adarle20.com, English, dark theme) without an account: no sign-up, no
+login, no booking, no form, nothing that reaches Stripe, and analytics requests
+blocked so the visits stay out of the product's funnel. Player names and
+avatars are out of every frame; hosts appear as on the public cards. The
+landing shot is cropped above the live counters so it publishes no figures.
+
+Every title, alt text and caption below was written from the file itself and
+describes what's on screen. None names a feature the record doesn't: the
+screens show more than the record says (reviews, badges, follows, tips), and
+the captions leave that to `docs/adarle20-feature-inventory.md` until Sidhant
+confirms it.
+
+| Status | Where | String / summary | Claims | Source |
+| --- | --- | --- | --- | --- |
+| draft | `content/adarle20-media.ts` → `landing` | Title "The front page". Alt: "The A Darle 20 landing page: the headline “The portal to your next adventure.”, a Find games button, and four cards headed Online or in person, Vetted Dungeon Masters, Secure payments and We handle the logistics." Caption: "The front page: one button to find games, and four cards on how it works." | none | `public/images/adarle20-landing.webp` |
+| draft | `content/adarle20-media.ts` → `walkthrough` | Title "From the listings to a session". Alt (also the video's `aria-label`): "Screen recording: the session listings, the Online filter switched on, and a paid one-shot opened to its own page, which scrolls down to the game's description and the host's card. Nothing is booked." Caption: "Browsing without an account: one filter, then a session's own page, stopping short of reserving." | none | `public/images/adarle20-walkthrough.webm` / `.mp4` |
+| draft | `content/adarle20-media.ts` → `filters` | Title "Browsing with filters". Alt: "The Available Sessions page with its filter panel open: quick filters for when, beginners, online, in person, free, workshops and one-shots, then price, experience, genre and format choices, a game menu, from and to dates, a currency menu and popular tags." Caption: "The listings with every filter open: price, experience, genre, format, game, dates and tags." | none | `public/images/adarle20-filters.webp` |
+| draft | `content/adarle20-media.ts` → `session-phone` | Title "A session, on a phone". Alt: "A one-shot's page on a phone: the title over its cover art, the host's name, the date in Mexico City time with the viewer's own time beneath, a price in pesos, a Book button, a row of empty seats, and Share, Save and Message DM buttons." Caption: "A session's own page on a phone: host, time, price and the button to reserve a place." | none | `public/images/adarle20-session-phone.webp` |
+| draft | `content/adarle20-media.ts` → `host-profile-phone` | Title "A host's public page". Alt: "A host's public profile on a phone: Overview, Calendar, Sessions and Reviews tabs, the host's logo and name, a star rating with the number of reviews, followers, three badges, a Support button, and the start of the host's own description in Spanish." Caption: "A host's public page on a phone: their rating, badges and own description." | none | `public/images/adarle20-host-profile-phone.webp` |
+| draft | `content/adarle20-media.ts` → `listings` | The existing title "Session listings" is visible again: with more than one file on the page, every frame shows its title (the rule logged in the 2026-10-22 trim pass). Alt and caption unchanged. | none | — |
+| draft | `content/adarle20-media.ts` → briefs for the five new slots (not rendered) | One line each saying what the file shows and how it was kept clean, e.g. "The landing page at desktop width, cropped above the live counters so the frame carries no figures." | none | — |
+| draft | `components/project-media.tsx`, `components/project-media-video.tsx` | No new visible strings. The recording loops muted and inline only while on screen, never starts on its own under reduced motion (poster frame plus the browser's controls instead), and loads nothing until it plays. Consecutive phone frames share a row. | none | — |
+| draft | `docs/site-copy.md` → "What it looks like" | The slot table and the new captions, mirrored from the rows above. | none | — |
+| draft | `docs/adarle20-feature-inventory.md` (not rendered) | The product's feature surface read from the `rpg-marketplace-1` source and its docs, grouped by area, with evidence paths, public visibility, status flags (unfinished, flagged, dormant, removed, excluded) and an empty "Sidhant confirms" column. Ends with a paste-ready "## Also in the product" block for `content/knowledge/projects-adarle20.md`. Cash payments are listed once, marked excluded, and kept out of the block. No metrics or numbers from code or data. | **factual, pending Sidhant** | A code reading, not his confirmation: nothing in it enters `content/knowledge/` until he ticks it. Once he does, `FEATURE_SURFACE` and `FEATURE_SURFACE_NOTE` (pending table above) can be revisited from the record. |
+
+Captured but not wired, for Sidhant to decide (files in the session scratchpad,
+listed in the agent's report):
+
+- **A series page on a phone** ("Join the series", a saved card charged ahead
+  of each session). Recurring series and automatic charges aren't in the
+  record, and a caption couldn't avoid naming them.
+- **The MEGA XP 2026 event page** (tables by day, filters by table and host).
+  If it is the 251-player event, it belongs with the convention slot, but the
+  brief for that slot says its caption names the event and date only once
+  Sidhant has.
+## Consistent fit check, 2026-11-02
+
+Strings drafted for the consistent fit check (`docs/consistent-fit-check.md`): a fit-check table settled across several independent assessments of one posting. None makes a claim about Sidhant; every one describes what the site does. `{n}`, `{count}`, `{of}` and `{verdict}` are filled from the table.
+
+| Status | Where | String / summary | Claims | Source |
+| --- | --- | --- | --- | --- |
+| draft | `components/shell/shell-data.ts` → `FIT_CONSENSUS.note` (under a consensus table, panel and print) | "Each requirement was assessed {n} times, independently, and each row shows the verdict most of the assessments gave. A count under a tag, or a split under a row, means they differed. A row with no majority, or with both met and unmet among its assessments, is unclear." | none | `lib/consistency.ts` (what the merge does) |
+| draft | `components/shell/shell-data.ts` → `agreementCount` (under a row's verdict tag) | "{count} of {of}", e.g. "2 of 3" | none | — |
+| draft | `components/shell/shell-data.ts` → `agreementNote` (a row's quiet line) | "split · {count} {verdict}, …", e.g. "split · 1 met, 1 partial, 1 unmet"; and "{count} of {of} agree" on a row code changed after the vote | none | — |
+| draft | `components/shell/shell-data.ts` → `FIT_CONSENSUS.unshared` (a row's quiet line, accent) | "no source most of the assessments shared · downgraded from {verdict}" | none | `lib/consistency.ts` (`unshared` downgrade) |
+| draft | `lib/turn-phase.ts` → `JD_COMPARING_PHASE` (the phase line while the card waits) | "cross-checking…", with the readout "{done}/{of}" | none | — |
+| draft | `lib/system-prompt.ts` → roleFit instructions (rendered on /prompt) | "The table the tool returns is the one the reader sees, and the site may have changed rows in it since your call. Write the sentences after the call from the returned table." | none | — |
+
+## Backlog pass, 2026-11-02
+
+GitHub issues #3 and #2, per-model settings, and the app-shell split. Visible
+strings changed for #3, #2 and the `/measurements/models` settings caveat; the
+split only moved strings (note under the table).
+
+| Status | Where | String / summary | Claims | Source |
+| --- | --- | --- | --- | --- |
+| draft | `components/shell/app-shell.tsx` → the composer's button | While a turn is in flight the "send ↵" button reads "stop" followed by a small drawn square, in the same box, from the moment a question is sent until the stream closes (issue #3). | none | — |
+| removed | `components/shell/app-shell.tsx` → beside the phase line | The plain "stop" that appeared after eight seconds beside the phase line. The composer's button replaces it. | none | Issue #3 |
+| draft | `lib/model-comparison.ts` → `rankedTrailer`, under the ranked panels on `/measurements/models` | "Median withheld for {models}: fewer than 10 measured turns." for a model whose run was measured over too few turns for a median; "Not measured for {models}." stays for one with no measurement. Both can appear under one panel. Was "Not measured for {models}." for both (issue #2). | none | `MIN_TURNS_FOR_P50` in `lib/measurements.ts` |
+| draft | `components/charts/ranked-bars.tsx` → a panel with no bars | "No published run reports this figure." when at least one model was measured but withheld; "Not measured in any published run." when none was measured, as before. | none | — |
+| draft | `lib/model-comparison.ts` → `unplottedTrailer`, under the frontier charts | "{models} could not be plotted because its median was withheld: fewer than 10 measured turns." ("their medians were" for several). The not-measured sentence is unchanged: "{models} could not be plotted because one of the two axes was not measured." | none | as above |
+| draft | `components/charts/frontier-scatter.tsx` → a chart with no points | "No published run reports both figures, so there's no chart to draw." Was "…has both measurements…", which a withheld median would make untrue. | none | — |
+| draft | `app/measurements/models/page.tsx` → the "Each model runs the way the chat runs it" caveat | When a charted model's settings changed after its run: "{models} have been reconfigured since their runs here, so the chat no longer runs them the way they were measured. Of the rest, {tuned list}, and everything else runs at the provider's default." (singular: "has been reconfigured since its run here, so the chat no longer runs it the way it was measured"; with nothing tuned: "The rest run at the provider's default reasoning."). Today it names DeepSeek V4 Flash, Claude Haiku 5.5 and GPT-5 mini. With nothing reconfigured the old sentence renders unchanged. | none about Sidhant; one about the site | `settingsChanged` on each row of `lib/models.ts` |
+
+The app-shell split (`docs/app-shell-split.md`) moved strings out of
+`components/shell/app-shell.tsx` without changing a word, so earlier rows that
+name that file now mean: the replay banner, `replay-banner.tsx`; the front door
+and the continue row, `front-door.tsx`; Home and the question count,
+`conversation-bar.tsx`; the composer's placeholders and fine print,
+`composer.tsx`; the conversation-full notice, `transcript-view.tsx`; the header,
+`status-strip.tsx`; the actions strip, `actions-strip.tsx`. The rate-limit line
+stays in `app-shell.tsx`.

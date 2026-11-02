@@ -25,6 +25,7 @@ import { guardedFetch, INTERNAL_TOOLS, TurnFailure, type Budget } from "@/lib/ch
 import { activityOf, phaseOf } from "@/lib/turn-phase";
 import { MAX_USER_MESSAGES } from "@/lib/models";
 import { publishPhaseActivity } from "./phase-activity";
+import { canStop } from "./composer-action";
 import { isChatEntry, markEntry } from "./conversation-history";
 
 /** Re-exported from lib/chat-transport, where the fetch that reads it lives. */
@@ -591,6 +592,12 @@ export function useConversation(model: string) {
     /** At the per-conversation question cap; `submit` refuses past it. */
     full,
     isBusy,
+    /**
+     * Whether the turn on screen can be stopped: the whole time it is in
+     * flight, prose or no prose. Never read it off `phase`, which goes null as
+     * soon as text arrives (issue #3).
+     */
+    stoppable: canStop(status),
     /** One line naming the step in flight, or null once prose is on screen. */
     phase: phaseOf(status, messages),
     errorKind,

@@ -22,6 +22,7 @@ import assert from "node:assert/strict";
 import {
   checkableTokens,
   citationIds,
+  isGapHeading,
   stripCitations,
   verifyAnswer,
 } from "../lib/verify.ts";
@@ -668,5 +669,193 @@ describe("a table row is a claim, its header is not", () => {
       result.downgraded.some((c) => c.missing.includes("900")),
       "a wrong number inside a table cell was not caught",
     );
+  });
+});
+
+// The bake-off of 2026-10-20 (docs/followups.md, "The bake-off") read all ten
+// sentences the checker found nowhere in the record, and all ten were honest.
+// The prose isn't stored (evals/README.md: answers don't travel into the
+// snapshot), so these are rebuilt from the phrasings and requirements the
+// followups name. The wording is ours; the shapes are the models'.
+describe("false alarms the bake-off produced", () => {
+  const GAP_SENTENCES = [
+    // "are gaps"
+    "Kubernetes, GPU cluster operations and CUDA are gaps.",
+    "Spark, Ray and Beam pipelines are gaps too.",
+    // "no X on the page"
+    "There's no HubSpot or Marketo on the page.",
+    // "nothing touching X"
+    "There's nothing touching Kubernetes or GPU clusters in his record.",
+    // "primary unknowns"
+    "The primary unknowns are Spark, Ray or Beam experience.",
+    "Primary unknowns: HubSpot or Marketo lifecycle campaigns.",
+    // "4+ years"
+    "The 4+ years in a customer-facing technical role is a gap.",
+    // "Biggest gaps:" on one line
+    "Biggest gaps: Kubernetes, GPU clusters and CUDA.",
+    "He has two gaps: HubSpot and Marketo.",
+  ];
+
+  for (const sentence of GAP_SENTENCES) {
+    test(`"${sentence}" names nothing to check`, () => {
+      assert.deepEqual(checkableTokens(sentence, BY_ID), []);
+      // Cited, as the models cited them, it is not a claim at all.
+      const result = verifyAnswer(`${sentence} [resume:skills]`, BY_ID);
+      assert.deepEqual(result.claims, [], `marked: ${result.claims.map((c) => c.missing)}`);
+    });
+  }
+
+  test('a list under "Biggest gaps:" is a list of absences', () => {
+    const answer = [
+      "Biggest gaps:",
+      "- Kubernetes and GPU cluster operations [resume:skills]",
+      "- CUDA, kernel profiling and GPU memory optimization",
+      "- Spark, Ray or Beam pipelines",
+    ].join("\n");
+    assert.deepEqual(verifyAnswer(answer, BY_ID).claims, []);
+    // A blank line between the heading and its list doesn't end it.
+    assert.deepEqual(verifyAnswer(answer.replace("gaps:\n", "gaps:\n\n"), BY_ID).claims, []);
+  });
+
+  test("the list ends where the list ends", () => {
+    const answer = [
+      "Where he doesn't match:",
+      "- Kubernetes and GPU clusters",
+      "",
+      "He ran CPQ for 900 reps at Oracle. [resume:nokia]",
+    ].join("\n");
+    const claims = verifyAnswer(answer, BY_ID).claims;
+    assert.equal(claims.length, 1, "the paragraph after the list was exempted with it");
+    assert.equal(claims[0].verdict, "unverified");
+  });
+
+  test("gap headings are recognised, denials are not", () => {
+    for (const heading of ["Biggest gaps:", "Primary unknowns:", "**Gaps**", "### The main gaps", "Where he doesn't match:", "There are three gaps:"]) {
+      assert.ok(isGapHeading(heading), heading);
+    }
+    for (const line of ["No gaps:", "There are no real gaps:", "He has the skills:", "Gaps?"]) {
+      assert.ok(!isGapHeading(line), line);
+    }
+  });
+
+  test("the recorded fit check's prose marks nothing it shouldn't", () => {
+    // Real model output, recorded through the site on 2026-10-19
+    // (evals/fixtures/recorded-fit-check.json). Its first sentence cites the
+    // Nokia block for figures the block holds; the next two name gaps.
+    const recorded = JSON.parse(read("evals/fixtures/recorded-fit-check.json"));
+    const answer = recorded.messages
+      .find((m) => m.role === "assistant")
+      .parts.filter((p) => p.type === "text")
+      .map((p) => p.text)
+      .join("\n\n");
+    const result = verifyAnswer(answer, BY_ID);
+    const marked = result.downgraded.map((c) => `${c.verdict}: ${c.text}`);
+    assert.deepEqual(marked, []);
+    assert.equal(result.verified, 1, "the cited sentence stopped being checked");
+  });
+});
+
+// "Strong SQL and executive-facing dashboards" — a strengths-first summary
+// opens on an adjective, and the old checker read every capital as a name.
+// The capital at the start of a sentence belongs to the sentence; the word is
+// a name only when something says so (lib/verify.ts, readsAsName).
+describe("a capital that starts a sentence is not a name by itself", () => {
+  test("an opening adjective is not looked up", () => {
+    for (const [sentence, id] of [
+      ["Strong Power BI and CRM Analytics reporting at Nokia, with 150+ monthly users. [nokia:reporting]", "nokia:reporting"],
+      ["Strong forecasting evidence: he ran the monthly headcount forecast for a 3,000–4,000-person organization. [nokia:workforce-management]", "nokia:workforce-management"],
+      ["Solid quarter-end close work: the self-serve Power App for 80+ stakeholders across 7 regions. [nokia:quarter-end-close]", "nokia:quarter-end-close"],
+      ["Hands-on Power BI reporting for 5 teams outside the sales organization. [nokia:reporting]", "nokia:reporting"],
+      ["- Strongest match: the tool behind the Chief Customer Officer's weekly report. [nokia:the-weekly-operating-review-tool]", "nokia:the-weekly-operating-review-tool"],
+      ["Verdict: Strong on reporting, with 150+ monthly users on the CRM Analytics dashboards. [nokia:reporting]", "nokia:reporting"],
+    ]) {
+      const result = verifyAnswer(sentence, BY_ID);
+      assert.deepEqual(result.claims.map((c) => c.ids), [[id]], sentence);
+      assert.equal(result.claims[0].verdict, "verified", `${sentence}\nflagged: ${result.claims[0].missing}`);
+    }
+  });
+
+  test("without the record, the common-word list still decides", () => {
+    assert.deepEqual(checkableTokens("Strong SQL and executive-facing dashboards."), ["SQL"]);
+    assert.deepEqual(checkableTokens("Clearly the closest match is Power BI."), ["Power", "BI"]);
+  });
+
+  test("a name at the start of a sentence is still a name", () => {
+    // The default is "name": an unknown word is checked until something shows
+    // it is ordinary, so an invented employer can't hide in first position.
+    assert.deepEqual(checkableTokens("Google hired him.", BY_ID), ["Google"]);
+    assert.deepEqual(checkableTokens("Google hired him."), ["Google"]);
+    assert.equal(verifyAnswer("Google hired him. [resume:nokia]", BY_ID).claims[0].verdict, "unverified");
+    // Shape says name: an acronym, inner capitals, a digit, a dot.
+    for (const name of ["CPQ", "TypeScript", "B2B", "Next.js"]) {
+      assert.ok(checkableTokens(`${name} is the stack.`).includes(name), name);
+    }
+    // The record says name: written capitalized mid-sentence somewhere.
+    assert.ok(checkableTokens("Glean is the reasoning layer.", BY_ID).includes("Glean"));
+    assert.ok(checkableTokens("Teams is where the agent posts.", BY_ID).includes("Teams"));
+    assert.ok(checkableTokens("Power BI does the bulk analysis.", BY_ID).includes("Power"));
+  });
+
+  test("tools a posting could name stay checkable at the start of a sentence", () => {
+    // The common-word list leaves these out on purpose. A word joins this
+    // list's exceptions only by being written lowercase in the record.
+    const tools = `Power Teams Glean Stripe Notion Slack Mode Square Looker Outreach Spark
+      Ray Beam Gong Excel React Node Salesforce HubSpot Marketo Tableau Snowflake
+      Workday Asana Linear Zoom Apple Amazon Oracle Block Meta Census Hex Sigma Ramp
+      Lattice Python Java Ruby Rust Swift Kubernetes Docker Jira Figma Clay Apollo`
+      .split(/\s+/)
+      .filter(Boolean);
+    const lost = tools.filter((t) => !checkableTokens(`${t} was his main tool there.`, BY_ID).includes(t));
+    assert.deepEqual(lost, [], "read as ordinary words in first position");
+  });
+});
+
+// The other direction. Every rule above that stops checking part of a sentence
+// is a place a fabrication could stand, so each gets a sentence that tries.
+// Google, Oracle and "12 years" are in no chunk; each must still be reported.
+describe("an absence can't carry a claim past the checker", () => {
+  const ATTEMPTS = [
+    "The gaps are minor; he led Salesforce at Google.",
+    "The gaps are minor, and he led Salesforce at Google.",
+    "No gaps: 12 years at Oracle.",
+    "There are no real gaps: he spent 12 years at Oracle.",
+    "Gaps: none. 12 years at Oracle.",
+    "The main gap: he spent 12 years at Oracle.",
+    "The main gaps are CPQ and Gong, and Oracle hired him for 12 years.",
+    "He spent 12 years at Oracle and CPQ is a gap.",
+    "Oracle hired him for 12 years and CPQ is a gap.",
+    "Oracle is not a gap: he spent 12 years there.",
+    "Not only did he lead Salesforce at Google, he ran it.",
+    "The record does not show CPQ, but he led Salesforce at Google.",
+    "Nothing touching CPQ — he ran Salesforce at Google for 12 years.",
+    "There's no HubSpot on the page, and he ran Marketo at Oracle.",
+    "He closed the gaps: 12 years at Oracle.",
+    "Strong at Oracle for 12 years.",
+  ];
+
+  for (const sentence of ATTEMPTS) {
+    test(`"${sentence}"`, () => {
+      const tokens = checkableTokens(sentence, BY_ID);
+      const invented = tokens.filter((t) => ["Google", "Oracle", "12"].includes(t));
+      assert.ok(invented.length > 0, `nothing invented was checked: ${JSON.stringify(tokens)}`);
+      const result = verifyAnswer(`${sentence} [resume:nokia]`, BY_ID);
+      assert.equal(result.claims[0]?.verdict, "unverified", sentence);
+    });
+  }
+
+  test("a list item under a gap heading is checked once it is about him", () => {
+    const answer = ["Biggest gaps:", "- CPQ and Gong", "- He led Salesforce at Google for 12 years [resume:nokia]"].join("\n");
+    const claims = verifyAnswer(answer, BY_ID).claims;
+    assert.equal(claims.length, 1);
+    assert.equal(claims[0].verdict, "unverified");
+    const denied = verifyAnswer(["No gaps:", "- 12 years at Oracle [resume:nokia]"].join("\n"), BY_ID).claims;
+    assert.equal(denied[0]?.verdict, "unverified", "a denied heading exempted its list");
+  });
+
+  test("what an absence names is only what it names", () => {
+    // The span is the absence's object, not its clause: the subject of the
+    // sentence is still a claim.
+    assert.deepEqual(checkableTokens("At Oracle, he hasn't run Kubernetes."), ["Oracle"]);
+    assert.deepEqual(checkableTokens("The record doesn't show that he ran CPQ at Oracle."), []);
   });
 });

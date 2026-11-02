@@ -33,7 +33,7 @@ import assert from "node:assert/strict";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 
-import { ROOT, read } from "./lib/artifacts.mjs";
+import { ROOT, read, readShellSources } from "./lib/artifacts.mjs";
 import { checkClaim, checkableTokens } from "../lib/verify.ts";
 import { looksLikeJobPosting } from "../lib/job-posting.ts";
 import { looksLikeSiteQuestion } from "../lib/site-question.ts";
@@ -130,13 +130,20 @@ describe("#25 — the recruiter TL;DR", () => {
     // The block is a substitute for having asked a question. Once there is a
     // conversation it is chrome, and it would sit above someone's transcript
     // on every reload.
-    const shell = read("components/shell/app-shell.tsx");
-    const uses = shell.match(/<RecruiterTldr\s*\/>/g) ?? [];
+    // The front door is its own component (front-door.tsx) since the shell
+    // split, and the shell renders it only in the empty state.
+    const uses = readShellSources().match(/<RecruiterTldr\s*\/>/g) ?? [];
     assert.equal(uses.length, 1, "RecruiterTldr is rendered more than once in the shell");
-    const emptyState = shell.slice(shell.indexOf("{!hasMessages && ("));
     assert.ok(
-      emptyState.includes("<RecruiterTldr />"),
-      "RecruiterTldr is rendered outside the !hasMessages branch — it would sit over a live conversation",
+      read("components/shell/front-door.tsx").includes("<RecruiterTldr />"),
+      "RecruiterTldr is no longer part of the front door",
+    );
+    const shell = read("components/shell/app-shell.tsx");
+    assert.equal((shell.match(/<FrontDoor\b/g) ?? []).length, 1, "the front door is rendered more than once");
+    assert.match(
+      shell,
+      /\{!hasMessages && \(\s*<FrontDoor\b/,
+      "the front door is rendered outside the !hasMessages branch — it would sit over a live conversation",
     );
   });
 
@@ -185,9 +192,12 @@ describe("the front door's case-study cards", () => {
       HERO_TLDR[0].value.includes("Nokia"),
       "the tl;dr's first row is no longer the Nokia work",
     );
-    const shell = read("components/shell/app-shell.tsx");
-    const emptyState = shell.slice(shell.indexOf("{!hasMessages && ("));
-    assert.ok(emptyState.includes("<CaseCards />"), "the cards are not in the empty state");
+    // The front door (front-door.tsx) renders only in the empty state; the
+    // test above holds the shell to that.
+    assert.ok(
+      read("components/shell/front-door.tsx").includes("<CaseCards />"),
+      "the cards are not in the empty state",
+    );
   });
 
   test("the card copy is in docs/site-copy.md", () => {
@@ -236,7 +246,7 @@ describe("#26 — the recruiter chips", () => {
 
   test("the chips replaced the old set rather than adding to it", () => {
     // decisions #26: recruiter chips replace the current ones, no toggle.
-    const shell = read("components/shell/app-shell.tsx");
+    const shell = readShellSources();
     assert.ok(
       !shell.includes("What did Sidhant build at Nokia?"),
       "an old suggested question is still in the shell — #26 is a swap, not an addition",

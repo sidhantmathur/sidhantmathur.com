@@ -380,12 +380,18 @@ intro "Frames with nothing in them are waiting on a file…", empty-frame text
 "Nothing here yet — waiting on a {kind}.", empty caption "{slot title} — not
 captured yet." A slot appears the day its file is added.]
 
-The six slots, and what each needs, live in `content/adarle20-media.ts` as
-capture briefs. Summary:
+The slots, and what each needs, live in `content/adarle20-media.ts` as
+capture briefs. They render in this order; the two phone frames sit side by
+side. Summary:
 
 | Slot | Kind | Shape | Must show |
 | --- | --- | --- | --- |
+| The front page | screenshot | 720:281 | **Filled 2026-11-02** — `public/images/adarle20-landing.webp`, cropped above the live counters |
+| From the listings to a session | screen recording | 16:9 | **Filled 2026-11-02** — `public/images/adarle20-walkthrough.webm` (and `.mp4`), silent, no account, stops before reserving |
+| Browsing with filters | screenshot | 8:5 | **Filled 2026-11-02** — `public/images/adarle20-filters.webp` |
 | Session listings | screenshot | 152:69 | **Filled** — the existing `public/images/adarle20-listings.png` |
+| A session, on a phone | screenshot | 195:422 | **Filled 2026-11-02** — `public/images/adarle20-session-phone.webp` |
+| A host's public page | screenshot | 195:422 | **Filled 2026-11-02** — `public/images/adarle20-host-profile-phone.webp` |
 | Reserving a place, end to end | screen recording | 16:9 | listing → checkout → confirmation, one take, test account |
 | What a host sees | screenshot | 16:9 | a host's profile, sessions and payouts |
 | Host and player chat | screenshot | 9:16 | a real thread, redacted or on test accounts |
@@ -394,6 +400,23 @@ capture briefs. Summary:
 
 Caption for the filled slot: Each card shows the host and their rating, the
 price in pesos, the schedule, and how many seats are filled.
+
+[Captures 2026-11-02, taken from the public site without an account. Each
+frame now shows its title. Captions, in page order:]
+
+- The front page: one button to find games, and four cards on how it works.
+- Browsing without an account: one filter, then a session's own page,
+  stopping short of reserving.
+- The listings with every filter open: price, experience, genre, format,
+  game, dates and tags.
+- Each card shows the host and their rating, the price in pesos, the
+  schedule, and how many seats are filled. (unchanged)
+- A session's own page on a phone: host, time, price and the button to
+  reserve a place.
+- A host's public page on a phone: their rating, badges and own description.
+
+[Alt text for each is in `content/adarle20-media.ts` and the ledger section
+"A Darle 20 media and feature inventory, 2026-11-02".]
 
 [Trim pass 2026-10-22 (gauntlet): the section now sits above "What's in it".
 With one file on the page, the frame's own title row ("Session listings ·

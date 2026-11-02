@@ -401,8 +401,11 @@ describe("manual mode", () => {
   });
 
   test("the rate-limited state is the one that renders it", () => {
-    const shell = read("components/shell/app-shell.tsx");
-    assert.match(shell, /errorKind === "rate_limited" && \(\s*<ManualMode/);
+    // The transcript (transcript-view.tsx, split out of app-shell.tsx) renders
+    // it; the shell hands it the lazily loaded component.
+    const transcript = read("components/shell/transcript-view.tsx");
+    assert.match(transcript, /errorKind === "rate_limited" && \(\s*<ManualMode/);
+    assert.match(read("components/shell/app-shell.tsx"), /ManualMode=\{ManualMode\}/);
   });
 
   test("the state is reproducible without waiting for real traffic", () => {
@@ -469,7 +472,12 @@ describe("Sprint 7's surfaces are reachable", () => {
     // A row claiming Sidhant meets a requirement, evidenced by a comment in
     // this site's own source, is not evidence about Sidhant.
     const route = read("app/api/chat/route.ts");
-    assert.match(route, /reconcileRoleFit\(raw, extraction\.requirements, CHUNK_BY_ID\)/);
+    // Through the consensus merge (lib/consistency.ts), which reconciles with
+    // the lookup it is handed and imports no corpus of its own.
+    assert.match(route, /mergeRoleFitSamples\(assessments, extraction\.requirements, CHUNK_BY_ID\)/);
+    const merge = read("lib/consistency.ts");
+    assert.ok(!/generated|ALL_CHUNKS|corpus\.ts/.test(merge.replace(/^\s*\/\/.*$/gm, "")), "the merge picked its own corpus");
+    assert.match(merge, /reconcileRoleFit\(own, extracted, lookup\)/);
   });
 
   test("both pages are in the sitemap", () => {

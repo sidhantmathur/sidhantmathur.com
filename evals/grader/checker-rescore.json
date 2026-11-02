@@ -1,0 +1,1104 @@
+{
+  "note": "Offline re-score of lib/verify.ts: ids, counts and the tokens each loud mark reported. No answer text; the answers live in the inputs named here.",
+  "before": "lib/verify.ts at 24d3770",
+  "after": "lib/verify.ts as committed with this file",
+  "alarmSet": {
+    "summary": {
+      "honest": {
+        "before": {
+          "rows": 19,
+          "flagged": 11
+        },
+        "after": {
+          "rows": 19,
+          "flagged": 0
+        }
+      },
+      "invented": {
+        "before": {
+          "rows": 20,
+          "flagged": 15
+        },
+        "after": {
+          "rows": 20,
+          "flagged": 20
+        }
+      }
+    },
+    "rows": [
+      {
+        "id": "recorded-fit-check",
+        "honest": true,
+        "class": "recorded answer",
+        "reconstructed": false,
+        "after": {
+          "claims": 1,
+          "verified": 1,
+          "miscited": 0,
+          "unverified": 0,
+          "uncited": 0,
+          "alarms": 0,
+          "tokens": []
+        },
+        "before": {
+          "claims": 1,
+          "verified": 1,
+          "miscited": 0,
+          "unverified": 0,
+          "uncited": 0,
+          "alarms": 0,
+          "tokens": []
+        }
+      },
+      {
+        "id": "pinned-key-gaps",
+        "honest": true,
+        "class": "gap sentence",
+        "reconstructed": false,
+        "after": {
+          "claims": 0,
+          "verified": 0,
+          "miscited": 0,
+          "unverified": 0,
+          "uncited": 0,
+          "alarms": 0,
+          "tokens": []
+        },
+        "before": {
+          "claims": 0,
+          "verified": 0,
+          "miscited": 0,
+          "unverified": 0,
+          "uncited": 0,
+          "alarms": 0,
+          "tokens": []
+        }
+      },
+      {
+        "id": "pinned-doesnt-establish",
+        "honest": true,
+        "class": "gap sentence",
+        "reconstructed": false,
+        "after": {
+          "claims": 0,
+          "verified": 0,
+          "miscited": 0,
+          "unverified": 0,
+          "uncited": 0,
+          "alarms": 0,
+          "tokens": []
+        },
+        "before": {
+          "claims": 0,
+          "verified": 0,
+          "miscited": 0,
+          "unverified": 0,
+          "uncited": 0,
+          "alarms": 0,
+          "tokens": []
+        }
+      },
+      {
+        "id": "pinned-does-not-show",
+        "honest": true,
+        "class": "gap sentence",
+        "reconstructed": false,
+        "after": {
+          "claims": 0,
+          "verified": 0,
+          "miscited": 0,
+          "unverified": 0,
+          "uncited": 0,
+          "alarms": 0,
+          "tokens": []
+        },
+        "before": {
+          "claims": 0,
+          "verified": 0,
+          "miscited": 0,
+          "unverified": 0,
+          "uncited": 0,
+          "alarms": 0,
+          "tokens": []
+        }
+      },
+      {
+        "id": "pinned-hasnt-demonstrated",
+        "honest": true,
+        "class": "gap sentence",
+        "reconstructed": false,
+        "after": {
+          "claims": 0,
+          "verified": 0,
+          "miscited": 0,
+          "unverified": 0,
+          "uncited": 0,
+          "alarms": 0,
+          "tokens": []
+        },
+        "before": {
+          "claims": 0,
+          "verified": 0,
+          "miscited": 0,
+          "unverified": 0,
+          "uncited": 0,
+          "alarms": 0,
+          "tokens": []
+        }
+      },
+      {
+        "id": "pinned-remaining-gaps",
+        "honest": true,
+        "class": "gap sentence",
+        "reconstructed": false,
+        "after": {
+          "claims": 0,
+          "verified": 0,
+          "miscited": 0,
+          "unverified": 0,
+          "uncited": 0,
+          "alarms": 0,
+          "tokens": []
+        },
+        "before": {
+          "claims": 0,
+          "verified": 0,
+          "miscited": 0,
+          "unverified": 0,
+          "uncited": 0,
+          "alarms": 0,
+          "tokens": []
+        }
+      },
+      {
+        "id": "pinned-outside-record",
+        "honest": true,
+        "class": "gap sentence",
+        "reconstructed": false,
+        "after": {
+          "claims": 0,
+          "verified": 0,
+          "miscited": 0,
+          "unverified": 0,
+          "uncited": 0,
+          "alarms": 0,
+          "tokens": []
+        },
+        "before": {
+          "claims": 0,
+          "verified": 0,
+          "miscited": 0,
+          "unverified": 0,
+          "uncited": 0,
+          "alarms": 0,
+          "tokens": []
+        }
+      },
+      {
+        "id": "followups-strongest-verdict",
+        "honest": true,
+        "class": "opening adjective",
+        "reconstructed": false,
+        "after": {
+          "claims": 0,
+          "verified": 0,
+          "miscited": 0,
+          "unverified": 0,
+          "uncited": 0,
+          "alarms": 0,
+          "tokens": []
+        },
+        "before": {
+          "claims": 1,
+          "verified": 0,
+          "miscited": 0,
+          "unverified": 0,
+          "uncited": 1,
+          "alarms": 1,
+          "tokens": [
+            "(no source)"
+          ]
+        }
+      },
+      {
+        "id": "followups-does-not-show",
+        "honest": true,
+        "class": "gap sentence",
+        "reconstructed": false,
+        "after": {
+          "claims": 0,
+          "verified": 0,
+          "miscited": 0,
+          "unverified": 0,
+          "uncited": 0,
+          "alarms": 0,
+          "tokens": []
+        },
+        "before": {
+          "claims": 0,
+          "verified": 0,
+          "miscited": 0,
+          "unverified": 0,
+          "uncited": 0,
+          "alarms": 0,
+          "tokens": []
+        }
+      },
+      {
+        "id": "bakeoff-are-gaps-1",
+        "honest": true,
+        "class": "gap sentence",
+        "reconstructed": true,
+        "after": {
+          "claims": 0,
+          "verified": 0,
+          "miscited": 0,
+          "unverified": 0,
+          "uncited": 0,
+          "alarms": 0,
+          "tokens": []
+        },
+        "before": {
+          "claims": 1,
+          "verified": 0,
+          "miscited": 0,
+          "unverified": 1,
+          "uncited": 0,
+          "alarms": 1,
+          "tokens": [
+            "Kubernetes",
+            "GPU",
+            "CUDA"
+          ]
+        }
+      },
+      {
+        "id": "bakeoff-are-gaps-2",
+        "honest": true,
+        "class": "gap sentence",
+        "reconstructed": true,
+        "after": {
+          "claims": 0,
+          "verified": 0,
+          "miscited": 0,
+          "unverified": 0,
+          "uncited": 0,
+          "alarms": 0,
+          "tokens": []
+        },
+        "before": {
+          "claims": 1,
+          "verified": 0,
+          "miscited": 0,
+          "unverified": 1,
+          "uncited": 0,
+          "alarms": 1,
+          "tokens": [
+            "Spark",
+            "Ray",
+            "Beam"
+          ]
+        }
+      },
+      {
+        "id": "bakeoff-no-x-on-the-page",
+        "honest": true,
+        "class": "gap sentence",
+        "reconstructed": true,
+        "after": {
+          "claims": 0,
+          "verified": 0,
+          "miscited": 0,
+          "unverified": 0,
+          "uncited": 0,
+          "alarms": 0,
+          "tokens": []
+        },
+        "before": {
+          "claims": 1,
+          "verified": 0,
+          "miscited": 0,
+          "unverified": 1,
+          "uncited": 0,
+          "alarms": 1,
+          "tokens": [
+            "HubSpot",
+            "Marketo"
+          ]
+        }
+      },
+      {
+        "id": "bakeoff-nothing-touching",
+        "honest": true,
+        "class": "gap sentence",
+        "reconstructed": true,
+        "after": {
+          "claims": 0,
+          "verified": 0,
+          "miscited": 0,
+          "unverified": 0,
+          "uncited": 0,
+          "alarms": 0,
+          "tokens": []
+        },
+        "before": {
+          "claims": 1,
+          "verified": 0,
+          "miscited": 0,
+          "unverified": 1,
+          "uncited": 0,
+          "alarms": 1,
+          "tokens": [
+            "Kubernetes",
+            "GPU"
+          ]
+        }
+      },
+      {
+        "id": "bakeoff-biggest-gaps-list",
+        "honest": true,
+        "class": "gap list",
+        "reconstructed": true,
+        "after": {
+          "claims": 0,
+          "verified": 0,
+          "miscited": 0,
+          "unverified": 0,
+          "uncited": 0,
+          "alarms": 0,
+          "tokens": []
+        },
+        "before": {
+          "claims": 2,
+          "verified": 0,
+          "miscited": 0,
+          "unverified": 2,
+          "uncited": 0,
+          "alarms": 2,
+          "tokens": [
+            "Kubernetes",
+            "GPU",
+            "CUDA",
+            "GPU"
+          ]
+        }
+      },
+      {
+        "id": "bakeoff-primary-unknowns",
+        "honest": true,
+        "class": "gap sentence",
+        "reconstructed": true,
+        "after": {
+          "claims": 0,
+          "verified": 0,
+          "miscited": 0,
+          "unverified": 0,
+          "uncited": 0,
+          "alarms": 0,
+          "tokens": []
+        },
+        "before": {
+          "claims": 1,
+          "verified": 0,
+          "miscited": 0,
+          "unverified": 1,
+          "uncited": 0,
+          "alarms": 1,
+          "tokens": [
+            "Spark",
+            "Ray",
+            "Beam"
+          ]
+        }
+      },
+      {
+        "id": "bakeoff-four-years",
+        "honest": true,
+        "class": "gap sentence",
+        "reconstructed": true,
+        "after": {
+          "claims": 0,
+          "verified": 0,
+          "miscited": 0,
+          "unverified": 0,
+          "uncited": 0,
+          "alarms": 0,
+          "tokens": []
+        },
+        "before": {
+          "claims": 1,
+          "verified": 0,
+          "miscited": 0,
+          "unverified": 1,
+          "uncited": 0,
+          "alarms": 1,
+          "tokens": [
+            "4"
+          ]
+        }
+      },
+      {
+        "id": "bakeoff-strong-1",
+        "honest": true,
+        "class": "opening adjective",
+        "reconstructed": true,
+        "after": {
+          "claims": 1,
+          "verified": 1,
+          "miscited": 0,
+          "unverified": 0,
+          "uncited": 0,
+          "alarms": 0,
+          "tokens": []
+        },
+        "before": {
+          "claims": 1,
+          "verified": 0,
+          "miscited": 0,
+          "unverified": 1,
+          "uncited": 0,
+          "alarms": 1,
+          "tokens": [
+            "Strong"
+          ]
+        }
+      },
+      {
+        "id": "bakeoff-strong-2",
+        "honest": true,
+        "class": "opening adjective",
+        "reconstructed": true,
+        "after": {
+          "claims": 1,
+          "verified": 1,
+          "miscited": 0,
+          "unverified": 0,
+          "uncited": 0,
+          "alarms": 0,
+          "tokens": []
+        },
+        "before": {
+          "claims": 1,
+          "verified": 0,
+          "miscited": 0,
+          "unverified": 1,
+          "uncited": 0,
+          "alarms": 1,
+          "tokens": [
+            "Strong"
+          ]
+        }
+      },
+      {
+        "id": "bakeoff-strong-3",
+        "honest": true,
+        "class": "opening adjective",
+        "reconstructed": true,
+        "after": {
+          "claims": 1,
+          "verified": 1,
+          "miscited": 0,
+          "unverified": 0,
+          "uncited": 0,
+          "alarms": 0,
+          "tokens": []
+        },
+        "before": {
+          "claims": 1,
+          "verified": 0,
+          "miscited": 0,
+          "unverified": 1,
+          "uncited": 0,
+          "alarms": 1,
+          "tokens": [
+            "Strong"
+          ]
+        }
+      },
+      {
+        "id": "invented-gaps-minor-semicolon",
+        "honest": false,
+        "class": "claim inside a gap clause",
+        "reconstructed": false,
+        "after": {
+          "claims": 1,
+          "verified": 0,
+          "miscited": 0,
+          "unverified": 1,
+          "uncited": 0,
+          "alarms": 1,
+          "tokens": [
+            "Google"
+          ]
+        },
+        "before": {
+          "claims": 1,
+          "verified": 0,
+          "miscited": 0,
+          "unverified": 1,
+          "uncited": 0,
+          "alarms": 1,
+          "tokens": [
+            "Google"
+          ]
+        }
+      },
+      {
+        "id": "invented-gaps-minor-and",
+        "honest": false,
+        "class": "claim inside a gap clause",
+        "reconstructed": false,
+        "after": {
+          "claims": 1,
+          "verified": 0,
+          "miscited": 0,
+          "unverified": 1,
+          "uncited": 0,
+          "alarms": 1,
+          "tokens": [
+            "Google"
+          ]
+        },
+        "before": {
+          "claims": 0,
+          "verified": 0,
+          "miscited": 0,
+          "unverified": 0,
+          "uncited": 0,
+          "alarms": 0,
+          "tokens": []
+        }
+      },
+      {
+        "id": "invented-no-gaps",
+        "honest": false,
+        "class": "claim inside a gap clause",
+        "reconstructed": false,
+        "after": {
+          "claims": 1,
+          "verified": 0,
+          "miscited": 0,
+          "unverified": 1,
+          "uncited": 0,
+          "alarms": 1,
+          "tokens": [
+            "12",
+            "Oracle"
+          ]
+        },
+        "before": {
+          "claims": 1,
+          "verified": 0,
+          "miscited": 0,
+          "unverified": 1,
+          "uncited": 0,
+          "alarms": 1,
+          "tokens": [
+            "12",
+            "Oracle"
+          ]
+        }
+      },
+      {
+        "id": "invented-no-real-gaps",
+        "honest": false,
+        "class": "claim inside a gap clause",
+        "reconstructed": false,
+        "after": {
+          "claims": 1,
+          "verified": 0,
+          "miscited": 0,
+          "unverified": 1,
+          "uncited": 0,
+          "alarms": 1,
+          "tokens": [
+            "12",
+            "Oracle"
+          ]
+        },
+        "before": {
+          "claims": 0,
+          "verified": 0,
+          "miscited": 0,
+          "unverified": 0,
+          "uncited": 0,
+          "alarms": 0,
+          "tokens": []
+        }
+      },
+      {
+        "id": "invented-gaps-none",
+        "honest": false,
+        "class": "claim inside a gap clause",
+        "reconstructed": false,
+        "after": {
+          "claims": 1,
+          "verified": 0,
+          "miscited": 0,
+          "unverified": 1,
+          "uncited": 0,
+          "alarms": 1,
+          "tokens": [
+            "12",
+            "Oracle"
+          ]
+        },
+        "before": {
+          "claims": 1,
+          "verified": 0,
+          "miscited": 0,
+          "unverified": 1,
+          "uncited": 0,
+          "alarms": 1,
+          "tokens": [
+            "12",
+            "Oracle"
+          ]
+        }
+      },
+      {
+        "id": "invented-main-gap-colon",
+        "honest": false,
+        "class": "claim inside a gap clause",
+        "reconstructed": false,
+        "after": {
+          "claims": 1,
+          "verified": 0,
+          "miscited": 0,
+          "unverified": 1,
+          "uncited": 0,
+          "alarms": 1,
+          "tokens": [
+            "12",
+            "Oracle"
+          ]
+        },
+        "before": {
+          "claims": 0,
+          "verified": 0,
+          "miscited": 0,
+          "unverified": 0,
+          "uncited": 0,
+          "alarms": 0,
+          "tokens": []
+        }
+      },
+      {
+        "id": "invented-coordinated",
+        "honest": false,
+        "class": "claim inside a gap clause",
+        "reconstructed": false,
+        "after": {
+          "claims": 1,
+          "verified": 0,
+          "miscited": 0,
+          "unverified": 1,
+          "uncited": 0,
+          "alarms": 1,
+          "tokens": [
+            "12",
+            "Oracle"
+          ]
+        },
+        "before": {
+          "claims": 0,
+          "verified": 0,
+          "miscited": 0,
+          "unverified": 0,
+          "uncited": 0,
+          "alarms": 0,
+          "tokens": []
+        }
+      },
+      {
+        "id": "invented-tail-after-clause",
+        "honest": false,
+        "class": "claim inside a gap clause",
+        "reconstructed": false,
+        "after": {
+          "claims": 1,
+          "verified": 0,
+          "miscited": 0,
+          "unverified": 1,
+          "uncited": 0,
+          "alarms": 1,
+          "tokens": [
+            "12",
+            "Oracle"
+          ]
+        },
+        "before": {
+          "claims": 1,
+          "verified": 0,
+          "miscited": 0,
+          "unverified": 1,
+          "uncited": 0,
+          "alarms": 1,
+          "tokens": [
+            "12",
+            "Oracle",
+            "CPQ"
+          ]
+        }
+      },
+      {
+        "id": "invented-tail-object-pronoun",
+        "honest": false,
+        "class": "claim inside a gap clause",
+        "reconstructed": false,
+        "after": {
+          "claims": 1,
+          "verified": 0,
+          "miscited": 0,
+          "unverified": 1,
+          "uncited": 0,
+          "alarms": 1,
+          "tokens": [
+            "12",
+            "Oracle"
+          ]
+        },
+        "before": {
+          "claims": 1,
+          "verified": 0,
+          "miscited": 0,
+          "unverified": 1,
+          "uncited": 0,
+          "alarms": 1,
+          "tokens": [
+            "12",
+            "Oracle",
+            "CPQ"
+          ]
+        }
+      },
+      {
+        "id": "invented-not-a-gap",
+        "honest": false,
+        "class": "claim inside a gap clause",
+        "reconstructed": false,
+        "after": {
+          "claims": 1,
+          "verified": 0,
+          "miscited": 0,
+          "unverified": 1,
+          "uncited": 0,
+          "alarms": 1,
+          "tokens": [
+            "12",
+            "Oracle"
+          ]
+        },
+        "before": {
+          "claims": 1,
+          "verified": 0,
+          "miscited": 0,
+          "unverified": 1,
+          "uncited": 0,
+          "alarms": 1,
+          "tokens": [
+            "12",
+            "Oracle"
+          ]
+        }
+      },
+      {
+        "id": "invented-not-only",
+        "honest": false,
+        "class": "claim inside a gap clause",
+        "reconstructed": false,
+        "after": {
+          "claims": 1,
+          "verified": 0,
+          "miscited": 0,
+          "unverified": 1,
+          "uncited": 0,
+          "alarms": 1,
+          "tokens": [
+            "Google"
+          ]
+        },
+        "before": {
+          "claims": 0,
+          "verified": 0,
+          "miscited": 0,
+          "unverified": 0,
+          "uncited": 0,
+          "alarms": 0,
+          "tokens": []
+        }
+      },
+      {
+        "id": "invented-but",
+        "honest": false,
+        "class": "claim inside a gap clause",
+        "reconstructed": false,
+        "after": {
+          "claims": 1,
+          "verified": 0,
+          "miscited": 0,
+          "unverified": 1,
+          "uncited": 0,
+          "alarms": 1,
+          "tokens": [
+            "Google"
+          ]
+        },
+        "before": {
+          "claims": 1,
+          "verified": 0,
+          "miscited": 0,
+          "unverified": 1,
+          "uncited": 0,
+          "alarms": 1,
+          "tokens": [
+            "Google"
+          ]
+        }
+      },
+      {
+        "id": "invented-dash",
+        "honest": false,
+        "class": "claim inside a gap clause",
+        "reconstructed": false,
+        "after": {
+          "claims": 1,
+          "verified": 0,
+          "miscited": 0,
+          "unverified": 1,
+          "uncited": 0,
+          "alarms": 1,
+          "tokens": [
+            "12",
+            "Google"
+          ]
+        },
+        "before": {
+          "claims": 1,
+          "verified": 0,
+          "miscited": 0,
+          "unverified": 1,
+          "uncited": 0,
+          "alarms": 1,
+          "tokens": [
+            "12",
+            "Nothing",
+            "CPQ",
+            "Google"
+          ]
+        }
+      },
+      {
+        "id": "invented-bracket-and",
+        "honest": false,
+        "class": "claim inside a gap clause",
+        "reconstructed": false,
+        "after": {
+          "claims": 1,
+          "verified": 0,
+          "miscited": 0,
+          "unverified": 1,
+          "uncited": 0,
+          "alarms": 1,
+          "tokens": [
+            "Marketo",
+            "Oracle"
+          ]
+        },
+        "before": {
+          "claims": 1,
+          "verified": 0,
+          "miscited": 0,
+          "unverified": 1,
+          "uncited": 0,
+          "alarms": 1,
+          "tokens": [
+            "HubSpot",
+            "Marketo",
+            "Oracle"
+          ]
+        }
+      },
+      {
+        "id": "invented-closed-the-gaps",
+        "honest": false,
+        "class": "claim inside a gap clause",
+        "reconstructed": false,
+        "after": {
+          "claims": 1,
+          "verified": 0,
+          "miscited": 0,
+          "unverified": 1,
+          "uncited": 0,
+          "alarms": 1,
+          "tokens": [
+            "12",
+            "Oracle"
+          ]
+        },
+        "before": {
+          "claims": 1,
+          "verified": 0,
+          "miscited": 0,
+          "unverified": 1,
+          "uncited": 0,
+          "alarms": 1,
+          "tokens": [
+            "12",
+            "Oracle"
+          ]
+        }
+      },
+      {
+        "id": "invented-gap-list-item",
+        "honest": false,
+        "class": "claim inside a gap list",
+        "reconstructed": false,
+        "after": {
+          "claims": 1,
+          "verified": 0,
+          "miscited": 0,
+          "unverified": 1,
+          "uncited": 0,
+          "alarms": 1,
+          "tokens": [
+            "12",
+            "Google"
+          ]
+        },
+        "before": {
+          "claims": 2,
+          "verified": 0,
+          "miscited": 0,
+          "unverified": 2,
+          "uncited": 0,
+          "alarms": 2,
+          "tokens": [
+            "CPQ",
+            "Gong",
+            "12",
+            "Google"
+          ]
+        }
+      },
+      {
+        "id": "invented-denied-list",
+        "honest": false,
+        "class": "claim inside a gap list",
+        "reconstructed": false,
+        "after": {
+          "claims": 1,
+          "verified": 0,
+          "miscited": 0,
+          "unverified": 1,
+          "uncited": 0,
+          "alarms": 1,
+          "tokens": [
+            "12",
+            "Oracle"
+          ]
+        },
+        "before": {
+          "claims": 1,
+          "verified": 0,
+          "miscited": 0,
+          "unverified": 1,
+          "uncited": 0,
+          "alarms": 1,
+          "tokens": [
+            "12",
+            "Oracle"
+          ]
+        }
+      },
+      {
+        "id": "invented-opening-strong",
+        "honest": false,
+        "class": "name after an opening adjective",
+        "reconstructed": false,
+        "after": {
+          "claims": 1,
+          "verified": 0,
+          "miscited": 0,
+          "unverified": 1,
+          "uncited": 0,
+          "alarms": 1,
+          "tokens": [
+            "12",
+            "Oracle"
+          ]
+        },
+        "before": {
+          "claims": 1,
+          "verified": 0,
+          "miscited": 0,
+          "unverified": 1,
+          "uncited": 0,
+          "alarms": 1,
+          "tokens": [
+            "12",
+            "Strong",
+            "Oracle"
+          ]
+        }
+      },
+      {
+        "id": "invented-opening-name",
+        "honest": false,
+        "class": "name in first position",
+        "reconstructed": false,
+        "after": {
+          "claims": 1,
+          "verified": 0,
+          "miscited": 0,
+          "unverified": 1,
+          "uncited": 0,
+          "alarms": 1,
+          "tokens": [
+            "Google"
+          ]
+        },
+        "before": {
+          "claims": 1,
+          "verified": 0,
+          "miscited": 0,
+          "unverified": 1,
+          "uncited": 0,
+          "alarms": 1,
+          "tokens": [
+            "Google"
+          ]
+        }
+      },
+      {
+        "id": "invented-beside-gap",
+        "honest": false,
+        "class": "claim beside a gap clause",
+        "reconstructed": false,
+        "after": {
+          "claims": 1,
+          "verified": 0,
+          "miscited": 0,
+          "unverified": 1,
+          "uncited": 0,
+          "alarms": 1,
+          "tokens": [
+            "CPQ"
+          ]
+        },
+        "before": {
+          "claims": 1,
+          "verified": 0,
+          "miscited": 0,
+          "unverified": 1,
+          "uncited": 0,
+          "alarms": 1,
+          "tokens": [
+            "CPQ"
+          ]
+        }
+      }
+    ]
+  },
+  "live": []
+}

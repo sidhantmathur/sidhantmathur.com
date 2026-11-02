@@ -5,6 +5,7 @@ import {
   createUIMessageStreamResponse,
   tool,
   stepCountIs,
+  type JSONValue,
   type UIMessage,
 } from "ai";
 import { z } from "zod";
@@ -13,14 +14,26 @@ import { Redis } from "@upstash/redis";
 import { buildSystemPrompt } from "@/lib/system-prompt";
 import { looksLikeJobPosting, MAX_USER_TEXT, wrapPosting } from "@/lib/job-posting";
 import { looksLikeSiteQuestion } from "@/lib/site-question";
-import { reconcileRoleFit } from "@/lib/role-fit";
+import {
+  CONSISTENCY_GRACE_MS,
+  CONSISTENCY_HEARTBEAT_MS,
+  CONSISTENCY_SAMPLES,
+  addUsage,
+  extraUsage,
+  forModel,
+  mergeRoleFitSamples,
+  usageCeiling,
+} from "@/lib/consistency";
+import { startFitSamples, type FitSamples } from "@/lib/fit-samples";
 import { CHUNK_BY_ID } from "@/lib/chunks.generated";
 import {
+  SAMPLES_PART_ID,
   SIMULATABLE_CLASSES,
   TURN_FAILURES,
   TURN_PART_ID,
   classifyTurnError,
   type ChatUIMessage,
+  type SampleProgress,
   type TurnErrorClass,
   type TurnTelemetry,
 } from "@/lib/chat-telemetry";
@@ -31,6 +44,8 @@ import {
   DEFAULT_MODEL,
   HOURLY_LIMIT,
   MAX_USER_MESSAGES,
+  maxOutputTokensFor,
+  providerOptionsFor,
   reasoningFor,
   type ModelId,
 } from "@/lib/models";
@@ -159,20 +174,8 @@ function jsonError(error: TurnErrorClass, status: number): Response {
   });
 }
 
-// --- Per-turn output ceiling ---------------------------------------------
-//
-// 600 tokens suits a conversational answer. A job-posting turn has to fit an
-// extraction, a whole `roleFit` object and the sentence after it, and a turn
-// truncated mid-tool-call loses the tool call entirely.
-//
-// The posting ceiling comes from measurement: a reasoning model spends the
-// per-step budget on reasoning before it emits the tool call. At 1000,
-// `openai/gpt-5-mini` finished three of five postings on
-// `finishReason: "length"` with nothing to show; at 2500 it spent 2,496 tokens
-// reasoning on the extraction step alone and emitted nothing. It's a ceiling,
-// not a target: non-reasoning models still answer in about 500.
-const MAX_OUTPUT_TOKENS = 600;
-const MAX_OUTPUT_TOKENS_JD = 4000;
+// The per-step output ceiling lives in lib/models.ts (DEFAULT_MAX_OUTPUT_TOKENS
+// and maxOutputTokensFor) since 2026-11-02, so a catalogue row can raise it.
 
 /**
  * Rewrites the last user message so the posting arrives fenced and re-asserted.
@@ -275,10 +278,24 @@ const rowSchema = z.array(
   ]),
 );
 
+/**
+ * One request's extra assessments of its posting (lib/consistency.ts). Started
+ * beside the judging step, awaited by `roleFit`, costed when the turn closes.
+ * Stays empty on any turn that isn't a pasted posting.
+ */
+type Consensus = {
+  samples: FitSamples | null;
+  /** How many assessments the table was merged from, once it was. */
+  merged: number | null;
+  /** Writes the progress part. Wired to the stream once the stream exists. */
+  report: (progress: SampleProgress) => void;
+};
+
 // Built per request because the judging tool has to see what the extracting
 // tool produced. `extraction` is that hand-off: one request's requirement list,
-// closed over by both tools and never shared between requests.
-function buildChatTools(extraction: { requirements: string[] }) {
+// closed over by both tools and never shared between requests. `consensus` is
+// the same for the extra assessments.
+function buildChatTools(extraction: { requirements: string[] }, consensus: Consensus) {
   return {
     // The model only picks the slug; all card copy comes from
     // content/projects.ts, never from the model.
@@ -358,6 +375,12 @@ function buildChatTools(extraction: { requirements: string[] }) {
     // call skipped, downgrades any positive verdict that cites nothing valid,
     // runs the claim checker in lib/verify.ts over each row's evidence, and
     // refuses an assessment that has unmet rows and no gaps.
+    //
+    // On a pasted posting this call is one of CONSISTENCY_SAMPLES assessments
+    // of the same extracted list, and the table is their per-row consensus
+    // (lib/consistency.ts), reconciled the same way. It is returned as this
+    // call's result, so the sentences the model writes next read the table
+    // the reader sees, not the call it made.
     roleFit: tool({
       description:
         "Show a structured, per-requirement assessment of Sidhant against a role — a pasted job posting, or a role the user names (e.g. GTM engineer, solutions engineer, RevOps). One row per requirement, each with a verdict and, where it claims a fit, the chunk ids it stands on.",
@@ -412,8 +435,27 @@ function buildChatTools(extraction: { requirements: string[] }) {
       }),
       // The model's object goes in; what the site is prepared to render comes
       // out. `extraction.requirements` is empty on a turn that was a question
-      // rather than a posting, which is exactly when coverage doesn't apply.
-      execute: async (raw) => reconcileRoleFit(raw, extraction.requirements, CHUNK_BY_ID),
+      // rather than a posting, which is exactly when coverage doesn't apply,
+      // and no other assessment was started. With one assessment the merge is
+      // `reconcileRoleFit` exactly.
+      execute: async (raw) => {
+        const samples = consensus.samples;
+        const others = samples
+          ? await samples.collect({
+              graceMs: CONSISTENCY_GRACE_MS,
+              heartbeatMs: CONSISTENCY_HEARTBEAT_MS,
+              onProgress: (settled) =>
+                consensus.report({ done: 1 + settled, of: 1 + samples.count }),
+            })
+          : [];
+        const assessments = [raw, ...others.flatMap((o) => (o.input ? [o.input] : []))];
+        consensus.merged = assessments.length;
+        return mergeRoleFitSamples(assessments, extraction.requirements, CHUNK_BY_ID);
+      },
+      // The vote counts are for the reader. The model writing the summary
+      // reads the merged table without them (identical to the default output
+      // when there was one assessment).
+      toModelOutput: ({ output }) => ({ type: "json", value: forModel(output) as JSONValue }),
     }),
 
     // The fixed footer links. Contact goes through email and social here; the
@@ -617,9 +659,11 @@ export async function POST(req: Request): Promise<Response> {
   // across requests for the prompt cache to hit.
   const outgoing = jobPosting ? messages.map(hardenPosting(messages)) : messages;
 
-  // This request's extraction, closed over by both job-description tools.
+  // This request's extraction, closed over by both job-description tools, and
+  // the extra assessments of it.
   const extraction = { requirements: [] as string[] };
-  const chatTools = buildChatTools(extraction);
+  const consensus: Consensus = { samples: null, merged: null, report: () => {} };
+  const chatTools = buildChatTools(extraction, consensus);
 
   const startedAt = Date.now();
 
@@ -657,6 +701,10 @@ export async function POST(req: Request): Promise<Response> {
       // must carry what was true when it was written, and `telemetry` is
       // mutated in place for the rest of this function.
       writer.write({ type: "data-turn", id: TURN_PART_ID, data: { ...telemetry } });
+      // While `roleFit` waits for the other assessments, the stream carries
+      // their count and nothing else (lib/turn-phase.ts reads it).
+      consensus.report = (progress) =>
+        writer.write({ type: "data-samples", id: SAMPLES_PART_ID, data: { ...progress } });
 
       const result = streamText({
         model, // resolved from the catalogue, never the raw client string
@@ -664,10 +712,14 @@ export async function POST(req: Request): Promise<Response> {
         // stall watchdog all abort the request. Without this the model would
         // keep generating, and billing, into a socket nobody reads.
         abortSignal: req.signal,
-        maxOutputTokens: jobPosting ? MAX_OUTPUT_TOKENS_JD : MAX_OUTPUT_TOKENS,
+        // Per model and kind of turn, from the catalogue, like `reasoning`.
+        maxOutputTokens: maxOutputTokensFor(model, { jobPosting }),
         // Per model and kind of turn, from the catalogue. Undefined sends
         // nothing and leaves the provider on its default.
         reasoning: reasoningFor(model, { jobPosting }),
+        // Which Gateway providers may serve this model, from the catalogue.
+        // Undefined sends nothing and leaves routing to the Gateway.
+        providerOptions: providerOptionsFor(model),
         tools: chatTools,
         // The SDK's default, stepCountIs(1), ends the stream at the tool call
         // before the model can answer, and a tool card is a visual aid, not a
@@ -680,11 +732,24 @@ export async function POST(req: Request): Promise<Response> {
         // applies to every step and the model calls the tool again instead of
         // writing the sentence after it. Other turns keep the default, `auto`.
         prepareStep: jobPosting
-          ? ({ stepNumber }) => {
+          ? ({ stepNumber, messages: stepMessages }) => {
               if (stepNumber === 0) {
                 return { toolChoice: { type: "tool", toolName: "extractRequirements" } };
               }
               if (stepNumber === 1) {
+                // The other assessments start now, beside this one, from the
+                // prompt it is about to be sent (lib/fit-samples.ts). Without
+                // an extraction there is nothing to line them up against.
+                if (extraction.requirements.length) {
+                  consensus.samples ??= startFitSamples({
+                    count: CONSISTENCY_SAMPLES - 1,
+                    model,
+                    messages: stepMessages,
+                    tools: chatTools,
+                    maxOutputTokens: maxOutputTokensFor(model, { jobPosting: true }),
+                    abortSignal: req.signal,
+                  });
+                }
                 return { toolChoice: { type: "tool", toolName: "roleFit" } };
               }
               return { toolChoice: "none" };
@@ -745,6 +810,30 @@ export async function POST(req: Request): Promise<Response> {
         telemetry.toolsCalled = steps.flatMap((s) => s.toolCalls.map((c) => c.toolName));
         telemetry.finishReason = finishReason;
 
+        // The extra assessments bill like any other call, so the turn's usage
+        // carries them and the cost meter can't read low. One that never
+        // reported is counted at its ceiling. Tokens per second above stays
+        // the reader's stream only.
+        if (consensus.samples) {
+          const outcomes = consensus.samples.finish();
+          const extra = extraUsage(
+            outcomes.map((o) => o.usage),
+            usageCeiling(
+              steps[1]?.usage.inputTokens ?? usage.inputTokens ?? null,
+              maxOutputTokensFor(model, { jobPosting: true }),
+              MODELS[model],
+            ),
+          );
+          telemetry.usage = addUsage(telemetry.usage, extra.usage);
+          telemetry.consistency = {
+            requested: 1 + consensus.samples.count,
+            merged: consensus.merged,
+            extraUsage: extra.usage,
+            estimated: extra.estimated,
+            sampleMs: outcomes.map((o) => o.ms),
+          };
+        }
+
         // A turn that finished and said nothing: usually a reasoning model that
         // spent the whole ceiling thinking and stopped on "length". It billed
         // tokens and produced no answer, so its record says so rather than
@@ -764,6 +853,8 @@ export async function POST(req: Request): Promise<Response> {
         // This adds the class, so the client can tell a timeout from a
         // misconfiguration.
         console.error("[chat] turn failed", err);
+        // Nothing will read the other assessments now, so they stop billing.
+        consensus.samples?.finish();
         telemetry.error = {
           class: classifyTurnError(err),
           detail: err instanceof Error ? err.name : "error",

@@ -14,7 +14,7 @@
 
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 
 import { MAX_USER_MESSAGES } from "../lib/models.ts";
 import { TURN_FAILURES, isRetryableClass } from "../lib/chat-telemetry.ts";
@@ -23,7 +23,17 @@ const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), "utf
 const flat = (path) => read(path).replace(/\s+/g, " ");
 
 const hook = flat("components/shell/use-conversation.ts");
+// The shell was one file until the 2026-11-02 split (docs/app-shell-split.md).
+// AppShell keeps the wiring; each region is its own file beside it.
 const shell = flat("components/shell/app-shell.tsx");
+const statusStrip = flat("components/shell/status-strip.tsx");
+const conversationBar = flat("components/shell/conversation-bar.tsx");
+const frontDoor = flat("components/shell/front-door.tsx");
+const transcript = flat("components/shell/transcript-view.tsx");
+const allShell = readdirSync(new URL("../components/shell/", import.meta.url))
+  .filter((f) => f.endsWith(".tsx"))
+  .map((f) => flat(`components/shell/${f}`))
+  .join(" ");
 const history = flat("components/shell/conversation-history.ts");
 
 describe("a reload lands on the front door", () => {
@@ -61,23 +71,28 @@ describe("leaving keeps the conversation", () => {
 
 describe("the way out is visible", () => {
   test("the name goes to the front door rather than linking to the same page", () => {
-    assert.match(shell, /<Link href="\/" onClick=\{\(e\) => \{[^}]*e\.preventDefault\(\); goHome\(\);/);
+    assert.match(statusStrip, /<Link href="\/" onClick=\{\(e\) => \{[^}]*e\.preventDefault\(\); onHome\(\);/);
+    const strip = shell.slice(shell.indexOf("<StatusStrip"));
+    assert.ok(strip.slice(0, strip.indexOf("/>")).includes("onHome={goHome}"), "the header's name isn't wired to goHome");
   });
 
   test("a conversation has a labelled Home button at the top", () => {
-    const bar = shell.slice(shell.indexOf("Conversation bar"));
-    assert.ok(bar.indexOf("onClick={goHome}") > -1, "the conversation bar has no Home button");
+    const bar = conversationBar.slice(conversationBar.indexOf("Conversation bar"));
+    assert.ok(bar.indexOf("onClick={onHome}") > -1, "the conversation bar has no Home button");
     assert.ok(bar.indexOf("{HOME_LABEL}") > -1, "the Home button has no visible label");
+    assert.match(shell, /\{hasMessages && <ConversationBar onHome=\{goHome\}/);
   });
 
   test("the strip no longer carries reset", () => {
-    assert.doesNotMatch(shell, /label="reset"/);
+    assert.doesNotMatch(allShell, /label="reset"/);
   });
 
   test("the front door offers the saved conversation and a way to clear it", () => {
     assert.match(shell, /\{!hasMessages && saved && \(/);
-    assert.match(shell, /onClick=\{continueSaved\}/);
-    assert.match(shell, /onClick=\{clearSaved\}/);
+    assert.match(shell, /onContinue=\{continueSaved\}/);
+    assert.match(shell, /onClear=\{clearSaved\}/);
+    assert.match(frontDoor, /onClick=\{onContinue\}/);
+    assert.match(frontDoor, /onClick=\{onClear\}/);
   });
 });
 
@@ -89,7 +104,7 @@ describe("Back moves across the front door", () => {
   test("every way of asking goes through ask", () => {
     // A direct submit would start a conversation with no entry behind it, and
     // Back from it would leave the site again.
-    const direct = shell.match(/(?<![.\w])submit\(/g) ?? [];
+    const direct = allShell.match(/(?<![.\w])submit\(/g) ?? [];
     assert.equal(direct.length, 1, "submit is called somewhere other than ask");
   });
 
@@ -123,8 +138,8 @@ describe("the conversation cap is not the hourly budget", () => {
   });
 
   test("the full state names the cap the route enforces", () => {
-    assert.match(shell, /That's \$\{MAX_USER_MESSAGES\} questions/);
+    assert.match(transcript, /That's \$\{MAX_USER_MESSAGES\} questions/);
     assert.ok(MAX_USER_MESSAGES > 0);
-    assert.match(shell, /\{full && !isBusy && \(/);
+    assert.match(transcript, /\{full && !isBusy && \(/);
   });
 });

@@ -10,7 +10,13 @@
 //
 // Sentences with no numbers and no proper nouns ("he likes owning the result")
 // have nothing to check against: they are not claims here, and are never
-// counted, flagged or marked.
+// counted, flagged or marked. Nor is the part of a sentence that names what the
+// record lacks ("the main gaps are CPQ and Gong"): those names are absent by
+// design.
+//
+// It cannot see scope. "Built" for a tool he inherited, or "the systems" for
+// one app, uses the same names and numbers as the true sentence and verifies.
+// evals/grader/ measures that with a model, at eval time, never per request.
 //
 // The caller passes the chunks in, so `node --test` can exercise this against
 // a hand-written fixture rather than the generated corpus.
@@ -172,10 +178,11 @@ export function checkClaim(
   text: string,
   cited: string[],
   lookup: Record<string, VerifiableChunk>,
+  options: TokenOptions = {},
 ): ClaimCheck {
   const ids = cited.filter((id) => lookup[id]);
   const unknownIds = cited.filter((id) => !lookup[id]);
-  const tokens = checkableTokens(text);
+  const tokens = checkableTokens(text, lookup, options);
 
   if (!ids.length) {
     return {
@@ -255,34 +262,243 @@ const STOPWORDS = new Set(
     .filter(Boolean),
 );
 
+/**
+ * Common English words, in base form (`baseForms` undoes inflections). Used
+ * for one decision: whether a capital the sentence's position explains
+ * ("Strong SQL…") is also a name. Words that double as products or companies a
+ * posting could name (power, teams, spark, outreach, slack, notion, looker,
+ * square, mode, segment…) are left out on purpose, so they stay checkable.
+ */
+const COMMON_WORDS = new Set(
+  `all any every many much several little less least lot lots none nothing
+   nobody everything everyone everybody something someone somebody anything
+   anyone anybody another others whatever whichever whoever wherever whenever
+   thus hence therefore otherwise rather quite really almost nearly roughly
+   approximately around above below beneath behind beside besides along
+   alongside among against toward towards upon within off out up down away
+   back through past near far outside inside except unless once whereas
+   whilst myself himself herself itself ourselves themselves yourself yours
+   ours theirs mine else ever never always often sometimes usually rarely
+   seldom already soon now tomorrow yesterday tonight ago afterward afterwards
+   moreover furthermore nonetheless nevertheless regardless accordingly
+   consequently indeed anyway anyhow likewise alternatively conversely namely
+   respectively perhaps maybe possibly probably likely unlikely certainly
+   definitely surely clearly obviously apparently evidently presumably
+   arguably admittedly honest frank candid simple mere further altogether
+   entire full part partial large most main mainly primary chief especial
+   particular notable significant substantial considerable slight somewhat fair
+   pretty enough okay absolute exact precise direct indirect apart alone
+   able actual additional adjacent advanced aggressive ample analytical annual
+   applicable appropriate available average aware bad basic big bold brief broad
+   busy capable careful central certain cheap clean clear close common
+   comparable competitive complete complex comprehensive concrete confident
+   consistent constant core correct credible critical crucial current daily
+   dedicated deep demonstrable demonstrate dense detail different difficult
+   distinct early easy effective efficient empty essential excellent existing
+   expected experience explicit extensive external extra familiar fast fine firm
+   final financial flat flexible focus foreign formal former frequent fresh
+   functional fundamental future general genuine global good great half hand
+   hard heavy high huge ideal immediate important impressive independent
+   individual informal initial inner intense interesting internal junior key
+   late lateral lean legitimate light limited local long loose low major manual
+   material mature meaningful measurable medium mid middle minimal minor missing
+   mixed modest monthly moderate multiple narrow natural near necessary negative
+   net new nice nominal normal noticeable numerous obvious occasional official
+   old open operational optional ordinary original outer own perfect personal
+   plain plausible poor positive possible potential practical prefer present
+   previous prior private probable productive professional proficient prominent
+   proper proven public quarterly quick quiet rapid rare raw ready real
+   realistic reasonable recent regional regular related relative relevant
+   reliable remaining remote repeated required responsible rich right rigorous
+   robust rough routine safe scalable scarce secondary secure senior separate
+   serious sharp short similar single slow small smart solid sound special
+   specific stable standard steady strategic strict strong structured
+   successful sufficient suitable super supportive technical temporary thin
+   thorough tight top total tough traditional transferable true typical
+   ultimate unclear uncommon unique unknown unmet unrelated unusual upper urgent
+   useful usual valid valuable various vast verified visible vital weak weekly
+   whole wide worse worst wrong yearly young better best lower higher greater
+   larger smaller bigger fewer
+   ability access account accuracy action activity adoption advantage
+   alignment analysis analyst analytics answer approach area aspect assessment
+   assumption attention audience automation background balance base basis
+   benefit budget business call candidate capability capacity career case cause
+   caveat certification chance change choice claim client code collaboration
+   combination comfort commitment communication company comparison competence
+   concern condition confidence connection context contribution control cost
+   coverage credit criteria culture customer cycle dashboard data date deadline
+   deal decision degree delivery demand depth design development difference
+   direction discussion domain draft effort emphasis end engagement engineering
+   evidence example execution exercise expertise exposure extent fact factor
+   feature feedback field figure finance fit forecast form foundation framework
+   function gap goal governance ground group growth guess headcount help
+   highlight history hour idea impact implementation importance improvement
+   increase industry information infrastructure input insight instance
+   integration intent interest interview issue item job judgment kind
+   knowledge lack language leader leadership learning level life limit line
+   list logic loop maintenance management manager market marketing match matter
+   means measure method metric migration mind minute model moment month name
+   nature need network number objective operation ops opportunity option order
+   organization outcome output overview owner ownership pace partner pattern
+   people percent performance period person perspective phase picture piece
+   pipeline place plan platform point policy portion position practice
+   preference presence pressure priority problem process product production
+   profile program progress project proof proposal purpose quality quarter
+   question range rate reason record reference region relationship report
+   request requirement research resource response responsibility rest result
+   revenue review risk role rollout room round rule sale sales scale scenario
+   schedule scope score section sense sequence service set setup share side
+   sign signal situation size skill solution source space speed stack stage
+   stakeholder start state statement step story strategy strength structure
+   style subject success summary supply support system table takeaway target
+   task technology tenure term test thing time title tool tooling topic
+   track training transition trend trust type understanding unit update usage
+   use user value variety verdict version view volume way weakness week weight
+   work workflow world year day decade morning evening night summer winter
+   hundred thousand million billion dozen twice double triple
+   accept achieve add address adjust adopt aim align allow analyze appear apply
+   argue arrive assess assume attend avoid become begin believe belong bring
+   build calculate carry catch check choose clarify collect combine compare
+   compile connect consider consolidate contain continue contribute convert
+   coordinate cover create cut decide define deliver depend deploy describe
+   determine develop differ document drive earn eliminate enable ensure
+   establish estimate evaluate exceed expand expect explain extend face fail
+   fall fill find finish fix flag follow gain gather get give go grow handle
+   happen hire hold identify implement improve include indicate inherit involve
+   join know land launch lead learn leave lift live lose maintain make manage
+   map mean meet merge migrate mention miss move offer operate pass pay perform
+   pick play prepare prevent prioritize produce prove provide publish pull push
+   put raise reach read receive reduce refer reflect relate release rely remain
+   remove replace represent require resolve respond return run save say seem
+   sell send serve settle shape ship show sit solve speak spend stand stay stop
+   streamline suggest suit suppose talk teach tell tend train transfer
+   translate treat try turn understand validate verify wait walk watch win
+   write yield
+   built ran led made gave given went gone took taken came saw seen said told
+   knew known found held kept left lost met paid sent shown sold spent stood
+   taught thought understood won wrote written brought bought began begun became
+   chose chosen drew drawn drove driven fell fallen felt grew grown meant rose
+   risen sat spoke spoken struck threw thrown broke broken caught dealt fought
+   hid hit hung laid lent lit quit rode rang sang sank slid split spread stuck
+   swept swung tore`
+    .split(/\s+/)
+    .filter(Boolean),
+);
+
+/** Inflections `baseForms` undoes: [suffix, what replaces it]. */
+const INFLECTIONS: [string, string][] = [
+  ["ies", "y"], ["ied", "y"], ["iest", "y"], ["ily", "y"], ["ally", ""],
+  ["es", ""], ["s", ""], ["ed", ""], ["ing", ""], ["ly", ""], ["est", ""],
+];
+
+/** Candidate base forms: "matches" → match, "shipped" → ship, "used" → use. */
+function baseForms(word: string): string[] {
+  const out: string[] = [];
+  for (const [suffix, replacement] of INFLECTIONS) {
+    if (!word.endsWith(suffix)) continue;
+    const stem = word.slice(0, -suffix.length);
+    if (stem.length < 3) continue;
+    out.push(stem + replacement);
+    if (replacement) continue;
+    out.push(`${stem}e`);
+    if (/([b-df-hj-np-tv-z])\1$/.test(stem)) out.push(stem.slice(0, -1));
+  }
+  return out;
+}
+
+function inVocabulary(word: string, vocabulary: Set<string>): boolean {
+  return vocabulary.has(word) || baseForms(word).some((form) => vocabulary.has(form));
+}
+
 /** Digit runs: `2,100`, `4.96`, `20,000`, `2024`. */
 const NUMBER = /\d[\d,]*(?:\.\d+)?/g;
 
 /** Capitalized words, keeping internal punctuation: `Power`, `B.S.`, `OXXO`. */
 const NAME = /\b[A-Z][A-Za-z0-9&.'’/-]*/g;
 
-/**
- * A clause that says what the record does not contain ("the key gaps are CPQ
- * and lead routing"). Every name in it is correctly absent from the corpus, so
- * checking it would mark a candid sentence as invented. An absence has nothing
- * to point at, the same reason an unmet row cites nothing.
- */
-const ABSENCE = new RegExp(
-  [
-    String.raw`\b(?:does|did|do|has|have|had)(?:n['’]t| not)\b[^;]*?\b(?:show|establish|demonstrate|evidence|mention|include|cover|indicate|name|list|record)\w*`,
-    String.raw`\b(?:hasn['’]t|haven['’]t|has not|have not)\s+(?:demonstrated|shown|done|worked|held|owned|used)\b`,
-    String.raw`\b(?:key|main|central|core|biggest|remaining|other|real|clear)\s+gaps?\b`,
-    String.raw`\bgaps?\s+(?:are|is|include|includes|would be)\b`,
-    String.raw`\b(?:outside|beyond|not in|absent from|missing from)\s+(?:the|his)\s+record\b`,
-    String.raw`\bno\s+(?:evidence|record|sign)\s+of\b`,
-    String.raw`\bthe ramp would be\b`,
-    String.raw`^\s*(?:but\s+)?not\b`,
-  ].join("|"),
-  "i",
-);
+/** Every word, capitalized or not, in the same alphabet as NAME. */
+const WORD = /[A-Za-z0-9][A-Za-z0-9&.'’/-]*/g;
 
-/** Splits a sentence at the joints where a gap clause usually starts. */
-const CLAUSE = /;|\s[—–]\s|,?\s+but\s+|,?\s+while\s+/i;
+/** What sits between two words when the second starts a sentence or label. */
+const OPENING = /\n|[.!?:]["'”’)\]]*\s|\s[—–·|]\s/;
+
+/**
+ * Where a capital letter is explained by position: the first word of the
+ * text, of a line, of a sentence the splitter left joined, after a colon, or
+ * after a spaced dash. A list numeral ("1.") is markup, not the first word.
+ */
+function openingWords(text: string): Set<number> {
+  const starts = new Set<number>();
+  let previousEnd = 0;
+  let opening = true;
+  for (const match of text.matchAll(WORD)) {
+    const word = match[0].replace(/[.'’/-]+$/, "");
+    const index = match.index;
+    const isOpening: boolean = opening || OPENING.test(text.slice(previousEnd, index));
+    if (isOpening) starts.add(index);
+    opening =
+      isOpening && /^\d+$/.test(word) && /^[.)]\s/.test(text.slice(index + word.length));
+    previousEnd = index + word.length;
+  }
+  return starts;
+}
+
+/**
+ * What the record itself says about a word's case: `names` were written
+ * capitalized somewhere a capital isn't explained by position ("built on
+ * Glean"), `lower` were written lowercase (with their base forms). Only the
+ * record counts: the site's source capitalizes identifiers, which says nothing
+ * about English.
+ */
+type CaseEvidence = { names: Set<string>; lower: Set<string> };
+
+const CASE_EVIDENCE = new WeakMap<Record<string, VerifiableChunk>, CaseEvidence>();
+
+function caseEvidence(lookup: Record<string, VerifiableChunk>): CaseEvidence {
+  const cached = CASE_EVIDENCE.get(lookup);
+  if (cached) return cached;
+  const names = new Set<string>();
+  const lower = new Set<string>();
+  for (const chunk of Object.values(lookup)) {
+    if (corpusOf(chunk.id) === "repo") continue;
+    const text = plain(chunk.text);
+    const opening = openingWords(text);
+    for (const match of text.matchAll(WORD)) {
+      const parts = match[0].replace(/[.,;:!?'’]+$/, "").split(/[/-]/);
+      parts.forEach((part, i) => {
+        const key = normalize(part);
+        if (!key) return;
+        if (/^[a-z]/.test(part)) {
+          lower.add(key);
+          for (const form of baseForms(key)) lower.add(form);
+        } else if (/^[A-Z]/.test(part) && !(i === 0 && opening.has(match.index))) {
+          names.add(key);
+        }
+      });
+    }
+  }
+  const evidence = { names, lower };
+  CASE_EVIDENCE.set(lookup, evidence);
+  return evidence;
+}
+
+/**
+ * Is a capitalized word at the start of a sentence a name, or just the start
+ * of the sentence? A name when its shape says so (CPQ, TypeScript, B2B, B.S.),
+ * when the record writes it capitalized mid-sentence, or when nothing marks it
+ * as an ordinary word. It is ordinary when it is a common English word or the
+ * record writes it lowercase. The default is "name" on purpose: "Google hired
+ * him" must still be checked, so an unknown word is a name until shown not to
+ * be.
+ */
+function readsAsName(word: string, evidence?: CaseEvidence): boolean {
+  if (/[A-Z].*[A-Z]|\d|[.&]/.test(word)) return true;
+  const key = normalize(word);
+  if (evidence?.names.has(key)) return true;
+  if (inVocabulary(key, COMMON_WORDS)) return false;
+  if (evidence && inVocabulary(key, evidence.lower)) return false;
+  return true;
+}
 
 /** Lowercases, drops apostrophes, and closes up thousands separators. */
 function normalize(text: string): string {
@@ -299,37 +515,288 @@ function plain(sentence: string): string {
     .replace(/[`*_]/g, "");
 }
 
+// --- Absences -------------------------------------------------------------
+//
+// A sentence that says what the record lacks ("the key gaps are CPQ and lead
+// routing") names things correctly absent from every chunk, so checking them
+// marks a candid sentence as invented. The checker finds what each absence is
+// about (its object) and checks the rest of the sentence.
+//
+// The object is kept as small as the grammar allows, because nothing inside it
+// is checked. It ends at a clause joint (;, a colon, a spaced dash, "but") and
+// where a clause about him starts again ("…, and he led…"). A denied gap ("no
+// gaps:", "isn't a gap") is a claim of coverage, not an absence.
+
+/** What "the record" is called in an answer. */
+const RECORD_NOUN = String.raw`(?:record|page|resume|corpus|knowledge\s+base)\b`;
+
+/** Joints inside a sentence where one assertion ends and another can begin. */
+const JOINT = new RegExp(
+  [
+    ";",
+    String.raw`:\s`,
+    // A full stop the sentence splitter left in ("none. 12 years…"), but not
+    // the one in an abbreviation ("B.S. in").
+    String.raw`(?<!\b[a-z])[.!?]\s`,
+    String.raw`\s[—–]\s`,
+    String.raw`,?\s+(?:but|while)\s+`,
+    String.raw`,\s+(?:although|though|whereas)\s+`,
+    String.raw`(?:,\s*|\s+)(?:and|or|so|plus)\s+(?=(?:he|she|it|they|sidhant)\b)`,
+    String.raw`,\s*(?:and|so|plus)\s+(?=his\b(?!\s+${RECORD_NOUN}))`,
+  ].join("|"),
+  "gi",
+);
+
+type Segment = { start: number; end: number; afterColon: boolean };
+
+function segmentsOf(text: string): Segment[] {
+  const segments: Segment[] = [];
+  let start = 0;
+  let afterColon = false;
+  for (const joint of text.matchAll(JOINT)) {
+    segments.push({ start, end: joint.index, afterColon });
+    start = joint.index + joint[0].length;
+    afterColon = joint[0].startsWith(":");
+  }
+  segments.push({ start, end: text.length, afterColon });
+  return segments;
+}
+
+const QUALIFIER = String.raw`(?:key|main|central|core|biggest|big|largest|major|real|clear|obvious|notable|significant|primary|principal|chief|remaining|other|open|outstanding|only|one|two|three|another)`;
+const GAP = String.raw`(?:gaps?|unknowns?)`;
+const LINK = String.raw`(?:\s+(?:are|is|include|includes|would\s+be|remains?))?`;
+const NEGATION = String.raw`(?:(?:does|did|do|has|have|had)(?:n['’]t|\s+not|\s+never)|never)`;
+const NOT_ONLY = String.raw`(?!\s+(?:only|just|merely|simply)\b)`;
+const RECORD_VERB = String.raw`(?:show(?:s|n|ed|ing)?|establish(?:es|ed|ing)?|demonstrat(?:e|es|ed|ing)|evidenc(?:e|es|ed|ing)|mention(?:s|ed|ing)?|includ(?:e|es|ed|ing)|cover(?:s|ed|ing)?|indicat(?:e|es|ed|ing)|name(?:s|d)?|list(?:s|ed|ing)?|record(?:s|ed)?|document(?:s|ed)?|referenc(?:e|es|ed)|touch(?:es|ed)?|state(?:s|d)?|specif(?:y|ies|ied)|describ(?:e|es|ed)|support(?:s|ed)?|contain(?:s|ed)?|says?|said|cite(?:s|d)?|have|has|had|holds?|held|own(?:s|ed)?|possess(?:es|ed)?|use(?:s|d)?|runs?|ran|operat(?:e|es|ed)|manag(?:e|es|ed)|leads?|led|buil(?:t|d|ds)|administer(?:s|ed)?|configur(?:e|es|ed)|handl(?:e|es|ed)|work(?:s|ed)?|match(?:es|ed)?|meets?|met|fits?)`;
+const RECORD = String.raw`(?:the|his|this)\s+${RECORD_NOUN}`;
+const BE = String.raw`(?:is|are|was|were|remains?|stays?)`;
+const ADVERB = String.raw`(?:\s+(?:also|still|both|entirely|currently|clearly))?`;
+
+type Lead = { pattern: RegExp; deniable?: boolean };
+
+/** The object follows: "the record does not show [CPQ or Gong]". */
+const LEADS: Lead[] = [
+  { pattern: new RegExp(String.raw`\b${NEGATION}\b${NOT_ONLY}(?:\s+[\w'’-]+){0,3}?\s+${RECORD_VERB}\b`, "gi") },
+  { pattern: new RegExp(String.raw`\b${QUALIFIER}\s+${GAP}\b${LINK}`, "gi"), deniable: true },
+  { pattern: new RegExp(String.raw`\b${GAP}\s+(?:are|is|include|includes|would\s+be|remain)\b`, "gi"), deniable: true },
+  // A gap word ending its clause: "Gaps: …" labels what follows the colon.
+  { pattern: new RegExp(String.raw`\b${GAP}\s*$`, "gi"), deniable: true },
+  { pattern: /\bno\s+(?:evidence|record|sign|mention|indication|trace)\s+of\b/gi },
+  { pattern: /\bno\s+(?:documented|recorded|listed|explicit|stated|demonstrated|evidenced|hands-on)\b/gi },
+  { pattern: /\bthere(?:['’]s|\s+is|\s+are)\s+no\b(?!\s+(?:doubt|question)\b)/gi },
+  { pattern: /\b(?:is|are)(?:n['’]t|\s+not)\s+any\b/gi },
+  { pattern: /\bnothing\s+(?:touching|on|about|covering|involving|related\s+to|that\s+(?:touches|covers|shows|mentions))\b/gi },
+  { pattern: /\b(?:is\s+silent\s+on|says\s+nothing\s+(?:about|on)|lacks|lacking)\b/gi },
+  { pattern: /\bwhat(?:['’]s|\s+is)\s+missing\b/gi },
+  { pattern: new RegExp(String.raw`\b(?:outside|beyond|absent\s+from|missing\s+from|not\s+(?:in|on))\s+${RECORD}\b`, "gi") },
+  { pattern: /\bthe\s+ramp\s+would\s+be\b/gi },
+  // At the start of a clause only: "…, but not Workato" and "Not Kubernetes."
+  // count; "not only did he…" doesn't.
+  { pattern: /^\s*not\b(?!\s+(?:only|just|merely|simply)\b)/gi },
+];
+
+/** The object comes first: "[Spark, Ray and Beam] are gaps". */
+const TAILS: RegExp[] = [
+  new RegExp(String.raw`\b${BE}${ADVERB}\s+(?:(?:a|an|the)\s+)?(?:${QUALIFIER}\s+)?${GAP}\b`, "gi"),
+  new RegExp(String.raw`\b(?:${BE}|sits?|falls?|lies?)${ADVERB}\s+(?:outside|beyond|absent\s+from|missing\s+from|not\s+(?:in|on|part\s+of))\s+${RECORD}\b`, "gi"),
+  new RegExp(String.raw`\b(?:is|are|was|were)(?:n['’]t|\s+not)${ADVERB}\s+(?:[\w-]+\s+)?(?:documented|established|shown|evidenced|demonstrated|covered|listed|mentioned|described|specified|stated|recorded|addressed|supported|confirmed|found)\b`, "gi"),
+  new RegExp(String.raw`\b${BE}${ADVERB}\s+(?:missing|absent|unknown|undocumented|unproven|unevidenced|unmet|unaddressed|unestablished|unconfirmed)\b`, "gi"),
+];
+
+/** The object sits between: "no [HubSpot or Marketo] on the page". */
+const BRACKET = new RegExp(
+  String.raw`\bno\s+(.{1,120}?)\s+(?:on|in|anywhere\s+(?:on|in))\s+(?:the|his|this)\s+(?:page|record|resume|site|corpus|knowledge\s+base)\b`,
+  "gi",
+);
+
+/** "no gaps", "no real gaps", "aren't any gaps": the gap word is denied. */
+const DENIED = /\b(?:no|not|n['’]t|never|without|zero)\s+(?:[\w-]+\s+){0,2}$/i;
+
+/**
+ * Does the clause before a gap word make it something he acted on ("he
+ * closed the gaps: …") rather than a label for what's missing? Having gaps
+ * ("he has two gaps: …") is still a label.
+ */
+function actsOnGap(before: string): boolean {
+  return (
+    /\b(?:he|she|sidhant)\b/i.test(before) &&
+    !/\b(?:he|she|sidhant)\s+(?:\w+\s+)?(?:has|have|had|faces|lacks)\b/i.test(before)
+  );
+}
+
+/** A gap word that is denied, or that he acted on, labels no absence. */
+function notALabel(before: string): boolean {
+  return DENIED.test(before) || actsOnGap(before);
+}
+
+/** He, as a subject: where an object ends and a claim about him begins. */
+const SUBJECT = /\b(?:he|she|sidhant)\b/gi;
+/** "…doesn't show that he…": a subject inside the absence, not after it. */
+const REPORTED = /\b(?:that|whether|if|how|where|when|what|which|who|whom|why)\s+(?:[\w'’-]+\s+)?$/i;
+/**
+ * A coordinated clause about him again: ", and Oracle hired him". "His
+ * record" is where absences live, so it doesn't count.
+ */
+const ABOUT_HIM = new RegExp(
+  String.raw`(?:,\s*|\s+)(?:and|or|so|plus)\s+(?=[^,;]*\b(?:he|him|she|her|sidhant|his(?!\s+${RECORD_NOUN}))\b)`,
+  "i",
+);
+
+/** Where an object that starts at `from` ends, at most `to`. */
+function objectEnd(text: string, from: number, to: number): number {
+  const stretch = text.slice(from, to);
+  let end = to;
+  for (const subject of stretch.matchAll(SUBJECT)) {
+    const at = from + subject.index;
+    if (REPORTED.test(text.slice(Math.max(0, at - 40), at))) continue;
+    end = at;
+    break;
+  }
+  const joint = ABOUT_HIM.exec(stretch);
+  if (joint) end = Math.min(end, from + joint.index);
+  return end;
+}
+
+/**
+ * Where the object of a tail ("… are gaps") starts, given the segment before
+ * the tail. After the last clause that mentions him, if there is one: in "he
+ * spent 12 years at Oracle and CPQ is a gap" the object is "CPQ".
+ */
+function objectStart(before: string): number {
+  const mentions = [...before.matchAll(/\b(?:he|him|she|it|they|sidhant)\b/gi)];
+  const last = mentions[mentions.length - 1];
+  if (!last) return 0;
+  const joint = /,\s*|\s(?:and|or)\s/i.exec(before.slice(last.index));
+  return joint ? last.index + joint.index + joint[0].length : before.length;
+}
+
+type Span = [number, number];
+
+/**
+ * The stretches of `text` that name what the record lacks. `gapItem` marks a
+ * list item under a gap heading ("Biggest gaps:"): an object from its first
+ * word, though it doesn't say so itself.
+ */
+function absenceSpans(text: string, gapItem: boolean): Span[] {
+  const spans: Span[] = [];
+  let labelled = gapItem;
+  segmentsOf(text).forEach((segment, i) => {
+    const { start, end } = segment;
+    const words = text.slice(start, end);
+    if (labelled && (i === 0 || segment.afterColon)) {
+      const from = start + (/^\s*(?:[-*+]|\d+[.)])?\s*/.exec(words)?.[0].length ?? 0);
+      spans.push([from, objectEnd(text, from, end)]);
+    }
+    labelled = false;
+
+    for (const { pattern, deniable } of LEADS) {
+      for (const lead of words.matchAll(new RegExp(pattern.source, pattern.flags))) {
+        if (deniable && notALabel(words.slice(0, lead.index))) continue;
+        const from = start + lead.index + lead[0].length;
+        // "Biggest gaps:" names its object after the colon.
+        if (!/\w/.test(text.slice(from, end))) {
+          labelled = true;
+          continue;
+        }
+        spans.push([from, objectEnd(text, from, end)]);
+      }
+    }
+    for (const pattern of TAILS) {
+      for (const tail of words.matchAll(new RegExp(pattern.source, pattern.flags))) {
+        spans.push([start + objectStart(words.slice(0, tail.index)), start + tail.index]);
+      }
+    }
+    for (const bracket of words.matchAll(new RegExp(BRACKET.source, BRACKET.flags))) {
+      const from = start + bracket.index + /^no\s+/i.exec(bracket[0])![0].length;
+      spans.push([from, objectEnd(text, from, from + bracket[1]!.length)]);
+    }
+  });
+  return spans;
+}
+
+/** Heading forms of a gap list: "Gaps", "The main gaps", "Where he doesn't match". */
+const GAP_HEADING = new RegExp(
+  [
+    String.raw`(?:(?:the|his|some)\s+)?(?:${QUALIFIER}\s+)?${GAP}${LINK}`,
+    String.raw`what(?:['’]s|\s+is)\s+missing`,
+    String.raw`(?:outside|beyond|not\s+(?:in|on))\s+${RECORD}`,
+    String.raw`where\s+(?:he|it)\s+(?:doesn['’]t|does\s+not|falls\s+short)\b[\w\s'’-]*`,
+    String.raw`(?:the\s+record\s+)?${NEGATION}\s+${RECORD_VERB}`,
+  ]
+    .map((form) => `^(?:${form})$`)
+    .join("|"),
+  "i",
+);
+
+/**
+ * Is this line the heading of a list of gaps ("Biggest gaps:", "**Where he
+ * doesn't match**")? The items under it name absences without saying so.
+ */
+export function isGapHeading(sentence: string): boolean {
+  const text = plain(sentence)
+    .trim()
+    .replace(/^#{1,6}\s+/, "")
+    .replace(/:$/, "")
+    .trim();
+  if (!text) return false;
+  if (GAP_HEADING.test(text)) return true;
+  // A lead-in sentence that ends at its colon: "There are three gaps:".
+  if (!plain(sentence).trim().endsWith(":")) return false;
+  const last = segmentsOf(text).pop()!;
+  const words = text.slice(last.start, last.end);
+  const tail = new RegExp(String.raw`\b${GAP}${LINK}$`, "i").exec(words);
+  return !!tail && !notALabel(words.slice(0, tail.index));
+}
+
+/** List items: "- …", "* …", "1. …". */
+const LIST_ITEM = /^\s*(?:[-*+]|\d+[.)])\s+/;
+
+// --- Checkable tokens -----------------------------------------------------
+
+export type TokenOptions = {
+  /** The sentence is an item in a list under a gap heading. */
+  gapItem?: boolean;
+};
+
 /**
  * The parts of a sentence that can be checked against a source without a
- * model: its numbers and its proper nouns.
+ * model: its numbers and its proper nouns. `lookup` is the record, which says
+ * how its own words are capitalized; without it, only the built-in common-word
+ * list decides whether a sentence's first word is a name.
  */
-export function checkableTokens(sentence: string): string[] {
+export function checkableTokens(
+  sentence: string,
+  lookup?: Record<string, VerifiableChunk>,
+  options: TokenOptions = {},
+): string[] {
   const text = plain(sentence);
   // A question asserts nothing ("Want to see how the payments work?").
   if (/\?\s*$/.test(text)) return [];
-  // Only the clauses that assert something present are checked; a gap clause
-  // is dropped and the rest of the sentence is still held to its sources, so
-  // "Strong on Power BI at Nokia; the main gaps are CPQ" still checks Nokia.
-  const asserted = text
-    .split(CLAUSE)
-    .filter((clause) => !ABSENCE.test(clause))
-    .join(" ; ");
+  const spans = absenceSpans(text, options.gapItem ?? false);
+  const asserted = (index: number) => !spans.some(([from, to]) => index >= from && index < to);
+  const opening = openingWords(text);
+  const evidence = lookup ? caseEvidence(lookup) : undefined;
   const tokens: string[] = [];
 
   // The trailing comma of "in 2026, he shipped" is punctuation, not a digit.
-  for (const match of asserted.matchAll(NUMBER)) tokens.push(match[0].replace(/,+$/, ""));
+  for (const match of text.matchAll(NUMBER)) {
+    if (asserted(match.index)) tokens.push(match[0].replace(/,+$/, ""));
+  }
 
-  for (const match of asserted.matchAll(NAME)) {
+  for (const match of text.matchAll(NAME)) {
+    if (!asserted(match.index)) continue;
     const raw = match[0].replace(/[.,;:!?'’]+$/, "");
     if (raw.length < 2) continue;
     // A compound the answer joins and the corpus writes apart ("TypeScript/
     // Next.js", "Salesforce-to-Power"): each capitalized part is a name to
     // look for, and the lowercase parts assert nothing.
-    for (const part of raw.split(/[/-]/)) {
-      if (part.length < 2 || !/^[A-Z]/.test(part)) continue;
-      if (STOPWORDS.has(normalize(part))) continue;
+    raw.split(/[/-]/).forEach((part, i) => {
+      if (part.length < 2 || !/^[A-Z]/.test(part)) return;
+      if (STOPWORDS.has(normalize(part))) return;
+      // "Strong SQL…": the capital is the sentence's, not the word's.
+      if (i === 0 && opening.has(match.index) && !readsAsName(part, evidence)) return;
       tokens.push(part);
-    }
+    });
   }
 
   // Deduplicated case-insensitively so "Nokia … Nokia" is one thing to find.
@@ -417,17 +884,32 @@ function rowSentence(row: string): string {
  * A table is split by row rather than exempted the way fences are, because a
  * row states facts. The header and delimiter rows state nothing and are
  * dropped, and so are the pipes.
+ *
+ * Each sentence says whether it opens and closes its line, which is how a list
+ * item is told from the second sentence inside one.
  */
-function sentencesOf(block: string): string[] {
+type Sentence = { text: string; opensLine: boolean; closesLine: boolean };
+
+function sentencesOf(block: string): Sentence[] {
   const lines = block.split("\n").filter((l) => l.trim());
   if (lines.length >= 2 && lines[0]!.includes("|") && TABLE_DELIMITER.test(lines[1]!)) {
-    return lines.slice(2).map(rowSentence).filter(Boolean);
+    return lines
+      .slice(2)
+      .map(rowSentence)
+      .filter(Boolean)
+      .map((text) => ({ text, opensLine: true, closesLine: true }));
   }
-  return block
-    .split("\n")
-    .flatMap((line) => line.split(/(?<=[.!?])\s+(?=[A-Z[])/))
-    .map((s) => s.trim())
-    .filter(Boolean);
+  return lines.flatMap((line) => {
+    const parts = line
+      .split(/(?<=[.!?])\s+(?=[A-Z[])/)
+      .map((s) => s.trim())
+      .filter(Boolean);
+    return parts.map((text, i) => ({
+      text,
+      opensLine: i === 0,
+      closesLine: i === parts.length - 1,
+    }));
+  });
 }
 
 // --- The check ------------------------------------------------------------
@@ -450,6 +932,9 @@ export function verifyAnswer(
   const claims: Claim[] = [];
   const citedIds: string[] = [];
   const unknownIds: string[] = [];
+  // Inside a list that a gap heading ("Biggest gaps:") introduced. Survives a
+  // blank line between the heading and its list; any other line ends it.
+  let gapList = false;
 
   rawBlocks.forEach((block, index) => {
     const blockIds = citationIds(block);
@@ -464,11 +949,16 @@ export function verifyAnswer(
     let downgraded = 0;
 
     for (const sentence of sentencesOf(block)) {
-      const own = citationIds(sentence);
-      const text = stripCitations(sentence).trim();
+      const own = citationIds(sentence.text);
+      const text = stripCitations(sentence.text).trim();
+      const item = sentence.opensLine && LIST_ITEM.test(text);
+      if (sentence.opensLine && !item) gapList = false;
       // `uncited` means no real chunk was cited for this sentence (nothing,
       // or only invented ids): either way there is no source to open.
-      const check = checkClaim(text, own.length ? own : blockIds, lookup);
+      const check = checkClaim(text, own.length ? own : blockIds, lookup, {
+        gapItem: gapList && item,
+      });
+      if (sentence.closesLine && isGapHeading(text)) gapList = true;
       // Not a claim: nothing here can be checked against anything.
       if (!check.checkable) continue;
 

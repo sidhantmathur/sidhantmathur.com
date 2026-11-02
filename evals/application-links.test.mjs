@@ -186,15 +186,19 @@ describe("the fragment stays in the browser", () => {
   });
 
   test("a replay opens at its top, where the banner and the contact actions are", () => {
-    // app-shell.tsx tells a replayed message from a new one by the id the
-    // restore gives it. If that id scheme changes, a replay opens scrolled to
-    // its last line again, with the explanation above the fold.
+    // The shell's stick-to-bottom tells a replayed message from a new one by
+    // the id the restore gives it. If that id scheme changes, a replay opens
+    // scrolled to its last line again, with the explanation above the fold.
     assert.match(read("components/shell/use-conversation.ts"), /id: `replay-\$\{i\}`/);
-    const shell = read("components/shell/app-shell.tsx");
-    assert.match(shell, /const replaying = replayed && messages\[messages\.length - 1\]\?\.id\.startsWith\("replay-"\)/);
-    assert.match(shell, /<ResumePdfButton surface="replay"/);
-    assert.match(shell, /<EmailCopy surface="replay"/);
-    assert.match(shell, /<LinkedInButton surface="replay"/);
+    assert.match(
+      read("components/shell/use-stick-to-bottom.ts"),
+      /const replaying = replayed && messages\[messages\.length - 1\]\?\.id\.startsWith\("replay-"\)/,
+    );
+    const banner = read("components/shell/replay-banner.tsx");
+    assert.match(banner, /<ResumePdfButton surface="replay"/);
+    assert.match(banner, /<EmailCopy surface="replay"/);
+    assert.match(banner, /<LinkedInButton surface="replay"/);
+    assert.match(read("components/shell/app-shell.tsx"), /\{replayed && \(\s*<ReplayBanner\b/);
   });
 
   test("the landing address is read on mount, before the idle init", () => {

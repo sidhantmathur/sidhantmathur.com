@@ -26,7 +26,14 @@ import { checkClaim, type VerifiableChunk } from "./verify.ts";
 
 export type RequirementVerdict = "met" | "partial" | "unmet" | "unclear";
 
-const VERDICTS: RequirementVerdict[] = ["met", "partial", "unmet", "unclear"];
+/** Every verdict, in the order the table counts them. */
+export const VERDICTS: readonly RequirementVerdict[] = ["met", "partial", "unmet", "unclear"];
+
+/**
+ * How independent assessments of one row voted, by verdict. Only verdicts that
+ * got a vote are present; the total is the number of assessments.
+ */
+export type VerdictVotes = Partial<Record<RequirementVerdict, number>>;
 
 /** A verdict that asserts something Sidhant has, and so has to cite it. */
 function isPositive(v: RequirementVerdict): boolean {
@@ -54,8 +61,11 @@ export type RequirementRow = {
   verdict: RequirementVerdict;
   /** What the model tagged it, when code changed the answer. */
   claimedVerdict: RequirementVerdict | null;
-  /** Why code changed it. */
-  downgrade: "uncited" | "uncovered" | "unjudged" | null;
+  /**
+   * Why code changed it. `unshared` is lib/consistency.ts's: the assessments
+   * agreed on a positive verdict but no source was cited by most of them.
+   */
+  downgrade: "uncited" | "uncovered" | "unjudged" | "unshared" | null;
   evidence: string;
   /** Cited ids that exist in the corpus. */
   sources: string[];
@@ -63,6 +73,11 @@ export type RequirementRow = {
   unknownSources: string[];
   /** Checkable tokens the cited chunks don't contain. Empty when it holds up. */
   unverified: string[];
+  /**
+   * How the independent assessments split on this row (lib/consistency.ts).
+   * Absent when they all agreed, and on a table that was assessed once.
+   */
+  agreement?: VerdictVotes;
 };
 
 export type RoleFitResult = {
@@ -78,12 +93,17 @@ export type RoleFitResult = {
   uncovered: number;
   /** Rows whose verdict was changed by this module. */
   downgraded: number;
+  /**
+   * How many independent assessments the rows are the consensus of
+   * (lib/consistency.ts). Absent on a table that was assessed once.
+   */
+  samples?: number;
 };
 
 // Bounds. A table longer than MAX_ROWS stops being readable, and the generation
 // that fills it stops fitting the output ceiling.
-const MAX_ROWS = 14;
-const MAX_REQUIREMENT_CHARS = 240;
+export const MAX_ROWS = 14;
+export const MAX_REQUIREMENT_CHARS = 240;
 const MAX_EVIDENCE_CHARS = 400;
 
 function str(value: unknown, max: number): string {
@@ -97,7 +117,7 @@ function strList(value: unknown, max: number): string[] {
 
 function toVerdict(value: unknown): RequirementVerdict {
   const v = typeof value === "string" ? value.trim().toLowerCase() : "";
-  return (VERDICTS as string[]).includes(v) ? (v as RequirementVerdict) : "unclear";
+  return (VERDICTS as readonly string[]).includes(v) ? (v as RequirementVerdict) : "unclear";
 }
 
 // --- What part of a row's sentence is checkable ---------------------------

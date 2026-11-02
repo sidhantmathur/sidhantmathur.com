@@ -130,6 +130,14 @@ bucket. Items 2–4 stay open. Still only a recommendation: drop gpt-5-mini or
 give it a reasoning setting. It blanked on two of four chips, and it was the
 slowest and costliest model on the posting.
 
+**Update 2026-11-02 — items 2 and 4 applied, gpt-5-mini given a setting.**
+DeepSeek is pinned to runware with `only`, Haiku runs with reasoning off and a
+1,000-token ceiling on ordinary turns, and gpt-5-mini reasons at `minimal` on
+ordinary turns and `low` on postings. None of it has run live. What was
+applied, why, and the smoke test it needs are in "Applied 2026-11-02,
+untested" at the end of this section. Item 3 (deepseek-v4.1-flash) and the
+choice to keep or drop gpt-5-mini are still Sidhant's.
+
 The bake-off should be re-run once 1–4 are settled. Three of the five models
 on offer have never been measured. At current list prices, with July's token
 counts, it should cost roughly $0.20–$0.50 in total.
@@ -367,6 +375,10 @@ needs a setting or should be dropped. DeepSeek at `none` must not be used on
 posting turns, because it writes raw DSML markup into the answer. Each of
 these is one key on its catalogue row now.
 
+*Applied 2026-11-02, untested live:* Haiku's `none`/`none`, its higher
+non-posting ceiling, and a setting for gpt-5-mini. See "Applied 2026-11-02,
+untested" below.
+
 **Cost.** 21 scripted turns, $0.038 at list price, plus 4 browser turns for
 the screenshots, about $0.009.
 
@@ -525,6 +537,69 @@ says so beside the chart (`GATEWAY_BILLED_USD`).
 Both are false alarms worth a checker fix. Making one would change the
 published figure, so it was left for its own change.
 
+### Applied 2026-11-02, untested — per-model settings
+
+Applied in the backlog pass from the smoke test (2026-10-19) and the bake-off
+(2026-10-20). **None of it has run against the Gateway.** There was no key in
+the session that made the change, so every item below is a hypothesis with
+data behind it until the smoke test at the end confirms it. The record is the
+header and the per-row comments of `lib/models.ts`.
+
+What changed in code:
+
+- **Two new keys on a catalogue row, read by the route through helpers**, as
+  `reasoning` already was. `maxOutputTokens: { chat?, jobPosting? }` is read by
+  `maxOutputTokensFor()`. Absent keys fall back to `DEFAULT_MAX_OUTPUT_TOKENS`
+  (600 and 4,000), which moved from the route into `lib/models.ts`.
+  `gateway: { only?, order? }` is read by `providerOptionsFor()` and sent as
+  `providerOptions.gateway` on `streamText`. A row without either sends
+  exactly what it sent before. The ceiling isn't stated in
+  `lib/system-prompt.ts` (so `/prompt` is unchanged) or used by the cost
+  meter, which prices the tokens a turn used.
+- **A third key, `settingsChanged`**, dates each row's settings.
+  `/measurements/models` reads it. A charted run from before that date
+  measured the earlier settings, so the settings caveat names the model
+  instead of describing today's settings as the ones it ran with.
+
+Per model:
+
+| Model | Applied | Why | Untested risk |
+| --- | --- | --- | --- |
+| claude-haiku-5.5 | `reasoning: { chat: 'none', jobPosting: 'none' }`; ordinary-turn ceiling 1,000 | Smoke test: default thinking spent 599/600 on the RevOps chip; `none` gave the fastest complete card (16 s) and 3 of 4 clean chips; the 4th lost its `roleFit` call to the 600 ceiling | A longer answer now fits before the ceiling stops it, so a chatty turn can cost up to 1,000 output tokens ($0.0005 at list). The card duplication seen at the default may or may not recur. |
+| gpt-5-mini | `reasoning: { chat: 'minimal', jobPosting: 'low' }` | Blanked on 2 of 4 chips spending the whole ceiling reasoning; posting took 72 s, no card. The Gateway lists its efforts as minimal, low, medium and high, with no `none` (checked on `/v1/models`) | `minimal` might weaken tool use on the chips; `low` might still not produce a card on a posting. If it doesn't, dropping the model is Sidhant's call. |
+| deepseek-v4-flash-0731 | `gateway: { only: ['runware'] }` | Bake-off billed 3.3× list. The meter prices runware's rate, the headline. `only` was chosen over `order`; the header of `lib/models.ts` has why | A runware outage fails DeepSeek turns (the error offers another model). If the Gateway rejected or ignored the option, nothing on the page would say so: check `finalProvider`. |
+
+**Not applied, on purpose.** DeepSeek's ordinary turns stay at the provider
+default. The smoke test showed `none` fixing its blank chips, but it wasn't
+asked for, and its posting turns must not use `none` (raw DSML markup). Its
+row stays `unconfirmed` until the smoke test shows the pin holding, and then
+it can move to `confirmed`. When it does, `/measurements/models`' cost caveat
+("the meter can't see which one billed a turn") needs rewording for runs made
+after the pin. Item 3, deepseek-v4.1-flash, is untouched.
+
+**Prices re-checked.** Every rate in the catalogue matched the Gateway's
+public `/v1/models` on 2026-11-02, so `PRICES_CHECKED` moved to that date.
+DeepSeek's endpoints listed fourteen providers that day, not fifteen.
+
+**The smoke test this needs.** Same method as the 2026-10-19 one: `next dev`
+or `next start` with only `AI_GATEWAY_API_KEY` set, each turn in a fresh
+conversation, the four homepage chips plus the GTM posting above.
+
+1. Haiku 5.5: all four chips render, the RevOps chip with its card, and
+   `usage.reasoningTokens` is 0 on every turn. The posting renders one card,
+   not two. No chip turn ends on `finishReason: "length"`.
+2. gpt-5-mini: all four chips render, with no `empty_answer` records. The
+   posting produces a card. Record the time to card and the reasoning tokens.
+   If it still fails, raise the drop decision with Sidhant.
+3. DeepSeek: on every turn, `providerMetadata.gateway.routing.finalProvider`
+   is `runware`, and the Gateway's reported cost equals the meter's estimate.
+   Then move the row to `confirmed`.
+4. GPT-6 Luna and Gemini are unchanged, so one chip each is enough to show
+   nothing regressed.
+5. Re-run the bake-off once 1–3 hold, so the published runs measure today's
+   settings. Until then, `/measurements/models` names the three reconfigured
+   models in its settings caveat.
+
 ## 3. Copy — Sidhant is doing this, do not write it
 
 Two blocks on the live site are Claude's drafts, marked `[DRAFT]` in
@@ -607,6 +682,21 @@ this section is the index, the detail is in the issues.
   applying the same gate to token medians. `lib/measurements.ts:33` already
   models the distinction (`"too-few" | "not-measured"`); `rank()` collapses it.
   Needs a copy decision, so it wants Sidhant, not an agent.
+
+  **Fixed 2026-11-02 (backlog pass), copy drafted under the ledger.** The
+  copy-decision note above predates the rule that lets an agent draft and log
+  copy. `medianOf` in `lib/model-comparison.ts` returns the reason with the
+  median, `rank()` and `frontier()` carry it to their `missing`/`unplotted`
+  lists, and the trailers say "Median withheld for X: fewer than 10 measured
+  turns." apart from "Not measured for Y." The latency frontier had the same
+  fault ("one of the two axes was not measured") and is fixed the same way.
+  The page passes its four median panels through `medianOf`; a test fails if
+  one goes back to `median()`. Today's published data has no withheld median
+  among the charted models (Haiku 4.5's 6-turn run is retired, so it is not
+  charted), so the live page is unchanged; the screenshots in the backlog
+  pass used a doctored, uncommitted snapshot to show both sentences. The
+  wording is in the ledger's "Backlog pass, 2026-11-02" section for Sidhant.
+  The issue can be closed once this is merged.
 - **[#3](https://github.com/sidhantmathur/sidhantmathur.com/issues/3) — the stop
   button disappears the moment an answer starts rendering.** `phaseOf` returns
   null once the assistant message has text (`use-conversation.ts:135`) and the
@@ -615,6 +705,18 @@ this section is the index, the detail is in the issues.
   healthy turn. Pre-existing (`b820054`, `c930843`), not from this branch. The
   abort path itself is sound and now covered by `evals/chat-transport.test.mjs`;
   it is the affordance that is unreachable.
+
+  **Fixed 2026-11-02 (backlog pass).** The composer's send button becomes
+  "stop" from the moment a question is sent until the stream closes, in the
+  same box, so it never moves as the answer grows. Whether a turn can be
+  stopped is read off the chat status (`canStop` in
+  `components/shell/composer-action.ts`), never off the phase line, and the
+  eight-second delay is gone: beside a disabled send it reads as the control,
+  not as a hint that something is wrong. One Tab from the composer reaches it;
+  keyboard focus returns to the composer when the turn ends; the second click
+  of a double-click on send doesn't stop the turn it started. Tests in
+  `evals/turn-phase.test.mjs` ("stopping a turn"). The issue can be closed
+  once this is merged.
 
 ---
 

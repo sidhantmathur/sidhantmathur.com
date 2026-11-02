@@ -19,6 +19,7 @@ import {
   formatTurnCost,
   frontier,
   median,
+  medianOf,
   rank,
   runHistory,
   splitArchive,
@@ -30,6 +31,7 @@ import {
   MODEL_IDS,
   modelName,
   reasoningFor,
+  settingsChangedOn,
   type ReasoningLevel,
 } from "@/lib/models";
 import { PRICES_CHECKED, PRICE_CONFIDENCE } from "@/lib/pricing";
@@ -215,7 +217,15 @@ export default function ModelComparisonPage() {
       : [];
   });
   // Read from the catalogue, so the caveat cannot drift from what the route sends.
-  const tuned = rows.flatMap((r) => {
+  // A model whose settings changed after its charted run is named instead of
+  // described: today's settings are not the ones that run measured, until the
+  // bake-off is run again.
+  const reconfigured = rows.flatMap((r) => {
+    const id = MODEL_IDS.find((m) => m === r.model);
+    const changed = id ? settingsChangedOn(id) : undefined;
+    return changed && r.ranAt && r.ranAt < changed ? [r.model] : [];
+  });
+  const tuned = rows.filter((r) => !reconfigured.includes(r.model)).flatMap((r) => {
     const id = MODEL_IDS.find((m) => m === r.model);
     if (!id) return [];
     return [
@@ -225,7 +235,7 @@ export default function ModelComparisonPage() {
   });
   const bill = billedAgainstList(rows);
   const cost = frontier(rows, (r) => r.costPerTaskUsd, (r) => r.passRate);
-  const latency = frontier(rows, (r) => median(r.ttftMs), (r) => r.passRate);
+  const latency = frontier(rows, (r) => medianOf(r.ttftMs), (r) => r.passRate);
 
   return (
     <DocPage>
@@ -323,14 +333,14 @@ export default function ModelComparisonPage() {
             note="Median, server-measured. Lower is better."
             bestLabel="fastest"
             format={formatSeconds}
-            ranked={rank(rows, (r) => median(r.ttftMs), "lower")}
+            ranked={rank(rows, (r) => medianOf(r.ttftMs), "lower")}
           />
           <RankedBars
             heading="Output speed"
             note="Median output tokens per second across the turn. Higher is better."
             bestLabel="fastest"
             format={(v) => `${v.toFixed(1)} tok/s`}
-            ranked={rank(rows, (r) => median(r.tokensPerSecond), "higher")}
+            ranked={rank(rows, (r) => medianOf(r.tokensPerSecond), "higher")}
           />
           <RankedBars
             heading="Cost per turn"
@@ -343,14 +353,14 @@ export default function ModelComparisonPage() {
             heading="Output tokens per turn"
             note="Median. Neither end is better. More tokens means a longer answer and a bigger output bill. Each provider counts with its own tokenizer, so the counts don't line up exactly across models."
             format={(v) => formatCount(v)}
-            ranked={rank(rows, (r) => median(r.outputTokens), "none")}
+            ranked={rank(rows, (r) => medianOf(r.outputTokens), "none")}
           />
           <RankedBars
             heading="Input tokens per turn"
             note="Median. Every model got the same prompts, so most of this spread is each tokenizer counting the same text differently. These counts don't compare across providers the way seconds and dollars do."
             bestLabel="fewest"
             format={(v) => formatCount(v)}
-            ranked={rank(rows, (r) => median(r.inputTokens), "lower")}
+            ranked={rank(rows, (r) => medianOf(r.inputTokens), "lower")}
           />
           <RankedBars
             heading="Turns that broke"
@@ -512,9 +522,19 @@ export default function ModelComparisonPage() {
                 {"id" in limit && limit.id === "settings" && (
                   <>
                     {" "}
-                    {tuned.length === 0
-                      ? "Every model ran at its provider's default reasoning."
-                      : `${tuned.map((t) => `${modelName(t.model)} ${reasoningPhrase(t.level)} ${t.turn}`).join("; ")}. Everything else runs at the provider's default.`}
+                    {reconfigured.length === 0
+                      ? tuned.length === 0
+                        ? "Every model ran at its provider's default reasoning."
+                        : `${tunedList(tuned)}. Everything else runs at the provider's default.`
+                      : `${andList(reconfigured.map(modelName))} ${
+                          reconfigured.length === 1
+                            ? "has been reconfigured since its run here, so the chat no longer runs it the way it was measured."
+                            : "have been reconfigured since their runs here, so the chat no longer runs them the way they were measured."
+                        } ${
+                          tuned.length === 0
+                            ? "The rest run at the provider's default reasoning."
+                            : `Of the rest, ${tunedList(tuned)}, and everything else runs at the provider's default.`
+                        }`}
                   </>
                 )}
               </dd>
@@ -536,6 +556,16 @@ function runLabel(run: PublishedRun, siblings: PublishedRun[]): string {
   const day = formatDate(run.ranAt);
   const shared = siblings.filter((r) => formatDate(r.ranAt) === day).length > 1;
   return shared && run.ranAt ? `${day}, ${run.ranAt.slice(11, 16)} UTC` : day;
+}
+
+/** "GPT-6 Luna reasons at low effort on a pasted job posting; …" */
+function tunedList(tuned: { model: string; turn: string; level: ReasoningLevel }[]): string {
+  return tuned.map((t) => `${modelName(t.model)} ${reasoningPhrase(t.level)} ${t.turn}`).join("; ");
+}
+
+/** "A, B and C". */
+function andList(items: string[]): string {
+  return items.length < 2 ? (items[0] ?? "") : `${items.slice(0, -1).join(", ")} and ${items.at(-1)}`;
 }
 
 /** "at low reasoning effort", or "with reasoning off" — never "at none effort". */
