@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { MediaVideo } from "@/components/project-media-video";
 import { ADARLE_MEDIA, FEATURE_SURFACE, type MediaSlot } from "@/content/adarle20-media";
 
 // The A Darle 20 media and feature surface (#19): two pre-rendered sections
@@ -41,13 +42,32 @@ type CapturedSlot = MediaSlot & { asset: NonNullable<MediaSlot["asset"]> };
 export function AdarleMediaSurface() {
   const captured = ADARLE_MEDIA.filter((slot): slot is CapturedSlot => slot.asset != null);
   if (!captured.length) return null;
+  // Consecutive phone-shaped slots share a row: two portrait frames stacked
+  // would be a long scroll of mostly empty column.
+  const rows: CapturedSlot[][] = [];
+  for (const slot of captured) {
+    const last = rows.at(-1);
+    if (slot.width === "narrow" && last?.[0].width === "narrow") last.push(slot);
+    else rows.push([slot]);
+  }
   return (
     <section className="mt-8">
       <h2 className="t-head font-medium text-text">What it looks like</h2>
       <div className="mt-3 space-y-8">
-        {captured.map((slot) => (
-          <MediaFrame key={slot.id} slot={slot} titled={captured.length > 1} />
-        ))}
+        {rows.map((row) =>
+          row.length === 1 ? (
+            <MediaFrame key={row[0].id} slot={row[0]} titled={captured.length > 1} />
+          ) : (
+            <div
+              key={row.map((slot) => slot.id).join("+")}
+              className="grid max-w-[68ch] grid-cols-1 gap-8 sm:grid-cols-2 sm:gap-6"
+            >
+              {row.map((slot) => (
+                <MediaFrame key={slot.id} slot={slot} titled={captured.length > 1} />
+              ))}
+            </div>
+          ),
+        )}
       </div>
     </section>
   );
@@ -56,18 +76,28 @@ export function AdarleMediaSurface() {
 // With one file the section heading names it, so the frame carries no title of
 // its own; once a second slot is filled, each frame is titled.
 function MediaFrame({ slot, titled }: { slot: CapturedSlot; titled: boolean }) {
-  const width = slot.width === "narrow" ? "max-w-[300px]" : "max-w-[68ch]";
+  const narrow = slot.width === "narrow";
+  const isVideo = /\.(webm|mp4)$/.test(slot.asset.src);
   return (
-    <figure className={width}>
+    <figure className={narrow ? "max-w-[300px]" : "max-w-[68ch]"}>
       {titled && <div className="t-meta mb-2 text-text-soft">{slot.title}</div>}
-      <div className={`relative border border-line ${slot.aspectClass}`}>
-        <Image
-          src={slot.asset.src}
-          alt={slot.asset.alt}
-          fill
-          sizes="(max-width: 768px) 100vw, 68ch"
-          className="object-cover object-top"
-        />
+      <div className={`relative overflow-hidden border border-line ${slot.aspectClass}`}>
+        {isVideo ? (
+          <MediaVideo
+            src={slot.asset.src}
+            fallback={slot.asset.fallback}
+            poster={slot.asset.poster}
+            label={slot.asset.alt}
+          />
+        ) : (
+          <Image
+            src={slot.asset.src}
+            alt={slot.asset.alt}
+            fill
+            sizes={narrow ? "300px" : "(max-width: 768px) 100vw, 68ch"}
+            className="object-cover object-top"
+          />
+        )}
       </div>
       <figcaption className="t-meta mt-2 max-w-[62ch] text-text-faint">
         {slot.asset.caption}

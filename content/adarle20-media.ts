@@ -34,7 +34,18 @@ export type MediaSlot = {
    * can never be added without describing it, and a description can never be
    * written ahead of the file.
    */
-  asset?: { src: string; alt: string; caption: string };
+  asset?: {
+    src: string;
+    alt: string;
+    caption: string;
+    /**
+     * Recordings only: the frame shown before playback, and the only frame a
+     * visitor who prefers reduced motion sees until they press play.
+     */
+    poster?: string;
+    /** Recordings only: an H.264 copy for browsers that can't play `src`. */
+    fallback?: string;
+  };
 };
 
 export const ADARLE_MEDIA: MediaSlot[] = [
