@@ -1101,3 +1101,19 @@ also gave in the brief for this pass).
 | removed | front door, metadata, prompt | "at an AI-forward company". | factual | In neither source |
 | removed | `docs/resume/` (the July source and its three variant drafts), `docs/Sidhant_Mathur_Resume.docx` and `.pdf` | Deleted; `public/resume.pdf` is the master's export. | — | Log §3 and §5: one master, no variant files |
 
+## Interview guide, 2026-11-02
+
+`docs/interview-guide.md`: the questions and format for one sitting in which
+Sidhant turns his resume bullets into stories. Nothing in it renders on the
+site, and the chat's corpus is unchanged: no knowledge file was created or
+edited. It asks and never answers. Its only factual lines restate what the
+knowledge base already says, so he can correct them.
+
+| Status | Where | String / summary | Claims | Source |
+| --- | --- | --- | --- | --- |
+| draft | `docs/interview-guide.md` → "Already on record", stories 1–11 | One short restatement per story of the facts already in the corpus (quarter-end app, weekly review tool, incentives, headcount forecast, building A Darle 20, North America app, the funnel finding, CRM Analytics to Power BI, the convention event, the $1.2M analysis, the AI agent), with the shapes the prompt enforces ("ran", "identified", "in testing", "not the event"). No new fact. | factual (restated) | `projects-nokia.md`, `projects-adarle20.md`, `resume.md` |
+| draft | `docs/interview-guide.md` → story questions and one-breath frames | Six questions per story (five for 10 and 11): before, yours and others', the hard call, pushback, what changed and how he knows, differently; plus a fill-in one-breath frame. A few A Darle 20 questions (where money could go wrong, a bug record, where the funnel lost people, analytics and database disagreeing, what the event left in the product) were sharpened by reading that product's docs; they are phrased as questions, and nothing from that repo is stated. | none | — |
+| draft | `docs/interview-guide.md` → gap prompts G1–G13, "Why these roles" W1–W2 | Questions on adjacent experience for the three recruiter-visible gaps (Salesforce administration, CPQ or deal desk, PSA, SOWs and billable utilization), plus SQL and people management, each answerable with "none"; two questions on why he wants these roles. | none | `docs/gauntlet-log.md` "Gaps a recruiter will notice"; `lib/system-prompt.ts` |
+| draft | `docs/interview-guide.md` → "Off the record by an earlier decision" | The prompt's list of deliberate absences, restated so the interview doesn't reopen them by accident: languages, freelance fees, A Darle 20 revenue and payment figures, the weekly report's other readers, hours saved by the review tool, North America revenue, the agent's plans. | none (names absences) | `lib/system-prompt.ts` "What the record leaves out" |
+| draft | `docs/interview-guide.md` → question map, answer template, interviewer prompt, after-the-interview checklist | Seventeen interview questions mapped to stories, with the ones no story answers yet flagged; the shape of a future `content/knowledge/stories.md` (not created) with its chunk ids and the rules it has to follow; the voice-mode interviewer prompt; the ingestion checklist. | none | `scripts/build-knowledge.mjs`, `lib/verify.ts`, `evals/static.test.mjs`, `evals/track-b.test.mjs` |
+
