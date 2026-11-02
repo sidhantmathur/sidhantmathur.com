@@ -1101,3 +1101,42 @@ also gave in the brief for this pass).
 | removed | front door, metadata, prompt | "at an AI-forward company". | factual | In neither source |
 | removed | `docs/resume/` (the July source and its three variant drafts), `docs/Sidhant_Mathur_Resume.docx` and `.pdf` | Deleted; `public/resume.pdf` is the master's export. | — | Log §3 and §5: one master, no variant files |
 
+
+## A Darle 20 media and feature inventory, 2026-11-02
+
+Five new frames on `/projects/adarle20`, captured from the public site
+(www.adarle20.com, English, dark theme) without an account: no sign-up, no
+login, no booking, no form, nothing that reaches Stripe, and analytics requests
+blocked so the visits stay out of the product's funnel. Player names and
+avatars are out of every frame; hosts appear as on the public cards. The
+landing shot is cropped above the live counters so it publishes no figures.
+
+Every title, alt text and caption below was written from the file itself and
+describes what's on screen. None names a feature the record doesn't: the
+screens show more than the record says (reviews, badges, follows, tips), and
+the captions leave that to `docs/adarle20-feature-inventory.md` until Sidhant
+confirms it.
+
+| Status | Where | String / summary | Claims | Source |
+| --- | --- | --- | --- | --- |
+| draft | `content/adarle20-media.ts` → `landing` | Title "The front page". Alt: "The A Darle 20 landing page: the headline “The portal to your next adventure.”, a Find games button, and four cards headed Online or in person, Vetted Dungeon Masters, Secure payments and We handle the logistics." Caption: "The front page: one button to find games, and four cards on how it works." | none | `public/images/adarle20-landing.webp` |
+| draft | `content/adarle20-media.ts` → `walkthrough` | Title "From the listings to a session". Alt (also the video's `aria-label`): "Screen recording: the session listings, the Online filter switched on, and a paid one-shot opened to its own page, which scrolls down to the game's description and the host's card. Nothing is booked." Caption: "Browsing without an account: one filter, then a session's own page, stopping short of reserving." | none | `public/images/adarle20-walkthrough.webm` / `.mp4` |
+| draft | `content/adarle20-media.ts` → `filters` | Title "Browsing with filters". Alt: "The Available Sessions page with its filter panel open: quick filters for when, beginners, online, in person, free, workshops and one-shots, then price, experience, genre and format choices, a game menu, from and to dates, a currency menu and popular tags." Caption: "The listings with every filter open: price, experience, genre, format, game, dates and tags." | none | `public/images/adarle20-filters.webp` |
+| draft | `content/adarle20-media.ts` → `session-phone` | Title "A session, on a phone". Alt: "A one-shot's page on a phone: the title over its cover art, the host's name, the date in Mexico City time with the viewer's own time beneath, a price in pesos, a Book button, a row of empty seats, and Share, Save and Message DM buttons." Caption: "A session's own page on a phone: host, time, price and the button to reserve a place." | none | `public/images/adarle20-session-phone.webp` |
+| draft | `content/adarle20-media.ts` → `host-profile-phone` | Title "A host's public page". Alt: "A host's public profile on a phone: Overview, Calendar, Sessions and Reviews tabs, the host's logo and name, a star rating with the number of reviews, followers, three badges, a Support button, and the start of the host's own description in Spanish." Caption: "A host's public page on a phone: their rating, badges and own description." | none | `public/images/adarle20-host-profile-phone.webp` |
+| draft | `content/adarle20-media.ts` → `listings` | The existing title "Session listings" is visible again: with more than one file on the page, every frame shows its title (the rule logged in the 2026-10-22 trim pass). Alt and caption unchanged. | none | — |
+| draft | `content/adarle20-media.ts` → briefs for the five new slots (not rendered) | One line each saying what the file shows and how it was kept clean, e.g. "The landing page at desktop width, cropped above the live counters so the frame carries no figures." | none | — |
+| draft | `components/project-media.tsx`, `components/project-media-video.tsx` | No new visible strings. The recording loops muted and inline only while on screen, never starts on its own under reduced motion (poster frame plus the browser's controls instead), and loads nothing until it plays. Consecutive phone frames share a row. | none | — |
+| draft | `docs/site-copy.md` → "What it looks like" | The slot table and the new captions, mirrored from the rows above. | none | — |
+| draft | `docs/adarle20-feature-inventory.md` (not rendered) | The product's feature surface read from the `rpg-marketplace-1` source and its docs, grouped by area, with evidence paths, public visibility, status flags (unfinished, flagged, dormant, removed, excluded) and an empty "Sidhant confirms" column. Ends with a paste-ready "## Also in the product" block for `content/knowledge/projects-adarle20.md`. Cash payments are listed once, marked excluded, and kept out of the block. No metrics or numbers from code or data. | **factual, pending Sidhant** | A code reading, not his confirmation: nothing in it enters `content/knowledge/` until he ticks it. Once he does, `FEATURE_SURFACE` and `FEATURE_SURFACE_NOTE` (pending table above) can be revisited from the record. |
+
+Captured but not wired, for Sidhant to decide (files in the session scratchpad,
+listed in the agent's report):
+
+- **A series page on a phone** ("Join the series", a saved card charged ahead
+  of each session). Recurring series and automatic charges aren't in the
+  record, and a caption couldn't avoid naming them.
+- **The MEGA XP 2026 event page** (tables by day, filters by table and host).
+  If it is the 251-player event, it belongs with the convention slot, but the
+  brief for that slot says its caption names the event and date only once
+  Sidhant has.
