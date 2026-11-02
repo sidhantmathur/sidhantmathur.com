@@ -12,8 +12,12 @@ import { locateMissing, stripCitations } from "@/lib/verify";
 import { buildSystemPrompt } from "@/lib/system-prompt";
 import { ENFORCEMENT_LABEL, REFUSALS } from "@/lib/refusals";
 import type { RequirementVerdict } from "@/lib/role-fit";
+import { agreementOf } from "@/lib/consistency";
 import {
+  FIT_CONSENSUS,
   FIT_LABELS,
+  agreementCount,
+  agreementNote,
   fitExcerptNote,
   JD_COPY,
   PROJECT_LINKS,
@@ -276,7 +280,8 @@ export function PanelBody({
 // (docs/idea-decisions.md §3). So there is no score, percentage, weighting or
 // ordering by verdict: rows stay in the posting's order, the counts are counts,
 // and the line under them says what a tag is. A row that code changed says so
-// next to the row.
+// next to the row, and so does a row the independent assessments didn't agree
+// on (lib/consistency.ts), as a count in the same quiet line.
 
 const VERDICT_STYLE: Record<RequirementVerdict, string> = {
   met: "border-line-strong text-text",
@@ -308,7 +313,7 @@ function RequirementTable({
     return <p className="t-meta text-text-faint">{ROLE_FIT_UNREADABLE}</p>;
   }
 
-  const { rows, counts, gaps, noGapsRationale, verdict } = partial as RoleFit;
+  const { rows, counts, gaps, noGapsRationale, verdict, samples } = partial as RoleFit;
   // More verdicts counted than rows present: this is the short fit link's
   // excerpt, and it says so before the first row (see fitExcerptNote).
   const total = COUNT_ORDER.reduce((sum, v) => sum + (counts[v] ?? 0), 0);
@@ -332,11 +337,7 @@ function RequirementTable({
             key={i}
             className="grid grid-cols-[72px_1fr] gap-3 border-b border-line py-3 last:border-b-0"
           >
-            <span
-              className={`mt-0.5 self-start border px-1 py-0.5 text-center t-label tracking-[0.07em] ${VERDICT_STYLE[row.verdict]}`}
-            >
-              {row.verdict}
-            </span>
+            <VerdictTag row={row} />
             <div>
               {/* The posting's words, not the site's — the input, not a claim. */}
               <p className="t-meta text-text">{row.requirement}</p>
@@ -368,6 +369,12 @@ function RequirementTable({
                 {row.downgrade === "unjudged" && (
                   <span>the assessment listed this one without a verdict</span>
                 )}
+                {row.downgrade === "unshared" && (
+                  <span className="text-accent">
+                    {FIT_CONSENSUS.unshared(row.claimedVerdict ?? "a fit")}
+                  </span>
+                )}
+                <AgreementMark row={row} />
                 {/* Same split as an answer's marks: a token the record holds
                     under another chunk is a pointer problem and is said
                     quietly; only one the record has nowhere keeps the accent. */}
@@ -414,9 +421,45 @@ function RequirementTable({
         </p>
       )}
 
+      {typeof samples === "number" && samples > 1 && (
+        <p className="t-meta text-text-faint">{FIT_CONSENSUS.note(samples)}</p>
+      )}
       <p className="t-meta text-text-faint">{FIT_LABELS.notAScore}</p>
     </div>
   );
+}
+
+/**
+ * The row's tag. When most of the assessments gave it and not all, the count
+ * sits under it ("2 of 3"): it qualifies the verdict, and in the left column
+ * it can't run into the source ids on the line under the evidence.
+ */
+function VerdictTag({ row }: { row: RoleFit["rows"][number] }) {
+  const tag = `border px-1 py-0.5 text-center t-label tracking-[0.07em] ${VERDICT_STYLE[row.verdict]}`;
+  const count = verdictCount(row);
+  if (!count) return <span className={`mt-0.5 self-start ${tag}`}>{row.verdict}</span>;
+  return (
+    <div className="mt-0.5 self-start">
+      <span className={`block ${tag}`}>{row.verdict}</span>
+      <span className="mt-1 block text-center t-label text-text-faint">{agreementCount(count)}</span>
+    </div>
+  );
+}
+
+/** A majority the tag shows as it is: not split, and not changed after the vote. */
+function verdictCount(row: RoleFit["rows"][number]) {
+  const agreement = agreementOf(row);
+  return agreement?.kind === "majority" && row.downgrade === null ? agreement : null;
+}
+
+/**
+ * Any other disagreement, in the row's quiet line: how a split row's
+ * assessments voted, or the vote behind a row code changed afterwards.
+ */
+function AgreementMark({ row }: { row: RoleFit["rows"][number] }) {
+  const agreement = agreementOf(row);
+  if (!agreement || verdictCount(row)) return null;
+  return <span>{agreementNote(agreement)}</span>;
 }
 
 /**

@@ -1170,3 +1170,15 @@ listed in the agent's report):
   If it is the 251-player event, it belongs with the convention slot, but the
   brief for that slot says its caption names the event and date only once
   Sidhant has.
+## Consistent fit check, 2026-11-02
+
+Strings drafted for the consistent fit check (`docs/consistent-fit-check.md`): a fit-check table settled across several independent assessments of one posting. None makes a claim about Sidhant; every one describes what the site does. `{n}`, `{count}`, `{of}` and `{verdict}` are filled from the table.
+
+| Status | Where | String / summary | Claims | Source |
+| --- | --- | --- | --- | --- |
+| draft | `components/shell/shell-data.ts` → `FIT_CONSENSUS.note` (under a consensus table, panel and print) | "Each requirement was assessed {n} times, independently, and each row shows the verdict most of the assessments gave. A count under a tag, or a split under a row, means they differed. A row with no majority, or with both met and unmet among its assessments, is unclear." | none | `lib/consistency.ts` (what the merge does) |
+| draft | `components/shell/shell-data.ts` → `agreementCount` (under a row's verdict tag) | "{count} of {of}", e.g. "2 of 3" | none | — |
+| draft | `components/shell/shell-data.ts` → `agreementNote` (a row's quiet line) | "split · {count} {verdict}, …", e.g. "split · 1 met, 1 partial, 1 unmet"; and "{count} of {of} agree" on a row code changed after the vote | none | — |
+| draft | `components/shell/shell-data.ts` → `FIT_CONSENSUS.unshared` (a row's quiet line, accent) | "no source most of the assessments shared · downgraded from {verdict}" | none | `lib/consistency.ts` (`unshared` downgrade) |
+| draft | `lib/turn-phase.ts` → `JD_COMPARING_PHASE` (the phase line while the card waits) | "cross-checking…", with the readout "{done}/{of}" | none | — |
+| draft | `lib/system-prompt.ts` → roleFit instructions (rendered on /prompt) | "The table the tool returns is the one the reader sees, and the site may have changed rows in it since your call. Write the sentences after the call from the returned table." | none | — |

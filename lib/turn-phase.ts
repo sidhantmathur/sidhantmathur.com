@@ -59,6 +59,13 @@ export const JD_READING_PHASE = TOOL_PHASE["tool-extractRequirements"]!;
 /** From the moment extraction returns until the card is in. */
 export const JD_CHECKING_PHASE = "checking the fit…";
 
+/**
+ * The turn's own assessment is in and the card is waiting for the others
+ * (lib/consistency.ts). Only on a turn whose stream says so: with one
+ * assessment there is no such step.
+ */
+export const JD_COMPARING_PHASE = "cross-checking…";
+
 /** After the card is in, while the model writes what follows it. */
 export const JD_WRITING_PHASE = "summarizing…";
 
@@ -110,9 +117,23 @@ function extractedCount(parts: Part[]): number | null {
   return Array.isArray(reqs) ? reqs.length : null;
 }
 
+/**
+ * The route's progress part while the other assessments finish: how many are
+ * in, out of how many. Only written on a turn that runs more than one.
+ */
+function samplesProgress(parts: Part[]): { done: number; of: number } | null {
+  const data = lastPart(parts, "data-samples")?.data as { done?: unknown; of?: unknown } | undefined;
+  const { done, of } = data ?? {};
+  if (typeof done !== "number" || typeof of !== "number" || of < 2) return null;
+  return { done: Math.max(0, Math.min(done, of)), of };
+}
+
 function jobPostingPhase(parts: Part[]): string {
   const fit = lastPart(parts, "tool-roleFit");
   if (fit && settled(fit)) return JD_WRITING_PHASE;
+  // The call is complete and its result is what's pending: the card is
+  // waiting on the other assessments.
+  if (fit?.state === "input-available" && samplesProgress(parts)) return JD_COMPARING_PHASE;
   const extract = lastPart(parts, "tool-extractRequirements");
   // Judging starts the moment extraction returns, not when the roleFit call
   // first streams: the model reasons in between, and that belongs to judging.
@@ -159,10 +180,13 @@ export function phaseOf(status: string, messages: readonly Message[]): string | 
  *   rows       the assessment's rows arriving, counted off the partial tool
  *              input, out of the requirements extracted. The row being written
  *              counts, so the first one reads 1 of N.
+ *   samples    the independent assessments that are in, the turn's own
+ *              included, out of how many the card waits for.
  */
 export type PhaseActivity =
   | { kind: "reasoning" }
-  | { kind: "rows"; done: number; total: number };
+  | { kind: "rows"; done: number; total: number }
+  | { kind: "samples"; done: number; total: number };
 
 export function activityOf(status: string, messages: readonly Message[]): PhaseActivity | null {
   if (status !== "streaming") return null;
@@ -175,6 +199,10 @@ export function activityOf(status: string, messages: readonly Message[]): PhaseA
   }
 
   const fit = lastPart(parts, "tool-roleFit");
+  if (fit?.state === "input-available") {
+    const progress = samplesProgress(parts);
+    return progress ? { kind: "samples", done: progress.done, total: progress.of } : null;
+  }
   if (fit?.state !== "input-streaming") return null;
   const total = extractedCount(parts);
   const input = fit.input as { rows?: unknown; requirements?: unknown } | undefined;
@@ -192,13 +220,14 @@ export function activityOf(status: string, messages: readonly Message[]): PhaseA
 export function sameActivity(a: PhaseActivity | null, b: PhaseActivity | null): boolean {
   if (a === null || b === null) return a === b;
   if (a.kind !== b.kind) return false;
-  return a.kind === "reasoning" || (b.kind === "rows" && a.done === b.done && a.total === b.total);
+  if (a.kind === "reasoning" || b.kind === "reasoning") return true;
+  return a.done === b.done && a.total === b.total;
 }
 
 /**
- * The readout's text: `thinking`, or `6/14`. "Thinking" rather than
- * "reasoning": it is the reader's word, and one character narrower in a row
- * with no room to spare.
+ * The readout's text: `thinking`, `6/14` for rows or `2/3` for assessments.
+ * "Thinking" rather than "reasoning": it is the reader's word, and one
+ * character narrower in a row with no room to spare.
  */
 export function formatActivity(activity: PhaseActivity): string {
   return activity.kind === "reasoning" ? "thinking" : `${activity.done}/${activity.total}`;
